@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright (c) 2023 Huawei Device Co., Ltd.
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+
+     Notes:
+     This is project config file for OpenHarmony OSS Audit Tool.
+-->
+<!-- OSS Audit Tool (OAT) configuration guide:
+basedir: Root directory. the basedir + project path is the real source file location.
+licensefile:
+1.If the project does not have "LICENSE" in root dir, please define all the license files in this project in. OAT will check license files according to this rule.
+
+tasklist(for batch mode only):
+1. task: OAT check check task. Each task will start a new thread.
+2. task name: Name of the OAT check task.
+3. task policy: Default policy for projects under this task. This field is mandatory and the specified policy must defined in policylist.
+4. task filter: Default filefilter for projects under this task. This field is mandatory and the specified filefilter must defined in filefilterlist.
+5. task project: Projects to be checked. The source root dir of the project is defined by the path field.
+
+
+policyList:
+1. policy: All policyitems will be merged to default rules in OAT.xml. The policy name doesn't affect OAT check process.
+2. policyitem: The fields type, name, path, desc are mandatory, and the fields rule, group, filefilter are optional. The default value is:
+<policyitem type="" name="" path="" desc="" rule="may" group="defaultGroup" filefilter="defaultPolicyFilter"/>
+3. policyitem type:
+    "compatibility" is used to check license compatibility in the specified path;
+    "license" is used to check source license header in the specified path;
+    "copyright" is used to check source copyright header in the specified path;
+    "import" is used to check source dependency in the specified path, such as import ... ,include ...
+    "filetype" is used to check file type in the specified path, supported file types: archive, binary
+    "filename" is used to check whether the specified file exists in the specified path(support projectroot in default OAT.xml), supported file names: LICENSE, README, README.OpenSource
+
+4. policyitem name: This field is used to define the license, copyright, "*" means to match all, the "!" prefix means a failure to match this value. For example, "!GPL" means a failure to use GPL license.
+5. policyitem path: This field is used to define the source file scope to apply this policyitem. The "!" prefix means to exclude the files. For example, "!./lib/." means to exclude the files in lib dir while process this policyitem.
+6. policyitem rule and group: These two fields are used together to merge policy results. "may" policyitems in the same group means that the result will be passed if any policyitem in this group is passed.
+7. policyitem filefilter: This field is used to bind file filters, which defines filter rules.
+8. filefilter: This field is used to define filter rules. Wherein, filename is used to filter file names and filepath is used to filter file path.
+
+Note: If the text contains special characters, please escape them according to the following rules:
+" == &gt;
+& == &gt;
+' == &gt;
+< == &gt;
+> == &gt;
+-->
+<configuration>
+    <oatconfig>
+        <filefilterlist>
+            <filefilter name="binaryFileTypePolicyFilter" desc="Filters for binary file policies" >
+                <filteritem type="filepath" name="figures/.*" desc="architecture figure binary."/>
+            </filefilter>
+        </filefilterlist>
+    </oatconfig>
+</configuration>

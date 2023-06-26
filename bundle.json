@@ -1,0 +1,57 @@
+{
+    "name": "@ohos/intelligent_voice_framework",
+    "description": "intelligent_voice framework",
+    "version": "1.0",
+    "license": "Apache License 2.0",
+    "publishAs": "code-segment",
+    "segment": {
+      "destPath": "foundation/ai/intelligent_voice_framework"
+    },    
+    "component": {
+        "name": "intelligent_voice_framework",
+        "subsystem": "ai",
+        "syscap": [ 
+            "SystemCapability.AI.IntelligentVoice.Core"
+        ],
+        "adapter_system_type": ["standard"],
+        "rom": "",
+        "ram": "",
+        "deps": {
+            "components": ["intelligent_voice_framework"],
+            "third_party": []
+            },
+        "features": [
+        ],
+        "build": {
+            "sub_component": [
+                "//foundation/ai/intelligent_voice_framework/services:intell_voice_server",
+                "//foundation/ai/intelligent_voice_framework/services:intell_voice_proxy",
+                "//foundation/ai/intelligent_voice_framework/services/etc:intell_voice_service.rc",
+                "//foundation/ai/intelligent_voice_framework/frameworks/js:intelligentvoice",
+                "//foundation/ai/intelligent_voice_framework/frameworks/js:intelligentvoice_js",
+                "//foundation/ai/intelligent_voice_framework/frameworks/native:intellvoice_native",
+                "//foundation/ai/intelligent_voice_framework/sa_profile:intell_voice_service_sa_profile"
+            ],
+            "inner_kits": [
+                {
+                  "type": "none",
+                  "name": "//foundation/ai/intelligent_voice_framework/frameworks/js:intelligentvoice_js",
+                  "header": {
+                    "header_files": [
+                      "intell_voice_manager_napi.h",
+                      "intell_voice_engine_napi.h",
+                      "enroll_intell_voice_engine_napi.h"
+                    ],
+                    "header_base": [
+                      "//foundation/ai/intelligent_voice_framework/frameworks/js/napi/include"
+                    ]
+                  }
+                }
+            ],
+            "test": [
+              "//foundation/ai/intelligent_voice_framework/tests:intell_voice_unit_test",
+              "//foundation/ai/intelligent_voice_framework/tests:intell_voice_fuzz_test"
+            ]
+        }
+    }
+}
