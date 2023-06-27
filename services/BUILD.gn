@@ -1,0 +1,146 @@
+# Copyright (c) 2023 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+
+ohos_shared_library("intell_voice_proxy") {
+  sources = [
+    "intell_voice_engine/proxy/engine_callback_inner.cpp",
+    "intell_voice_engine/proxy/intell_voice_engine_callback_stub.cpp",
+    "intell_voice_engine/proxy/intell_voice_engine_proxy.cpp",
+    "intell_voice_engine/proxy/intell_voice_service_proxy.cpp",
+  ]
+
+  include_dirs = [
+    "intell_voice_engine",
+    "intell_voice_engine/proxy",
+    "//foundation/ai/intelligent_voice_framework/utils",
+  ]
+
+  cflags_cc = [
+    "-Wno-error=unused-parameter",
+    "-DHILOG_ENABLE",
+    "-DENABLE_DEBUG",
+  ]
+
+  public_deps = [ "//drivers/interface/intelligent_voice/engine/v1_0:intell_voice_engine_idl_headers" ]
+
+  external_deps = [
+    "c_utils:utils",
+    "hdf_core:libhdf_host",
+    "hdf_core:libhdf_ipc_adapter",
+    "hdf_core:libhdf_utils",
+    "hdf_core:libhdi",
+    "hiviewdfx_hilog_native:libhilog",
+    "ipc:ipc_core",
+    "safwk:system_ability_fwk",
+    "samgr:samgr_proxy",
+  ]
+
+  subsystem_name = "ai"
+  part_name = "intelligent_voice_framework"
+}
+
+ohos_shared_library("intell_voice_server") {
+  configs = [ "//build/config/compiler:exceptions" ]
+
+  sources = [
+    "intell_voice_engine/server/base/adapter_callback_service.cpp",
+    "intell_voice_engine/server/base/audio_source.cpp",
+    "intell_voice_engine/server/base/engine_base.cpp",
+    "intell_voice_engine/server/base/engine_factory.cpp",
+    "intell_voice_engine/server/base/file_source.cpp",
+    "intell_voice_engine/server/enroll/enroll_adapter_listener.cpp",
+    "intell_voice_engine/server/enroll/enroll_engine.cpp",
+    "intell_voice_engine/server/sa/intell_voice_engine_callback_proxy.cpp",
+    "intell_voice_engine/server/sa/intell_voice_engine_stub.cpp",
+    "intell_voice_engine/server/sa/intell_voice_service.cpp",
+    "intell_voice_engine/server/sa/intell_voice_service_manager.cpp",
+    "intell_voice_engine/server/sa/intell_voice_service_stub.cpp",
+    "intell_voice_engine/server/utils/history_info_mgr.cpp",
+    "intell_voice_engine/server/utils/service_db_helper.cpp",
+    "intell_voice_engine/server/utils/switch_observer.cpp",
+    "intell_voice_engine/server/utils/switch_provider.cpp",
+    "intell_voice_engine/server/utils/system_event_observer.cpp",
+    "intell_voice_engine/server/wakeup/wakeup_adapter_listener.cpp",
+    "intell_voice_engine/server/wakeup/wakeup_engine.cpp",
+    "intell_voice_trigger/server/connector_mgr/trigger_callback_impl.cpp",
+    "intell_voice_trigger/server/connector_mgr/trigger_connector.cpp",
+    "intell_voice_trigger/server/connector_mgr/trigger_connector_internal_impl.cpp",
+    "intell_voice_trigger/server/connector_mgr/trigger_connector_internal_validation.cpp",
+    "intell_voice_trigger/server/connector_mgr/trigger_connector_mgr.cpp",
+    "intell_voice_trigger/server/trigger_base_type.cpp",
+    "intell_voice_trigger/server/trigger_db_helper.cpp",
+    "intell_voice_trigger/server/trigger_detector.cpp",
+    "intell_voice_trigger/server/trigger_detector_callback.cpp",
+    "intell_voice_trigger/server/trigger_detector_recognition_callback.cpp",
+    "intell_voice_trigger/server/trigger_helper.cpp",
+    "intell_voice_trigger/server/trigger_manager.cpp",
+    "intell_voice_trigger/server/trigger_service.cpp",
+  ]
+
+  public_deps = [
+    "//drivers/interface/intelligent_voice/engine/v1_0:intell_voice_engine_idl_headers",
+    "//drivers/interface/intelligent_voice/trigger/v1_0:intell_voice_trigger_idl_headers",
+  ]
+
+  include_dirs = [
+    "//foundation/multimedia/audio_framework/interfaces/inner_api/native/audiocommon/include",
+    "//foundation/multimedia/audio_framework/interfaces/inner_api/native/audiocapturer/include",
+    "//foundation/ai/intelligent_voice_framework/utils",
+    "intell_voice_engine",
+    "intell_voice_engine/server/base",
+    "intell_voice_engine/server/enroll",
+    "intell_voice_engine/server/sa",
+    "intell_voice_engine/server/utils",
+    "intell_voice_engine/server/wakeup",
+    "intell_voice_trigger/server",
+    "intell_voice_trigger/server/connector_mgr",
+  ]
+
+  cflags_cc = [
+    "-Wno-error=unused-parameter",
+    "-DHILOG_ENABLE",
+    "-DENABLE_DEBUG",
+  ]
+
+  deps = [
+    "//drivers/interface/intelligent_voice/engine/v1_0:libintell_voice_engine_proxy_1.0",
+    "//drivers/interface/intelligent_voice/trigger/v1_0:libintell_voice_trigger_proxy_1.0",
+    "//foundation/ability/ability_runtime/frameworks/native/appkit:app_context",
+    "//foundation/ability/ability_runtime/interfaces/inner_api/dataobs_manager:dataobs_manager",
+    "//foundation/ai/intelligent_voice_framework/utils:intell_voice_utils",
+    "//foundation/multimedia/audio_framework/frameworks/native/audiocapturer:audio_capturer",
+  ]
+
+  external_deps = [
+    "ability_base:want",
+    "ability_base:zuri",
+    "ability_runtime:ability_manager",
+    "access_token:libaccesstoken_sdk",
+    "c_utils:utils",
+    "common_event_service:cesfwk_innerkits",
+    "data_share:datashare_consumer",
+    "eventhandler:libeventhandler",
+    "hdf_core:libhdi",
+    "hiviewdfx_hilog_native:libhilog",
+    "ipc:ipc_core",
+    "kv_store:distributeddata_inner",
+    "relational_store:native_rdb",
+    "safwk:system_ability_fwk",
+    "samgr:samgr_proxy",
+  ]
+
+  subsystem_name = "ai"
+  part_name = "intelligent_voice_framework"
+}

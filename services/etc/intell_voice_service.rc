@@ -1,0 +1,8 @@
+on post-fs-data
+    start intell_voice_service
+service intell_voice_service /system/bin/sa_main /system/profile/intell_voice_service.xml
+    class z_core
+    user system
+    group system shell
+    seclabel u:r:intell_voice_service:s0
+    onrestart restart intell_voice_hal_1_0

@@ -1,0 +1,73 @@
+# Copyright (c) 2023 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+import("//build/ohos/ace/ace.gni")
+
+js_declaration("intelligentvoice_js") {
+  part_name = "intelligent_voice_framework"
+  sources = [ "//foundation/ai/intelligent_voice_framework/interfaces/kits/js/@ohos.ai.intelligentVoice.d.ts" ]
+}
+
+ohos_copy("intelligentvoice_declaration") {
+  sources = [ "//foundation/ai/intelligent_voice_framework/interfaces/kits/js/@ohos.ai.intelligentVoice.d.ts" ]
+  outputs = [ target_out_dir + "/$target_name/" ]
+  module_source_dir = target_out_dir + "/$target_name"
+  module_install_name = ""
+}
+
+ohos_shared_library("intelligentvoice") {
+  sources = [
+    "napi/engine_event_callback_napi.cpp",
+    "napi/enroll_intell_voice_engine_callback_napi.cpp",
+    "napi/enroll_intell_voice_engine_napi.cpp",
+    "napi/intell_voice_manager_napi.cpp",
+    "napi/intell_voice_napi_queue.cpp",
+    "napi/intell_voice_napi_util.cpp",
+    "napi/wakeup_intell_voice_engine_napi.cpp",
+  ]
+
+  include_dirs = [
+    "//foundation/arkui/napi/interfaces/kits",
+    "//foundation/ai/intelligent_voice_framework/interfaces/inner_api/native",
+    "//foundation/ai/intelligent_voice_framework/services/intell_voice_engine",
+    "//foundation/ai/intelligent_voice_framework/services/intell_voice_engine/proxy",
+    "//foundation/ai/intelligent_voice_framework/utils",
+    "napi",
+  ]
+
+  cflags_cc = [
+    "-Wno-error=unused-parameter",
+    "-DHILOG_ENABLE",
+    "-DENABLE_DEBUG",
+  ]
+
+  deps = [
+    "//foundation/ai/intelligent_voice_framework/frameworks/native:intellvoice_native",
+    "//foundation/ai/intelligent_voice_framework/services:intell_voice_proxy",
+    "//foundation/arkui/napi:ace_napi",
+  ]
+
+  external_deps = [
+    "ability_base:want",
+    "c_utils:utils",
+    "hiviewdfx_hilog_native:libhilog",
+    "ipc:ipc_core",
+    "safwk:system_ability_fwk",
+    "samgr:samgr_proxy",
+  ]
+
+  relative_install_dir = "module/ai"
+  subsystem_name = "ai"
+  part_name = "intelligent_voice_framework"
+}
