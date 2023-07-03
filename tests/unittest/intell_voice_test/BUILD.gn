@@ -26,10 +26,10 @@ ohos_unittest("client_unit_test") {
 
   include_dirs = [
     "include",
-    "//foundation/ai/intelligent_voice_framework/services/intell_voice_engine",
-    "//foundation/ai/intelligent_voice_framework/services/intell_voice_engine/server/base",
-    "//foundation/ai/intelligent_voice_framework/services/intell_voice_engine/proxy",
-    "//foundation/ai/intelligent_voice_framework/utils",
+    "../../../services/intell_voice_engine",
+    "../../../services/intell_voice_engine/server/base",
+    "../../../services/intell_voice_engine/proxy",
+    "../../../utils",
   ]
 
   cflags_cc = [
@@ -38,9 +38,7 @@ ohos_unittest("client_unit_test") {
     "-DENABLE_DEBUG",
   ]
 
-  deps = [
-    "//foundation/ai/intelligent_voice_framework/services:intell_voice_proxy",
-  ]
+  deps = [ "../../../services:intell_voice_proxy" ]
 
   external_deps = [
     "c_utils:utils",
@@ -57,9 +55,9 @@ ohos_unittest("trigger_unit_test") {
   sources = [ "src/trigger_unit_test.cpp" ]
 
   include_dirs = [
-    "//foundation/ai/intelligent_voice_framework/services/intell_voice_trigger/server",
-    "//foundation/ai/intelligent_voice_framework/services/intell_voice_trigger/server/connector_mgr",
-    "//foundation/ai/intelligent_voice_framework/utils",
+    "../../../services/intell_voice_trigger/server",
+    "../../../services/intell_voice_trigger/server/connector_mgr",
+    "../../../utils",
   ]
 
   cflags_cc = [
@@ -68,9 +66,7 @@ ohos_unittest("trigger_unit_test") {
     "-DENABLE_DEBUG",
   ]
 
-  deps = [
-    "//foundation/ai/intelligent_voice_framework/services:intell_voice_server",
-  ]
+  deps = [ "../../../services:intell_voice_server" ]
 
   external_deps = [
     "c_utils:utils",
@@ -85,9 +81,9 @@ ohos_unittest("trigger_manager_test") {
   sources = [ "src/trigger_manager_test.cpp" ]
 
   include_dirs = [
-    "//foundation/ai/intelligent_voice_framework/services/intell_voice_trigger/server",
-    "//foundation/ai/intelligent_voice_framework/services/intell_voice_trigger/server/connector_mgr",
-    "//foundation/ai/intelligent_voice_framework/utils",
+    "../../../services/intell_voice_trigger/server",
+    "../../../services/intell_voice_trigger/server/connector_mgr",
+    "/../../../utils",
   ]
 
   cflags_cc = [
@@ -96,9 +92,7 @@ ohos_unittest("trigger_manager_test") {
     "-DENABLE_DEBUG",
   ]
 
-  deps = [
-    "//foundation/ai/intelligent_voice_framework/services:intell_voice_server",
-  ]
+  deps = [ "../../../services:intell_voice_server" ]
 
   external_deps = [
     "c_utils:utils",

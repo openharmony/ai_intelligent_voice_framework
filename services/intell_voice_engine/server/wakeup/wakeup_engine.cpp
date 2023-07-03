@@ -307,8 +307,7 @@ bool WakeupEngine::StartFileSource()
                 adapter_->WriteAudio(audioBuff);
             }
         },
-        [&](bool isError)
-        {
+        [&](bool isError) {
             INTELL_VOICE_LOG_INFO("end of pcm, isError:%d", isError);
             if (adapter_ != nullptr) {
                 adapter_->SetParameter("end_of_pcm=true");

@@ -38,11 +38,11 @@ ohos_shared_library("intelligentvoice") {
   ]
 
   include_dirs = [
-    "//foundation/arkui/napi/interfaces/kits",
-    "//foundation/ai/intelligent_voice_framework/interfaces/inner_api/native",
-    "//foundation/ai/intelligent_voice_framework/services/intell_voice_engine",
-    "//foundation/ai/intelligent_voice_framework/services/intell_voice_engine/proxy",
-    "//foundation/ai/intelligent_voice_framework/utils",
+    "../../../../arkui/napi/interfaces/kits",
+    "../../interfaces/inner_api/native",
+    "../../services/intell_voice_engine",
+    "../../services/intell_voice_engine/proxy",
+    "../../utils",
     "napi",
   ]
 
@@ -53,9 +53,8 @@ ohos_shared_library("intelligentvoice") {
   ]
 
   deps = [
-    "//foundation/ai/intelligent_voice_framework/frameworks/native:intellvoice_native",
-    "//foundation/ai/intelligent_voice_framework/services:intell_voice_proxy",
-    "//foundation/arkui/napi:ace_napi",
+    "../../frameworks/native:intellvoice_native",
+    "../../services:intell_voice_proxy",
   ]
 
   external_deps = [
@@ -65,6 +64,7 @@ ohos_shared_library("intelligentvoice") {
     "ipc:ipc_core",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
+    "napi:ace_napi"
   ]
 
   relative_install_dir = "module/ai"

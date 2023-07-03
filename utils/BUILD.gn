@@ -16,8 +16,6 @@ import("//build/ohos.gni")
 ohos_shared_library("intell_voice_utils") {
   configs = [ "//build/config/compiler:exceptions" ]
 
-  include_dirs = [ "//foundation/ai/intelligent_voice_framework/utils" ]
-
   sources = [
     "base_thread.cpp",
     "memory_guard.cpp",
@@ -38,30 +36,6 @@ ohos_shared_library("intell_voice_utils") {
     "c_utils:utils",
     "hiviewdfx_hilog_native:libhilog",
   ]
-
-  cflags = [
-    "-Wall",
-    "-Wextra",
-    "-Werror",
-    "-DHAVE_CONFIG_H",
-    "-fno-strict-aliasing",
-    "-Wno-sign-compare",
-    "-Wno-builtin-requires-header",
-    "-Wno-implicit-function-declaration",
-    "-Wno-format",
-    "-Wno-int-conversion",
-    "-Wno-unused-function",
-    "-Wno-unused-parameter",
-    "-Wno-thread-safety-attributes",
-    "-Wno-inconsistent-missing-override",
-    "-fno-rtti",
-    "-fno-exceptions",
-    "-ffunction-sections",
-    "-fdata-sections",
-    "-Wheader-hygiene",
-  ]
-
-  ldflags = [ "-Wl" ]
 
   subsystem_name = "ai"
   part_name = "intelligent_voice_framework"

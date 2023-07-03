@@ -22,12 +22,12 @@
 #include "enroll_intell_voice_engine.h"
 #include "enroll_intell_voice_engine_callback_napi.h"
 
-#define ENROLL_ENGINE_NAPI_CLASS_NAME "EnrollIntelligentVoiceEngine"
-
 namespace OHOS {
 namespace IntellVoiceNapi {
 using OHOS::IntellVoice::EnrollIntellVoiceEngine;
 using OHOS::IntellVoice::EngineConfig;
+
+extern const std::string ENROLL_ENGINE_NAPI_CLASS_NAME;
 
 class EnrollIntellVoiceEngineNapi {
 public:

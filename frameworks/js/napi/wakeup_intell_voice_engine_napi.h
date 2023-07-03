@@ -12,7 +12,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #ifndef WAKEUP_INTELL_VOICE_ENGINE_NAPI_H
 #define WAKEUP_INTELL_VOICE_ENGINE_NAPI_H
 
@@ -21,11 +20,11 @@
 #include "engine_event_callback_napi.h"
 #include "wakeup_intell_voice_engine.h"
 
-#define WAKEUP_ENGINE_NAPI_CLASS_NAME "WakeupIntelligentVoiceEngine"
-
 namespace OHOS {
 namespace IntellVoiceNapi {
 using OHOS::IntellVoice::WakeupIntellVoiceEngine;
+
+extern const std::string WAKEUP_ENGINE_NAPI_CLASS_NAME;
 
 class WakeupIntellVoiceEngineNapi {
 public:
