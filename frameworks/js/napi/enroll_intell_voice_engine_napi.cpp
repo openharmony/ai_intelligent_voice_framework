@@ -30,6 +30,8 @@ using namespace std;
 
 namespace OHOS {
 namespace IntellVoiceNapi {
+const std::string ENROLL_ENGINE_NAPI_CLASS_NAME = "EnrollIntelligentVoiceEngine";
+
 EnrollIntellVoiceEngineNapi::EnrollIntellVoiceEngineNapi()
 {
     INTELL_VOICE_LOG_INFO("enter, %{public}p", this);
@@ -116,7 +118,7 @@ napi_value EnrollIntellVoiceEngineNapi::Constructor(napi_env env)
     };
 
     status = napi_define_class(env,
-        ENROLL_ENGINE_NAPI_CLASS_NAME,
+        ENROLL_ENGINE_NAPI_CLASS_NAME.c_str(),
         NAPI_AUTO_LENGTH,
         New,
         nullptr,

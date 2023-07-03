@@ -24,7 +24,7 @@ ohos_shared_library("intell_voice_proxy") {
   include_dirs = [
     "intell_voice_engine",
     "intell_voice_engine/proxy",
-    "//foundation/ai/intelligent_voice_framework/utils",
+    "../utils",
   ]
 
   cflags_cc = [
@@ -95,9 +95,9 @@ ohos_shared_library("intell_voice_server") {
   ]
 
   include_dirs = [
-    "//foundation/multimedia/audio_framework/interfaces/inner_api/native/audiocommon/include",
-    "//foundation/multimedia/audio_framework/interfaces/inner_api/native/audiocapturer/include",
-    "//foundation/ai/intelligent_voice_framework/utils",
+    "../../../multimedia/audio_framework/interfaces/inner_api/native/audiocommon/include",
+    "../../../multimedia/audio_framework/interfaces/inner_api/native/audiocapturer/include",
+    "../../../ai/intelligent_voice_framework/utils",
     "intell_voice_engine",
     "intell_voice_engine/server/base",
     "intell_voice_engine/server/enroll",
@@ -114,28 +114,26 @@ ohos_shared_library("intell_voice_server") {
     "-DENABLE_DEBUG",
   ]
 
-  deps = [
-    "//drivers/interface/intelligent_voice/engine/v1_0:libintell_voice_engine_proxy_1.0",
-    "//drivers/interface/intelligent_voice/trigger/v1_0:libintell_voice_trigger_proxy_1.0",
-    "//foundation/ability/ability_runtime/frameworks/native/appkit:app_context",
-    "//foundation/ability/ability_runtime/interfaces/inner_api/dataobs_manager:dataobs_manager",
-    "//foundation/ai/intelligent_voice_framework/utils:intell_voice_utils",
-    "//foundation/multimedia/audio_framework/frameworks/native/audiocapturer:audio_capturer",
-  ]
+  deps = [ "../../../ai/intelligent_voice_framework/utils:intell_voice_utils" ]
 
   external_deps = [
     "ability_base:want",
     "ability_base:zuri",
     "ability_runtime:ability_manager",
+    "ability_runtime:app_context",
+    "ability_runtime:dataobs_manager",
     "access_token:libaccesstoken_sdk",
     "c_utils:utils",
     "common_event_service:cesfwk_innerkits",
     "data_share:datashare_consumer",
+    "drivers_interface_intelligent_voice:libintell_voice_engine_proxy_1.0",
+    "drivers_interface_intelligent_voice:libintell_voice_trigger_proxy_1.0",
     "eventhandler:libeventhandler",
     "hdf_core:libhdi",
     "hiviewdfx_hilog_native:libhilog",
     "ipc:ipc_core",
     "kv_store:distributeddata_inner",
+    "multimedia_audio_framework:audio_capturer",
     "relational_store:native_rdb",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",

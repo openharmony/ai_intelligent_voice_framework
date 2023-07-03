@@ -391,12 +391,12 @@ static napi_value Export(napi_env env, napi_value exports)
     IntellVoiceManagerNapi::Export(env, exports);
 
     status = napi_set_named_property(
-        env, exports, ENROLL_ENGINE_NAPI_CLASS_NAME, EnrollIntellVoiceEngineNapi::Constructor(env));
-    INTELL_VOICE_LOG_INFO("init %{public}s, status: %{public}d", ENROLL_ENGINE_NAPI_CLASS_NAME, status);
+        env, exports, ENROLL_ENGINE_NAPI_CLASS_NAME.c_str(), EnrollIntellVoiceEngineNapi::Constructor(env));
+    INTELL_VOICE_LOG_INFO("init %{public}s, status: %{public}d", ENROLL_ENGINE_NAPI_CLASS_NAME.c_str(), status);
 
     status = napi_set_named_property(
-        env, exports, WAKEUP_ENGINE_NAPI_CLASS_NAME, WakeupIntellVoiceEngineNapi::Constructor(env));
-    INTELL_VOICE_LOG_INFO("init %{public}s, status: %{public}d", WAKEUP_ENGINE_NAPI_CLASS_NAME, status);
+        env, exports, WAKEUP_ENGINE_NAPI_CLASS_NAME.c_str(), WakeupIntellVoiceEngineNapi::Constructor(env));
+    INTELL_VOICE_LOG_INFO("init %{public}s, status: %{public}d", WAKEUP_ENGINE_NAPI_CLASS_NAME.c_str(), status);
 
     return exports;
 }

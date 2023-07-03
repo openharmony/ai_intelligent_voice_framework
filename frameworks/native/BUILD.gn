@@ -21,10 +21,10 @@ ohos_shared_library("intellvoice_native") {
   ]
 
   include_dirs = [
-    "//foundation/ai/intelligent_voice_framework/interfaces/inner_api/native",
-    "//foundation/ai/intelligent_voice_framework/services/intell_voice_engine",
-    "//foundation/ai/intelligent_voice_framework/services/intell_voice_engine/proxy",
-    "//foundation/ai/intelligent_voice_framework/utils",
+    "../../interfaces/inner_api/native",
+    "../../services/intell_voice_engine",
+    "../../services/intell_voice_engine/proxy",
+    "../../utils",
   ]
 
   cflags_cc = [
@@ -34,7 +34,7 @@ ohos_shared_library("intellvoice_native") {
   ]
 
   deps = [
-    "//foundation/ai/intelligent_voice_framework/services:intell_voice_proxy",
+    "../../services:intell_voice_proxy",
   ]
 
   external_deps = [
