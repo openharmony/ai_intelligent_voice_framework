@@ -1,0 +1,9 @@
+{
+    "patches": [
+        {
+            "project":"productdefine_common",
+            "patch_file":"productdefine_common.patch",
+            "path":"productdefine/common"
+        }
+    ]
+}
