@@ -24,7 +24,7 @@ namespace OHOS {
 namespace IntellVoiceNapi {
 using OHOS::IntellVoice::WakeupIntellVoiceEngine;
 
-extern const std::string WAKEUP_ENGINE_NAPI_CLASS_NAME;
+const std::string WAKEUP_ENGINE_NAPI_CLASS_NAME = "WakeupIntelligentVoiceEngine";
 
 class WakeupIntellVoiceEngineNapi {
 public:
