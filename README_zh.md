@@ -1,4 +1,4 @@
-# 智能语音组件
+# 智能语音部件
 
 ## 概述
 
@@ -47,6 +47,18 @@
 ### 约束与限制
 
 - 智能语音服务当前只支持一个唤醒词的注册以及唤醒。
+
+## 编译构建
+
+在OpenHarmony源码根目录下，调用以下指令，单独编译intelligent_voice_framework。
+```shell
+./build.sh --product-name rk3568 --ccache --build-target intelligent_voice_framework --jobs 4
+```
+> **说明：** 
+--product-name：产品名称，例如Hi3516DV300、rk3568等。
+--ccache：编译时使用缓存功能。
+--build-target: 编译的部件名称。
+--jobs：编译的线程数，可加速编译。
 
 
 ## 接口说明
