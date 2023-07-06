@@ -89,11 +89,6 @@ ohos_shared_library("intell_voice_server") {
     "intell_voice_trigger/server/trigger_service.cpp",
   ]
 
-  public_deps = [
-    "//drivers/interface/intelligent_voice/engine/v1_0:intell_voice_engine_idl_headers",
-    "//drivers/interface/intelligent_voice/trigger/v1_0:intell_voice_trigger_idl_headers",
-  ]
-
   include_dirs = [
     "../../../multimedia/audio_framework/interfaces/inner_api/native/audiocommon/include",
     "../../../multimedia/audio_framework/interfaces/inner_api/native/audiocapturer/include",
@@ -114,7 +109,7 @@ ohos_shared_library("intell_voice_server") {
     "-DENABLE_DEBUG",
   ]
 
-  deps = [ "../../../ai/intelligent_voice_framework/utils:intell_voice_utils" ]
+  deps = [ "../utils:intell_voice_utils" ]
 
   external_deps = [
     "ability_base:want",
@@ -123,9 +118,12 @@ ohos_shared_library("intell_voice_server") {
     "ability_runtime:app_context",
     "ability_runtime:dataobs_manager",
     "access_token:libaccesstoken_sdk",
+    "audio_framework:audio_capturer",
     "c_utils:utils",
     "common_event_service:cesfwk_innerkits",
     "data_share:datashare_consumer",
+    "drivers_interface_intelligent_voice:intell_voice_engine_idl_headers",
+    "drivers_interface_intelligent_voice:intell_voice_trigger_idl_headers",
     "drivers_interface_intelligent_voice:libintell_voice_engine_proxy_1.0",
     "drivers_interface_intelligent_voice:libintell_voice_trigger_proxy_1.0",
     "eventhandler:libeventhandler",
@@ -133,7 +131,6 @@ ohos_shared_library("intell_voice_server") {
     "hilog:libhilog",
     "ipc:ipc_core",
     "kv_store:distributeddata_inner",
-    "audio_framework:audio_capturer",
     "relational_store:native_rdb",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",

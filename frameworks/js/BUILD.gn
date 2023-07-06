@@ -62,9 +62,9 @@ ohos_shared_library("intelligentvoice") {
     "c_utils:utils",
     "hilog:libhilog",
     "ipc:ipc_core",
+    "napi:ace_napi",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
-    "napi:ace_napi"
   ]
 
   relative_install_dir = "module/ai"

@@ -33,9 +33,7 @@ ohos_shared_library("intellvoice_native") {
     "-DENABLE_DEBUG",
   ]
 
-  deps = [
-    "../../services:intell_voice_proxy",
-  ]
+  deps = [ "../../services:intell_voice_proxy" ]
 
   external_deps = [
     "ability_base:base",
