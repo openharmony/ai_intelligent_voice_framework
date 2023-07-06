@@ -33,10 +33,9 @@ ohos_shared_library("intell_voice_proxy") {
     "-DENABLE_DEBUG",
   ]
 
-  public_deps = [ "//drivers/interface/intelligent_voice/engine/v1_0:intell_voice_engine_idl_headers" ]
-
   external_deps = [
     "c_utils:utils",
+    "drivers_interface_intelligent_voice:intell_voice_engine_idl_headers",
     "hdf_core:libhdf_host",
     "hdf_core:libhdf_ipc_adapter",
     "hdf_core:libhdf_utils",
