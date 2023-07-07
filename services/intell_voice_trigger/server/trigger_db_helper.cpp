@@ -94,7 +94,7 @@ bool TriggerDbHelper::UpdateGenericTriggerModel(std::shared_ptr<GenericTriggerMo
     return true;
 }
 
-bool TriggerDbHelper::GetVendorUuid(std::unique_ptr<ResultSet> &set, int32_t &vendorUuid)
+bool TriggerDbHelper::GetVendorUuid(std::shared_ptr<AbsSharedResultSet> &set, int32_t &vendorUuid)
 {
     int columnIndex;
     int ret = set->GetColumnIndex("vendor_uuid", columnIndex);
@@ -111,7 +111,7 @@ bool TriggerDbHelper::GetVendorUuid(std::unique_ptr<ResultSet> &set, int32_t &ve
     return true;
 }
 
-bool TriggerDbHelper::GetBlob(std::unique_ptr<ResultSet> &set, std::vector<uint8_t> &data)
+bool TriggerDbHelper::GetBlob(std::shared_ptr<AbsSharedResultSet> &set, std::vector<uint8_t> &data)
 {
     int columnIndex;
     int ret = set->GetColumnIndex("data", columnIndex);
@@ -128,7 +128,7 @@ bool TriggerDbHelper::GetBlob(std::unique_ptr<ResultSet> &set, std::vector<uint8
     return true;
 }
 
-bool TriggerDbHelper::GetModelVersion(std::unique_ptr<ResultSet> &set, int32_t &version)
+bool TriggerDbHelper::GetModelVersion(std::shared_ptr<AbsSharedResultSet> &set, int32_t &version)
 {
     int columnIndex;
     int ret = set->GetColumnIndex("model_version", columnIndex);
@@ -154,7 +154,7 @@ std::shared_ptr<GenericTriggerModel> TriggerDbHelper::GetGenericTriggerModel(con
         return nullptr;
     }
 
-    std::unique_ptr<ResultSet> set = store_->QuerySql(
+    std::shared_ptr<AbsSharedResultSet> set = store_->QuerySql(
         "SELECT * FROM trigger WHERE model_uuid = ?", std::vector<std::string> {std::to_string(modelUuid)});
     if (set == nullptr) {
         INTELL_VOICE_LOG_ERROR("set is nullptr");

@@ -33,9 +33,9 @@ public:
     void DeleteGenericTriggerModel(const int32_t modelUuid);
 
 private:
-    bool GetVendorUuid(std::unique_ptr<OHOS::NativeRdb::ResultSet> &set, int32_t &vendorUuid);
-    bool GetBlob(std::unique_ptr<OHOS::NativeRdb::ResultSet> &set, std::vector<uint8_t> &data);
-    bool GetModelVersion(std::unique_ptr<OHOS::NativeRdb::ResultSet> &set, int32_t &version);
+    bool GetVendorUuid(std::shared_ptr<OHOS::NativeRdb::AbsSharedResultSet> &set, int32_t &vendorUuid);
+    bool GetBlob(std::shared_ptr<OHOS::NativeRdb::AbsSharedResultSet> &set, std::vector<uint8_t> &data);
+    bool GetModelVersion(std::shared_ptr<OHOS::NativeRdb::AbsSharedResultSet> &set, int32_t &version);
 
 private:
     std::mutex mutex_;
