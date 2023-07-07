@@ -133,7 +133,7 @@ bool StringUtil::SplitLineToPair(const std::string &line, std::string &first, st
     Trim(second);
 
     if (first.empty() || second.empty()) {
-        INTELL_VOICE_LOG_ERROR("line is invalid, first:%s, second:%s", first.c_str(), second.c_str());
+        INTELL_VOICE_LOG_ERROR("line is invalid, first:%{public}s, second:%{public}s", first.c_str(), second.c_str());
         return false;
     }
     return true;

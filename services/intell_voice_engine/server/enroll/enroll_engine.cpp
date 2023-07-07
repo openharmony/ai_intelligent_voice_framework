@@ -337,7 +337,7 @@ bool EnrollEngine::StartAudioSource()
             std::vector<uint8_t> audioBuff(&buffer[0], &buffer[size]);
             adapter_->WriteAudio(audioBuff);
         }}, [&] (bool isError) {
-            INTELL_VOICE_LOG_INFO("end of pcm, isError:%d", isError);
+            INTELL_VOICE_LOG_INFO("end of pcm, isError:%{public}d", isError);
             if ((adapter_ != nullptr) && (!isError)) {
                 adapter_->SetParameter("end_of_pcm=true");
             }

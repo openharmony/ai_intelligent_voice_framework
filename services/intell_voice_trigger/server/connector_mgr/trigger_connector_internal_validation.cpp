@@ -46,7 +46,7 @@ std::vector<TriggerConnectorModuleDesc> TriggerConnectorInternalValidation::List
 
         for (auto it : ret) {
             if (moduleDescs_.count(it.adapterName) == 0) {
-                INTELL_VOICE_LOG_ERROR("adapter name:%s does not exist", it.adapterName.c_str());
+                INTELL_VOICE_LOG_ERROR("adapter name:%{public}s does not exist", it.adapterName.c_str());
                 return {};
             }
         }
@@ -59,7 +59,7 @@ std::shared_ptr<IIntellVoiceTriggerConnectorModule> TriggerConnectorInternalVali
 {
     std::lock_guard<std::mutex> lock(mutex_);
     if (moduleDescs_.count(adapterName) == 0) {
-        INTELL_VOICE_LOG_ERROR("adapter name:%s does not exist", adapterName.c_str());
+        INTELL_VOICE_LOG_ERROR("adapter name:%{public}s does not exist", adapterName.c_str());
         return nullptr;
     }
     std::shared_ptr<TriggerConnectorModuleValidation> moduleValidation =
@@ -87,7 +87,7 @@ bool TriggerConnectorInternalValidation::TriggerConnectorModuleValidation::Valid
     }
 
     if (model->GetType() != TriggerModel::TriggerModelType::GENERIC_TYPE) {
-        INTELL_VOICE_LOG_ERROR("generic model type:%d is invalid", model->GetType());
+        INTELL_VOICE_LOG_ERROR("generic model type:%{public}d is invalid", model->GetType());
         return false;
     }
 

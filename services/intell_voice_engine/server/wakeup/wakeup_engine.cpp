@@ -308,7 +308,7 @@ bool WakeupEngine::StartFileSource()
             }
         },
         [&](bool isError) {
-            INTELL_VOICE_LOG_INFO("end of pcm, isError:%d", isError);
+            INTELL_VOICE_LOG_INFO("end of pcm, isError:%{public}d", isError);
             if (adapter_ != nullptr) {
                 adapter_->SetParameter("end_of_pcm=true");
             }

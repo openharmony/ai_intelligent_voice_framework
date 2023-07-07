@@ -69,7 +69,7 @@ void AutoTimer::PrintTimeElapse(const std::string &logInfo)
         return;
     }
 
-    INTELL_VOICE_LOG_DEBUG("%s, %s", __FUNCTION__, log.c_str());
+    INTELL_VOICE_LOG_DEBUG("%{public}s", log.c_str());
 
     mIsReset = false;
 }
@@ -116,7 +116,7 @@ string TimeUtil::GetCurrTime(TimeFormat format)
         } else if (format == TIME_FORMAT_STANDARD) {
             strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", timeInfo);
         } else {
-            INTELL_VOICE_LOG_WARN("invalid format:%d", format);
+            INTELL_VOICE_LOG_WARN("invalid format:%{public}d", format);
         }
     }
     std::string str(buffer);
@@ -145,7 +145,7 @@ string TimeUtil::GetCurrTimeUs()
 
 time_t TimeUtil::GetFormatTimeToSec(const string &formatTime)
 {
-    INTELL_VOICE_LOG_DEBUG("GetFormatTimeToSec, formatTime is %s", formatTime.c_str());
+    INTELL_VOICE_LOG_DEBUG("GetFormatTimeToSec, formatTime is %{public}s", formatTime.c_str());
     struct tm s_tm;
 
     if (!strptime(formatTime.c_str(), "%Y%m%d%H%M%S", &s_tm)) {
@@ -163,8 +163,6 @@ bool TimeUtil::IsFormatTimeExpired(const string &formatTime, int maxKeepTime)
 
     currentTime = time(nullptr);
     originalTime = GetFormatTimeToSec(formatTime);
-    INTELL_VOICE_LOG_DEBUG("IsFormatTimeExpired, originalTime is %ld, currentTime is %ld, maxKeepTime is %d",
-        originalTime, currentTime, maxKeepTime);
 
     if ((originalTime == INVALID_TIME_T) || (currentTime == INVALID_TIME_T)) {
         INTELL_VOICE_LOG_ERROR("get sys time error");
