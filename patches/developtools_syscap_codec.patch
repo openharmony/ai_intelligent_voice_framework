@@ -1,0 +1,33 @@
+From dcd0c6b8cda141465cb3bc180dfe9822d83d6cc3 Mon Sep 17 00:00:00 2001
+From: lvqiang214 <lvqiang1@huawei.com>
+Date: Fri, 7 Jul 2023 12:01:15 +0800
+Subject: [PATCH] add intelligent voice core
+
+Signed-off-by: lvqiang214 <lvqiang1@huawei.com>
+---
+ include/codec_config/syscap_define.h | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/include/codec_config/syscap_define.h b/include/codec_config/syscap_define.h
+index efe6ab0..8ce7576 100644
+--- a/include/codec_config/syscap_define.h
++++ b/include/codec_config/syscap_define.h
+@@ -295,6 +295,7 @@ typedef enum SystemCapabilityNum {
+     POWERMANAGER_DISPLAYPOWERMANAGER_LITE,
+     FILEMANAGEMENT_FILE_FILEIO_LITE,
+     MULTIMEDIA_AVSESSION_AVCAST,
++    AI_INTELLIGENTVOICE_CORE,
+     // Add before here
+     SYSCAP_BASIC_END = 500,
+ } SyscapNum;
+@@ -572,6 +573,7 @@ const static SyscapWithNum g_arraySyscap[] = {
+     {"SystemCapability.Security.Huks.Extension", SECURITY_HUKS_EXTENSION},
+     {"SystemCapability.Sensors.MiscDevice.Lite", SENSORS_MISCDEVICE_LITE},
+     {"SystemCapability.FileManagement.File.FileIO.Lite", FILEMANAGEMENT_FILE_FILEIO_LITE},
++    {"SystemCapability.AI.IntelligentVoice.Core", AI_INTELLIGENTVOICE_CORE},
+ };
+ 
+ #ifdef __cplusplus
+-- 
+2.34.1
+

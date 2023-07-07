@@ -163,7 +163,6 @@ bool TimeUtil::IsFormatTimeExpired(const string &formatTime, int maxKeepTime)
 
     currentTime = time(nullptr);
     originalTime = GetFormatTimeToSec(formatTime);
-
     if ((originalTime == INVALID_TIME_T) || (currentTime == INVALID_TIME_T)) {
         INTELL_VOICE_LOG_ERROR("get sys time error");
         return false;
