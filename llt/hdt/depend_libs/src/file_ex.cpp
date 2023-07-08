@@ -42,9 +42,9 @@ bool LoadStringFromFile(const string& filePath, string& content)
     }
 
     file.seekg(0, ios::end);
-    const long fileLength = file.tellg();
+    int fileLength = file.tellg();
     if (fileLength > MAX_FILE_LENGTH) {
-        UTILS_LOGD("invalid file length(%{public}ld)!", fileLength);
+        UTILS_LOGD("invalid file length(%{public}d)", fileLength);
         return false;
     }
 
@@ -96,7 +96,7 @@ bool LoadStringFromFd(int fd, string& content)
 
     const long fileLength = lseek(fd, 0, SEEK_END);
     if (fileLength > MAX_FILE_LENGTH) {
-        UTILS_LOGE("invalid file length(%{public}ld)!", fileLength);
+        UTILS_LOGE("invalid file length");
         return false;
     }
 
@@ -118,8 +118,7 @@ bool LoadStringFromFd(int fd, string& content)
 
     const long len = read(fd, content.data(), fileLength);
     if (len != fileLength) {
-        UTILS_LOGE("the length read from file is not equal to fileLength!len:%{public}ld,fileLen:%{public}ld",
-            len, fileLength);
+        UTILS_LOGE("the length read from file is not equal to fileLength");
         return false;
     }
 
@@ -173,8 +172,7 @@ bool SaveStringToFd(int fd, const std::string& content)
     }
 
     if (static_cast<unsigned long>(len) != content.length()) {
-        UTILS_LOGE("the length write to file is not equal to fileLength!len:%{public}ld, fileLen:%{public}zu",
-            len, content.length());
+        UTILS_LOGE("the length write to file is not equal to fileLength");
         return false;
     }
 
@@ -227,7 +225,7 @@ bool LoadBufferFromFile(const string& filePath, vector<char>& content)
     file.seekg(0, std::ios::end);
     const long fileLength = file.tellg();
     if (fileLength > MAX_FILE_LENGTH) {
-        UTILS_LOGD("invalid file length(%{public}ld)!", fileLength);
+        UTILS_LOGD("invalid file length");
         return false;
     }
 

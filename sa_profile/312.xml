@@ -16,7 +16,7 @@
 <info>
     <process>intell_voice_service</process>
     <systemability>
-        <name>2688</name>
+        <name>312</name>
         <libpath>/system/lib64/libintell_voice_server.z.so</libpath>
         <run-on-create>true</run-on-create>
         <distributed>false</distributed>
