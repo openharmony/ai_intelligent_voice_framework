@@ -1,0 +1,12 @@
+{
+    "process": "intell_voice_service",
+    "systemability": [
+        {
+            "name": 312,
+            "libpath": "libintell_voice_server.z.so",
+            "run-on-create": true,
+            "distributed": false,
+            "dump_level": 1
+        }
+    ]
+}
