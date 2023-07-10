@@ -33,15 +33,14 @@ ohos_shared_library("intellvoice_native") {
     "-DENABLE_DEBUG",
   ]
 
-  deps = [
-    "../../services:intell_voice_proxy",
-  ]
+  deps = [ "../../services:intell_voice_proxy" ]
 
   external_deps = [
     "ability_base:base",
     "ability_base:want",
     "c_utils:utils",
-    "hiviewdfx_hilog_native:libhilog",
+    "drivers_interface_intelligent_voice:intell_voice_engine_idl_headers",
+    "hilog:libhilog",
     "ipc:ipc_core",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",

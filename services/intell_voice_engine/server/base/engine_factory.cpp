@@ -36,7 +36,7 @@ sptr<EngineBase> EngineFactory::CreateEngineInst(IntellVoiceEngineType type)
             break;
         case INTELL_VOICE_UPDATE:
         default:
-            INTELL_VOICE_LOG_INFO("create engine enter, type:%d", type);
+            INTELL_VOICE_LOG_INFO("create engine enter, type:%{public}d", type);
             break;
     }
 

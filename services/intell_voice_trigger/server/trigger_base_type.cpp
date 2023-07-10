@@ -59,7 +59,7 @@ void TriggerModel::Print()
     INTELL_VOICE_LOG_INFO("trigger model uuid:%{public}d", uuid_);
     INTELL_VOICE_LOG_INFO("trigger model vendor uuid:%{public}d", vendorUuid_);
     INTELL_VOICE_LOG_INFO("trigger model version:%{public}d", version_);
-    INTELL_VOICE_LOG_INFO("trigger model data size:%{public}lu", data_.size());
+    INTELL_VOICE_LOG_INFO("trigger model data size:%{public}zu", data_.size());
 }
 }  // namespace IntellVoiceTrigger
 }  // namespace OHOS

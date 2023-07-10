@@ -73,7 +73,7 @@ sptr<IIntellVoiceEngine> IntellVoiceServiceManager::CreateEngine(IntellVoiceEngi
 
 sptr<IIntellVoiceEngine> IntellVoiceServiceManager::CreateEngineInner(IntellVoiceEngineType type)
 {
-    INTELL_VOICE_LOG_INFO("create engine enter, type: %d", type);
+    INTELL_VOICE_LOG_INFO("create engine enter, type: %{public}d", type);
     OHOS::IntellVoiceUtils::MemoryGuard memoryGuard;
     auto it = engines_.find(type);
     if (it != engines_.end() && it->second != nullptr) {
@@ -309,7 +309,7 @@ int32_t IntellVoiceServiceManager::ApplyArbitration(IntellVoiceEngineType type, 
         case ENGINE_EVENT_START:
             return StartArbitration(type);
         default:
-            INTELL_VOICE_LOG_INFO("unknown engine event:%d", event);
+            INTELL_VOICE_LOG_INFO("unknown engine event:%{public}d", event);
             break;
     }
     return ARBITRATION_OK;

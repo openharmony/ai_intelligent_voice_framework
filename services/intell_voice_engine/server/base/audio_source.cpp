@@ -95,6 +95,7 @@ bool AudioSource::Start()
 
 void AudioSource::ReadThread()
 {
+    INTELL_VOICE_LOG_INFO("enter");
     uint32_t readCnt = 0;
     bool isError = true;
     while (isReading_.load()) {

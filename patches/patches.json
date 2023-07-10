@@ -1,0 +1,19 @@
+{
+    "patches": [
+        {
+            "project":"developtools_syscap_codec",
+            "patch_file":"developtools_syscap_codec.patch",
+            "path":"developtools/syscap_codec"
+        },
+        {
+            "project":"productdefine_common",
+            "patch_file":"productdefine_common.patch",
+            "path":"productdefine/common"
+        },
+        {
+            "project":"systemabilitymgr_samgr",
+            "patch_file":"systemabilitymgr_samgr.patch",
+            "path":"foundation/systemabilitymgr/samgr"
+        }
+    ]
+}

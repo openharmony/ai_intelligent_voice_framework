@@ -34,7 +34,7 @@ ohos_shared_library("intell_voice_utils") {
 
   external_deps = [
     "c_utils:utils",
-    "hiviewdfx_hilog_native:libhilog",
+    "hilog:libhilog",
   ]
 
   subsystem_name = "ai"

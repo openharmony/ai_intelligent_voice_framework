@@ -240,7 +240,7 @@ int32_t TriggerHelper::LoadModel(shared_ptr<TriggerModelData> modelData)
     auto ret = module_->LoadModel(modelData->GetModel(), handle);
     modelData->SetModelHandle(handle);
     modelData->SetState(MODEL_LOADED);
-    INTELL_VOICE_LOG_INFO("exit, handle: %d", handle);
+    INTELL_VOICE_LOG_INFO("exit, handle: %{public}d", handle);
     return ret;
 }
 
@@ -265,7 +265,7 @@ int32_t TriggerHelper::UnloadModel(shared_ptr<TriggerModelData> modelData)
 
 shared_ptr<TriggerModelData> TriggerHelper::GetTriggerModelData(int32_t uuid)
 {
-    INTELL_VOICE_LOG_INFO("enter, uuid is :%d", uuid);
+    INTELL_VOICE_LOG_INFO("enter, uuid is :%{public}d", uuid);
     auto it = modelDataMap_.find(uuid);
     if (it != modelDataMap_.end() && it->second != nullptr) {
         return it->second;
@@ -287,7 +287,7 @@ void TriggerHelper::OnRecognition(int32_t modelHandle, const IntellVoiceRecognit
     std::shared_ptr<IIntellVoiceTriggerRecognitionCallback> callback = nullptr;
     for (auto iter : modelDataMap_) {
         if (iter.second == nullptr) {
-            INTELL_VOICE_LOG_ERROR("uuid: %d, model data is nullptr", iter.first);
+            INTELL_VOICE_LOG_ERROR("uuid: %{public}d, model data is nullptr", iter.first);
             continue;
         }
 

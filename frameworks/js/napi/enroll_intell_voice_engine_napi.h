@@ -27,7 +27,7 @@ namespace IntellVoiceNapi {
 using OHOS::IntellVoice::EnrollIntellVoiceEngine;
 using OHOS::IntellVoice::EngineConfig;
 
-extern const std::string ENROLL_ENGINE_NAPI_CLASS_NAME;
+const std::string ENROLL_ENGINE_NAPI_CLASS_NAME = "EnrollIntelligentVoiceEngine";
 
 class EnrollIntellVoiceEngineNapi {
 public:

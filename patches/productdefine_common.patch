@@ -1,0 +1,28 @@
+From be4f9f9cfcc52fdef93660258cdc85eafc354fac Mon Sep 17 00:00:00 2001
+From: lvqiang214 <lvqiang1@huawei.com>
+Date: Tue, 4 Jul 2023 22:48:01 +0800
+Subject: [PATCH] add intelligent voice framework component
+
+Signed-off-by: lvqiang214 <lvqiang1@huawei.com>
+---
+ inherit/rich.json | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/inherit/rich.json b/inherit/rich.json
+index 5be76c6..1ae6aaa 100644
+--- a/inherit/rich.json
++++ b/inherit/rich.json
+@@ -1080,6 +1080,10 @@
+         {
+           "component": "mindspore",
+           "features": []
++        },
++        {
++          "component": "intelligent_voice_framework",
++          "features": []
+         }
+       ]
+     },
+-- 
+2.34.1
+

@@ -17,16 +17,33 @@
         "rom": "675KB",
         "ram": "7680KB",
         "deps": {
-            "components": ["intelligent_voice_framework"],
+            "components": [
+                "ability_base",
+                "ability_runtime",
+                "access_token",
+                "c_utils",
+                "common_event_service",
+                "data_share",
+                "drivers_interface_intelligent_voice",
+                "eventhandler",
+                "hdf_core",
+                "hilog",
+                "ipc",
+                "kv_store",
+                "audio_framework",
+                "napi",
+                "relational_store",
+                "safwk",
+                "samgr"
+            ],
             "third_party": []
-            },
+        },
         "features": [
         ],
         "build": {
             "sub_component": [
                 "//foundation/ai/intelligent_voice_framework/services:intell_voice_server",
                 "//foundation/ai/intelligent_voice_framework/services:intell_voice_proxy",
-                "//foundation/ai/intelligent_voice_framework/services/etc:intell_voice_service.rc",
                 "//foundation/ai/intelligent_voice_framework/frameworks/js:intelligentvoice",
                 "//foundation/ai/intelligent_voice_framework/frameworks/js:intelligentvoice_js",
                 "//foundation/ai/intelligent_voice_framework/frameworks/native:intellvoice_native",

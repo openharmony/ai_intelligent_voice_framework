@@ -33,7 +33,6 @@ using namespace OHOS::IntellVoice;
 namespace OHOS {
 namespace IntellVoiceNapi {
 static const std::string INTELL_VOICE_EVENT_CALLBACK_NAME = "IntellVoiceEvent";
-const std::string WAKEUP_ENGINE_NAPI_CLASS_NAME = "WakeupIntelligentVoiceEngine";
 
 WakeupIntellVoiceEngineNapi::WakeupIntellVoiceEngineNapi()
 {
