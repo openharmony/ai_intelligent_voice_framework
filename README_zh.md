@@ -8,7 +8,7 @@
 
 **图 1**  智能语音组件架构图
 
-![image.png](figures/intelligent-voice-framework.png)
+![image.png](figures/zh-intelligent-voice-framework.png)
 
 智能语音服务框架支持如下功能：
 系统事件监测：开机解锁、亮灭屏等系统事件监测

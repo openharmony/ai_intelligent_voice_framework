@@ -1,4 +1,4 @@
-From 6a0d56c42b6c1203f451e71ebd9941c2144534d0 Mon Sep 17 00:00:00 2001
+From 7ac57c5c7041b4b3482b4d3dddb10daf7e87321e Mon Sep 17 00:00:00 2001
 From: lvqiang214 <lvqiang1@huawei.com>
 Date: Fri, 7 Jul 2023 16:19:34 +0800
 Subject: [PATCH] add intelligent voice core
@@ -9,21 +9,21 @@ Signed-off-by: lvqiang214 <lvqiang1@huawei.com>
  1 file changed, 2 insertions(+)
 
 diff --git a/include/codec_config/syscap_define.h b/include/codec_config/syscap_define.h
-index b22af3a..742d27a 100644
+index 54cc6ad..39d46f2 100755
 --- a/include/codec_config/syscap_define.h
 +++ b/include/codec_config/syscap_define.h
-@@ -298,6 +298,7 @@ typedef enum SystemCapabilityNum {
-     STARTUP_SYSTEMINFO_LITE,
+@@ -299,6 +299,7 @@ typedef enum SystemCapabilityNum {
      CLOUD_ADS,
      MULTIMEDIA_AUDIO_PLAYBACKCAPTURE,
+     MULTIMEDIA_MEDIA_AVSCREENCAPTURE,
 +    AI_INTELLIGENTVOICE_CORE,
      // Add before here
      SYSCAP_BASIC_END = 500,
  } SyscapNum;
-@@ -578,6 +579,7 @@ const static SyscapWithNum g_arraySyscap[] = {
-     {"SystemCapability.FileManagement.File.FileIO.Lite", FILEMANAGEMENT_FILE_FILEIO_LITE},
+@@ -580,6 +581,7 @@ const static SyscapWithNum g_arraySyscap[] = {
      {"SystemCapability.Cloud.Ads", CLOUD_ADS},
      {"SystemCapability.Multimedia.Audio.PlaybackCapture", MULTIMEDIA_AUDIO_PLAYBACKCAPTURE},
+     {"SystemCapability.Multimedia.Media.AVScreenCapture", MULTIMEDIA_MEDIA_AVSCREENCAPTURE},
 +    {"SystemCapability.AI.IntelligentVoice.Core", AI_INTELLIGENTVOICE_CORE},
  };
  
