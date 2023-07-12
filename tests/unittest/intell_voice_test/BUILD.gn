@@ -42,6 +42,7 @@ ohos_unittest("client_unit_test") {
 
   external_deps = [
     "c_utils:utils",
+    "drivers_interface_intelligent_voice:intell_voice_engine_idl_headers",
     "hilog:libhilog",
     "ipc:ipc_core",
     "safwk:system_ability_fwk",
