@@ -85,7 +85,7 @@ ohos_unittest("trigger_manager_test") {
   include_dirs = [
     "../../../services/intell_voice_trigger/server",
     "../../../services/intell_voice_trigger/server/connector_mgr",
-    "/../../../utils",
+    "../../../utils",
   ]
 
   cflags_cc = [
