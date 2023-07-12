@@ -71,6 +71,7 @@ ohos_unittest("trigger_unit_test") {
 
   external_deps = [
     "c_utils:utils",
+    "drivers_interface_intelligent_voice:intell_voice_trigger_idl_headers",
     "hilog:libhilog",
     "relational_store:native_rdb",
   ]
@@ -97,6 +98,7 @@ ohos_unittest("trigger_manager_test") {
 
   external_deps = [
     "c_utils:utils",
+    "drivers_interface_intelligent_voice:intell_voice_trigger_idl_headers",
     "hilog:libhilog",
     "relational_store:native_rdb",
     "safwk:system_ability_fwk",
