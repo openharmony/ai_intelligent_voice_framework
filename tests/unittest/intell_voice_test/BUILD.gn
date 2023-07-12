@@ -42,6 +42,7 @@ ohos_unittest("client_unit_test") {
 
   external_deps = [
     "c_utils:utils",
+    "drivers_interface_intelligent_voice:intell_voice_engine_idl_headers",
     "hilog:libhilog",
     "ipc:ipc_core",
     "safwk:system_ability_fwk",
@@ -70,6 +71,7 @@ ohos_unittest("trigger_unit_test") {
 
   external_deps = [
     "c_utils:utils",
+    "drivers_interface_intelligent_voice:intell_voice_trigger_idl_headers",
     "hilog:libhilog",
     "relational_store:native_rdb",
   ]
@@ -83,7 +85,7 @@ ohos_unittest("trigger_manager_test") {
   include_dirs = [
     "../../../services/intell_voice_trigger/server",
     "../../../services/intell_voice_trigger/server/connector_mgr",
-    "/../../../utils",
+    "../../../utils",
   ]
 
   cflags_cc = [
@@ -96,6 +98,7 @@ ohos_unittest("trigger_manager_test") {
 
   external_deps = [
     "c_utils:utils",
+    "drivers_interface_intelligent_voice:intell_voice_trigger_idl_headers",
     "hilog:libhilog",
     "relational_store:native_rdb",
     "safwk:system_ability_fwk",
