@@ -44,6 +44,7 @@
             "sub_component": [
                 "//foundation/ai/intelligent_voice_framework/services:intell_voice_server",
                 "//foundation/ai/intelligent_voice_framework/services:intell_voice_proxy",
+                "//foundation/ai/intelligent_voice_framework/services/etc:intell_voice_service.rc",
                 "//foundation/ai/intelligent_voice_framework/frameworks/js:intelligentvoice",
                 "//foundation/ai/intelligent_voice_framework/frameworks/js:intelligentvoice_js",
                 "//foundation/ai/intelligent_voice_framework/frameworks/native:intellvoice_native",

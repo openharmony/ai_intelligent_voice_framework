@@ -131,7 +131,7 @@ bool AudioSource::Read()
     }
 
     if (bytesRead != minBufferSize_) {
-        INTELL_VOICE_LOG_ERROR("failed to read data,  bytesRead is %zu", bytesRead);
+        INTELL_VOICE_LOG_ERROR("failed to read data,  bytesRead is %{public}zu", bytesRead);
         return false;
     }
 

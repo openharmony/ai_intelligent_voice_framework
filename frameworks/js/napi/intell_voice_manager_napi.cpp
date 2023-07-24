@@ -36,6 +36,7 @@ napi_ref IntellVoiceManagerNapi::sensibilityTypeRef_ = nullptr;
 napi_ref IntellVoiceManagerNapi::enrollEventTypeRef_ = nullptr;
 napi_ref IntellVoiceManagerNapi::wakeupEventTypeRef_ = nullptr;
 napi_ref IntellVoiceManagerNapi::errorCodeRef_ = nullptr;
+std::mutex IntellVoiceManagerNapi::mutex_;
 
 static const std::map<std::string, OHOS::IntellVoice::ServiceChangeType> SERVICE_CHANGE_TYPE_MAP = {
     {"SERVICE_UNAVAILABLE", SERVICE_UNAVAILABLE},
@@ -114,13 +115,18 @@ napi_value IntellVoiceManagerNapi::Constructor(napi_env env, napi_callback_info 
 
     unique_ptr<IntellVoiceManagerNapi> managerNapi = make_unique<IntellVoiceManagerNapi>();
     if (managerNapi == nullptr) {
-        INTELL_VOICE_LOG_ERROR("no memory.");
+        INTELL_VOICE_LOG_ERROR("no memory");
         return undefinedResult;
     }
     managerNapi->env_ = env;
     managerNapi->manager_ = IntellVoiceManager::GetInstance();
     if (managerNapi->manager_ == nullptr) {
-        INTELL_VOICE_LOG_ERROR("create native manager faild.");
+        INTELL_VOICE_LOG_ERROR("create native manager faild");
+        return undefinedResult;
+    }
+
+    if (!managerNapi->manager_->Init()) {
+        INTELL_VOICE_LOG_ERROR("init faild");
         return undefinedResult;
     }
 
@@ -221,6 +227,7 @@ napi_value IntellVoiceManagerNapi::Off(napi_env env, napi_callback_info info)
 
 napi_value IntellVoiceManagerNapi::GetIntelligentVoiceManager(napi_env env, napi_callback_info info)
 {
+    std::unique_lock<std::mutex> lock(mutex_);
     INTELL_VOICE_LOG_INFO("enter");
 
     napi_status status;
@@ -256,6 +263,8 @@ napi_value IntellVoiceManagerNapi::GetIntelligentVoiceManagerWrapper(napi_env en
 
 napi_value IntellVoiceManagerNapi::CreateEnrollIntelligentVoiceEngine(napi_env env, napi_callback_info info)
 {
+    std::unique_lock<std::mutex> lock(mutex_);
+
     INTELL_VOICE_LOG_INFO("enter");
     size_t cbIndex = 1;
     class CreateContext : public AsyncContext {
@@ -293,6 +302,8 @@ napi_value IntellVoiceManagerNapi::CreateEnrollIntelligentVoiceEngine(napi_env e
 
 napi_value IntellVoiceManagerNapi::CreateWakeupIntelligentVoiceEngine(napi_env env, napi_callback_info info)
 {
+    std::unique_lock<std::mutex> lock(mutex_);
+
     INTELL_VOICE_LOG_INFO("enter");
     size_t cbIndex = 1;
     class CreateContext : public AsyncContext {
@@ -343,7 +354,7 @@ template<typename T> napi_value IntellVoiceManagerNapi::CreatePropertyBase(napi_
         return result;
     }
 
-    for (auto &iter : propertyMap) {
+    for (const auto &iter : propertyMap) {
         propName = iter.first;
         enumValue = iter.second;
 

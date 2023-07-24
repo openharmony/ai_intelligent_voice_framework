@@ -25,7 +25,7 @@ using OHOS::HDI::IntelligentVoice::Engine::V1_0::IntellVoiceEngineCallBackEvent;
 
 class AdapterCallbackService final: public IIntellVoiceEngineCallback {
 public:
-    AdapterCallbackService(std::shared_ptr<IntellVoiceAdapterListener> listener) : listener_(listener) {}
+    explicit AdapterCallbackService(std::shared_ptr<IntellVoiceAdapterListener> listener) : listener_(listener) {}
     virtual ~AdapterCallbackService() = default;
 
     int32_t OnIntellVoiceHdiEvent(const IntellVoiceEngineCallBackEvent& event) override;

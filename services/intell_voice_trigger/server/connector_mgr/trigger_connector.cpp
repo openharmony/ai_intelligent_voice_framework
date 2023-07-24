@@ -26,6 +26,7 @@
 #define LOG_TAG "TriggerConnector"
 
 using namespace std;
+using namespace OHOS::HDI::ServiceManager::V1_0;
 using namespace OHOS::IntellVoiceUtils;
 using namespace OHOS::HDI::IntelligentVoice::Trigger::V1_0;
 
@@ -82,16 +83,24 @@ IntellVoiceTriggerProperties TriggerConnector::GetProperties()
     return properties;
 }
 
-void TriggerConnector::OnReceive(const ServiceStatus &status)
+void TriggerConnector::OnReceive(const ServiceStatus &serviceStatus)
 {
     OHOS::IntellVoiceUtils::MemoryGuard memoryGuard;
-    INTELL_VOICE_LOG_INFO("enter");
-    if (status.serviceName != INTELL_VOICE_TRIGGER_SERVICE) {
+    INTELL_VOICE_LOG_INFO("enter, service name:%{public}s, status:%{public}d", serviceStatus.serviceName.c_str(),
+        serviceStatus.status);
+    if (serviceStatus.serviceName != INTELL_VOICE_TRIGGER_SERVICE) {
         return;
     }
+
+    if (serviceStatus.status != SERVIE_STATUS_START) {
+        INTELL_VOICE_LOG_INFO("status: %{public}d is not start", serviceStatus.status);
+        return;
+    }
+
     if (adapter_ != nullptr) {
         return;
     }
+
     auto mgr = IIntellVoiceTriggerManager::Get();
     if (mgr != nullptr) {
         mgr->LoadAdapter(desc_, adapter_);
@@ -194,6 +203,7 @@ void TriggerConnector::TriggerSession::ProcessRecognitionHdiEvent(const Message 
         auto it = loadedModels_.find(modelHandle);
         if ((it != loadedModels_.end()) && (it->second != nullptr)) {
             INTELL_VOICE_LOG_INFO("receive recognition event");
+            it->second->SetState(Model::ModelState::LOADED);
         }
     }
     callback_->OnRecognition(modelHandle, *(event.get()));

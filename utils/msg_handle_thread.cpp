@@ -46,7 +46,7 @@ void MsgHandleThread::SetCallbackThread(MsgHandleThread *tmpCallbackThread)
 // the default realization is for debug, subclass should override this func
 bool MsgHandleThread::HandleMsg(Message &msg)
 {
-    INTELL_VOICE_LOG_INFO("run thread %u process msg %u", Gettid(), msg.mWhat);
+    INTELL_VOICE_LOG_INFO("run thread %{public}u process msg %{public}u", Gettid(), msg.mWhat);
 
     SendbackMsg(msg);
 
@@ -124,7 +124,7 @@ void MsgHandleThread::Run()
     }
 }
 
-string MsgHandleThread::ToString() const
+std::string MsgHandleThread::ToString() const
 {
     return "";
 }

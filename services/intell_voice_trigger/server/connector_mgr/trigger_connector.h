@@ -47,7 +47,7 @@ public:
     std::shared_ptr<IIntellVoiceTriggerConnectorModule> GetModule(
         std::shared_ptr<IIntellVoiceTriggerConnectorCallback> callback);
     IntellVoiceTriggerProperties GetProperties();
-    void OnReceive(const ServiceStatus &status) override;
+    void OnReceive(const ServiceStatus &serviceStatus) override;
 
 private:
     class TriggerSession : public IIntellVoiceTriggerConnectorModule, public OHOS::IntellVoiceUtils::MsgHandleThread {

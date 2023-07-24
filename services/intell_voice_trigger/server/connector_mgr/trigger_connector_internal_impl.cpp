@@ -31,7 +31,7 @@ TriggerConnectorInternalImpl::TriggerConnectorInternalImpl()
     IntellVoiceTriggerAdapterDsecriptor descriptor;
     descriptor.adapterName = "primary";
 
-    sptr<IServiceManager> servmgr_ = IServiceManager::Get();
+    servmgr_ = IServiceManager::Get();
     if (servmgr_ != nullptr) {
         auto connector = sptr<TriggerConnector>(new (std::nothrow) TriggerConnector(descriptor));
         if (connector != nullptr) {
@@ -48,8 +48,10 @@ TriggerConnectorInternalImpl::TriggerConnectorInternalImpl()
 TriggerConnectorInternalImpl::~TriggerConnectorInternalImpl()
 {
     INTELL_VOICE_LOG_DEBUG("TriggerConnectorInternalImpl destructor");
-    for (auto it = connectors_.begin(); it != connectors_.end(); ++it) {
-        servmgr_->UnregisterServiceStatusListener(it->second);
+    if (servmgr_ != nullptr) {
+        for (auto it = connectors_.begin(); it != connectors_.end(); ++it) {
+            servmgr_->UnregisterServiceStatusListener(it->second);
+        }
     }
 }
 

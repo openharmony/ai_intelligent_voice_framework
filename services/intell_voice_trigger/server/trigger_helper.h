@@ -38,9 +38,9 @@ public:
     void SetModel(std::shared_ptr<GenericTriggerModel> model);
     std::shared_ptr<GenericTriggerModel> GetModel();
     void SetState(ModelState state);
-    ModelState GetState();
+    ModelState GetState() const;
     void SetModelHandle(int32_t handle);
-    int32_t GetModelHandle();
+    int32_t GetModelHandle() const;
 
     bool SameModel(std::shared_ptr<GenericTriggerModel> model);
     void Clear();
@@ -65,7 +65,7 @@ public:
     int32_t StartGenericRecognition(int32_t uuid, std::shared_ptr<GenericTriggerModel> model,
         std::shared_ptr<IIntellVoiceTriggerRecognitionCallback> callback);
     int32_t StopGenericRecognition(int32_t uuid, std::shared_ptr<IIntellVoiceTriggerRecognitionCallback> callback);
-
+    void UnloadGenericTriggerModel(int32_t uuid);
     std::shared_ptr<TriggerModelData> GetTriggerModelData(int32_t uuid);
 
 private:

@@ -71,6 +71,7 @@ void EnrollEngine::OnEnrollEvent(int32_t msgId, int32_t result)
     } else if (msgId == INTELL_VOICE_ENGINE_MSG_COMMIT_ENROLL_COMPLETE) {
         std::lock_guard<std::mutex> lock(mutex_);
         enrollResult_ = result;
+        IntellVoiceServiceManager::SetEnrollResult(result == 0 ? true : false);
     } else {
     }
 }
@@ -151,6 +152,7 @@ int32_t EnrollEngine::Attach(const IntellVoiceEngineInfo &info)
 
 int32_t EnrollEngine::Detach(void)
 {
+    INTELL_VOICE_LOG_ERROR("EnrollEngine::Detach");
     std::lock_guard<std::mutex> lock(mutex_);
     if (adapter_ == nullptr) {
         INTELL_VOICE_LOG_ERROR("adapter is nullptr");
@@ -160,6 +162,7 @@ int32_t EnrollEngine::Detach(void)
     if (enrollResult_ == 0) {
         ProcDspModel();
     }
+
     return adapter_->Detach();
 }
 
@@ -279,6 +282,7 @@ void EnrollEngine::WriteBufferFromAshmem(uint8_t *&buffer, uint32_t size, sptr<O
 
 void EnrollEngine::ProcDspModel()
 {
+    INTELL_VOICE_LOG_ERROR("enter");
     uint8_t *buffer = nullptr;
     uint32_t size = 0;
     sptr<Ashmem> ashmem;

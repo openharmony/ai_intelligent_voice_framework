@@ -29,6 +29,7 @@ public:
     ~TriggerDetector();
     bool StartRecognition();
     bool StopRecognition();
+    void UnloadTriggerModel();
 
 private:
 

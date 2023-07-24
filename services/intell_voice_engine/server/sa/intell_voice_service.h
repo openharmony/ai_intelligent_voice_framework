@@ -45,7 +45,7 @@ public:
     };
 
 protected:
-    void OnStart() override;
+    void OnStart(const SystemAbilityOnDemandReason& startReason) override;
     void OnStop() override;
     void OnAddSystemAbility(int32_t systemAbilityId, const std::string& deviceId) override;
     void OnRemoveSystemAbility(int32_t systemAbilityId, const std::string& deviceId) override;
@@ -56,6 +56,7 @@ private:
 
 private:
     std::shared_ptr<SystemEventObserver> systemEventObserver_ = nullptr;
+    OHOS::OnDemandReasonId reasonId_;
 };
 }
 }

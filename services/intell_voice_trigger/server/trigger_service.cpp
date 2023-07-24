@@ -111,5 +111,15 @@ int32_t TriggerService::StopRecognition(int32_t uuid, std::shared_ptr<IIntellVoi
     }
     return triggerHelper_->StopGenericRecognition(uuid, callback);
 }
+
+void TriggerService::UnloadTriggerModel(int32_t uuid)
+{
+    if (triggerHelper_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("trigger helper is nullptr");
+        return;
+    }
+
+    triggerHelper_->UnloadGenericTriggerModel(uuid);
+}
 }  // namespace IntellVoiceTrigger
 }  // namespace OHOS

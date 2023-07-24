@@ -35,27 +35,27 @@ public:
     bool SetData(std::vector<uint8_t> data);
     void Print();
 
-    int32_t GetUuid()
+    int32_t GetUuid() const
     {
         return uuid_;
     }
 
-    int32_t GetType()
+    int32_t GetType() const
     {
         return type_;
     }
 
-    int32_t GetVendorUuid()
+    int32_t GetVendorUuid() const
     {
         return vendorUuid_;
     }
 
-    int32_t GetVersion()
+    int32_t GetVersion() const
     {
         return version_;
     }
 
-    std::vector<uint8_t> GetData()
+    std::vector<uint8_t> GetData() const
     {
         return data_;
     }

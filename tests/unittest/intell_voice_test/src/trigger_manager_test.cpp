@@ -40,7 +40,7 @@ public:
     void SetUp();
     void TearDown();
     void TriggerManagerTestCallBack();
-    void ReadFile(const std::string path);
+    void ReadFile(const std::string &path);
     std::vector<uint8_t> modelData;
     bool testResult = false;
 };
@@ -69,7 +69,7 @@ void TriggerManagerTest::TriggerManagerTestCallBack(void)
     testResult = true;
 }
 
-void TriggerManagerTest::ReadFile(const std::string path)
+void TriggerManagerTest::ReadFile(const std::string &path)
 {
     INTELL_VOICE_LOG_INFO("path: %{public}s", path.c_str());
     ifstream infile;

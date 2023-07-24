@@ -17,6 +17,8 @@
 #define INTELL_VOICE_MANAGER_NAPI_H
 
 #include <functional>
+#include <mutex>
+
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
 
@@ -56,6 +58,7 @@ private:
     static napi_ref enrollEventTypeRef_;
     static napi_ref wakeupEventTypeRef_;
     static napi_ref errorCodeRef_;
+    static std::mutex mutex_;
 };
 }  // namespace IntellVoiceNapi
 }  // namespace OHOS

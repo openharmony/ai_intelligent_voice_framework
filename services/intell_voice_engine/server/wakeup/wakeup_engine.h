@@ -22,7 +22,7 @@
 #include "v1_0/iintell_voice_engine_callback.h"
 
 #include "audio_info.h"
-#include "file_source.h"
+#include "audio_source.h"
 #include "intell_voice_generic_factory.h"
 
 namespace OHOS {
@@ -45,16 +45,17 @@ private:
 
     void OnWakeupRecognition();
     bool SetCallback();
-    bool StartFileSource();
+    bool StartAudioSource();
     void StartAbility();
     bool SetParameterInner(const std::string &keyValueList);
+    void StopAudioSource();
 
 private:
     bool isPcmFromExternal_ = false;
     std::shared_ptr<WakeupAdapterListener> adapterListener_ = nullptr;
     sptr<OHOS::HDI::IntelligentVoice::Engine::V1_0::IIntellVoiceEngineCallback> callback_ = nullptr;
     OHOS::AudioStandard::AudioCapturerOptions capturerOptions_;
-    std::unique_ptr<FileSource> fileSource_ = nullptr;
+    std::unique_ptr<AudioSource> audioSource_ = nullptr;
     friend class IntellVoiceUtils::SptrFactory<WakeupEngine>;
 };
 }

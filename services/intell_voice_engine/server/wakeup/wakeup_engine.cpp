@@ -27,10 +27,11 @@
 #include "ability_manager_client.h"
 #include "memory_guard.h"
 
+#define LOG_TAG "WakeupEngine"
+
 using namespace OHOS::HDI::IntelligentVoice::Engine::V1_0;
 using namespace OHOS::IntellVoiceUtils;
 using namespace OHOS::AudioStandard;
-#define LOG_TAG "WakeupEngine"
 
 namespace OHOS {
 namespace IntellVoiceEngine {
@@ -45,7 +46,7 @@ WakeupEngine::WakeupEngine()
     capturerOptions_.streamInfo.channels = AudioChannel::MONO;
     capturerOptions_.streamInfo.samplingRate = AudioSamplingRate::SAMPLE_RATE_16000;
     capturerOptions_.streamInfo.format = AudioSampleFormat::SAMPLE_S16LE;
-    capturerOptions_.capturerInfo.sourceType = SourceType::SOURCE_TYPE_MIC;
+    capturerOptions_.capturerInfo.sourceType = SourceType::SOURCE_TYPE_WAKEUP;
     capturerOptions_.capturerInfo.capturerFlags = 0;
 }
 
@@ -62,7 +63,7 @@ WakeupEngine::~WakeupEngine()
 void WakeupEngine::OnDetected()
 {
     INTELL_VOICE_LOG_INFO("on detected");
-    StartAbility();
+    std::thread(&WakeupEngine::StartAbility, this).detach();
     SetParameter("VprTrdType=0;WakeupScene=0");
     Start(true);
 }
@@ -77,26 +78,14 @@ void WakeupEngine::OnWakeupEvent(int32_t msgId, int32_t result)
 void WakeupEngine::OnWakeupRecognition()
 {
     INTELL_VOICE_LOG_INFO("on wakeup recognition");
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-
-        if (fileSource_ != nullptr) {
-            fileSource_->Stop();
-            fileSource_ = nullptr;
-        }
-    }
-
-    const auto &manager = IntellVoiceServiceManager::GetInstance();
-    if (manager != nullptr) {
-        manager->StartDetection();
-    }
-
     Stop();
+    StopAudioSource();
 }
 
 bool WakeupEngine::SetCallback()
 {
     std::lock_guard<std::mutex> lock(mutex_);
+    INTELL_VOICE_LOG_INFO("enter");
     if (adapter_ == nullptr) {
         INTELL_VOICE_LOG_ERROR("adapter is nullptr");
         return false;
@@ -232,7 +221,7 @@ int32_t WakeupEngine::Start(bool isLast)
         return 0;
     }
 
-    if (!StartFileSource()) {
+    if (!StartAudioSource()) {
         INTELL_VOICE_LOG_ERROR("start file source failed");
         adapter_->Stop();
         return -1;
@@ -298,9 +287,9 @@ bool WakeupEngine::SetParameterInner(const std::string &keyValueList)
     return false;
 }
 
-bool WakeupEngine::StartFileSource()
+bool WakeupEngine::StartAudioSource()
 {
-    auto listener = std::make_unique<FileSourceListener>(
+    auto listener = std::make_unique<AudioSourceListener>(
         [&](uint8_t *buffer, uint32_t size) {
             if (adapter_ != nullptr) {
                 std::vector<uint8_t> audioBuff(&buffer[0], &buffer[size]);
@@ -309,28 +298,49 @@ bool WakeupEngine::StartFileSource()
         },
         [&](bool isError) {
             INTELL_VOICE_LOG_INFO("end of pcm, isError:%{public}d", isError);
-            if (adapter_ != nullptr) {
+            if ((adapter_ != nullptr) && (!isError)) {
                 adapter_->SetParameter("end_of_pcm=true");
             }
+            std::thread(&WakeupEngine::StopAudioSource, this).detach();
         });
     if (listener == nullptr) {
         INTELL_VOICE_LOG_ERROR("create listener failed");
         return false;
     }
 
-    fileSource_ = std::make_unique<FileSource>(MIN_BUFFER_SIZE, INTERVAL, RECOGNITION_FILE, std::move(listener));
-    if (fileSource_ == nullptr) {
-        INTELL_VOICE_LOG_ERROR("create file source failed");
+    audioSource_ = std::make_unique<AudioSource>(MIN_BUFFER_SIZE, INTERVAL, std::move(listener), capturerOptions_);
+    if (audioSource_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("create audio source failed");
         return false;
     }
 
-    if (!fileSource_->Start()) {
+    if (!audioSource_->Start()) {
         INTELL_VOICE_LOG_ERROR("start capturer failed");
-        fileSource_ = nullptr;
-        return false;
+        audioSource_ = nullptr;
     }
 
     return true;
+}
+
+void WakeupEngine::StopAudioSource()
+{
+    INTELL_VOICE_LOG_INFO("enter");
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+
+        if (audioSource_ == nullptr) {
+            INTELL_VOICE_LOG_INFO("already stop audio source");
+            return;
+        }
+
+        audioSource_->Stop();
+        audioSource_ = nullptr;
+    }
+
+    const auto &manager = IntellVoiceServiceManager::GetInstance();
+    if (manager != nullptr) {
+        manager->StartDetection();
+    }
 }
 }  // namespace IntellVoice
 }  // namespace OHOS
