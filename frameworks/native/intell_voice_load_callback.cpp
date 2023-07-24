@@ -26,7 +26,7 @@ IntellVoiceLoadCallback::IntellVoiceLoadCallback(OnLoadSystemAbilitySuccessCb lo
 {
 }
 
-void IntellVoiceLoadCallback::OnLoadSystemAbilitySuccess(int32_t systemAbilityId, 
+void IntellVoiceLoadCallback::OnLoadSystemAbilitySuccess(int32_t systemAbilityId,
     const sptr<IRemoteObject> &remoteObject)
 {
     INTELL_VOICE_LOG_INFO("Load system ability success!");
