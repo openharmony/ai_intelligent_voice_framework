@@ -56,5 +56,16 @@ bool TriggerDetector::StopRecognition()
     service_->StopRecognition(uuid_, callback_);
     return true;
 }
+
+void TriggerDetector::UnloadTriggerModel()
+{
+    OHOS::IntellVoiceUtils::MemoryGuard memoryGuard;
+    if (service_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("service_ is nullptr");
+        return;
+    }
+
+    service_->UnloadTriggerModel(uuid_);
+}
 }
 }

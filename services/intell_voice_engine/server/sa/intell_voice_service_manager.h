@@ -16,6 +16,7 @@
 #define SERVICE_MANAGER_H
 #include <mutex>
 #include <map>
+#include <atomic>
 #include "engine_base.h"
 #include "trigger_detector.h"
 #include "switch_observer.h"
@@ -42,17 +43,28 @@ public:
     {
         return g_enrollModelUuid;
     }
+    static void SetEnrollResult(bool result)
+    {
+        enrollResult_.store(result);
+    }
+    static bool GetEnrollResult()
+    {
+        return enrollResult_.load();
+    }
     sptr<IIntellVoiceEngine> CreateEngine(IntellVoiceEngineType type);
     int32_t ReleaseEngine(IntellVoiceEngineType type);
-    const std::unique_ptr<HistoryInfoMgr> &GetHistoryInfoMgr()
+    const std::unique_ptr<HistoryInfoMgr> &GetHistoryInfoMgr() const
     {
         return historyInfoMgr_;
     }
-    void OnUserUnlock();
+
+    void OnServiceStart();
     void CreateSwitchProvider();
     void ReleaseSwitchProvider();
     void StartDetection();
     void StopDetection();
+    bool QuerySwitchStatus();
+    void UnloadIntellVoiceService();
 
     int32_t ApplyArbitration(IntellVoiceEngineType type, EngineEvent event);
 
@@ -73,6 +85,7 @@ private:
 private:
     static const int32_t g_enrollModelUuid;
     static std::unique_ptr<IntellVoiceServiceManager> g_intellVoiceServiceMgr;
+    static std::atomic<bool> enrollResult_;
     std::mutex engineMutex_;
     std::mutex detectorMutex_;
     std::map<IntellVoiceEngineType, sptr<EngineBase>> engines_;

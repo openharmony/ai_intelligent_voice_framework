@@ -87,7 +87,7 @@ void EngineEventCallback::ReadFile(const std::string path)
         INTELL_VOICE_LOG_INFO("pcmData_ is null");
         return;
     }
-    INTELL_VOICE_LOG_INFO("read pcm, pcmSize:%u", pcmSize_);
+    INTELL_VOICE_LOG_INFO("read pcm, pcmSize:%{public}u", pcmSize_);
     infile.seekg(0, infile.beg);
     infile.read(reinterpret_cast<char *>(pcmData_.get()), pcmSize_);
     infile.close();

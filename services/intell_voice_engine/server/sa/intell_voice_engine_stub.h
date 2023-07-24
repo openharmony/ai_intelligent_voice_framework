@@ -28,7 +28,7 @@ private:
     IntellVoiceEngineInfo info;
     std::string str;
     int size = 0;
-    const uint8_t *buffer;
+    const uint8_t *buffer = nullptr;
 };
 }
 }

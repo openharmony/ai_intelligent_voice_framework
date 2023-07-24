@@ -16,6 +16,8 @@
 #ifndef INTELL_VOICE_MANAGER_H
 #define INTELL_VOICE_MANAGER_H
 
+#include <condition_variable>
+
 #include "i_intell_voice_engine.h"
 
 namespace OHOS {
@@ -29,12 +31,16 @@ public:
 
     int32_t CreateIntellVoiceEngine(IntellVoiceEngineType type, sptr<IIntellVoiceEngine> &inst);
     int32_t ReleaseIntellVoiceEngine(IntellVoiceEngineType type);
+    void LoadSystemAbilitySuccess(const sptr<IRemoteObject> &remoteObject);
+    void LoadSystemAbilityFail();
+    bool Init();
 
 private:
     IntellVoiceManager();
     ~IntellVoiceManager();
 
-    void Init();
+    static std::mutex mutex_;
+    static std::condition_variable proxyConVar_;
 };
 }  // namespace IntellVoice
 }  // namespace OHOS

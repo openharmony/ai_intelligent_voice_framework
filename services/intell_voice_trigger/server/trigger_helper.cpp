@@ -74,7 +74,7 @@ void TriggerModelData::SetState(ModelState state)
     state_ = state;
 }
 
-ModelState TriggerModelData::GetState()
+ModelState TriggerModelData::GetState() const
 {
     return state_;
 }
@@ -84,7 +84,7 @@ void TriggerModelData::SetModelHandle(int32_t handle)
     modelHandle_ = handle;
 }
 
-int32_t TriggerModelData::GetModelHandle()
+int32_t TriggerModelData::GetModelHandle() const
 {
     return modelHandle_;
 }
@@ -149,6 +149,24 @@ int32_t TriggerHelper::StopGenericRecognition(
     }
     modelData->SetCallback(callback);
     return StopRecognition(modelData);
+}
+
+void TriggerHelper::UnloadGenericTriggerModel(int32_t uuid)
+{
+    INTELL_VOICE_LOG_INFO("enter");
+    lock_guard<std::mutex> lock(mutex_);
+    auto modelData = GetTriggerModelData(uuid);
+    if (modelData == nullptr) {
+        INTELL_VOICE_LOG_WARN("no trigger model data");
+        return;
+    }
+
+    if (modelData->GetState() == MODEL_NOTLOADED) {
+        INTELL_VOICE_LOG_INFO("model is not loaded");
+        return;
+    }
+    StopRecognition(modelData);
+    UnloadModel(modelData);
 }
 
 void TriggerHelper::GetModule()
@@ -292,6 +310,7 @@ void TriggerHelper::OnRecognition(int32_t modelHandle, const IntellVoiceRecognit
         }
 
         if (iter.second->GetModelHandle() == modelHandle) {
+            iter.second->SetState(MODEL_LOADED);
             callback = iter.second->GetCallback();
             break;
         }

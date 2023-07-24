@@ -36,7 +36,6 @@ WakeupIntellVoiceEngine::WakeupIntellVoiceEngine(const WakeupIntelligentVoiceEng
 WakeupIntellVoiceEngine::~WakeupIntellVoiceEngine()
 {
     INTELL_VOICE_LOG_INFO("enter");
-    IntellVoiceManager::GetInstance()->ReleaseIntellVoiceEngine(INTELL_VOICE_WAKEUP);
 }
 
 int32_t WakeupIntellVoiceEngine::SetSensibility(const int32_t &sensibility)
@@ -59,7 +58,7 @@ int32_t WakeupIntellVoiceEngine::SetWakeupHapInfo(const WakeupHapInfo &info)
         return -1;
     }
     ret = engine_->SetParameter("wakeup_bundle_name=" + info.bundleName);
-    ret = engine_->SetParameter("wakeup_ability_name=" + info.abilityName);
+    ret += engine_->SetParameter("wakeup_ability_name=" + info.abilityName);
     return ret;
 }
 
@@ -77,12 +76,7 @@ int32_t WakeupIntellVoiceEngine::SetParameter(const string &key, const string &v
 int32_t WakeupIntellVoiceEngine::Release()
 {
     INTELL_VOICE_LOG_INFO("enter");
-    if (engine_ == nullptr) {
-        INTELL_VOICE_LOG_ERROR("engine is null");
-        return -1;
-    }
-
-    return engine_->Detach();
+    return 0;
 }
 
 int32_t WakeupIntellVoiceEngine::SetCallback(shared_ptr<IIntellVoiceEngineEventCallback> callback)

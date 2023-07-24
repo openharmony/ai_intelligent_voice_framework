@@ -34,17 +34,17 @@ public:
     int OnUpgrade(RdbStore &rdbStore, int oldVersion, int newVersion) override;
 };
 
-int TriggerModelOpenCallback::OnCreate(RdbStore &store)
+int TriggerModelOpenCallback::OnCreate(RdbStore &rdbStore)
 {
     INTELL_VOICE_LOG_DEBUG("OnCreate");
     std::string CREATE_TABLE_Trigger =
         std::string("CREATE TABLE IF NOT EXISTS trigger ") +
         std::string("(model_uuid INTEGER PRIMARY KEY, vendor_uuid INTEGER, data BLOB, model_version INTEGER)");
 
-    return store.ExecuteSql(CREATE_TABLE_Trigger);
+    return rdbStore.ExecuteSql(CREATE_TABLE_Trigger);
 }
 
-int TriggerModelOpenCallback::OnUpgrade(RdbStore &store, int oldVersion, int newVersion)
+int TriggerModelOpenCallback::OnUpgrade(RdbStore &rdbStore, int oldVersion, int newVersion)
 {
     return E_OK;
 }
@@ -94,7 +94,7 @@ bool TriggerDbHelper::UpdateGenericTriggerModel(std::shared_ptr<GenericTriggerMo
     return true;
 }
 
-bool TriggerDbHelper::GetVendorUuid(std::shared_ptr<AbsSharedResultSet> &set, int32_t &vendorUuid)
+bool TriggerDbHelper::GetVendorUuid(std::shared_ptr<AbsSharedResultSet> &set, int32_t &vendorUuid) const
 {
     int columnIndex;
     int ret = set->GetColumnIndex("vendor_uuid", columnIndex);
@@ -111,7 +111,7 @@ bool TriggerDbHelper::GetVendorUuid(std::shared_ptr<AbsSharedResultSet> &set, in
     return true;
 }
 
-bool TriggerDbHelper::GetBlob(std::shared_ptr<AbsSharedResultSet> &set, std::vector<uint8_t> &data)
+bool TriggerDbHelper::GetBlob(std::shared_ptr<AbsSharedResultSet> &set, std::vector<uint8_t> &data) const
 {
     int columnIndex;
     int ret = set->GetColumnIndex("data", columnIndex);
@@ -128,7 +128,7 @@ bool TriggerDbHelper::GetBlob(std::shared_ptr<AbsSharedResultSet> &set, std::vec
     return true;
 }
 
-bool TriggerDbHelper::GetModelVersion(std::shared_ptr<AbsSharedResultSet> &set, int32_t &version)
+bool TriggerDbHelper::GetModelVersion(std::shared_ptr<AbsSharedResultSet> &set, int32_t &version) const
 {
     int columnIndex;
     int ret = set->GetColumnIndex("model_version", columnIndex);

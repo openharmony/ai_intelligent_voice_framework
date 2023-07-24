@@ -34,8 +34,8 @@ public:
     explicit Message(uint32_t what);
     Message(uint32_t what, int32_t arg1);
     Message(uint32_t what, int32_t arg1, int32_t arg2, float arg3);
-    Message(uint32_t what, int32_t arg1, int32_t arg2, std::string obj);
-    Message(uint32_t what, int32_t arg1, int32_t arg2, float arg3, std::string obj);
+    Message(uint32_t what, int32_t arg1, int32_t arg2, const std::string &obj);
+    Message(uint32_t what, int32_t arg1, int32_t arg2, float arg3, const std::string &obj);
     Message(uint32_t what, std::shared_ptr<void> obj2);
     Message(uint32_t what, std::shared_ptr<void> obj2, std::shared_ptr<void> obj3);
     Message(uint32_t what, void* voidPtr);

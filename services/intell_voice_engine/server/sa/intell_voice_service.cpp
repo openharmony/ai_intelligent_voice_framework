@@ -78,7 +78,7 @@ int32_t IntellVoiceService::ReleaseIntellVoiceEngine(IntellVoiceEngineType type)
     return mgr->ReleaseEngine(type);
 }
 
-void IntellVoiceService::OnStart(void)
+void IntellVoiceService::OnStart(const SystemAbilityOnDemandReason& startReason)
 {
     bool ret = Publish(this);
     if (!ret) {
@@ -90,10 +90,13 @@ void IntellVoiceService::OnStart(void)
     AddSystemAbilityListener(DISTRIBUTED_KV_DATA_SERVICE_ABILITY_ID);
     RegisterPermissionCallback(OHOS_PERMISSION_INTELL_VOICE);
     INTELL_VOICE_LOG_INFO("publish ok");
+
+    reasonId_ = startReason.GetId();
 }
 
 void IntellVoiceService::OnStop(void)
 {
+    INTELL_VOICE_LOG_INFO("enter");
     const auto &manager = IntellVoiceServiceManager::GetInstance();
     if (manager != nullptr) {
         manager->ReleaseSwitchProvider();
@@ -113,8 +116,21 @@ void IntellVoiceService::OnAddSystemAbility(int32_t systemAbilityId, const std::
         }
     } else if (systemAbilityId == DISTRIBUTED_KV_DATA_SERVICE_ABILITY_ID) {
         const auto &manager = IntellVoiceServiceManager::GetInstance();
-        if (manager != nullptr) {
-            manager->CreateSwitchProvider();
+        if (manager == nullptr) {
+            INTELL_VOICE_LOG_INFO("manager is nullptr");
+            return;
+        }
+
+        manager->CreateSwitchProvider();
+        if (reasonId_ == OHOS::OnDemandReasonId::COMMON_EVENT) {
+            INTELL_VOICE_LOG_INFO("power on start");
+            if (!manager->QuerySwitchStatus()) {
+                manager->UnloadIntellVoiceService();
+            } else {
+                manager->OnServiceStart();
+            }
+        } else if (reasonId_ == OHOS::OnDemandReasonId::INTERFACE_CALL) {
+            manager->OnServiceStart();
         }
     } else {
         INTELL_VOICE_LOG_WARN("unhandled sysabilityId");
@@ -156,7 +172,7 @@ void IntellVoiceService::CreateSystemEventObserver()
 
 static void print_to_file(void *fp, const char *s)
 {
-    (void)fputs(s, (FILE *)fp);
+    (void)fputs(s, static_cast<FILE *>(fp));
 }
 
 int IntellVoiceService::Dump(int fd, const std::vector<std::u16string> &args)

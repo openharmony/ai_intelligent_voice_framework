@@ -30,6 +30,7 @@ public:
 
     int32_t StartRecognition(int32_t uuid, std::shared_ptr<IIntellVoiceTriggerRecognitionCallback> callback);
     int32_t StopRecognition(int32_t uuid, std::shared_ptr<IIntellVoiceTriggerRecognitionCallback> callback);
+    void UnloadTriggerModel(int32_t uuid);
 
 private:
     std::shared_ptr<TriggerDbHelper> dbHelper_ = nullptr;

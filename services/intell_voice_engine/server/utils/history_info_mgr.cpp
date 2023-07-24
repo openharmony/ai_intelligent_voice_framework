@@ -42,7 +42,7 @@ int32_t HistoryInfoMgr::GetEnrollEngineUid()
     return static_cast<int32_t>(strtol(value.c_str(), nullptr, decimalNotation));
 }
 
-void HistoryInfoMgr::SetWakeupEngineBundleName(std::string bundleName)
+void HistoryInfoMgr::SetWakeupEngineBundleName(const std::string &bundleName)
 {
     SetValue(KEY_WAKEUP_ENGINE_BUNDLE_NAME, bundleName);
 }
@@ -52,7 +52,7 @@ std::string HistoryInfoMgr::GetWakeupEngineBundleName()
     return GetValue(KEY_WAKEUP_ENGINE_BUNDLE_NAME);
 }
 
-void HistoryInfoMgr::SetWakeupEngineAbilityName(std::string abilityName)
+void HistoryInfoMgr::SetWakeupEngineAbilityName(const std::string &abilityName)
 {
     SetValue(KEY_WAKEUP_ENGINE_ABILITY_NAME, abilityName);
 }

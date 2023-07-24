@@ -27,9 +27,9 @@ public:
 
     void SetEnrollEngineUid(int32_t uid);
     int32_t GetEnrollEngineUid();
-    void SetWakeupEngineBundleName(std::string bundleName);
+    void SetWakeupEngineBundleName(const std::string &bundleName);
     std::string GetWakeupEngineBundleName();
-    void SetWakeupEngineAbilityName(std::string abilityName);
+    void SetWakeupEngineAbilityName(const std::string &abilityName);
     std::string GetWakeupEngineAbilityName();
 
 private:

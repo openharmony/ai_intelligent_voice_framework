@@ -17,11 +17,11 @@
 #include "common_event_manager.h"
 #include "common_event_support.h"
 #include "intell_voice_log.h"
-#include "intell_voice_service_manager.h"
+
+#define LOG_TAG "SystemEventObserver"
 
 using namespace OHOS::AppExecFwk;
 using namespace OHOS::EventFwk;
-#define LOG_TAG "SystemEventObserver"
 
 namespace OHOS {
 namespace IntellVoiceEngine {
@@ -94,7 +94,6 @@ void SystemEventObserver::OnReceiveEvent(const OHOS::EventFwk::CommonEventData &
         INTELL_VOICE_LOG_INFO("COMMON_EVENT_PACKAGE_DATA_CLEARED");
     } else if (action == OHOS::EventFwk::CommonEventSupport::COMMON_EVENT_USER_UNLOCKED) {
         INTELL_VOICE_LOG_INFO("COMMON_EVENT_USER_UNLOCKED");
-        IntellVoiceServiceManager::GetInstance()->OnUserUnlock();
     } else {
         INTELL_VOICE_LOG_INFO("unkonw event");
     }

@@ -18,17 +18,21 @@
 #include "engine_factory.h"
 #include "wakeup_engine.h"
 #include "trigger_manager.h"
+#include "iservice_registry.h"
+#include "system_ability_definition.h"
 #include "intell_voice_generic_factory.h"
 #include "trigger_detector_callback.h"
 #include "memory_guard.h"
 
+#define LOG_TAG "IntellVoiceServiceManager"
+
 using namespace OHOS::IntellVoiceTrigger;
 using namespace OHOS::IntellVoiceUtils;
-#define LOG_TAG "IntellVoiceServiceManager"
 
 namespace OHOS {
 namespace IntellVoiceEngine {
 const int32_t IntellVoiceServiceManager::g_enrollModelUuid = 1;
+std::atomic<bool> IntellVoiceServiceManager::enrollResult_ = false;
 
 std::unique_ptr<IntellVoiceServiceManager> IntellVoiceServiceManager::g_intellVoiceServiceMgr =
     std::unique_ptr<IntellVoiceServiceManager>(new (std::nothrow) IntellVoiceServiceManager());
@@ -101,6 +105,11 @@ int32_t IntellVoiceServiceManager::ReleaseEngine(IntellVoiceEngineType type)
     }
 
     if (type == INTELL_VOICE_ENROLL) {
+        if ((!GetEnrollResult()) && (!switchProvider_->QuerySwitchStatus())) {
+            std::thread(&IntellVoiceServiceManager::UnloadIntellVoiceService, this).detach();
+            return 0;
+        }
+
         auto triggerMgr = TriggerManager::GetInstance();
         if (triggerMgr == nullptr) {
             INTELL_VOICE_LOG_WARN("trigger manager is nullptr");
@@ -142,6 +151,7 @@ int32_t IntellVoiceServiceManager::ReleaseEngineInner(IntellVoiceEngineType type
 
 void IntellVoiceServiceManager::CreateSwitchProvider()
 {
+    INTELL_VOICE_LOG_INFO("enter");
     switchObserver_ = sptr<SwitchObserver>(new (std::nothrow) SwitchObserver());
     if (switchObserver_ == nullptr) {
         INTELL_VOICE_LOG_ERROR("switchObserver_ is nullptr");
@@ -246,7 +256,7 @@ void IntellVoiceServiceManager::OnDetected()
     engine->OnDetected();
 }
 
-void IntellVoiceServiceManager::OnUserUnlock()
+void IntellVoiceServiceManager::OnServiceStart()
 {
     auto triggerMgr = TriggerManager::GetInstance();
     if (triggerMgr == nullptr) {
@@ -270,9 +280,48 @@ void IntellVoiceServiceManager::OnUserUnlock()
     }
 
     CreateDetector();
-    if (switchProvider_->QuerySwitchStatus()) {
-        StartDetection();
+    StartDetection();
+}
+
+bool IntellVoiceServiceManager::QuerySwitchStatus()
+{
+    if (switchProvider_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("switchProvider_ is nullptr");
+        return false;
     }
+    return switchProvider_->QuerySwitchStatus();
+}
+
+void IntellVoiceServiceManager::UnloadIntellVoiceService()
+{
+    {
+        std::lock_guard<std::mutex> lock(detectorMutex_);
+        if (detector_ != nullptr) {
+            detector_->UnloadTriggerModel();
+        }
+    }
+
+    {
+        std::lock_guard<std::mutex> lock(engineMutex_);
+        auto it = engines_.find(INTELL_VOICE_WAKEUP);
+        if ((it != engines_.end()) && (it->second != nullptr)) {
+            INTELL_VOICE_LOG_INFO("wakeup engine is existed");
+            it->second->Detach();
+            ReleaseEngineInner(INTELL_VOICE_WAKEUP);
+        }
+    }
+
+    auto systemAbilityMgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    if (systemAbilityMgr == nullptr) {
+        INTELL_VOICE_LOG_ERROR("Failed to get systemabilitymanager.");
+        return;
+    }
+    int32_t ret = systemAbilityMgr->UnloadSystemAbility(INTELL_VOICE_SERVICE_ID);
+    if (ret != 0) {
+        INTELL_VOICE_LOG_ERROR("failed to unload intellvoice service, ret: %{public}d", ret);
+        return;
+    }
+    INTELL_VOICE_LOG_INFO("success to unload intellvoice service");
 }
 
 void IntellVoiceServiceManager::OnSwitchChange()
@@ -282,21 +331,9 @@ void IntellVoiceServiceManager::OnSwitchChange()
         return;
     }
 
-    {
-        std::lock_guard<std::mutex> lock(engineMutex_);
-        auto it = engines_.find(INTELL_VOICE_ENROLL);
-        if ((it != engines_.end()) && (it->second != nullptr)) {
-            INTELL_VOICE_LOG_INFO("enroll engine is existed");
-            return;
-        }
-    }
-
-    if (switchProvider_->QuerySwitchStatus()) {
-        INTELL_VOICE_LOG_INFO("switch on");
-        StartDetection();
-    } else {
+    if (!switchProvider_->QuerySwitchStatus()) {
         INTELL_VOICE_LOG_INFO("switch off");
-        StopDetection();
+        UnloadIntellVoiceService();
     }
 }
 

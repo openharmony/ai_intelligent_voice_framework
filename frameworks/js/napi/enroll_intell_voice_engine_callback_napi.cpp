@@ -35,9 +35,8 @@ void EnrollIntellVoiceEngineCallBackInfo::GetCallBackInfoNapiValue(const napi_en
     napi_set_named_property(env, result, "context", SetValue(env, context));
 }
 
-EnrollIntellVoiceEngineCallbackNapi::EnrollIntellVoiceEngineCallbackNapi(const napi_env env)
+EnrollIntellVoiceEngineCallbackNapi::EnrollIntellVoiceEngineCallbackNapi(const napi_env env) : env_(env)
 {
-    env_ = env;
     contextMap_.clear();
 }
 

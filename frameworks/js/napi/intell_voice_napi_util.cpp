@@ -108,7 +108,7 @@ napi_status GetValue(napi_env env, napi_value jsValue, string &value)
         return napi_generic_failure;
     }
 
-    char *buffer = (char *)malloc((bufferSize + 1) * sizeof(char));
+    char *buffer = new (std::nothrow) char[(bufferSize + 1)];
     if (buffer == nullptr) {
         INTELL_VOICE_LOG_ERROR("no memory");
         return napi_generic_failure;
@@ -116,7 +116,8 @@ napi_status GetValue(napi_env env, napi_value jsValue, string &value)
 
     status = napi_get_value_string_utf8(env, jsValue, buffer, bufferSize + 1, &bufferSize);
     value = buffer;
-    free(buffer);
+
+    delete[] buffer;
     buffer = nullptr;
     return status;
 }

@@ -42,7 +42,7 @@ Message::Message(uint32_t what, int32_t arg1, int32_t arg2, float arg3)
     this->arg3 = arg3;
 }
 
-Message::Message(uint32_t what, int32_t arg1, int32_t arg2, string obj)
+Message::Message(uint32_t what, int32_t arg1, int32_t arg2, const std::string &obj)
 {
     mWhat = what;
     this->arg1 = arg1;
@@ -50,7 +50,7 @@ Message::Message(uint32_t what, int32_t arg1, int32_t arg2, string obj)
     this->obj = obj;
 }
 
-Message::Message(uint32_t what, int32_t arg1, int32_t arg2, float arg3, string obj)
+Message::Message(uint32_t what, int32_t arg1, int32_t arg2, float arg3, const std::string &obj)
 {
     mWhat = what;
     this->arg1 = arg1;
@@ -90,10 +90,8 @@ Message::~Message()
     voidPtr = nullptr;
 }
 
-MessageQueue::MessageQueue(uint32_t size)
+MessageQueue::MessageQueue(uint32_t size) : mSize(size), mLock(PTHREAD_MUTEX_INITIALIZER)
 {
-    mSize = size;
-    mLock = PTHREAD_MUTEX_INITIALIZER;
     pthread_condattr_t attr;
     int result = pthread_condattr_init(&attr);
     result += pthread_cond_init(&mCond, &attr);
