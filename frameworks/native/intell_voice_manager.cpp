@@ -12,10 +12,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "intell_voice_manager.h"
 
 #include <chrono>
-
-#include "intell_voice_manager.h"
 #include "iservice_registry.h"
 #include "system_ability_definition.h"
 #include "intell_voice_log.h"

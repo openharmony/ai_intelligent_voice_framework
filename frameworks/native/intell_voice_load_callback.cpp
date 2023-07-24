@@ -22,9 +22,12 @@
 namespace OHOS {
 namespace IntellVoice {
 IntellVoiceLoadCallback::IntellVoiceLoadCallback(OnLoadSystemAbilitySuccessCb loadSASuccessCb,
-    OnLoadSystemAbilityFailCb loadSAFailCb) : loadSASuccessCb_(loadSASuccessCb), loadSAFailCb_(loadSAFailCb){}
+    OnLoadSystemAbilityFailCb loadSAFailCb) : loadSASuccessCb_(loadSASuccessCb), loadSAFailCb_(loadSAFailCb)
+{
+}
 
-void IntellVoiceLoadCallback::OnLoadSystemAbilitySuccess(int32_t systemAbilityId, const sptr<IRemoteObject> &remoteObject)
+void IntellVoiceLoadCallback::OnLoadSystemAbilitySuccess(int32_t systemAbilityId, 
+    const sptr<IRemoteObject> &remoteObject)
 {
     INTELL_VOICE_LOG_INFO("Load system ability success!");
     loadSASuccessCb_(remoteObject);

@@ -35,7 +35,6 @@ public:
     void LoadSystemAbilityFail();
     bool Init();
 
-
 private:
     IntellVoiceManager();
     ~IntellVoiceManager();
