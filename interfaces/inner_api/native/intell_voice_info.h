@@ -43,6 +43,25 @@ enum SensibilityType {
     HIGH_SENSIBILITY = 3,
 };
 
+enum EnrollResult {
+    /* Enroll success. */
+    SUCCESS = 0,
+    /* Vpr train failed. */
+    VPR_TRAIN_FAILED = -1,
+    /* Wakeup phrase not match. */
+    WAKEUP_PHRASE_NOT_MATCH = -2,
+    /* Too noisy. */
+    TOO_NOISY = -3,
+    /* Too loud. */
+    TOO_LOUD = -4,
+    /* Interval large. */
+    INTERVAL_LARGE = -5,
+    /* Different person. */
+    DIFFERENT_PERSON = -6,
+    /* Unknown error. */
+    UNKNOWN_ERROR = -100,
+};
+
 enum EnrollIntelligentVoiceEventType {
     /* Enroll None. */
     INTELLIGENT_VOICE_EVENT_ENROLL_NONE = 0,
@@ -62,20 +81,14 @@ enum WakeupIntelligentVoiceEventType {
 };
 
 enum IntelligentVoiceErrorCode {
-    /* Success. */
-    INTELLIGENT_VOICE_SUCCESS = 0,
-    /* Memory is insufficient. */
+    /* No memory. */
     INTELLIGENT_VOICE_NO_MEMORY = 22700101,
-    /* Invalid parameter. */
+    /* Input parameter value error. */
     INTELLIGENT_VOICE_INVALID_PARAM = 22700102,
     /* Init failed. */
     INTELLIGENT_VOICE_INIT_FAILED = 22700103,
-    /* Enroll failed. */
-    INTELLIGENT_VOICE_ENROLL_FAILED = 22700104,
     /* Commit enroll failed. */
-    INTELLIGENT_VOICE_COMMIT_ENROLL_FAILED = 22700105,
-    /* Recognize failed. */
-    INTELLIGENT_VOICE_RECOGNIZE_FAILED = 22700106,
+    INTELLIGENT_VOICE_COMMIT_ENROLL_FAILED = 22700104,
 };
 
 struct WakeupHapInfo {

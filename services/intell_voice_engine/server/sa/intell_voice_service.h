@@ -21,6 +21,7 @@
 #include "intell_voice_service_stub.h"
 #include "i_intell_voice_engine.h"
 #include "system_event_observer.h"
+#include "audio_capturer_source_change_callback.h"
 
 #include "trigger_manager.h"
 
@@ -53,10 +54,13 @@ private:
     void CreateSystemEventObserver();
     bool VerifyClientPermission(const std::string &permissionName);
     void RegisterPermissionCallback(const std::string &permissionName);
+    void LoadIntellVoiceHost();
+    void UnloadIntellVoiceHost();
 
 private:
     std::shared_ptr<SystemEventObserver> systemEventObserver_ = nullptr;
     OHOS::OnDemandReasonId reasonId_;
+    std::shared_ptr<AudioCapturerSourceChangeCallback> audioCapturerSourceChangeCallback_ = nullptr;
 };
 }
 }

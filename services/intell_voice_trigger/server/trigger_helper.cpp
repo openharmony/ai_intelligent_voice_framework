@@ -167,6 +167,7 @@ void TriggerHelper::UnloadGenericTriggerModel(int32_t uuid)
     }
     StopRecognition(modelData);
     UnloadModel(modelData);
+    modelDataMap_.erase(uuid);
 }
 
 void TriggerHelper::GetModule()

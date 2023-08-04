@@ -46,6 +46,9 @@ IntellVoiceManager::~IntellVoiceManager()
 IntellVoiceManager *IntellVoiceManager::GetInstance()
 {
     static IntellVoiceManager manager;
+    if (!manager.Init()) {
+        return nullptr;
+    }
     return &manager;
 }
 

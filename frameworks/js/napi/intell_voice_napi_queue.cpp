@@ -138,6 +138,7 @@ void NapiAsync::CommonCallbackRoutine(AsyncContext *context, const napi_value &d
 
 void NapiAsync::HandlePromise(AsyncContext *context, const napi_value &data)
 {
+    INTELL_VOICE_LOG_INFO("enter");
     napi_value result = nullptr;
     napi_value error = nullptr;
     napi_get_undefined(context->env_, &result);
@@ -149,8 +150,10 @@ void NapiAsync::HandlePromise(AsyncContext *context, const napi_value &data)
         return;
     }
     napi_value message = nullptr;
+    napi_value err_code = nullptr;
     napi_create_string_utf8(context->env_, context->error_.c_str(), NAPI_AUTO_LENGTH, &message);
-    napi_create_error(context->env_, nullptr, message, &error);
+    napi_create_string_utf8(context->env_, std::to_string(context->result_).c_str(), NAPI_AUTO_LENGTH, &err_code);
+    napi_create_error(context->env_, err_code, message, &error);
     napi_reject_deferred(context->env_, context->deferred_, error);
 }
 
@@ -165,8 +168,10 @@ void NapiAsync::HandleAsyncCallback(AsyncContext *context, const napi_value &dat
         args[1] = data;
     } else {
         napi_value message = nullptr;
+        napi_value err_code = nullptr;
         napi_create_string_utf8(context->env_, context->error_.c_str(), NAPI_AUTO_LENGTH, &message);
-        napi_create_error(context->env_, nullptr, message, &args[0]);
+        napi_create_string_utf8(context->env_, std::to_string(context->result_).c_str(), NAPI_AUTO_LENGTH, &err_code);
+        napi_create_error(context->env_, err_code, message, &args[0]);
         napi_get_undefined(context->env_, &args[1]);
     }
     napi_get_reference_value(context->env_, context->callbackRef_, &callback);

@@ -22,6 +22,7 @@
 
 #include "time_util.h"
 #include "scope_guard.h"
+#include "audio_system_manager.h"
 #include "adapter_callback_service.h"
 #include "intell_voice_service_manager.h"
 #include "ability_manager_client.h"
@@ -45,6 +46,7 @@ WakeupEngine::WakeupEngine()
 
     capturerOptions_.streamInfo.channels = AudioChannel::MONO;
     capturerOptions_.streamInfo.samplingRate = AudioSamplingRate::SAMPLE_RATE_16000;
+    capturerOptions_.streamInfo.encoding = AudioEncodingType::ENCODING_PCM;
     capturerOptions_.streamInfo.format = AudioSampleFormat::SAMPLE_S16LE;
     capturerOptions_.capturerInfo.sourceType = SourceType::SOURCE_TYPE_WAKEUP;
     capturerOptions_.capturerInfo.capturerFlags = 0;
@@ -221,6 +223,14 @@ int32_t WakeupEngine::Start(bool isLast)
         return 0;
     }
 
+    wakeUpSourceStopCallback_ = std::make_shared<WakeUpSourceStopCallback>();
+    auto audioSystemManager = AudioSystemManager::GetInstance();
+    if (audioSystemManager != nullptr) {
+        audioSystemManager->SetWakeUpSourceCloseCallback(wakeUpSourceStopCallback_);
+    } else {
+        INTELL_VOICE_LOG_ERROR("audioSystemManager is null");
+    }
+
     if (!StartAudioSource()) {
         INTELL_VOICE_LOG_ERROR("start file source failed");
         adapter_->Stop();
@@ -335,11 +345,6 @@ void WakeupEngine::StopAudioSource()
 
         audioSource_->Stop();
         audioSource_ = nullptr;
-    }
-
-    const auto &manager = IntellVoiceServiceManager::GetInstance();
-    if (manager != nullptr) {
-        manager->StartDetection();
     }
 }
 }  // namespace IntellVoice

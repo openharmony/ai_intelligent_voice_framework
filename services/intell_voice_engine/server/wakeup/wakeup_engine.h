@@ -19,6 +19,7 @@
 #include "engine_base.h"
 #include "intell_voice_engine_stub.h"
 #include "wakeup_adapter_listener.h"
+#include "wakeup_source_stop_callback.h"
 #include "v1_0/iintell_voice_engine_callback.h"
 
 #include "audio_info.h"
@@ -54,6 +55,7 @@ private:
     bool isPcmFromExternal_ = false;
     std::shared_ptr<WakeupAdapterListener> adapterListener_ = nullptr;
     sptr<OHOS::HDI::IntelligentVoice::Engine::V1_0::IIntellVoiceEngineCallback> callback_ = nullptr;
+    std::shared_ptr<WakeUpSourceStopCallback> wakeUpSourceStopCallback_ = nullptr;
     OHOS::AudioStandard::AudioCapturerOptions capturerOptions_;
     std::unique_ptr<AudioSource> audioSource_ = nullptr;
     friend class IntellVoiceUtils::SptrFactory<WakeupEngine>;

@@ -39,19 +39,19 @@ enum EnrollAsyncWorkType {
     ASYNC_WORK_INVALID,
 };
 
-struct EnrollIntellVoiceEngineCallBackInfo {
+struct EnrollCallbackInfo {
     int32_t eventId;
-    int32_t errCode;
+    int32_t result;
     std::string context;
 
-    void GetCallBackInfoNapiValue(const napi_env &env, napi_value &result);
+    void GetCallBackInfoNapiValue(const napi_env &env, napi_value &out);
 };
 
 class EnrollAsyncContext : public AsyncContext {
 public:
     EnrollAsyncWorkType type = ASYNC_WORK_INVALID;
     ProcessWorkFunc processWork = nullptr;
-    EnrollIntellVoiceEngineCallBackInfo callbackInfo;
+    EnrollCallbackInfo callbackInfo;
 };
 
 class EnrollIntellVoiceEngineCallbackNapi : public IIntellVoiceEngineEventCallback {

@@ -153,7 +153,10 @@ int32_t TriggerConnector::TriggerSession::UnloadModel(int32_t modelHandle)
         INTELL_VOICE_LOG_ERROR("failed to find model");
         return -1;
     }
-    return it->second->Unload();
+
+    int32_t ret = it->second->Unload();
+    loadedModels_.erase(it);
+    return ret;
 }
 
 int32_t TriggerConnector::TriggerSession::Start(int32_t modelHandle)

@@ -24,7 +24,6 @@ using namespace OHOS::HDI::IntelligentVoice::Engine::V1_0;
 namespace OHOS {
 namespace IntellVoiceEngine {
 WakeupAdapterListener::WakeupAdapterListener(OnWakeupEventCb wakeupEventCb) : wakeupEventCb_(wakeupEventCb)
-
 {
     INTELL_VOICE_LOG_INFO("constructor");
 }

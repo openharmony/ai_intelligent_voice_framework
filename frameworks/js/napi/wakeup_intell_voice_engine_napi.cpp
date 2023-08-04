@@ -68,13 +68,13 @@ napi_value WakeupIntellVoiceEngineNapi::New(napi_env env, napi_callback_info inf
 
     WakeupIntelligentVoiceEngineDescriptor descriptor = {};
     napi_value value = nullptr;
-    if (napi_get_named_property(env, args[0], "needApAlgEngine", &value) == napi_ok) {
-        GetValue(env, value, descriptor.needApAlgEngine);
+    if (napi_get_named_property(env, args[0], "needReconfirm", &value) == napi_ok) {
+        GetValue(env, value, descriptor.needReconfirm);
     }
     if (napi_get_named_property(env, args[0], "wakeupPhrase", &value) == napi_ok) {
         GetValue(env, value, descriptor.wakeupPhrase);
     }
-    INTELL_VOICE_LOG_INFO("EngineDescriptor needApAlgEngine: %{public}d", descriptor.needApAlgEngine);
+    INTELL_VOICE_LOG_INFO("EngineDescriptor needReconfirm: %{public}d", descriptor.needReconfirm);
     INTELL_VOICE_LOG_INFO("EngineDescriptor wakeupPhrase: %{public}s", descriptor.wakeupPhrase.c_str());
 
     engineNapi->engine_ = std::make_shared<WakeupIntellVoiceEngine>(descriptor);
