@@ -22,17 +22,16 @@ using namespace OHOS::IntellVoiceEngine;
 
 namespace OHOS {
 namespace IntellVoiceNapi {
-void EnrollIntellVoiceEngineCallBackInfo::GetCallBackInfoNapiValue(const napi_env &env, napi_value &result)
+void EnrollCallbackInfo::GetCallBackInfoNapiValue(const napi_env &env, napi_value &out)
 {
-    napi_status status = napi_create_object(env, &result);
-    if (status != napi_ok || result == nullptr) {
+    napi_status status = napi_create_object(env, &out);
+    if (status != napi_ok || out == nullptr) {
         INTELL_VOICE_LOG_ERROR("failed to create js callbackInfo, error: %{public}d", status);
         return;
     }
 
-    napi_set_named_property(env, result, "eventId", SetValue(env, eventId));
-    napi_set_named_property(env, result, "errCode", SetValue(env, errCode));
-    napi_set_named_property(env, result, "context", SetValue(env, context));
+    napi_set_named_property(env, out, "result", SetValue(env, result));
+    napi_set_named_property(env, out, "context", SetValue(env, context));
 }
 
 EnrollIntellVoiceEngineCallbackNapi::EnrollIntellVoiceEngineCallbackNapi(const napi_env env) : env_(env)
@@ -118,9 +117,15 @@ void EnrollIntellVoiceEngineCallbackNapi::UvWorkCallBack(uv_work_t *work, int st
     napi_value result = nullptr;
     if (asyncContext != nullptr) {
         napi_env env = asyncContext->env_;
-        asyncContext->callbackInfo.GetCallBackInfoNapiValue(env, result);
+        if (asyncContext->callbackInfo.eventId ==
+            HDI::IntelligentVoice::Engine::V1_0::INTELL_VOICE_ENGINE_MSG_ENROLL_COMPLETE) {
+            asyncContext->callbackInfo.GetCallBackInfoNapiValue(env, result);
+        } else {
+            napi_get_undefined(env, &result);
+        }
         NapiAsync::CommonCallbackRoutine(asyncContext, result);
     }
+
     delete work;
 }
 

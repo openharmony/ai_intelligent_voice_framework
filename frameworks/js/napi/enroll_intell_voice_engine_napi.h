@@ -41,7 +41,7 @@ private:
 
     static napi_value GetSupportedRegions(napi_env env, napi_callback_info info);
     static napi_value Init(napi_env env, napi_callback_info info);
-    static napi_value Start(napi_env env, napi_callback_info info);
+    static napi_value EnrollForResult(napi_env env, napi_callback_info info);
     static napi_value Stop(napi_env env, napi_callback_info info);
     static napi_value Commit(napi_env env, napi_callback_info info);
     static napi_value SetSensibility(napi_env env, napi_callback_info info);
@@ -51,6 +51,7 @@ private:
     static napi_value Release(napi_env env, napi_callback_info info);
 
     static void CompleteCallback(napi_env env, napi_status status, void *data);
+    static void UpdateAsyncContextInfo(AsyncContext *context);
 
     std::shared_ptr<EnrollIntellVoiceEngine> engine_ = nullptr;
     std::shared_ptr<EnrollIntellVoiceEngineCallbackNapi> callbackNapi_ = nullptr;

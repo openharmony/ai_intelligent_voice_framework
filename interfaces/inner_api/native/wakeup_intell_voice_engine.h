@@ -27,7 +27,7 @@ using OHOS::IntellVoiceEngine::IIntellVoiceEngine;
 using OHOS::IntellVoiceEngine::EngineCallbackInner;
 
 struct WakeupIntelligentVoiceEngineDescriptor {
-    bool needApAlgEngine;
+    bool needReconfirm;
     std::string wakeupPhrase;
 };
 

@@ -12,14 +12,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include "engine_event_callback_napi.h"
 #include <uv.h>
+#include "intell_voice_info.h"
 #include "intell_voice_log.h"
 
-using namespace std;
-using namespace OHOS::IntellVoiceEngine;
 #define LOG_TAG "EngineEventCallbackNapi"
+
+using namespace std;
+using namespace OHOS::IntellVoice;
+using namespace OHOS::IntellVoiceEngine;
 
 namespace OHOS {
 namespace IntellVoiceNapi {
@@ -47,7 +49,12 @@ void EngineEventCallbackNapi::OnEvent(const IntellVoiceEngineCallBackEvent &even
         return;
     }
 
-    EngineCallBackInfo cbInfo = {event.msgId, event.result, event.info};
+    if(event.msgId != HDI::IntelligentVoice::Engine::V1_0::INTELL_VOICE_ENGINE_MSG_RECOGNIZE_COMPLETE) {
+        INTELL_VOICE_LOG_ERROR("error msgId");
+        return;
+    }
+
+    EngineCallBackInfo cbInfo = {INTELLIGENT_VOICE_EVENT_RECOGNIZE_COMPLETE, event.result, event.info};
 
     INTELL_VOICE_LOG_INFO("OnEvent EngineCallBackInfo: msgId: %{public}d, errCode: %{public}d, context: %{public}s",
         cbInfo.msgId,

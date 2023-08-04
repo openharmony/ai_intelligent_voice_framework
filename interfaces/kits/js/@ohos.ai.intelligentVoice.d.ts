@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-import { AsyncCallback, Callback } from './@ohos.base';
+import type { AsyncCallback, Callback } from './@ohos.base';
 
 /**
  * @namespace intelligentVoice
@@ -22,7 +22,7 @@ import { AsyncCallback, Callback } from './@ohos.base';
 declare namespace intelligentVoice {
   /**
    * Obtains an {@link IntelligentVoiceManager} instance.
-   * @permission ohos.permission.MANAGER_INTELLIGENT_VOICE
+   * @permission ohos.permission.MANAGE_INTELLIGENT_VOICE
    * @returns { IntelligentVoiceManager } this {@link IntelligentVoiceManager} object.
    * @throws { BusinessError } 201 - Permission denied.
    * @throws { BusinessError } 22700101 - No memory.
@@ -40,7 +40,7 @@ declare namespace intelligentVoice {
   interface IntelligentVoiceManager {
     /**
      * Obtains capability information.
-     * @permission ohos.permission.MANAGER_INTELLIGENT_VOICE
+     * @permission ohos.permission.MANAGE_INTELLIGENT_VOICE
      * @returns { Array<IntelligentVoiceEngineType> } array of supported IntelligentVoiceEngineType.
      * @throws { BusinessError } 201 - Permission denied.
      * @syscap SystemCapability.AI.IntelligentVoice.Core
@@ -50,9 +50,9 @@ declare namespace intelligentVoice {
     /**
      * Subscribes service change events. When the state of intelligent voice service changes,
      * the callback is invoked.
-     * @permission ohos.permission.MANAGER_INTELLIGENT_VOICE
-     * @param { string } type - Type of the event to listen for. Only the serviceChange event is supported.
-     * @param { Callback<ServiceChangeType>Callback<ServiceChangeType> } callback - Callback is invoked when the event is triggered.
+     * @permission ohos.permission.MANAGE_INTELLIGENT_VOICE
+     * @param { 'serviceChange' } type - Type of the event to listen for. Only the serviceChange event is supported.
+     * @param { Callback<ServiceChangeType> } callback - Callback is invoked when the event is triggered.
      * @throws { BusinessError } 201 - Permission denied.
      * @syscap SystemCapability.AI.IntelligentVoice.Core
      * @since 10
@@ -60,13 +60,14 @@ declare namespace intelligentVoice {
     on(type: 'serviceChange', callback: Callback<ServiceChangeType>): void;
     /**
      * Unsubscribes service change events.
-     * @permission ohos.permission.MANAGER_INTELLIGENT_VOICE
-     * @param { string } type - Type of the event to listen for. Only the serviceChange event is supported.
+     * @permission ohos.permission.MANAGE_INTELLIGENT_VOICE
+     * @param { 'serviceChange' } type - Type of the event to listen for. Only the serviceChange event is supported.
+     * @param { Callback<ServiceChangeType> } [callback] - Callback is invoked when the event is triggered.
      * @throws { BusinessError } 201 - Permission denied.
      * @syscap SystemCapability.AI.IntelligentVoice.Core
      * @since 10
      */
-    off(type: 'serviceChange'): void;
+    off(type: 'serviceChange', callback?: Callback<ServiceChangeType>): void;
   }
 
   /**
@@ -120,6 +121,7 @@ declare namespace intelligentVoice {
   interface EnrollIntelligentVoiceEngineDescriptor {
     /**
      * Wakeup phrase.
+     * @type { string }
      * @syscap SystemCapability.AI.IntelligentVoice.Core
      * @since 10
      */
@@ -134,13 +136,15 @@ declare namespace intelligentVoice {
    */
   interface WakeupIntelligentVoiceEngineDescriptor {
     /**
-     * Need ap algorithm engine.
+     * Need reconfirm.
+     * @type { boolean }
      * @syscap SystemCapability.AI.IntelligentVoice.Core
      * @since 10
      */
-    needApAlgEngine: boolean;
+    needReconfirm: boolean;
     /**
      * Wakeup phrase.
+     * @type { string }
      * @syscap SystemCapability.AI.IntelligentVoice.Core
      * @since 10
      */
@@ -149,13 +153,13 @@ declare namespace intelligentVoice {
 
   /**
    * Obtains an {@link EnrollIntelligentVoiceEngine} instance. This method uses an asynchronous callback to return the EnrollIntelligentVoiceEngine instance.
-   * @permission ohos.permission.MANAGER_INTELLIGENT_VOICE
+   * @permission ohos.permission.MANAGE_INTELLIGENT_VOICE
    * @param { EnrollIntelligentVoiceEngineDescriptor } descriptor - descriptor indicates enroll intelligent voice engine descriptor.
    * @param { AsyncCallback<EnrollIntelligentVoiceEngine> } callback - the callback used to return the EnrollIntelligentVoiceEngine instance.
    * @throws { BusinessError } 201 - Permission denied.
    * @throws { BusinessError } 401 - if input parameter type or number mismatch.
    * @throws { BusinessError } 22700101 - No memory.
-   * @throws { BusinessError } 22700102 - if input parameter value error.
+   * @throws { BusinessError } 22700102 - Input parameter value error.
    * @syscap SystemCapability.AI.IntelligentVoice.Core
    * @since 10
    */
@@ -163,13 +167,13 @@ declare namespace intelligentVoice {
 
   /**
    * Obtains an {@link EnrollIntelligentVoiceEngine} instance. This method uses a promise to return the EnrollIntelligentVoiceEngine instance.
-   * @permission ohos.permission.MANAGER_INTELLIGENT_VOICE
+   * @permission ohos.permission.MANAGE_INTELLIGENT_VOICE
    * @param { EnrollIntelligentVoiceEngineDescriptor } descriptor - descriptor indicates enroll intelligent voice engine descriptor.
-   * @returns { Promise<EnrollIntelligentVoiceEngine>; } the promise used to return the EnrollIntelligentVoiceEngine instance.
+   * @returns { Promise<EnrollIntelligentVoiceEngine> } the promise used to return the EnrollIntelligentVoiceEngine instance.
    * @throws { BusinessError } 201 - Permission denied.
    * @throws { BusinessError } 401 - if input parameter type or number mismatch.
    * @throws { BusinessError } 22700101 - No memory.
-   * @throws { BusinessError } 22700102 - if input parameter value error.
+   * @throws { BusinessError } 22700102 - Input parameter value error.
    * @syscap SystemCapability.AI.IntelligentVoice.Core
    * @since 10
    */
@@ -177,13 +181,13 @@ declare namespace intelligentVoice {
 
   /**
    * Obtains an {@link WakeupIntelligentVoiceEngine} instance. This method uses an asynchronous callback to return the WakeupIntelligentVoiceEngine instance.
-   * @permission ohos.permission.MANAGER_INTELLIGENT_VOICE
+   * @permission ohos.permission.MANAGE_INTELLIGENT_VOICE
    * @param { WakeupIntelligentVoiceEngineDescriptor } descriptor - descriptor indicates wakeup intelligent voice engine descriptor.
    * @param { AsyncCallback<WakeupIntelligentVoiceEngine> } callback - the callback used to return the WakeupIntelligentVoiceEngine instance.
    * @throws { BusinessError } 201 - Permission denied.
    * @throws { BusinessError } 401 - if input parameter type or number mismatch.
    * @throws { BusinessError } 22700101 - No memory.
-   * @throws { BusinessError } 22700102 - if input parameter value error.
+   * @throws { BusinessError } 22700102 - Input parameter value error.
    * @syscap SystemCapability.AI.IntelligentVoice.Core
    * @since 10
    */
@@ -191,13 +195,13 @@ declare namespace intelligentVoice {
 
   /**
    * Obtains an {@link WakeupIntelligentVoiceEngine} instance. This method uses a promise to return the WakeupIntelligentVoiceEngine instance.
-   * @permission ohos.permission.MANAGER_INTELLIGENT_VOICE
+   * @permission ohos.permission.MANAGE_INTELLIGENT_VOICE
    * @param { WakeupIntelligentVoiceEngineDescriptor } descriptor - descriptor indicates wakeup intelligent voice engine descriptor.
    * @returns { Promise<WakeupIntelligentVoiceEngine> } the promise used to return the WakeupIntelligentVoiceEngine instance.
    * @throws { BusinessError } 201 - Permission denied.
    * @throws { BusinessError } 401 - if input parameter type or number mismatch.
    * @throws { BusinessError } 22700101 - No memory.
-   * @throws { BusinessError } 22700102 - if input parameter value error.
+   * @throws { BusinessError } 22700102 - Input parameter value error.
    * @syscap SystemCapability.AI.IntelligentVoice.Core
    * @since 10
    */
@@ -212,12 +216,14 @@ declare namespace intelligentVoice {
   interface EnrollEngineConfig {
     /**
      * Language that enroll engine supports.
+     * @type { string }
      * @syscap SystemCapability.AI.IntelligentVoice.Core
      * @since 10
      */
     language: string;
     /**
      * Region that enroll engine supports.
+     * @type { string }
      * @syscap SystemCapability.AI.IntelligentVoice.Core
      * @since 10
      */
@@ -260,49 +266,18 @@ declare namespace intelligentVoice {
   interface WakeupHapInfo {
     /**
      * Bundle name.
+     * @type { string }
      * @syscap SystemCapability.AI.IntelligentVoice.Core
      * @since 10
      */
     bundleName: string;
     /**
      * Ability name.
+     * @type { string }
      * @syscap SystemCapability.AI.IntelligentVoice.Core
      * @since 10
      */
     abilityName: string;
-  }
-
-  /**
-   * Enumerates enroll intelligent voice event type.
-   * @enum {number}
-   * @syscap SystemCapability.AI.IntelligentVoice.Core
-   * @since 10
-   */
-  enum EnrollIntelligentVoiceEventType {
-    /**
-     * Enroll None.
-     * @syscap SystemCapability.AI.IntelligentVoice.Core
-     * @since 10
-     */
-    INTELLIGENT_VOICE_EVENT_ENROLL_NONE = 0,
-    /**
-     * Init done.
-     * @syscap SystemCapability.AI.IntelligentVoice.Core
-     * @since 10
-     */
-    INTELLIGENT_VOICE_EVENT_ENROLL_INIT_DONE = 1,
-    /**
-     * Enroll complete.
-     * @syscap SystemCapability.AI.IntelligentVoice.Core
-     * @since 10
-     */
-    INTELLIGENT_VOICE_EVENT_ENROLL_COMPLETE = 2,
-    /**
-     * Commit enroll complete.
-     * @syscap SystemCapability.AI.IntelligentVoice.Core
-     * @since 10
-     */
-    INTELLIGENT_VOICE_EVENT_COMMIT_ENROLL_COMPLETE = 3,
   }
 
   /**
@@ -334,19 +309,13 @@ declare namespace intelligentVoice {
    */
   enum IntelligentVoiceErrorCode {
     /**
-     * Success.
-     * @syscap SystemCapability.AI.IntelligentVoice.Core
-     * @since 10
-     */
-    INTELLIGENT_VOICE_SUCCESS = 0,
-    /**
-     * Memory is insufficient.
+     * No memory.
      * @syscap SystemCapability.AI.IntelligentVoice.Core
      * @since 10
      */
     INTELLIGENT_VOICE_NO_MEMORY = 22700101,
     /**
-     * Invalid parameter.
+     * Input parameter value error.
      * @syscap SystemCapability.AI.IntelligentVoice.Core
      * @since 10
      */
@@ -358,46 +327,87 @@ declare namespace intelligentVoice {
      */
     INTELLIGENT_VOICE_INIT_FAILED = 22700103,
     /**
-     * Enroll failed.
-     * @syscap SystemCapability.AI.IntelligentVoice.Core
-     * @since 10
-     */
-    INTELLIGENT_VOICE_ENROLL_FAILED = 22700104,
-    /**
      * Commit enroll failed.
      * @syscap SystemCapability.AI.IntelligentVoice.Core
      * @since 10
      */
-    INTELLIGENT_VOICE_COMMIT_ENROLL_FAILED = 22700105,
-    /**
-     * Recognize failed.
-     * @syscap SystemCapability.AI.IntelligentVoice.Core
-     * @since 10
-     */
-    INTELLIGENT_VOICE_RECOGNIZE_FAILED = 22700106,
+    INTELLIGENT_VOICE_COMMIT_ENROLL_FAILED = 22700104,
   }
 
   /**
-   * Describes enrol intelligent voice engine callback information.
-   * @typedef EnrollIntelligentVoiceEngineCallbackInfo
+   * Enumerates enroll result.
+   * @enum {number}
    * @syscap SystemCapability.AI.IntelligentVoice.Core
    * @since 10
    */
-  interface EnrollIntelligentVoiceEngineCallbackInfo {
+  enum EnrollResult {
     /**
-     * Enroll event id.
+     * Success.
      * @syscap SystemCapability.AI.IntelligentVoice.Core
      * @since 10
      */
-    eventId: EnrollIntelligentVoiceEventType;
+    SUCCESS = 0,
     /**
-     * Error code.
+     * Vpr train failed.
      * @syscap SystemCapability.AI.IntelligentVoice.Core
      * @since 10
      */
-    errCode: IntelligentVoiceErrorCode;
+    VPR_TRAIN_FAILED = -1,
+    /**
+     * Wakeup phrase not match.
+     * @syscap SystemCapability.AI.IntelligentVoice.Core
+     * @since 10
+     */
+    WAKEUP_PHRASE_NOT_MATCH = -2,
+    /**
+     * Too noisy.
+     * @syscap SystemCapability.AI.IntelligentVoice.Core
+     * @since 10
+     */
+    TOO_NOISY = -3,
+    /**
+     * Too loud.
+     * @syscap SystemCapability.AI.IntelligentVoice.Core
+     * @since 10
+     */
+    TOO_LOUD = -4,
+    /**
+     * Interval large.
+     * @syscap SystemCapability.AI.IntelligentVoice.Core
+     * @since 10
+     */
+    INTERVAL_LARGE = -5,
+    /**
+     * Different person.
+     * @syscap SystemCapability.AI.IntelligentVoice.Core
+     * @since 10
+     */
+    DIFFERENT_PERSON = -6,
+    /**
+     * Unknown error.
+     * @syscap SystemCapability.AI.IntelligentVoice.Core
+     * @since 10
+     */
+    UNKNOWN_ERROR = -100,
+  }
+
+  /**
+   * Describes enroll callback information.
+   * @typedef EnrollCallbackInfo
+   * @syscap SystemCapability.AI.IntelligentVoice.Core
+   * @since 10
+   */
+  interface EnrollCallbackInfo {
+    /**
+     * Result.
+     * @type { EnrollResult }
+     * @syscap SystemCapability.AI.IntelligentVoice.Core
+     * @since 10
+     */
+    result: EnrollResult;
     /**
      * Describes enroll event context.
+     * @type { string }
      * @syscap SystemCapability.AI.IntelligentVoice.Core
      * @since 10
      */
@@ -413,18 +423,21 @@ declare namespace intelligentVoice {
   interface WakeupIntelligentVoiceEngineCallbackInfo {
     /**
      * Wakeup event id.
+     * @type { WakeupIntelligentVoiceEventType }
      * @syscap SystemCapability.AI.IntelligentVoice.Core
      * @since 10
      */
     eventId: WakeupIntelligentVoiceEventType;
     /**
-     * Error code.
+     * Is success.
+     * @type { boolean }
      * @syscap SystemCapability.AI.IntelligentVoice.Core
      * @since 10
      */
-    errCode: IntelligentVoiceErrorCode;
+    isSuccess: boolean;
     /**
      * Describes wakeup event context.
+     * @type { string }
      * @syscap SystemCapability.AI.IntelligentVoice.Core
      * @since 10
      */
@@ -440,7 +453,7 @@ declare namespace intelligentVoice {
   interface EnrollIntelligentVoiceEngine {
     /**
      * Obtains the supported regions, This method uses an asynchronous callback to return the query result.
-     * @permission ohos.permission.MANAGER_INTELLIGENT_VOICE
+     * @permission ohos.permission.MANAGE_INTELLIGENT_VOICE
      * @param { AsyncCallback<Array<string>> } callback - the callback used to return the supported regions.
      * @throws { BusinessError } 201 - Permission denied.
      * @syscap SystemCapability.AI.IntelligentVoice.Core
@@ -449,7 +462,7 @@ declare namespace intelligentVoice {
     getSupportedRegions(callback: AsyncCallback<Array<string>>): void;
     /**
      * Obtains the supported regions, This method uses a promise to return the query result.
-     * @permission ohos.permission.MANAGER_INTELLIGENT_VOICE
+     * @permission ohos.permission.MANAGE_INTELLIGENT_VOICE
      * @returns { Promise<Array<string>> } the promise used to return the supported regions.
      * @throws { BusinessError } 201 - Permission denied.
      * @syscap SystemCapability.AI.IntelligentVoice.Core
@@ -458,53 +471,55 @@ declare namespace intelligentVoice {
     getSupportedRegions(): Promise<Array<string>>;
     /**
      * Initials the engine, This method uses an asynchronous callback to return the result.
-     * @permission ohos.permission.MANAGER_INTELLIGENT_VOICE
+     * @permission ohos.permission.MANAGE_INTELLIGENT_VOICE
      * @param { EnrollEngineConfig } config - config indicates enroll engine configuration.
-     * @param { AsyncCallback<EnrollIntelligentVoiceEngineCallbackInfo> } callback - the callback used to return the result.
+     * @param { AsyncCallback<void> } callback - the callback used to return the result.
      * @throws { BusinessError } 201 - Permission denied.
      * @throws { BusinessError } 401 - if input parameter type or number mismatch.
-     * @throws { BusinessError } 22700102 - if input parameter value error.
+     * @throws { BusinessError } 22700102 - Input parameter value error.
+     * @throws { BusinessError } 22700103 - Init failed.
      * @syscap SystemCapability.AI.IntelligentVoice.Core
      * @since 10
      */
-    init(config: EnrollEngineConfig, callback: AsyncCallback<EnrollIntelligentVoiceEngineCallbackInfo>): void;
+    init(config: EnrollEngineConfig, callback: AsyncCallback<void>): void;
     /**
      * Initials the engine, This method uses a promise to return the result.
-     * @permission ohos.permission.MANAGER_INTELLIGENT_VOICE
+     * @permission ohos.permission.MANAGE_INTELLIGENT_VOICE
      * @param { EnrollEngineConfig } config - config indicates enroll engine configuration.
-     * @returns { Promise<EnrollIntelligentVoiceEngineCallbackInfo> } the promise used to return the result.
+     * @returns { Promise<void> } the promise used to return the result.
      * @throws { BusinessError } 201 - Permission denied.
      * @throws { BusinessError } 401 - if input parameter type or number mismatch.
-     * @throws { BusinessError } 22700102 - if input parameter value error.
+     * @throws { BusinessError } 22700102 - Input parameter value error.
+     * @throws { BusinessError } 22700103 - Init failed.
      * @syscap SystemCapability.AI.IntelligentVoice.Core
      * @since 10
      */
-    init(config: EnrollEngineConfig): Promise<EnrollIntelligentVoiceEngineCallbackInfo>;
+    init(config: EnrollEngineConfig): Promise<void>;
     /**
-     * Starts the engine, This method uses an asynchronous callback to return the result.
-     * @permission ohos.permission.MANAGER_INTELLIGENT_VOICE
-     * @param { boolean } isLast - isLast indicates if it is the last time to start.
-     * @param { AsyncCallback<EnrollIntelligentVoiceEngineCallbackInfo> } callback - the callback used to return the result.
+     * Enrolls for result, This method uses an asynchronous callback to return the result.
+     * @permission ohos.permission.MANAGE_INTELLIGENT_VOICE
+     * @param { boolean } isLast - isLast indicates if it is the last time to enroll.
+     * @param { AsyncCallback<EnrollCallbackInfo> } callback - the callback used to return the result.
      * @throws { BusinessError } 201 - Permission denied.
      * @throws { BusinessError } 401 - if input parameter type or number mismatch.
      * @syscap SystemCapability.AI.IntelligentVoice.Core
      * @since 10
      */
-    start(isLast: boolean, callback: AsyncCallback<EnrollIntelligentVoiceEngineCallbackInfo>): void;
+    enrollForResult(isLast: boolean, callback: AsyncCallback<EnrollCallbackInfo>): void;
     /**
-     * Starts the engine, This method uses a promise to return the result.
-     * @permission ohos.permission.MANAGER_INTELLIGENT_VOICE
-     * @param { boolean } isLast - isLast indicates if it is the last time to start.
-     * @returns { Promise<EnrollIntelligentVoiceEngineCallbackInfo> } the promise used to return the result.
+     * Enrolls for result, This method uses a promise to return the result.
+     * @permission ohos.permission.MANAGE_INTELLIGENT_VOICE
+     * @param { boolean } isLast - isLast indicates if it is the last time to enroll.
+     * @returns { Promise<EnrollCallbackInfo> } the promise used to return the result.
      * @throws { BusinessError } 201 - Permission denied.
      * @throws { BusinessError } 401 - if input parameter type or number mismatch.
      * @syscap SystemCapability.AI.IntelligentVoice.Core
      * @since 10
      */
-    start(isLast: boolean): Promise<EnrollIntelligentVoiceEngineCallbackInfo>;
+    enrollForResult(isLast: boolean): Promise<EnrollCallbackInfo>;
     /**
      * Stops the engine, This method uses an asynchronous callback to return the result.
-     * @permission ohos.permission.MANAGER_INTELLIGENT_VOICE
+     * @permission ohos.permission.MANAGE_INTELLIGENT_VOICE
      * @param { AsyncCallback<void> } callback  - the callback used to return the result.
      * @throws { BusinessError } 201 - Permission denied.
      * @syscap SystemCapability.AI.IntelligentVoice.Core
@@ -513,7 +528,7 @@ declare namespace intelligentVoice {
     stop(callback: AsyncCallback<void>): void;
     /**
      * Stops the engine, This method uses a promise to return the result.
-     * @permission ohos.permission.MANAGER_INTELLIGENT_VOICE
+     * @permission ohos.permission.MANAGE_INTELLIGENT_VOICE
      * @returns { Promise<void> } the promise used to return the result.
      * @throws { BusinessError } 201 - Permission denied.
      * @syscap SystemCapability.AI.IntelligentVoice.Core
@@ -521,124 +536,126 @@ declare namespace intelligentVoice {
      */
     stop(): Promise<void>;
     /**
-     * commit enroll, This method uses an asynchronous callback to return the result.
-     * @permission ohos.permission.MANAGER_INTELLIGENT_VOICE
-     * @param { AsyncCallback<EnrollIntelligentVoiceEngineCallbackInfo> } callback - the callback used to return the result.
+     * Commit enroll, This method uses an asynchronous callback to return the result.
+     * @permission ohos.permission.MANAGE_INTELLIGENT_VOICE
+     * @param { AsyncCallback<void> } callback - the callback used to return the result.
      * @throws { BusinessError } 201 - Permission denied.
+     * @throws { BusinessError } 22700104 - Commit enroll failed.
      * @syscap SystemCapability.AI.IntelligentVoice.Core
      * @since 10
      */
-    commit(callback: AsyncCallback<EnrollIntelligentVoiceEngineCallbackInfo>): void;
+    commit(callback: AsyncCallback<void>): void;
     /**
-     * commit enroll, This method uses a promise to return the result.
-     * @permission ohos.permission.MANAGER_INTELLIGENT_VOICE
-     * @returns { Promise<EnrollIntelligentVoiceEngineCallbackInfo> } the promise used to return the result.
+     * Commit enroll, This method uses a promise to return the result.
+     * @permission ohos.permission.MANAGE_INTELLIGENT_VOICE
+     * @returns { Promise<void> } the promise used to return the result.
      * @throws { BusinessError } 201 - Permission denied.
+     * @throws { BusinessError } 22700104 - Commit enroll failed.
      * @syscap SystemCapability.AI.IntelligentVoice.Core
      * @since 10
      */
-    commit(): Promise<EnrollIntelligentVoiceEngineCallbackInfo>;
+    commit(): Promise<void>;
     /**
      * Sets wakeup hap information, This method uses an asynchronous callback to return the result.
-     * @permission ohos.permission.MANAGER_INTELLIGENT_VOICE
+     * @permission ohos.permission.MANAGE_INTELLIGENT_VOICE
      * @param { WakeupHapInfo } info - info indicates wakeup hap information.
      * @param { AsyncCallback<void> } callback - the callback used to return the result.
      * @throws { BusinessError } 201 - Permission denied.
      * @throws { BusinessError } 401 - if input parameter type or number mismatch.
-     * @throws { BusinessError } 22700102 - if input parameter value error.
+     * @throws { BusinessError } 22700102 - Input parameter value error.
      * @syscap SystemCapability.AI.IntelligentVoice.Core
      * @since 10
      */
     setWakeupHapInfo(info: WakeupHapInfo, callback: AsyncCallback<void>): void;
     /**
      * Sets wakeup hap information, This method uses a promise to return the result.
-     * @permission ohos.permission.MANAGER_INTELLIGENT_VOICE
+     * @permission ohos.permission.MANAGE_INTELLIGENT_VOICE
      * @param { WakeupHapInfo } info - info indicates wakeup hap information.
      * @returns { Promise<void> } the promise used to return the result.
      * @throws { BusinessError } 201 - Permission denied.
      * @throws { BusinessError } 401 - if input parameter type or number mismatch.
-     * @throws { BusinessError } 22700102 - if input parameter value error.
+     * @throws { BusinessError } 22700102 - Input parameter value error.
      * @syscap SystemCapability.AI.IntelligentVoice.Core
      * @since 10
      */
     setWakeupHapInfo(info: WakeupHapInfo): Promise<void>;
     /**
      * Sets sensibility, This method uses an asynchronous callback to return the result.
-     * @permission ohos.permission.MANAGER_INTELLIGENT_VOICE
+     * @permission ohos.permission.MANAGE_INTELLIGENT_VOICE
      * @param { SensibilityType } sensibility - sensibility to set.
      * @param { AsyncCallback<void> } callback - the callback used to return the result.
      * @throws { BusinessError } 201 - Permission denied.
      * @throws { BusinessError } 401 - if input parameter type or number mismatch.
-     * @throws { BusinessError } 22700102 - if input parameter value error.
+     * @throws { BusinessError } 22700102 - Input parameter value error.
      * @syscap SystemCapability.AI.IntelligentVoice.Core
      * @since 10
      */
     setSensibility(sensibility: SensibilityType, callback: AsyncCallback<void>): void;
     /**
      * Sets sensibility, This method uses a promise to return the result.
-     * @permission ohos.permission.MANAGER_INTELLIGENT_VOICE
+     * @permission ohos.permission.MANAGE_INTELLIGENT_VOICE
      * @param { SensibilityType } sensibility - sensibility to set.
      * @returns { Promise<void> } the promise used to return the result.
      * @throws { BusinessError } 201 - Permission denied.
      * @throws { BusinessError } 401 - if input parameter type or number mismatch.
-     * @throws { BusinessError } 22700102 - if input parameter value error.
+     * @throws { BusinessError } 22700102 - Input parameter value error.
      * @syscap SystemCapability.AI.IntelligentVoice.Core
      * @since 10
      */
     setSensibility(sensibility: SensibilityType): Promise<void>;
     /**
      * Sets an intelligent voice parameter. This method uses an asynchronous callback to return the result.
-     * @permission ohos.permission.MANAGER_INTELLIGENT_VOICE
+     * @permission ohos.permission.MANAGE_INTELLIGENT_VOICE
      * @param { string } key - the key of the intelligent voice parameter to set.
      * @param { string } value - the value of the intelligent voice parameter to set.
      * @param { AsyncCallback<void> } callback - the callback used to return the result.
      * @throws { BusinessError } 201 - Permission denied.
      * @throws { BusinessError } 401 - if input parameter type or number mismatch.
-     * @throws { BusinessError } 22700102 - if input parameter value error.
+     * @throws { BusinessError } 22700102 - Input parameter value error.
      * @syscap SystemCapability.AI.IntelligentVoice.Core
      * @since 10
      */
     setParameter(key: string, value: string, callback: AsyncCallback<void>): void;
     /**
      * Sets an intelligent voice parameter. This method uses a promise to return the result.
-     * @permission ohos.permission.MANAGER_INTELLIGENT_VOICE
+     * @permission ohos.permission.MANAGE_INTELLIGENT_VOICE
      * @param { string } key - the key of the intelligent voice parameter to set.
      * @param { string } value - the value of the intelligent voice parameter to set.
      * @returns { Promise<void> } the promise used to return the result.
      * @throws { BusinessError } 201 - Permission denied.
      * @throws { BusinessError } 401 - if input parameter type or number mismatch.
-     * @throws { BusinessError } 22700102 - if input parameter value error.
+     * @throws { BusinessError } 22700102 - Input parameter value error.
      * @syscap SystemCapability.AI.IntelligentVoice.Core
      * @since 10
      */
     setParameter(key: string, value: string): Promise<void>;
     /**
      * Obtains the value of an intelligent voice parameter. This method uses an asynchronous callback to return the query result.
-     * @permission ohos.permission.MANAGER_INTELLIGENT_VOICE
+     * @permission ohos.permission.MANAGE_INTELLIGENT_VOICE
      * @param { string } key - the key of the intelligent voice parameter whose value is to be obtained.
      * @param { AsyncCallback<string> } callback - the callback used to return the value of the intelligent voice parameter.
      * @throws { BusinessError } 201 - Permission denied.
      * @throws { BusinessError } 401 - if input parameter type or number mismatch.
-     * @throws { BusinessError } 22700102 - if input parameter value error.
+     * @throws { BusinessError } 22700102 - Input parameter value error.
      * @syscap SystemCapability.AI.IntelligentVoice.Core
      * @since 10
      */
     getParameter(key: string, callback: AsyncCallback<string>): void;
     /**
      * Obtains the value of an intelligent voice parameter. This method uses an asynchronous callback to return the query result.
-     * @permission ohos.permission.MANAGER_INTELLIGENT_VOICE
+     * @permission ohos.permission.MANAGE_INTELLIGENT_VOICE
      * @param { string } key - the key of the intelligent voice parameter whose value is to be obtained.
      * @returns { Promise<string> } the promise used to return the value of the intelligent voice parameter.
      * @throws { BusinessError } 201 - Permission denied.
      * @throws { BusinessError } 401 - if input parameter type or number mismatch.
-     * @throws { BusinessError } 22700102 - if input parameter value error.
+     * @throws { BusinessError } 22700102 - Input parameter value error.
      * @syscap SystemCapability.AI.IntelligentVoice.Core
      * @since 10
      */
     getParameter(key: string): Promise<string>;
     /**
      * Releases the engine, This method uses an asynchronous callback to return the result.
-     * @permission ohos.permission.MANAGER_INTELLIGENT_VOICE
+     * @permission ohos.permission.MANAGE_INTELLIGENT_VOICE
      * @param { AsyncCallback<void> } callback - the callback used to return the result.
      * @throws { BusinessError } 201 - Permission denied.
      * @syscap SystemCapability.AI.IntelligentVoice.Core
@@ -647,7 +664,7 @@ declare namespace intelligentVoice {
     release(callback: AsyncCallback<void>): void;
     /**
      * Releases the engine, This method uses a promise to return the result.
-     * @permission ohos.permission.MANAGER_INTELLIGENT_VOICE
+     * @permission ohos.permission.MANAGE_INTELLIGENT_VOICE
      * @returns { Promise<void> } the promise used to return the result.
      * @throws { BusinessError } 201 - Permission denied.
      * @syscap SystemCapability.AI.IntelligentVoice.Core
@@ -665,7 +682,7 @@ declare namespace intelligentVoice {
   interface WakeupIntelligentVoiceEngine {
     /**
      * Obtains the supported regions, This method uses an asynchronous callback to return the query result.
-     * @permission ohos.permission.MANAGER_INTELLIGENT_VOICE
+     * @permission ohos.permission.MANAGE_INTELLIGENT_VOICE
      * @param { AsyncCallback<Array<string>> } callback - the callback used to return the supported regions.
      * @throws { BusinessError } 201 - Permission denied.
      * @syscap SystemCapability.AI.IntelligentVoice.Core
@@ -674,7 +691,7 @@ declare namespace intelligentVoice {
     getSupportedRegions(callback: AsyncCallback<Array<string>>): void;
     /**
      * Obtains the supported regions, This method uses a promise to return the query result.
-     * @permission ohos.permission.MANAGER_INTELLIGENT_VOICE
+     * @permission ohos.permission.MANAGE_INTELLIGENT_VOICE
      * @returns { Promise<Array<string>> } the promise used to return the supported regions.
      * @throws { BusinessError } 201 - Permission denied.
      * @syscap SystemCapability.AI.IntelligentVoice.Core
@@ -683,105 +700,105 @@ declare namespace intelligentVoice {
     getSupportedRegions(): Promise<Array<string>>;
     /**
      * Sets wakeup hap information, This method uses an asynchronous callback to return the result.
-     * @permission ohos.permission.MANAGER_INTELLIGENT_VOICE
+     * @permission ohos.permission.MANAGE_INTELLIGENT_VOICE
      * @param { WakeupHapInfo } info - info indicates wakeup hap information.
      * @param { AsyncCallback<void> } callback - the callback used to return the result.
      * @throws { BusinessError } 201 - Permission denied.
      * @throws { BusinessError } 401 - if input parameter type or number mismatch.
-     * @throws { BusinessError } 22700102 - if input parameter value error.
+     * @throws { BusinessError } 22700102 - Input parameter value error.
      * @syscap SystemCapability.AI.IntelligentVoice.Core
      * @since 10
      */
     setWakeupHapInfo(info: WakeupHapInfo, callback: AsyncCallback<void>): void;
     /**
      * Sets wakeup hap information, This method uses a promise to return the result.
-     * @permission ohos.permission.MANAGER_INTELLIGENT_VOICE
+     * @permission ohos.permission.MANAGE_INTELLIGENT_VOICE
      * @param { WakeupHapInfo } info - info indicates wakeup hap information.
      * @returns { Promise<void> } the promise used to return the result.
      * @throws { BusinessError } 201 - Permission denied.
      * @throws { BusinessError } 401 - if input parameter type or number mismatch.
-     * @throws { BusinessError } 22700102 - if input parameter value error.
+     * @throws { BusinessError } 22700102 - Input parameter value error.
      * @syscap SystemCapability.AI.IntelligentVoice.Core
      * @since 10
      */
     setWakeupHapInfo(info: WakeupHapInfo): Promise<void>;
     /**
      * Sets sensibility, This method uses an asynchronous callback to return the result.
-     * @permission ohos.permission.MANAGER_INTELLIGENT_VOICE
+     * @permission ohos.permission.MANAGE_INTELLIGENT_VOICE
      * @param { SensibilityType } sensibility - sensibility to set.
      * @param { AsyncCallback<void> } callback - the callback used to return the result.
      * @throws { BusinessError } 201 - Permission denied.
      * @throws { BusinessError } 401 - if input parameter type or number mismatch.
-     * @throws { BusinessError } 22700102 - if input parameter value error.
+     * @throws { BusinessError } 22700102 - Input parameter value error.
      * @syscap SystemCapability.AI.IntelligentVoice.Core
      * @since 10
      */
     setSensibility(sensibility: SensibilityType, callback: AsyncCallback<void>): void;
     /**
      * Sets sensibility, This method uses a promise to return the result.
-     * @permission ohos.permission.MANAGER_INTELLIGENT_VOICE
+     * @permission ohos.permission.MANAGE_INTELLIGENT_VOICE
      * @param { SensibilityType } sensibility - sensibility to set.
      * @returns { Promise<void> } the promise used to return the result.
      * @throws { BusinessError } 201 - Permission denied.
      * @throws { BusinessError } 401 - if input parameter type or number mismatch.
-     * @throws { BusinessError } 22700102 - if input parameter value error.
+     * @throws { BusinessError } 22700102 - Input parameter value error.
      * @syscap SystemCapability.AI.IntelligentVoice.Core
      * @since 10
      */
     setSensibility(sensibility: SensibilityType): Promise<void>;
     /**
      * Sets an intelligent voice parameter. This method uses an asynchronous callback to return the result.
-     * @permission ohos.permission.MANAGER_INTELLIGENT_VOICE
+     * @permission ohos.permission.MANAGE_INTELLIGENT_VOICE
      * @param { string } key - the key of the intelligent voice parameter to set.
      * @param { string } value - the value of the intelligent voice parameter to set.
      * @param { AsyncCallback<void> } callback - the callback used to return the result.
      * @throws { BusinessError } 201 - Permission denied.
      * @throws { BusinessError } 401 - if input parameter type or number mismatch.
-     * @throws { BusinessError } 22700102 - if input parameter value error.
+     * @throws { BusinessError } 22700102 - Input parameter value error.
      * @syscap SystemCapability.AI.IntelligentVoice.Core
      * @since 10
      */
     setParameter(key: string, value: string, callback: AsyncCallback<void>): void;
     /**
      * Sets an intelligent voice parameter. This method uses a promise to return the result.
-     * @permission ohos.permission.MANAGER_INTELLIGENT_VOICE
+     * @permission ohos.permission.MANAGE_INTELLIGENT_VOICE
      * @param { string } key - the key of the intelligent voice parameter to set.
      * @param { string } value - the value of the intelligent voice parameter to set.
      * @returns { Promise<void> } the promise used to return the result.
      * @throws { BusinessError } 201 - Permission denied.
      * @throws { BusinessError } 401 - if input parameter type or number mismatch.
-     * @throws { BusinessError } 22700102 - if input parameter value error.
+     * @throws { BusinessError } 22700102 - Input parameter value error.
      * @syscap SystemCapability.AI.IntelligentVoice.Core
      * @since 10
      */
     setParameter(key: string, value: string): Promise<void>;
     /**
      * Obtains the value of an intelligent voice parameter. This method uses an asynchronous callback to return the query result.
-     * @permission ohos.permission.MANAGER_INTELLIGENT_VOICE
+     * @permission ohos.permission.MANAGE_INTELLIGENT_VOICE
      * @param { string } key - the key of the intelligent voice parameter whose value is to be obtained.
      * @param { AsyncCallback<string> } callback - the callback used to return the value of the intelligent voice parameter.
      * @throws { BusinessError } 201 - Permission denied.
      * @throws { BusinessError } 401 - if input parameter type or number mismatch.
-     * @throws { BusinessError } 22700102 - if input parameter value error.
+     * @throws { BusinessError } 22700102 - Input parameter value error.
      * @syscap SystemCapability.AI.IntelligentVoice.Core
      * @since 10
      */
     getParameter(key: string, callback: AsyncCallback<string>): void;
     /**
      * Obtains the value of an intelligent voice parameter. This method uses an asynchronous callback to return the query result.
-     * @permission ohos.permission.MANAGER_INTELLIGENT_VOICE
+     * @permission ohos.permission.MANAGE_INTELLIGENT_VOICE
      * @param { string } key - the key of the intelligent voice parameter whose value is to be obtained.
      * @returns { Promise<string> } the promise used to return the value of the intelligent voice parameter.
      * @throws { BusinessError } 201 - Permission denied.
      * @throws { BusinessError } 401 - if input parameter type or number mismatch.
-     * @throws { BusinessError } 22700102 - if input parameter value error.
+     * @throws { BusinessError } 22700102 - Input parameter value error.
      * @syscap SystemCapability.AI.IntelligentVoice.Core
      * @since 10
      */
     getParameter(key: string): Promise<string>;
     /**
      * Releases the engine, This method uses an asynchronous callback to return the result.
-     * @permission ohos.permission.MANAGER_INTELLIGENT_VOICE
+     * @permission ohos.permission.MANAGE_INTELLIGENT_VOICE
      * @param { AsyncCallback<void> } callback - the callback used to return the result.
      * @throws { BusinessError } 201 - Permission denied.
      * @syscap SystemCapability.AI.IntelligentVoice.Core
@@ -790,7 +807,7 @@ declare namespace intelligentVoice {
     release(callback: AsyncCallback<void>): void;
     /**
      * Releases the engine, This method uses a promise to return the result.
-     * @permission ohos.permission.MANAGER_INTELLIGENT_VOICE
+     * @permission ohos.permission.MANAGE_INTELLIGENT_VOICE
      * @returns { Promise<void> } the promise used to return the result.
      * @throws { BusinessError } 201 - Permission denied.
      * @syscap SystemCapability.AI.IntelligentVoice.Core
@@ -800,8 +817,8 @@ declare namespace intelligentVoice {
     /**
      * Subscribes wakeup intelligent voice events. When wakeup intelligent voice events reach,
      * the callback is invoked.
-     * @permission ohos.permission.MANAGER_INTELLIGENT_VOICE
-     * @param { string } type - Type of the event to listen for. Only the wakeupIntelligentVoice event is supported.
+     * @permission ohos.permission.MANAGE_INTELLIGENT_VOICE
+     * @param { 'wakeupIntelligentVoiceEvent' } type - Type of the event to listen for. Only the wakeupIntelligentVoice event is supported.
      * @param { Callback<WakeupIntelligentVoiceEngineCallbackInfo> } callback - the callback invoked when the event is triggered.
      * @throws { BusinessError } 201 - Permission denied.
      * @syscap SystemCapability.AI.IntelligentVoice.Core
@@ -810,13 +827,14 @@ declare namespace intelligentVoice {
     on(type: 'wakeupIntelligentVoiceEvent', callback: Callback<WakeupIntelligentVoiceEngineCallbackInfo>): void;
     /**
      * Unsubscribes wakeup intelligent voice events.
-     * @permission ohos.permission.MANAGER_INTELLIGENT_VOICE
-     * @param { string } type - Type of the event to listen for. Only the wakeupIntelligentVoice event is supported.
+     * @permission ohos.permission.MANAGE_INTELLIGENT_VOICE
+     * @param { 'wakeupIntelligentVoiceEvent' } type - Type of the event to listen for. Only the wakeupIntelligentVoice event is supported.
+     * @param { Callback<WakeupIntelligentVoiceEngineCallbackInfo> } [callback] - the callback invoked when the event is triggered.
      * @throws { BusinessError } 201 - Permission denied.
      * @syscap SystemCapability.AI.IntelligentVoice.Core
      * @since 10
      */
-    off(type: 'wakeupIntelligentVoiceEvent');
+    off(type: 'wakeupIntelligentVoiceEvent', callback?: Callback<WakeupIntelligentVoiceEngineCallbackInfo>): void;
   }
 }
 

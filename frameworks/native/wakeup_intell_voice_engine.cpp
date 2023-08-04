@@ -28,7 +28,7 @@ WakeupIntellVoiceEngine::WakeupIntellVoiceEngine(const WakeupIntelligentVoiceEng
     INTELL_VOICE_LOG_INFO("enter");
 
     descriptor_ = make_unique<WakeupIntelligentVoiceEngineDescriptor>();
-    descriptor_->needApAlgEngine = descriptor.needApAlgEngine;
+    descriptor_->needReconfirm = descriptor.needReconfirm;
     descriptor_->wakeupPhrase = descriptor.wakeupPhrase;
     IntellVoiceManager::GetInstance()->CreateIntellVoiceEngine(INTELL_VOICE_WAKEUP, engine_);
 }

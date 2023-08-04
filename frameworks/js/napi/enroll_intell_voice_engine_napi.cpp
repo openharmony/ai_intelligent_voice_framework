@@ -30,6 +30,13 @@ using namespace std;
 
 namespace OHOS {
 namespace IntellVoiceNapi {
+static const std::string DEFAULT_THROW_ERROR_STR = "Unknown error";
+static const std::map<OHOS::IntellVoice::IntelligentVoiceErrorCode, std::string> THROW_ERROR_MAP = {
+    {INTELLIGENT_VOICE_INVALID_PARAM, "Input value error"},
+    {INTELLIGENT_VOICE_INIT_FAILED, "Init failed"},
+    {INTELLIGENT_VOICE_COMMIT_ENROLL_FAILED, "Commit enroll failed"},
+};
+
 EnrollIntellVoiceEngineNapi::EnrollIntellVoiceEngineNapi()
 {
     INTELL_VOICE_LOG_INFO("enter, %{public}p", this);
@@ -41,6 +48,28 @@ EnrollIntellVoiceEngineNapi::~EnrollIntellVoiceEngineNapi()
     if (wrapper_ != nullptr) {
         napi_delete_reference(env_, wrapper_);
     }
+}
+
+void EnrollIntellVoiceEngineNapi::UpdateAsyncContextInfo(AsyncContext *context)
+{
+    if (context == nullptr) {
+        INTELL_VOICE_LOG_ERROR("context is nullptr");
+        return;
+    }
+
+    if (context->result_ == SUCCESS) {
+        context->status_ = napi_ok;
+        return;
+    }
+
+    context->status_ = napi_invalid_arg;
+    for (auto iter = THROW_ERROR_MAP.begin(); iter != THROW_ERROR_MAP.end(); ++iter) {
+        if (iter->first == context->result_) {
+            context->error_ = iter->second;
+            return;
+        }
+    }
+    context->error_ = DEFAULT_THROW_ERROR_STR;
 }
 
 napi_value EnrollIntellVoiceEngineNapi::New(napi_env env, napi_callback_info info)
@@ -105,7 +134,7 @@ napi_value EnrollIntellVoiceEngineNapi::Constructor(napi_env env)
     napi_property_descriptor properties[] = {
         DECLARE_NAPI_FUNCTION("getSupportedRegions", GetSupportedRegions),
         DECLARE_NAPI_FUNCTION("init", Init),
-        DECLARE_NAPI_FUNCTION("start", Start),
+        DECLARE_NAPI_FUNCTION("enrollForResult", EnrollForResult),
         DECLARE_NAPI_FUNCTION("stop", Stop),
         DECLARE_NAPI_FUNCTION("setSensibility", SetSensibility),
         DECLARE_NAPI_FUNCTION("setWakeupHapInfo", SetWakeupHapInfo),
@@ -178,16 +207,15 @@ napi_value EnrollIntellVoiceEngineNapi::Init(napi_env env, napi_callback_info in
     context->GetCbInfo(env, info, cbIndex, parser);
 
     context->type = ASYNC_WORK_INIT;
-    context->callbackInfo.eventId = INTELLIGENT_VOICE_EVENT_ENROLL_INIT_DONE;
-    context->callbackInfo.errCode = INTELLIGENT_VOICE_INIT_FAILED;
+    context->callbackInfo.result = UNKNOWN_ERROR;
     context->processWork = [&](AsyncContext *asyncContext) {
-        EnrollIntellVoiceEngineNapi *engineNapi = reinterpret_cast<EnrollIntellVoiceEngineNapi *>(
-            asyncContext->engineNapi_);
+        auto engineNapi = reinterpret_cast<EnrollIntellVoiceEngineNapi *>(asyncContext->engineNapi_);
         auto engine = engineNapi->engine_;
         if (engine == nullptr) {
             INTELL_VOICE_LOG_ERROR("get engine instance faild");
             return -1;
         }
+
         return engine->Init(engineNapi->config_);
     };
 
@@ -196,7 +224,7 @@ napi_value EnrollIntellVoiceEngineNapi::Init(napi_env env, napi_callback_info in
     return NapiAsync::AsyncWork(context, "Init", execute, CompleteCallback);
 }
 
-napi_value EnrollIntellVoiceEngineNapi::Start(napi_env env, napi_callback_info info)
+napi_value EnrollIntellVoiceEngineNapi::EnrollForResult(napi_env env, napi_callback_info info)
 {
     INTELL_VOICE_LOG_INFO("enter");
     size_t cbIndex = 1;
@@ -215,8 +243,7 @@ napi_value EnrollIntellVoiceEngineNapi::Start(napi_env env, napi_callback_info i
     context->GetCbInfo(env, info, cbIndex, parser);
 
     context->type = ASYNC_WORK_START;
-    context->callbackInfo.eventId = INTELLIGENT_VOICE_EVENT_ENROLL_COMPLETE;
-    context->callbackInfo.errCode = INTELLIGENT_VOICE_ENROLL_FAILED;
+    context->callbackInfo.result = UNKNOWN_ERROR;
     context->processWork = [&](AsyncContext *asyncContext) {
         EnrollIntellVoiceEngineNapi *engineNapi = reinterpret_cast<EnrollIntellVoiceEngineNapi *>(
             asyncContext->engineNapi_);
@@ -259,7 +286,7 @@ napi_value EnrollIntellVoiceEngineNapi::Stop(napi_env env, napi_callback_info in
             return;
         }
         asyncContext->result_ = engine->Stop();
-        asyncContext->status_ = napi_ok;
+        UpdateAsyncContextInfo(asyncContext);
     };
 
     return NapiAsync::AsyncWork(context, "Stop", execute);
@@ -415,10 +442,10 @@ napi_value EnrollIntellVoiceEngineNapi::Commit(napi_env env, napi_callback_info 
     context->GetCbInfo(env, info, cbIndex, nullptr);
 
     context->type = ASYNC_WORK_COMMIT;
-    context->callbackInfo.eventId = INTELLIGENT_VOICE_EVENT_COMMIT_ENROLL_COMPLETE;
-    context->callbackInfo.errCode = INTELLIGENT_VOICE_COMMIT_ENROLL_FAILED;
-    context->processWork = [](AsyncContext *asyncContext) {
-        auto engine = reinterpret_cast<EnrollIntellVoiceEngineNapi *>(asyncContext->engineNapi_)->engine_;
+    context->callbackInfo.result = UNKNOWN_ERROR;
+    context->processWork = [&](AsyncContext *asyncContext) {
+        auto engineNapi = reinterpret_cast<EnrollIntellVoiceEngineNapi *>(asyncContext->engineNapi_);
+        auto engine = engineNapi->engine_;
         if (engine == nullptr) {
             INTELL_VOICE_LOG_ERROR("get engine instance faild");
             return -1;

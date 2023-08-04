@@ -20,16 +20,21 @@
 #include <unistd.h>
 #include "accesstoken_kit.h"
 #include "ipc_skeleton.h"
+#include "idevmgr_hdi.h"
+#include "audio_system_manager.h"
 #include "intell_voice_log.h"
 #include "system_ability_definition.h"
 #include "intell_voice_service_manager.h"
 #include "common_event_manager.h"
 #include "common_event_support.h"
 
+#define LOG_TAG "IntellVoiceService"
+
 using namespace std;
 using namespace OHOS::AppExecFwk;
 using namespace OHOS::EventFwk;
-#define LOG_TAG "IntellVoiceService"
+using namespace OHOS::AudioStandard;
+using OHOS::HDI::DeviceManager::V1_0::IDeviceManager;
 
 namespace OHOS {
 namespace IntellVoiceEngine {
@@ -80,9 +85,12 @@ int32_t IntellVoiceService::ReleaseIntellVoiceEngine(IntellVoiceEngineType type)
 
 void IntellVoiceService::OnStart(const SystemAbilityOnDemandReason& startReason)
 {
+    LoadIntellVoiceHost();
+
     bool ret = Publish(this);
     if (!ret) {
         INTELL_VOICE_LOG_ERROR("publish failed!");
+        UnloadIntellVoiceHost();
         return;
     }
     CreateSystemEventObserver();
@@ -92,6 +100,14 @@ void IntellVoiceService::OnStart(const SystemAbilityOnDemandReason& startReason)
     INTELL_VOICE_LOG_INFO("publish ok");
 
     reasonId_ = startReason.GetId();
+
+    audioCapturerSourceChangeCallback_ = std::make_shared<AudioCapturerSourceChangeCallback>();
+    auto audioSystemManager = AudioSystemManager::GetInstance();
+    if (audioSystemManager != nullptr) {
+        audioSystemManager->SetAudioCapturerSourceCallback(audioCapturerSourceChangeCallback_);
+    } else {
+        INTELL_VOICE_LOG_ERROR("audioSystemManager is null");
+    }
 }
 
 void IntellVoiceService::OnStop(void)
@@ -105,6 +121,8 @@ void IntellVoiceService::OnStop(void)
     if (systemEventObserver_ != nullptr) {
         systemEventObserver_->Unsubscribe();
     }
+
+    UnloadIntellVoiceHost();
 }
 
 void IntellVoiceService::OnAddSystemAbility(int32_t systemAbilityId, const std::string &deviceId)
@@ -195,6 +213,28 @@ bool IntellVoiceService::VerifyClientPermission(const std::string &permissionNam
         return false;
     }
     return true;
+}
+
+void IntellVoiceService::LoadIntellVoiceHost()
+{
+    auto devmgr = IDeviceManager::Get();
+    if (devmgr != nullptr) {
+        INTELL_VOICE_LOG_ERROR("Get devmgr success");
+        devmgr->LoadDevice("intell_voice_engine_manager_service");
+    } else {
+        INTELL_VOICE_LOG_ERROR("Get devmgr failed");
+    }
+}
+
+void IntellVoiceService::UnloadIntellVoiceHost()
+{
+    auto devmgr = IDeviceManager::Get();
+    if (devmgr != nullptr) {
+        INTELL_VOICE_LOG_ERROR("Get devmgr success");
+        devmgr->UnloadDevice("intell_voice_engine_manager_service");
+    } else {
+        INTELL_VOICE_LOG_ERROR("Get devmgr failed");
+    }
 }
 
 void IntellVoiceService::RegisterPermissionCallback(const std::string &permissionName)

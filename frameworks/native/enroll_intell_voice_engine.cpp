@@ -116,7 +116,7 @@ int32_t EnrollIntellVoiceEngine::SetWakeupHapInfo(const WakeupHapInfo &info)
         return -1;
     }
     ret = engine_->SetParameter("wakeup_bundle_name=" + info.bundleName);
-    ret = engine_->SetParameter("wakeup_ability_name=" + info.abilityName);
+    ret += engine_->SetParameter("wakeup_ability_name=" + info.abilityName);
     return ret;
 }
 
