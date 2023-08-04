@@ -49,7 +49,7 @@ void EngineEventCallbackNapi::OnEvent(const IntellVoiceEngineCallBackEvent &even
         return;
     }
 
-    if(event.msgId != HDI::IntelligentVoice::Engine::V1_0::INTELL_VOICE_ENGINE_MSG_RECOGNIZE_COMPLETE) {
+    if (event.msgId != HDI::IntelligentVoice::Engine::V1_0::INTELL_VOICE_ENGINE_MSG_RECOGNIZE_COMPLETE) {
         INTELL_VOICE_LOG_ERROR("error msgId");
         return;
     }

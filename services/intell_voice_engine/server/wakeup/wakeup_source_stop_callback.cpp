@@ -12,9 +12,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "intell_voice_log.h"
 #include "wakeup_source_stop_callback.h"
+#include "intell_voice_log.h"
 #include "intell_voice_service_manager.h"
 
 #define LOG_TAG "WakeUpSourceStopCallback"

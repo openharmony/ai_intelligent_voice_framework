@@ -29,8 +29,8 @@ void AudioCapturerSourceChangeCallback::OnCapturerState(bool isActive)
         INTELL_VOICE_LOG_ERROR("manager is nullptr");
         return;
     }
-    if(isActive) {
-       manager->StopDetection();
+    if (isActive) {
+        manager->StopDetection();
     } else {
         manager->StartDetection();
     }
