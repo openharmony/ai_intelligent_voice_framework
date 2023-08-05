@@ -23,7 +23,7 @@ namespace OHOS {
 namespace IntellVoiceEngine {
 void AudioCapturerSourceChangeCallback::OnCapturerState(bool isActive)
 {
-    INTELL_VOICE_LOG_INFO("enter");
+    INTELL_VOICE_LOG_INFO("enter, isActive:%{public}d", isActive);
     const auto &manager = IntellVoiceServiceManager::GetInstance();
     if (manager == nullptr) {
         INTELL_VOICE_LOG_ERROR("manager is nullptr");

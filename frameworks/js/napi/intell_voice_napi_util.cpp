@@ -63,6 +63,17 @@ napi_value SetValue(napi_env env, const int32_t &value)
     return result;
 }
 
+napi_value SetValue(napi_env env, const uint32_t &value)
+{
+    napi_value result = nullptr;
+    napi_status status = napi_create_uint32(env, value, &result);
+    if (status != napi_ok || result == nullptr) {
+        INTELL_VOICE_LOG_ERROR("get js value fail");
+        return nullptr;
+    }
+    return result;
+}
+
 napi_value SetValue(napi_env env, const string &value)
 {
     napi_value result = nullptr;

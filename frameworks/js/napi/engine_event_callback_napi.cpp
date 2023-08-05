@@ -54,11 +54,12 @@ void EngineEventCallbackNapi::OnEvent(const IntellVoiceEngineCallBackEvent &even
         return;
     }
 
-    EngineCallBackInfo cbInfo = {INTELLIGENT_VOICE_EVENT_RECOGNIZE_COMPLETE, event.result, event.info};
+    EngineCallBackInfo cbInfo = {INTELLIGENT_VOICE_EVENT_RECOGNIZE_COMPLETE,
+        event.result == 0 ? true : false, event.info};
 
-    INTELL_VOICE_LOG_INFO("OnEvent EngineCallBackInfo: msgId: %{public}d, errCode: %{public}d, context: %{public}s",
-        cbInfo.msgId,
-        cbInfo.errCode,
+    INTELL_VOICE_LOG_INFO("OnEvent EngineCallBackInfo: eventId: %{public}d, isSuccess: %{public}u, context: %{public}s",
+        cbInfo.eventId,
+        cbInfo.isSuccess,
         cbInfo.context.c_str());
 
     return OnEventUvCallback(cbInfo);
@@ -117,8 +118,8 @@ void GetJsCallbackInfo(const napi_env &env, const EngineCallBackInfo &callbackIn
         return;
     }
 
-    napi_set_named_property(env, jsObj, "msgId", SetValue(env, callbackInfo.msgId));
-    napi_set_named_property(env, jsObj, "errCode", SetValue(env, callbackInfo.errCode));
+    napi_set_named_property(env, jsObj, "eventId", SetValue(env, callbackInfo.eventId));
+    napi_set_named_property(env, jsObj, "isSuccess", SetValue(env, callbackInfo.isSuccess));
     napi_set_named_property(env, jsObj, "context", SetValue(env, callbackInfo.context));
 }
 }  // namespace IntellVoiceNapi
