@@ -27,8 +27,8 @@ using OHOS::IntellVoiceEngine::IIntellVoiceEngineEventCallback;
 using OHOS::IntellVoiceEngine::IntellVoiceEngineCallBackEvent;
 
 struct EngineCallBackInfo {
-    int32_t msgId;
-    int32_t errCode;
+    int32_t eventId;
+    bool isSuccess;
     std::string context;
 };
 
