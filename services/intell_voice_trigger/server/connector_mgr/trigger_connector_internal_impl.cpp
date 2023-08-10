@@ -25,13 +25,12 @@ using namespace OHOS::HDI::IntelligentVoice::Trigger::V1_0;
 
 namespace OHOS {
 namespace IntellVoiceTrigger {
-TriggerConnectorInternalImpl::TriggerConnectorInternalImpl()
+TriggerConnectorInternalImpl::TriggerConnectorInternalImpl() : servmgr_(IServiceManager::Get())
 {
     OHOS::IntellVoiceUtils::MemoryGuard memoryGuard;
     IntellVoiceTriggerAdapterDsecriptor descriptor;
     descriptor.adapterName = "primary";
 
-    servmgr_ = IServiceManager::Get();
     if (servmgr_ != nullptr) {
         auto connector = sptr<TriggerConnector>(new (std::nothrow) TriggerConnector(descriptor));
         if (connector != nullptr) {

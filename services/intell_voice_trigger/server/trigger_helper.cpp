@@ -96,7 +96,10 @@ void TriggerModelData::Clear()
 
 TriggerHelper::TriggerHelper()
 {
-    moduleDesc_ = TriggerConnectorMgr::GetInstance()->ListConnectorModuleDescriptors();
+    const auto &connectMgr = TriggerConnectorMgr::GetInstance();
+    if (connectMgr != nullptr) {
+        moduleDesc_ = connectMgr->ListConnectorModuleDescriptors();
+    }
 }
 
 TriggerHelper::~TriggerHelper()

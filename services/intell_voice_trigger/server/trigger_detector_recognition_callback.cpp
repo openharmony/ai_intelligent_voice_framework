@@ -35,7 +35,6 @@ void TriggerDetectorRecognitionCallback::OnGenericTriggerDetected(
 
     std::shared_ptr<DetectorEvent> eventPayLoad = std::make_shared<DetectorEvent>(
         event->audioFormat_, event->data_);
-
     if (eventPayLoad == nullptr) {
         INTELL_VOICE_LOG_ERROR("event or callback_ is nullptr");
         return;

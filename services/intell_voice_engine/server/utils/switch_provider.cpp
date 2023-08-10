@@ -17,13 +17,22 @@
 #include "iservice_registry.h"
 #include "system_ability_definition.h"
 
-using namespace OHOS::IntellVoiceUtils;
 #define LOG_TAG "SwitchProvider"
+
+using namespace OHOS::IntellVoiceUtils;
 
 namespace OHOS {
 namespace IntellVoiceEngine {
 const std::string SWITCH_URI_PROXY = "datashare:///com.ohos.settingsdata/entry/settingsdata/SETTINGSDATA?Proxy=true";
 const std::string SWITCH_KEY = "intell_voice_trigger_enabled";
+
+namespace {
+Uri AssembleUri(const std::string& key)
+{
+    Uri uri(SWITCH_URI_PROXY + "&key=" + key);
+    return uri;
+}
+}
 
 SwitchProvider::SwitchProvider()
 {
@@ -99,12 +108,6 @@ bool SwitchProvider::QuerySwitchStatus()
     } else {
         return false;
     }
-}
-
-Uri SwitchProvider::AssembleUri(const std::string& key)
-{
-    Uri uri(SWITCH_URI_PROXY + "&key=" + key);
-    return uri;
 }
 }  // namespace IntellVoice
 }  // namespace OHOS

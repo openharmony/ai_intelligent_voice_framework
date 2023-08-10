@@ -123,10 +123,5 @@ void MsgHandleThread::Run()
         }
     }
 }
-
-std::string MsgHandleThread::ToString() const
-{
-    return "";
-}
 }
 }

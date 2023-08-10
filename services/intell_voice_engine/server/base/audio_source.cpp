@@ -26,6 +26,7 @@ using namespace OHOS::IntellVoiceUtils;
 namespace OHOS {
 namespace IntellVoiceEngine {
 static const std::string PCM_DIR = "/data/data/intell_voice/pcm_data/";
+static const std::string CACHE_PATH = "/data/data/intell_voice/cache/";
 
 AudioSource::AudioSource(uint32_t minBufferSize, uint32_t bufferCnt,
     std::unique_ptr<AudioSourceListener> listener, const OHOS::AudioStandard::AudioCapturerOptions &capturerOptions)
@@ -38,7 +39,7 @@ AudioSource::AudioSource(uint32_t minBufferSize, uint32_t bufferCnt,
     capturerOptions_.capturerInfo.sourceType = capturerOptions.capturerInfo.sourceType;
     capturerOptions_.capturerInfo.capturerFlags = capturerOptions.capturerInfo.capturerFlags;
 
-    audioCapturer_ = AudioCapturer::Create(capturerOptions_);
+    audioCapturer_ = AudioCapturer::Create(capturerOptions_, CACHE_PATH);
     if (audioCapturer_ == nullptr) {
         INTELL_VOICE_LOG_ERROR("create audio capturer failed");
     }
@@ -121,6 +122,10 @@ bool AudioSource::Read()
 {
     size_t bytesRead = 0;
     while (bytesRead < minBufferSize_) {
+        if (!isReading_.load()) {
+            INTELL_VOICE_LOG_WARN("stop to read");
+            break;
+        }
         int32_t len = audioCapturer_->Read(*(buffer_.get() + bytesRead), minBufferSize_ - bytesRead, 0);
         if (len >= 0) {
             bytesRead += static_cast<uint32_t>(len);

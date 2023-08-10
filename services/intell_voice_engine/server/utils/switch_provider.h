@@ -29,9 +29,6 @@ public:
     bool QuerySwitchStatus();
 
 private:
-    Uri AssembleUri(const std::string& key);
-
-private:
     SwitchProvider();
     ~SwitchProvider();
 

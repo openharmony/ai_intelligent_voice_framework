@@ -36,6 +36,7 @@ napi_ref IntellVoiceManagerNapi::sensibilityTypeRef_ = nullptr;
 napi_ref IntellVoiceManagerNapi::enrollEventTypeRef_ = nullptr;
 napi_ref IntellVoiceManagerNapi::wakeupEventTypeRef_ = nullptr;
 napi_ref IntellVoiceManagerNapi::errorCodeRef_ = nullptr;
+napi_ref IntellVoiceManagerNapi::enrollResultRef_ = nullptr;
 
 static const std::map<std::string, OHOS::IntellVoice::ServiceChangeType> SERVICE_CHANGE_TYPE_MAP = {
     {"SERVICE_UNAVAILABLE", SERVICE_UNAVAILABLE},
@@ -70,6 +71,17 @@ static const std::map<std::string, OHOS::IntellVoice::IntelligentVoiceErrorCode>
     {"INTELLIGENT_VOICE_INVALID_PARAM", INTELLIGENT_VOICE_INVALID_PARAM},
     {"INTELLIGENT_VOICE_INIT_FAILED", INTELLIGENT_VOICE_INIT_FAILED},
     {"INTELLIGENT_VOICE_COMMIT_ENROLL_FAILED", INTELLIGENT_VOICE_COMMIT_ENROLL_FAILED},
+};
+
+static const std::map<std::string, OHOS::IntellVoice::EnrollResult> ENROLL_RESULT_MAP = {
+    {"SUCCESS", OHOS::IntellVoice::EnrollResult::SUCCESS},
+    {"VPR_TRAIN_FAILED", OHOS::IntellVoice::EnrollResult::VPR_TRAIN_FAILED},
+    {"WAKEUP_PHRASE_NOT_MATCH", OHOS::IntellVoice::EnrollResult::WAKEUP_PHRASE_NOT_MATCH},
+    {"TOO_NOISY", OHOS::IntellVoice::EnrollResult::TOO_NOISY},
+    {"TOO_LOUD", OHOS::IntellVoice::EnrollResult::TOO_LOUD},
+    {"INTERVAL_LARGE", OHOS::IntellVoice::EnrollResult::INTERVAL_LARGE},
+    {"DIFFERENT_PERSON", OHOS::IntellVoice::EnrollResult::DIFFERENT_PERSON},
+    {"UNKNOWN_ERROR", OHOS::IntellVoice::EnrollResult::UNKNOWN_ERROR},
 };
 
 IntellVoiceManagerNapi::IntellVoiceManagerNapi()
@@ -164,6 +176,7 @@ napi_value IntellVoiceManagerNapi::Export(napi_env env, napi_value exports)
         DECLARE_NAPI_PROPERTY("WakeupIntelligentVoiceEventType", CreatePropertyBase(env, WAKEUP_EVENT_TYPE_MAP,
             wakeupEventTypeRef_)),
         DECLARE_NAPI_PROPERTY("IntelligentVoiceErrorCode", CreatePropertyBase(env, ERROR_CODE_MAP, errorCodeRef_)),
+        DECLARE_NAPI_PROPERTY("EnrollResult", CreatePropertyBase(env, ENROLL_RESULT_MAP, enrollResultRef_)),
     };
 
     status = napi_define_class(env,
@@ -329,8 +342,6 @@ template<typename T> napi_value IntellVoiceManagerNapi::CreatePropertyBase(napi_
 {
     napi_value result = nullptr;
     napi_status status;
-    string propName;
-    int32_t enumValue;
     napi_value enumNapiValue;
 
     status = napi_create_object(env, &result);
@@ -341,8 +352,8 @@ template<typename T> napi_value IntellVoiceManagerNapi::CreatePropertyBase(napi_
     }
 
     for (const auto &iter : propertyMap) {
-        propName = iter.first;
-        enumValue = iter.second;
+        std::string propName = iter.first;
+        int32_t enumValue = iter.second;
 
         enumNapiValue = SetValue(env, enumValue);
         status = napi_set_named_property(env, result, propName.c_str(), enumNapiValue);
