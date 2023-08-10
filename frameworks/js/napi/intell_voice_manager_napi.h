@@ -57,6 +57,7 @@ private:
     static napi_ref enrollEventTypeRef_;
     static napi_ref wakeupEventTypeRef_;
     static napi_ref errorCodeRef_;
+    static napi_ref enrollResultRef_;
 };
 }  // namespace IntellVoiceNapi
 }  // namespace OHOS

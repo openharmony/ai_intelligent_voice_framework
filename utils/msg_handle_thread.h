@@ -32,8 +32,6 @@ public:
     bool SendMsg(std::shared_ptr<Message> msg);
     bool SendSynMsg(std::shared_ptr<Message> msg);
     void SetCallbackThread(MsgHandleThread *tmpCallbackThread);
-    // for debug
-    std::string ToString() const;
 
 protected:
     // subclass should override this function most time

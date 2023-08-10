@@ -53,6 +53,7 @@ void TriggerManager::UpdateModel(std::shared_ptr<GenericTriggerModel> model)
 {
     if (service_ == nullptr) {
         INTELL_VOICE_LOG_ERROR("service_ is nullptr");
+        return;
     }
     service_->UpdateGenericTriggerModel(model);
 }
@@ -61,6 +62,7 @@ void TriggerManager::DeleteModel(int32_t uuid)
 {
     if (service_ == nullptr) {
         INTELL_VOICE_LOG_ERROR("service_ is nullptr");
+        return;
     }
     service_->DeleteGenericTriggerModel(uuid);
 }
