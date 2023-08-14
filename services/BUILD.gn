@@ -56,6 +56,7 @@ ohos_shared_library("intell_voice_server") {
   sources = [
     "intell_voice_engine/server/base/adapter_callback_service.cpp",
     "intell_voice_engine/server/base/audio_capturer_source_change_callback.cpp",
+    "intell_voice_engine/server/base/audio_debug.cpp",
     "intell_voice_engine/server/base/audio_source.cpp",
     "intell_voice_engine/server/base/engine_base.cpp",
     "intell_voice_engine/server/base/engine_factory.cpp",

@@ -48,6 +48,8 @@ ohos_unittest("client_unit_test") {
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
   ]
+
+  resource_config_file = "resource/ohos_test.xml"
 }
 
 ohos_unittest("trigger_unit_test") {

@@ -32,7 +32,7 @@ public:
     virtual ~TriggerModel();
 
     bool SetData(const uint8_t *data, uint32_t size);
-    bool SetData(std::vector<uint8_t> data);
+    bool SetData(std::vector<uint8_t> &data);
     void Print();
 
     int32_t GetUuid() const

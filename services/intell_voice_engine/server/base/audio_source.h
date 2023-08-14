@@ -19,9 +19,9 @@
 #include <functional>
 #include <thread>
 #include <atomic>
-#include <fstream>
 #include "audio_capturer.h"
 #include "audio_info.h"
+#include "audio_debug.h"
 
 namespace OHOS {
 namespace IntellVoiceEngine {
@@ -35,7 +35,7 @@ struct AudioSourceListener {
     OnBufferEndCb bufferEndCb_;
 };
 
-class AudioSource {
+class AudioSource : private AudioDebug {
 public:
     AudioSource(uint32_t minBufferSize, uint32_t bufferCnt, std::unique_ptr<AudioSourceListener> listener,
         const OHOS::AudioStandard::AudioCapturerOptions &capturerOptions);
@@ -55,7 +55,6 @@ private:
     std::thread readThread_;
     OHOS::AudioStandard::AudioCapturerOptions capturerOptions_;
     std::shared_ptr<uint8_t> buffer_ = nullptr;
-    std::unique_ptr<std::ofstream> fileStream_ = nullptr;
     std::unique_ptr<OHOS::AudioStandard::AudioCapturer> audioCapturer_ = nullptr;
 };
 }
