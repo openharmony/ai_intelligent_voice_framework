@@ -43,7 +43,7 @@ bool TriggerModel::SetData(const uint8_t *data, uint32_t size)
     return true;
 }
 
-bool TriggerModel::SetData(std::vector<uint8_t>data)
+bool TriggerModel::SetData(std::vector<uint8_t> &data)
 {
     if (data.size() == 0) {
         INTELL_VOICE_LOG_ERROR("size is invalid");

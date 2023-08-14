@@ -327,6 +327,7 @@ bool WakeupEngine::StartAudioSource()
     if (!audioSource_->Start()) {
         INTELL_VOICE_LOG_ERROR("start capturer failed");
         audioSource_ = nullptr;
+        return false;
     }
 
     return true;

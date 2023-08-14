@@ -15,17 +15,16 @@
 #include "audio_source.h"
 
 #include "securec.h"
-#include "time_util.h"
 #include "intell_voice_log.h"
 #include "memory_guard.h"
 
+#define LOG_TAG "AudioSource"
+
 using namespace OHOS::AudioStandard;
 using namespace OHOS::IntellVoiceUtils;
-#define LOG_TAG "AudioSource"
 
 namespace OHOS {
 namespace IntellVoiceEngine {
-static const std::string PCM_DIR = "/data/data/intell_voice/pcm_data/";
 static const std::string CACHE_PATH = "/data/data/intell_voice/cache/";
 
 AudioSource::AudioSource(uint32_t minBufferSize, uint32_t bufferCnt,
@@ -74,17 +73,11 @@ bool AudioSource::Start()
         return false;
     }
 
-    auto path = PCM_DIR + TimeUtil::GetCurrTime() + ".pcm";
-    fileStream_ = std::make_unique<std::ofstream>(path);
-    if (fileStream_ == nullptr) {
-        INTELL_VOICE_LOG_ERROR("open debug record file failed");
-        return false;
-    }
+    CreateAudioDebugFile();
 
     if (!audioCapturer_->Start()) {
         INTELL_VOICE_LOG_ERROR("start audio capturer failed");
-        fileStream_->close();
-        fileStream_ = nullptr;
+        DestroyAudioDebugFile();
         return false;
     }
 
@@ -140,9 +133,7 @@ bool AudioSource::Read()
         return false;
     }
 
-    if (fileStream_ != nullptr) {
-        fileStream_->write(reinterpret_cast<char *>(buffer_.get()), minBufferSize_);
-    }
+    WriteData(reinterpret_cast<char *>(buffer_.get()), minBufferSize_);
 
     if (listener_ != nullptr) {
         listener_->readBufferCb_(buffer_.get(), minBufferSize_);
@@ -163,10 +154,7 @@ void AudioSource::Stop()
     isReading_.store(false);
     readThread_.join();
 
-    if (fileStream_ != nullptr) {
-        fileStream_->close();
-        fileStream_ = nullptr;
-    }
+    DestroyAudioDebugFile();
 
     if (audioCapturer_ == nullptr) {
         INTELL_VOICE_LOG_ERROR("audioCapturer_ is nullptr");
