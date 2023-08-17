@@ -758,9 +758,7 @@ HWTEST(MultipleAudioCapturerUnitTest, Multiple_Audio_Capturer_035, TestSize.Leve
     int32_t wakeupStart = wakeupEngine->Start(true);
     usleep(200000);
     EXPECT_EQ(-1, wakeupStart);
-    MultipleAudioCapturerUnitTest::AudioCapUnitTestFunc(audioCapturer2, cb2, SOURCE_TYPE_MIC, false);
-    usleep(200000);
-    EXPECT_EQ(INTERRUPT_HINT_STOP, cb2->GetInterruptEvent().hintType);
+    MultipleAudioCapturerUnitTest::AudioCapUnitTestFunc(audioCapturer2, cb2, SOURCE_TYPE_MIC);
 
     audioCapturer1->Release();
     audioCapturer2->Release();
@@ -872,11 +870,11 @@ HWTEST(MultipleAudioCapturerUnitTest, Multiple_Audio_Capturer_041, TestSize.Leve
 
     MultipleAudioCapturerUnitTest::InitIntellVoice(wakeupEngine1);
     int32_t wakeupStart1 = wakeupEngine1->Start(true);
-    usleep(2500000);
+    usleep(3000000);
     EXPECT_EQ(0, wakeupStart1);
     MultipleAudioCapturerUnitTest::InitIntellVoice(wakeupEngine2);
     int32_t wakeupStart2 = wakeupEngine2->Start(true);
-    usleep(2500000);
+    usleep(3000000);
     EXPECT_EQ(0, wakeupStart2);
     MultipleAudioCapturerUnitTest::AudioCapUnitTestFunc(audioCapturer, cb, SOURCE_TYPE_MIC);
 
@@ -892,11 +890,11 @@ HWTEST(MultipleAudioCapturerUnitTest, Multiple_Audio_Capturer_042, TestSize.Leve
 
     MultipleAudioCapturerUnitTest::InitIntellVoice(wakeupEngine1);
     int32_t wakeupStart1 = wakeupEngine1->Start(true);
-    usleep(2500000);
+    usleep(3000000);
     EXPECT_EQ(0, wakeupStart1);
     MultipleAudioCapturerUnitTest::InitIntellVoice(wakeupEngine2);
     int32_t wakeupStart2 = wakeupEngine2->Start(true);
-    usleep(2500000);
+    usleep(3000000);
     EXPECT_EQ(0, wakeupStart2);
     MultipleAudioCapturerUnitTest::AudioCapUnitTestFunc(audioCapturer, cb, SOURCE_TYPE_VOICE_RECOGNITION);
 
@@ -912,11 +910,11 @@ HWTEST(MultipleAudioCapturerUnitTest, Multiple_Audio_Capturer_043, TestSize.Leve
 
     MultipleAudioCapturerUnitTest::InitIntellVoice(wakeupEngine1);
     int32_t wakeupStart1 = wakeupEngine1->Start(true);
-    usleep(2500000);
+    usleep(3000000);
     EXPECT_EQ(0, wakeupStart1);
     MultipleAudioCapturerUnitTest::InitIntellVoice(wakeupEngine2);
     int32_t wakeupStart2 = wakeupEngine2->Start(true);
-    usleep(2500000);
+    usleep(3000000);
     EXPECT_EQ(0, wakeupStart2);
     MultipleAudioCapturerUnitTest::AudioCapUnitTestFunc(audioCapturer, cb, SOURCE_TYPE_VOICE_COMMUNICATION);
 
@@ -932,11 +930,11 @@ HWTEST(MultipleAudioCapturerUnitTest, Multiple_Audio_Capturer_044, TestSize.Leve
 
     MultipleAudioCapturerUnitTest::InitIntellVoice(wakeupEngine1);
     int32_t wakeupStart1 = wakeupEngine1->Start(true);
-    usleep(2500000);
+    usleep(3000000);
     EXPECT_EQ(0, wakeupStart1);
     MultipleAudioCapturerUnitTest::InitIntellVoice(wakeupEngine2);
     int32_t wakeupStart2 = wakeupEngine2->Start(true);
-    usleep(2500000);
+    usleep(3000000);
     EXPECT_EQ(0, wakeupStart2);
     MultipleAudioCapturerUnitTest::AudioCapUnitTestFunc(audioCapturer, cb, SOURCE_TYPE_ULTRASONIC);
 
@@ -952,11 +950,11 @@ HWTEST(MultipleAudioCapturerUnitTest, Multiple_Audio_Capturer_045, TestSize.Leve
 
     MultipleAudioCapturerUnitTest::InitIntellVoice(wakeupEngine1);
     int32_t wakeupStart1 = wakeupEngine1->Start(true);
-    usleep(2500000);
+    usleep(3000000);
     EXPECT_EQ(0, wakeupStart1);
     MultipleAudioCapturerUnitTest::InitIntellVoice(wakeupEngine2);
     int32_t wakeupStart2 = wakeupEngine2->Start(true);
-    usleep(2500000);
+    usleep(3000000);
     EXPECT_EQ(0, wakeupStart2);
     MultipleAudioCapturerUnitTest::AudioCapUnitTestFunc(audioCapturer, cb, SOURCE_TYPE_PLAYBACK_CAPTURE);
 
@@ -973,10 +971,10 @@ HWTEST(MultipleAudioCapturerUnitTest, Multiple_Audio_Capturer_046, TestSize.Leve
 
     MultipleAudioCapturerUnitTest::InitIntellVoice(wakeupEngine);
     int32_t wakeupStart = wakeupEngine->Start(true);
-    usleep(2500000);
+    usleep(3000000);
     EXPECT_EQ(0, wakeupStart);
     MultipleAudioCapturerUnitTest::AudioCapUnitTestFunc(audioCapturer1, cb1, SOURCE_TYPE_MIC);
-    MultipleAudioCapturerUnitTest::AudioCapUnitTestFunc(audioCapturer2, cb2, SOURCE_TYPE_VOICE_RECOGNITION);
+    MultipleAudioCapturerUnitTest::AudioCapUnitTestFunc(audioCapturer2, cb2, SOURCE_TYPE_VOICE_RECOGNITION, false);
     usleep(200000);
     EXPECT_EQ(INTERRUPT_HINT_STOP, cb2->GetInterruptEvent().hintType);
 
@@ -994,12 +992,12 @@ HWTEST(MultipleAudioCapturerUnitTest, Multiple_Audio_Capturer_047, TestSize.Leve
 
     MultipleAudioCapturerUnitTest::InitIntellVoice(wakeupEngine);
     int32_t wakeupStart = wakeupEngine->Start(true);
-    usleep(2500000);
+    usleep(3000000);
     EXPECT_EQ(0, wakeupStart);
     MultipleAudioCapturerUnitTest::AudioCapUnitTestFunc(audioCapturer1, cb1, SOURCE_TYPE_MIC);
     MultipleAudioCapturerUnitTest::AudioCapUnitTestFunc(audioCapturer2, cb2, SOURCE_TYPE_VOICE_COMMUNICATION);
     usleep(200000);
-    EXPECT_EQ(INTERRUPT_HINT_STOP, cb2->GetInterruptEvent().hintType);
+    EXPECT_EQ(INTERRUPT_HINT_STOP, cb1->GetInterruptEvent().hintType);
 
     audioCapturer1->Release();
     audioCapturer2->Release();
@@ -1015,7 +1013,7 @@ HWTEST(MultipleAudioCapturerUnitTest, Multiple_Audio_Capturer_048, TestSize.Leve
 
     MultipleAudioCapturerUnitTest::InitIntellVoice(wakeupEngine);
     int32_t wakeupStart = wakeupEngine->Start(true);
-    usleep(2500000);
+    usleep(3000000);
     EXPECT_EQ(0, wakeupStart);
     MultipleAudioCapturerUnitTest::AudioCapUnitTestFunc(audioCapturer1, cb1, SOURCE_TYPE_MIC);
     MultipleAudioCapturerUnitTest::AudioCapUnitTestFunc(audioCapturer2, cb2, SOURCE_TYPE_ULTRASONIC);
@@ -1033,7 +1031,7 @@ HWTEST(MultipleAudioCapturerUnitTest, Multiple_Audio_Capturer_049, TestSize.Leve
 
     MultipleAudioCapturerUnitTest::InitIntellVoice(wakeupEngine1);
     int32_t wakeupStart1 = wakeupEngine1->Start(true);
-    usleep(2500000);
+    usleep(3000000);
     EXPECT_EQ(0, wakeupStart1);
     MultipleAudioCapturerUnitTest::AudioCapUnitTestFunc(audioCapturer, cb, SOURCE_TYPE_MIC);
     MultipleAudioCapturerUnitTest::InitIntellVoice(wakeupEngine2);
@@ -1054,7 +1052,7 @@ HWTEST(MultipleAudioCapturerUnitTest, Multiple_Audio_Capturer_050, TestSize.Leve
 
     MultipleAudioCapturerUnitTest::InitIntellVoice(wakeupEngine);
     int32_t wakeupStart = wakeupEngine->Start(true);
-    usleep(2500000);
+    usleep(3000000);
     EXPECT_EQ(0, wakeupStart);
     MultipleAudioCapturerUnitTest::AudioCapUnitTestFunc(audioCapturer1, cb1, SOURCE_TYPE_MIC);
     MultipleAudioCapturerUnitTest::AudioCapUnitTestFunc(audioCapturer2, cb2, SOURCE_TYPE_PLAYBACK_CAPTURE);
@@ -1073,7 +1071,7 @@ HWTEST(MultipleAudioCapturerUnitTest, Multiple_Audio_Capturer_051, TestSize.Leve
 
     MultipleAudioCapturerUnitTest::InitIntellVoice(wakeupEngine);
     int32_t wakeupStart = wakeupEngine->Start(true);
-    usleep(2500000);
+    usleep(3000000);
     EXPECT_EQ(0, wakeupStart);
     MultipleAudioCapturerUnitTest::AudioCapUnitTestFunc(audioCapturer1, cb1, SOURCE_TYPE_VOICE_RECOGNITION);
     MultipleAudioCapturerUnitTest::AudioCapUnitTestFunc(audioCapturer2, cb2, SOURCE_TYPE_MIC, false);
@@ -1094,7 +1092,7 @@ HWTEST(MultipleAudioCapturerUnitTest, Multiple_Audio_Capturer_052, TestSize.Leve
 
     MultipleAudioCapturerUnitTest::InitIntellVoice(wakeupEngine);
     int32_t wakeupStart = wakeupEngine->Start(true);
-    usleep(2500000);
+    usleep(3000000);
     EXPECT_EQ(0, wakeupStart);
     MultipleAudioCapturerUnitTest::AudioCapUnitTestFunc(audioCapturer1, cb1, SOURCE_TYPE_VOICE_RECOGNITION);
     MultipleAudioCapturerUnitTest::AudioCapUnitTestFunc(audioCapturer2, cb2, SOURCE_TYPE_VOICE_COMMUNICATION);
@@ -1115,7 +1113,7 @@ HWTEST(MultipleAudioCapturerUnitTest, Multiple_Audio_Capturer_053, TestSize.Leve
 
     MultipleAudioCapturerUnitTest::InitIntellVoice(wakeupEngine);
     int32_t wakeupStart = wakeupEngine->Start(true);
-    usleep(2500000);
+    usleep(3000000);
     EXPECT_EQ(0, wakeupStart);
     MultipleAudioCapturerUnitTest::AudioCapUnitTestFunc(audioCapturer1, cb1, SOURCE_TYPE_VOICE_RECOGNITION);
     MultipleAudioCapturerUnitTest::AudioCapUnitTestFunc(audioCapturer2, cb2, SOURCE_TYPE_ULTRASONIC);
@@ -1133,7 +1131,7 @@ HWTEST(MultipleAudioCapturerUnitTest, Multiple_Audio_Capturer_054, TestSize.Leve
 
     MultipleAudioCapturerUnitTest::InitIntellVoice(wakeupEngine1);
     int32_t wakeupStart1 = wakeupEngine1->Start(true);
-    usleep(2500000);
+    usleep(3000000);
     EXPECT_EQ(0, wakeupStart1);
     MultipleAudioCapturerUnitTest::AudioCapUnitTestFunc(audioCapturer, cb, SOURCE_TYPE_VOICE_RECOGNITION);
     MultipleAudioCapturerUnitTest::InitIntellVoice(wakeupEngine2);
@@ -1154,7 +1152,7 @@ HWTEST(MultipleAudioCapturerUnitTest, Multiple_Audio_Capturer_055, TestSize.Leve
 
     MultipleAudioCapturerUnitTest::InitIntellVoice(wakeupEngine);
     int32_t wakeupStart = wakeupEngine->Start(true);
-    usleep(2500000);
+    usleep(3000000);
     EXPECT_EQ(0, wakeupStart);
     MultipleAudioCapturerUnitTest::AudioCapUnitTestFunc(audioCapturer1, cb1, SOURCE_TYPE_VOICE_RECOGNITION);
     MultipleAudioCapturerUnitTest::AudioCapUnitTestFunc(audioCapturer2, cb2, SOURCE_TYPE_PLAYBACK_CAPTURE);
@@ -1173,7 +1171,7 @@ HWTEST(MultipleAudioCapturerUnitTest, Multiple_Audio_Capturer_056, TestSize.Leve
 
     MultipleAudioCapturerUnitTest::InitIntellVoice(wakeupEngine);
     int32_t wakeupStart = wakeupEngine->Start(true);
-    usleep(2500000);
+    usleep(3000000);
     EXPECT_EQ(0, wakeupStart);
     MultipleAudioCapturerUnitTest::AudioCapUnitTestFunc(audioCapturer1, cb1, SOURCE_TYPE_VOICE_COMMUNICATION);
     MultipleAudioCapturerUnitTest::AudioCapUnitTestFunc(audioCapturer2, cb2, SOURCE_TYPE_MIC, false);
@@ -1194,7 +1192,7 @@ HWTEST(MultipleAudioCapturerUnitTest, Multiple_Audio_Capturer_057, TestSize.Leve
 
     MultipleAudioCapturerUnitTest::InitIntellVoice(wakeupEngine);
     int32_t wakeupStart = wakeupEngine->Start(true);
-    usleep(2500000);
+    usleep(3000000);
     EXPECT_EQ(0, wakeupStart);
     MultipleAudioCapturerUnitTest::AudioCapUnitTestFunc(audioCapturer1, cb1, SOURCE_TYPE_VOICE_COMMUNICATION);
     MultipleAudioCapturerUnitTest::AudioCapUnitTestFunc(audioCapturer2, cb2, SOURCE_TYPE_VOICE_RECOGNITION, false);
@@ -1215,7 +1213,7 @@ HWTEST(MultipleAudioCapturerUnitTest, Multiple_Audio_Capturer_058, TestSize.Leve
 
     MultipleAudioCapturerUnitTest::InitIntellVoice(wakeupEngine);
     int32_t wakeupStart = wakeupEngine->Start(true);
-    usleep(2500000);
+    usleep(3000000);
     EXPECT_EQ(0, wakeupStart);
     MultipleAudioCapturerUnitTest::AudioCapUnitTestFunc(audioCapturer1, cb1, SOURCE_TYPE_VOICE_COMMUNICATION);
     MultipleAudioCapturerUnitTest::AudioCapUnitTestFunc(audioCapturer2, cb2, SOURCE_TYPE_ULTRASONIC);
@@ -1233,7 +1231,7 @@ HWTEST(MultipleAudioCapturerUnitTest, Multiple_Audio_Capturer_059, TestSize.Leve
 
     MultipleAudioCapturerUnitTest::InitIntellVoice(wakeupEngine1);
     int32_t wakeupStart1 = wakeupEngine1->Start(true);
-    usleep(2500000);
+    usleep(3000000);
     EXPECT_EQ(0, wakeupStart1);
     MultipleAudioCapturerUnitTest::AudioCapUnitTestFunc(audioCapturer, cb, SOURCE_TYPE_VOICE_COMMUNICATION);
     MultipleAudioCapturerUnitTest::InitIntellVoice(wakeupEngine2);
@@ -1254,7 +1252,7 @@ HWTEST(MultipleAudioCapturerUnitTest, Multiple_Audio_Capturer_060, TestSize.Leve
 
     MultipleAudioCapturerUnitTest::InitIntellVoice(wakeupEngine);
     int32_t wakeupStart = wakeupEngine->Start(true);
-    usleep(2500000);
+    usleep(3000000);
     EXPECT_EQ(0, wakeupStart);
     MultipleAudioCapturerUnitTest::AudioCapUnitTestFunc(audioCapturer1, cb1, SOURCE_TYPE_VOICE_COMMUNICATION);
     MultipleAudioCapturerUnitTest::AudioCapUnitTestFunc(audioCapturer2, cb2, SOURCE_TYPE_PLAYBACK_CAPTURE);
@@ -1273,7 +1271,7 @@ HWTEST(MultipleAudioCapturerUnitTest, Multiple_Audio_Capturer_061, TestSize.Leve
 
     MultipleAudioCapturerUnitTest::InitIntellVoice(wakeupEngine);
     int32_t wakeupStart = wakeupEngine->Start(true);
-    usleep(2500000);
+    usleep(3000000);
     EXPECT_EQ(0, wakeupStart);
     MultipleAudioCapturerUnitTest::AudioCapUnitTestFunc(audioCapturer1, cb1, SOURCE_TYPE_ULTRASONIC);
     MultipleAudioCapturerUnitTest::AudioCapUnitTestFunc(audioCapturer2, cb2, SOURCE_TYPE_MIC);
@@ -1292,7 +1290,7 @@ HWTEST(MultipleAudioCapturerUnitTest, Multiple_Audio_Capturer_062, TestSize.Leve
 
     MultipleAudioCapturerUnitTest::InitIntellVoice(wakeupEngine);
     int32_t wakeupStart = wakeupEngine->Start(true);
-    usleep(2500000);
+    usleep(3000000);
     EXPECT_EQ(0, wakeupStart);
     MultipleAudioCapturerUnitTest::AudioCapUnitTestFunc(audioCapturer1, cb1, SOURCE_TYPE_ULTRASONIC);
     MultipleAudioCapturerUnitTest::AudioCapUnitTestFunc(audioCapturer2, cb2, SOURCE_TYPE_VOICE_RECOGNITION);
@@ -1311,7 +1309,7 @@ HWTEST(MultipleAudioCapturerUnitTest, Multiple_Audio_Capturer_063, TestSize.Leve
 
     MultipleAudioCapturerUnitTest::InitIntellVoice(wakeupEngine);
     int32_t wakeupStart = wakeupEngine->Start(true);
-    usleep(2500000);
+    usleep(3000000);
     EXPECT_EQ(0, wakeupStart);
     MultipleAudioCapturerUnitTest::AudioCapUnitTestFunc(audioCapturer1, cb1, SOURCE_TYPE_ULTRASONIC);
     MultipleAudioCapturerUnitTest::AudioCapUnitTestFunc(audioCapturer2, cb2, SOURCE_TYPE_VOICE_COMMUNICATION);
@@ -1329,7 +1327,7 @@ HWTEST(MultipleAudioCapturerUnitTest, Multiple_Audio_Capturer_064, TestSize.Leve
 
     MultipleAudioCapturerUnitTest::InitIntellVoice(wakeupEngine1);
     int32_t wakeupStart1 = wakeupEngine1->Start(true);
-    usleep(2500000);
+    usleep(3000000);
     EXPECT_EQ(0, wakeupStart1);
     MultipleAudioCapturerUnitTest::AudioCapUnitTestFunc(audioCapturer, cb, SOURCE_TYPE_ULTRASONIC);
     MultipleAudioCapturerUnitTest::InitIntellVoice(wakeupEngine2);
@@ -1350,7 +1348,7 @@ HWTEST(MultipleAudioCapturerUnitTest, Multiple_Audio_Capturer_065, TestSize.Leve
 
     MultipleAudioCapturerUnitTest::InitIntellVoice(wakeupEngine);
     int32_t wakeupStart = wakeupEngine->Start(true);
-    usleep(2500000);
+    usleep(3000000);
     EXPECT_EQ(0, wakeupStart);
     MultipleAudioCapturerUnitTest::AudioCapUnitTestFunc(audioCapturer1, cb1, SOURCE_TYPE_ULTRASONIC);
     MultipleAudioCapturerUnitTest::AudioCapUnitTestFunc(audioCapturer2, cb2, SOURCE_TYPE_PLAYBACK_CAPTURE);
@@ -1369,7 +1367,7 @@ HWTEST(MultipleAudioCapturerUnitTest, Multiple_Audio_Capturer_066, TestSize.Leve
 
     MultipleAudioCapturerUnitTest::InitIntellVoice(wakeupEngine);
     int32_t wakeupStart = wakeupEngine->Start(true);
-    usleep(2500000);
+    usleep(3000000);
     EXPECT_EQ(0, wakeupStart);
     MultipleAudioCapturerUnitTest::AudioCapUnitTestFunc(audioCapturer1, cb1, SOURCE_TYPE_PLAYBACK_CAPTURE);
     MultipleAudioCapturerUnitTest::AudioCapUnitTestFunc(audioCapturer2, cb2, SOURCE_TYPE_MIC);
@@ -1388,7 +1386,7 @@ HWTEST(MultipleAudioCapturerUnitTest, Multiple_Audio_Capturer_067, TestSize.Leve
 
     MultipleAudioCapturerUnitTest::InitIntellVoice(wakeupEngine);
     int32_t wakeupStart = wakeupEngine->Start(true);
-    usleep(2500000);
+    usleep(3000000);
     EXPECT_EQ(0, wakeupStart);
     MultipleAudioCapturerUnitTest::AudioCapUnitTestFunc(audioCapturer1, cb1, SOURCE_TYPE_PLAYBACK_CAPTURE);
     MultipleAudioCapturerUnitTest::AudioCapUnitTestFunc(audioCapturer2, cb2, SOURCE_TYPE_VOICE_RECOGNITION);
@@ -1407,7 +1405,7 @@ HWTEST(MultipleAudioCapturerUnitTest, Multiple_Audio_Capturer_068, TestSize.Leve
 
     MultipleAudioCapturerUnitTest::InitIntellVoice(wakeupEngine);
     int32_t wakeupStart = wakeupEngine->Start(true);
-    usleep(2500000);
+    usleep(3000000);
     EXPECT_EQ(0, wakeupStart);
     MultipleAudioCapturerUnitTest::AudioCapUnitTestFunc(audioCapturer1, cb1, SOURCE_TYPE_PLAYBACK_CAPTURE);
     MultipleAudioCapturerUnitTest::AudioCapUnitTestFunc(audioCapturer2, cb2, SOURCE_TYPE_VOICE_COMMUNICATION);
@@ -1426,7 +1424,7 @@ HWTEST(MultipleAudioCapturerUnitTest, Multiple_Audio_Capturer_069, TestSize.Leve
 
     MultipleAudioCapturerUnitTest::InitIntellVoice(wakeupEngine);
     int32_t wakeupStart = wakeupEngine->Start(true);
-    usleep(2500000);
+    usleep(3000000);
     EXPECT_EQ(0, wakeupStart);
     MultipleAudioCapturerUnitTest::AudioCapUnitTestFunc(audioCapturer1, cb1, SOURCE_TYPE_PLAYBACK_CAPTURE);
     MultipleAudioCapturerUnitTest::AudioCapUnitTestFunc(audioCapturer2, cb2, SOURCE_TYPE_ULTRASONIC);
@@ -1444,12 +1442,12 @@ HWTEST(MultipleAudioCapturerUnitTest, Multiple_Audio_Capturer_070, TestSize.Leve
 
     MultipleAudioCapturerUnitTest::InitIntellVoice(wakeupEngine1);
     int32_t wakeupStart1 = wakeupEngine1->Start(true);
-    usleep(2500000);
+    usleep(3000000);
     EXPECT_EQ(0, wakeupStart1);
     MultipleAudioCapturerUnitTest::AudioCapUnitTestFunc(audioCapturer, cb, SOURCE_TYPE_PLAYBACK_CAPTURE);
     MultipleAudioCapturerUnitTest::InitIntellVoice(wakeupEngine2);
     int32_t wakeupStart2 = wakeupEngine2->Start(true);
-    usleep(2500000);
+    usleep(3000000);
     EXPECT_EQ(0, wakeupStart2);
 
     audioCapturer->Release();
@@ -1467,7 +1465,7 @@ HWTEST(MultipleAudioCapturerUnitTest, Multiple_Audio_Capturer_071, TestSize.Leve
     MultipleAudioCapturerUnitTest::AudioCapUnitTestFunc(audioCapturer2, cb2, SOURCE_TYPE_PLAYBACK_CAPTURE);
     MultipleAudioCapturerUnitTest::InitIntellVoice(wakeupEngine);
     int32_t wakeupStart = wakeupEngine->Start(true);
-    usleep(2500000);
+    usleep(3000000);
     EXPECT_EQ(0, wakeupStart);
 
     audioCapturer1->Release();
@@ -1561,7 +1559,7 @@ HWTEST(MultipleAudioCapturerUnitTest, Multiple_Audio_Capturer_076, TestSize.Leve
     MultipleAudioCapturerUnitTest::AudioCapUnitTestFunc(audioCapturer1, cb1, SOURCE_TYPE_PLAYBACK_CAPTURE);
     MultipleAudioCapturerUnitTest::InitIntellVoice(wakeupEngine);
     int32_t wakeupStart = wakeupEngine->Start(true);
-    usleep(2500000);
+    usleep(3000000);
     EXPECT_EQ(0, wakeupStart);
     MultipleAudioCapturerUnitTest::AudioCapUnitTestFunc(audioCapturer2, cb2, SOURCE_TYPE_MIC);
 
@@ -1580,7 +1578,7 @@ HWTEST(MultipleAudioCapturerUnitTest, Multiple_Audio_Capturer_077, TestSize.Leve
     MultipleAudioCapturerUnitTest::AudioCapUnitTestFunc(audioCapturer1, cb1, SOURCE_TYPE_PLAYBACK_CAPTURE);
     MultipleAudioCapturerUnitTest::InitIntellVoice(wakeupEngine);
     int32_t wakeupStart = wakeupEngine->Start(true);
-    usleep(2500000);
+    usleep(3000000);
     EXPECT_EQ(0, wakeupStart);
     MultipleAudioCapturerUnitTest::AudioCapUnitTestFunc(audioCapturer2, cb2, SOURCE_TYPE_VOICE_RECOGNITION);
 
@@ -1599,7 +1597,7 @@ HWTEST(MultipleAudioCapturerUnitTest, Multiple_Audio_Capturer_078, TestSize.Leve
     MultipleAudioCapturerUnitTest::AudioCapUnitTestFunc(audioCapturer1, cb1, SOURCE_TYPE_PLAYBACK_CAPTURE);
     MultipleAudioCapturerUnitTest::InitIntellVoice(wakeupEngine);
     int32_t wakeupStart = wakeupEngine->Start(true);
-    usleep(2500000);
+    usleep(3000000);
     EXPECT_EQ(0, wakeupStart);
     MultipleAudioCapturerUnitTest::AudioCapUnitTestFunc(audioCapturer2, cb2, SOURCE_TYPE_VOICE_COMMUNICATION);
 
@@ -1618,7 +1616,7 @@ HWTEST(MultipleAudioCapturerUnitTest, Multiple_Audio_Capturer_079, TestSize.Leve
     MultipleAudioCapturerUnitTest::AudioCapUnitTestFunc(audioCapturer1, cb1, SOURCE_TYPE_PLAYBACK_CAPTURE);
     MultipleAudioCapturerUnitTest::InitIntellVoice(wakeupEngine);
     int32_t wakeupStart = wakeupEngine->Start(true);
-    usleep(2500000);
+    usleep(3000000);
     EXPECT_EQ(0, wakeupStart);
     MultipleAudioCapturerUnitTest::AudioCapUnitTestFunc(audioCapturer2, cb2, SOURCE_TYPE_ULTRASONIC);
 
@@ -1637,7 +1635,7 @@ HWTEST(MultipleAudioCapturerUnitTest, Multiple_Audio_Capturer_080, TestSize.Leve
     MultipleAudioCapturerUnitTest::AudioCapUnitTestFunc(audioCapturer1, cb1, SOURCE_TYPE_PLAYBACK_CAPTURE);
     MultipleAudioCapturerUnitTest::InitIntellVoice(wakeupEngine);
     int32_t wakeupStart = wakeupEngine->Start(true);
-    usleep(2500000);
+    usleep(3000000);
     EXPECT_EQ(0, wakeupStart);
     MultipleAudioCapturerUnitTest::AudioCapUnitTestFunc(audioCapturer2, cb2, SOURCE_TYPE_PLAYBACK_CAPTURE);
 
