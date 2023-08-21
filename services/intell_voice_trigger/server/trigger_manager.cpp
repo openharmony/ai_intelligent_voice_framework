@@ -136,6 +136,5 @@ void TriggerManager::DettachAudioCaptureListener()
     }
     return service_->DettachAudioCaptureListener();
 }
-
 }  // namespace IntellVoiceTrigger
 }  // namespace OHOS

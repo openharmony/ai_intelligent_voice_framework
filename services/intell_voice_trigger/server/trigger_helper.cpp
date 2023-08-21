@@ -29,7 +29,6 @@ using namespace std;
 
 namespace OHOS {
 namespace IntellVoiceTrigger {
-
 static constexpr int32_t SIM_SLOT_ID_1 = DEFAULT_SIM_SLOT_ID + 1;
 
 TriggerModelData::TriggerModelData(int32_t uuid)
