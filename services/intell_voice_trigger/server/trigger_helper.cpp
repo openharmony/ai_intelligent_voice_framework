@@ -16,13 +16,21 @@
 #include "intell_voice_log.h"
 
 #include "trigger_connector_mgr.h"
+#include "telephony_observer_client.h"
+#include "state_registry_errors.h"
+#include "telephony_types.h"
+#include "call_manager_inner_type.h"
 
 using namespace OHOS::HDI::IntelligentVoice::Trigger::V1_0;
+using namespace OHOS::AudioStandard;
+using namespace OHOS::Telephony;
 using namespace std;
 #define LOG_TAG "TriggerHelper"
 
 namespace OHOS {
 namespace IntellVoiceTrigger {
+static constexpr int32_t SIM_SLOT_ID_1 = DEFAULT_SIM_SLOT_ID + 1;
+
 TriggerModelData::TriggerModelData(int32_t uuid)
 {
     uuid_ = uuid;
@@ -332,6 +340,154 @@ void TriggerHelper::OnRecognition(int32_t modelHandle, const IntellVoiceRecognit
     }
     genericEvent->modelHandle_ = modelHandle;
     callback->OnGenericTriggerDetected(genericEvent);
+}
+
+bool TriggerHelper::IsConflictSceneActive()
+{
+    if (telephonyObserver0_ == nullptr ||
+        telephonyObserver1_ == nullptr ||
+        audioCapturerSourceChangeCallback_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("observe nullptr");
+        return false;
+    }
+
+    INTELL_VOICE_LOG_INFO("callActive0_ %{public}d, callActive1_ %{public}d, audioCaptureActive_ %{public}d",
+        telephonyObserver0_->callActive_,
+        telephonyObserver1_->callActive_,
+        audioCapturerSourceChangeCallback_->audioCaptureActive_);
+
+    return (telephonyObserver0_->callActive_ ||
+        telephonyObserver1_->callActive_ ||
+        audioCapturerSourceChangeCallback_->audioCaptureActive_);
+}
+
+void TriggerHelper::OnUpdateAllRecognitionState()
+{
+    lock_guard<std::mutex> lock(mutex_);
+    for (auto iter : modelDataMap_) {
+        if (iter.second == nullptr) {
+            INTELL_VOICE_LOG_ERROR("uuid: %{public}d, model data is nullptr", iter.first);
+            continue;
+        }
+        if (IsConflictSceneActive()) {
+            StopRecognition(iter.second);
+        } else {
+            StartRecognition(iter.second);
+        }
+    }
+}
+
+void TriggerHelper::AttachTelephonyObserver()
+{
+    INTELL_VOICE_LOG_INFO("enter");
+    telephonyObserver0_ = std::make_unique<TelephonyStateObserver>(shared_from_this()).release();
+    if (telephonyObserver0_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("telephonyObserver0_ is nullptr");
+        return;
+    }
+    auto res = TelephonyObserverClient::GetInstance().AddStateObserver(telephonyObserver0_, DEFAULT_SIM_SLOT_ID,
+        TelephonyObserverBroker::OBSERVER_MASK_CALL_STATE, false);
+    if (res != TELEPHONY_SUCCESS) {
+        INTELL_VOICE_LOG_ERROR("telephonyObserver0_ add failed");
+    }
+
+    telephonyObserver1_ = std::make_unique<TelephonyStateObserver>(shared_from_this()).release();
+    if (telephonyObserver1_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("telephonyObserver1_ is nullptr");
+        return;
+    }
+    res = TelephonyObserverClient::GetInstance().AddStateObserver(telephonyObserver1_, SIM_SLOT_ID_1,
+        TelephonyObserverBroker::OBSERVER_MASK_CALL_STATE, false);
+    if (res != TELEPHONY_SUCCESS) {
+        INTELL_VOICE_LOG_ERROR("telephonyObserver1_ add failed");
+    }
+}
+
+void TriggerHelper::DettachTelephonyObserver()
+{
+    INTELL_VOICE_LOG_INFO("enter");
+    if (telephonyObserver0_) {
+        Telephony::TelephonyObserverClient::GetInstance().RemoveStateObserver(
+            DEFAULT_SIM_SLOT_ID, Telephony::TelephonyObserverBroker::OBSERVER_MASK_CALL_STATE);
+        telephonyObserver0_ = nullptr;
+    }
+
+    if (telephonyObserver1_) {
+        Telephony::TelephonyObserverClient::GetInstance().RemoveStateObserver(
+            SIM_SLOT_ID_1, Telephony::TelephonyObserverBroker::OBSERVER_MASK_CALL_STATE);
+        telephonyObserver1_ = nullptr;
+    }
+}
+
+void TriggerHelper::TelephonyStateObserver::OnCallStateUpdated(int32_t slotId, int32_t callState,
+    const std::u16string &phoneNumber)
+{
+    if (helper_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("helper is nullptr");
+        return;
+    }
+
+    if (callState < static_cast<int32_t>(TelCallState::CALL_STATUS_UNKNOWN) ||
+        callState > static_cast<int32_t>(TelCallState::CALL_STATUS_IDLE)) {
+        INTELL_VOICE_LOG_ERROR("callstate err: %{public}d", callState);
+        return;
+    }
+
+    bool curCallActive = (callState != static_cast<int32_t>(TelCallState::CALL_STATUS_DISCONNECTED) &&
+        callState != static_cast<int32_t>(TelCallState::CALL_STATUS_IDLE) &&
+        callState != static_cast<int32_t>(TelCallState::CALL_STATUS_UNKNOWN));
+
+    INTELL_VOICE_LOG_INFO("state: %{public}d, slotId: %{public}d, callActive: %{public}d, curCallActive: %{public}d",
+        callState, slotId, callActive_, curCallActive);
+    if (callActive_ == curCallActive) {
+        return;
+    }
+
+    callActive_ = curCallActive;
+    helper_->OnUpdateAllRecognitionState();
+}
+
+void TriggerHelper::AttachAudioCaptureListener()
+{
+    INTELL_VOICE_LOG_INFO("enter");
+
+    audioCapturerSourceChangeCallback_ = std::make_shared<AudioCapturerSourceChangeCallback>(shared_from_this());
+    auto audioSystemManager = AudioSystemManager::GetInstance();
+    if (audioSystemManager != nullptr) {
+        audioSystemManager->SetAudioCapturerSourceCallback(audioCapturerSourceChangeCallback_);
+    } else {
+        INTELL_VOICE_LOG_ERROR("audioSystemManager is nullptr");
+    }
+}
+
+void TriggerHelper::DettachAudioCaptureListener()
+{
+    INTELL_VOICE_LOG_INFO("enter");
+
+    auto audioSystemManager = AudioSystemManager::GetInstance();
+    if (audioSystemManager != nullptr) {
+        audioSystemManager->SetAudioCapturerSourceCallback(nullptr);
+    } else {
+        INTELL_VOICE_LOG_ERROR("audioSystemManager is null");
+    }
+}
+
+void TriggerHelper::AudioCapturerSourceChangeCallback::OnCapturerState(bool isActive)
+{
+    INTELL_VOICE_LOG_INFO("OnCapturerState active: %{public}d", isActive);
+
+    if (helper_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("helper is nullptr");
+        return;
+    }
+
+    if (audioCaptureActive_ == isActive) {
+        return;
+    }
+
+    audioCaptureActive_ = isActive;
+
+    helper_->OnUpdateAllRecognitionState();
 }
 }  // namespace IntellVoiceTrigger
 }  // namespace OHOS

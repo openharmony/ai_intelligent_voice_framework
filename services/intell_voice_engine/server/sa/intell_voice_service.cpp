@@ -44,6 +44,14 @@ const std::string OHOS_PERMISSION_INTELL_VOICE = "ohos.permission.MANAGE_INTELLI
 IntellVoiceService::IntellVoiceService(int32_t systemAbilityId, bool runOnCreate)
     : SystemAbility(INTELL_VOICE_SERVICE_ID, true)
 {
+    systemAbilityChangeMap_[COMMON_EVENT_SERVICE_ID] =
+        std::bind(&IntellVoiceService::OnCommonEventServiceChange, this, std::placeholders::_1);
+    systemAbilityChangeMap_[DISTRIBUTED_KV_DATA_SERVICE_ABILITY_ID] =
+        std::bind(&IntellVoiceService::OnDistributedKvDataServiceChange, this, std::placeholders::_1);
+    systemAbilityChangeMap_[TELEPHONY_STATE_REGISTRY_SYS_ABILITY_ID] =
+        std::bind(&IntellVoiceService::OnTelephonyStateRegistryServiceChange, this, std::placeholders::_1);
+    systemAbilityChangeMap_[AUDIO_DISTRIBUTED_SERVICE_ID] =
+        std::bind(&IntellVoiceService::OnAudioDistributedServiceChange, this, std::placeholders::_1);
 }
 
 IntellVoiceService::~IntellVoiceService()
@@ -85,6 +93,8 @@ int32_t IntellVoiceService::ReleaseIntellVoiceEngine(IntellVoiceEngineType type)
 
 void IntellVoiceService::OnStart(const SystemAbilityOnDemandReason& startReason)
 {
+    INTELL_VOICE_LOG_ERROR("enter, reason id:%{public}d", startReason.GetId());
+    reasonId_ = static_cast<int32_t>(startReason.GetId());
     LoadIntellVoiceHost();
 
     bool ret = Publish(this);
@@ -96,23 +106,22 @@ void IntellVoiceService::OnStart(const SystemAbilityOnDemandReason& startReason)
     CreateSystemEventObserver();
     AddSystemAbilityListener(COMMON_EVENT_SERVICE_ID);
     AddSystemAbilityListener(DISTRIBUTED_KV_DATA_SERVICE_ABILITY_ID);
+    AddSystemAbilityListener(TELEPHONY_STATE_REGISTRY_SYS_ABILITY_ID);
+    AddSystemAbilityListener(AUDIO_DISTRIBUTED_SERVICE_ID);
     RegisterPermissionCallback(OHOS_PERMISSION_INTELL_VOICE);
-    INTELL_VOICE_LOG_INFO("publish ok");
-
-    reasonId_ = startReason.GetId();
-
-    audioCapturerSourceChangeCallback_ = std::make_shared<AudioCapturerSourceChangeCallback>();
-    auto audioSystemManager = AudioSystemManager::GetInstance();
-    if (audioSystemManager != nullptr) {
-        audioSystemManager->SetAudioCapturerSourceCallback(audioCapturerSourceChangeCallback_);
-    } else {
-        INTELL_VOICE_LOG_ERROR("audioSystemManager is null");
-    }
+    INTELL_VOICE_LOG_ERROR("publish ok");
 }
 
 void IntellVoiceService::OnStop(void)
 {
     INTELL_VOICE_LOG_INFO("enter");
+
+    auto triggerMgr = IntellVoiceTrigger::TriggerManager::GetInstance();
+    if (triggerMgr != nullptr) {
+        triggerMgr->DettachTelephonyObserver();
+        triggerMgr->DettachAudioCaptureListener();
+    }
+
     const auto &manager = IntellVoiceServiceManager::GetInstance();
     if (manager != nullptr) {
         manager->ReleaseSwitchProvider();
@@ -127,36 +136,24 @@ void IntellVoiceService::OnStop(void)
 
 void IntellVoiceService::OnAddSystemAbility(int32_t systemAbilityId, const std::string &deviceId)
 {
-    INTELL_VOICE_LOG_INFO("systemAbilityId:%{public}d", systemAbilityId);
-    if (systemAbilityId == COMMON_EVENT_SERVICE_ID) {
-        if (systemEventObserver_ != nullptr) {
-            systemEventObserver_->Subscribe();
-        }
-    } else if (systemAbilityId == DISTRIBUTED_KV_DATA_SERVICE_ABILITY_ID) {
-        const auto &manager = IntellVoiceServiceManager::GetInstance();
-        if (manager == nullptr) {
-            INTELL_VOICE_LOG_INFO("manager is nullptr");
-            return;
-        }
-
-        manager->CreateSwitchProvider();
-        if (reasonId_ == OHOS::OnDemandReasonId::COMMON_EVENT) {
-            INTELL_VOICE_LOG_INFO("power on start");
-            if (!manager->QuerySwitchStatus()) {
-                manager->UnloadIntellVoiceService();
-            } else {
-                manager->OnServiceStart();
-            }
-        } else if (reasonId_ == OHOS::OnDemandReasonId::INTERFACE_CALL) {
-            manager->OnServiceStart();
-        }
-    } else {
+    INTELL_VOICE_LOG_INFO("add systemAbilityId:%{public}d", systemAbilityId);
+    auto iter = systemAbilityChangeMap_.find(systemAbilityId);
+    if (iter == systemAbilityChangeMap_.end()) {
         INTELL_VOICE_LOG_WARN("unhandled sysabilityId");
+        return;
     }
+
+    if (iter->second == nullptr) {
+        INTELL_VOICE_LOG_WARN("func is nullptr");
+        return;
+    }
+
+    iter->second(true);
 }
 
 void IntellVoiceService::OnRemoveSystemAbility(int32_t systemAbilityId, const std::string &deviceId)
-{}
+{
+}
 
 void IntellVoiceService::CreateSystemEventObserver()
 {
@@ -219,7 +216,7 @@ void IntellVoiceService::LoadIntellVoiceHost()
 {
     auto devmgr = IDeviceManager::Get();
     if (devmgr != nullptr) {
-        INTELL_VOICE_LOG_ERROR("Get devmgr success");
+        INTELL_VOICE_LOG_INFO("Get devmgr success");
         devmgr->LoadDevice("intell_voice_engine_manager_service");
     } else {
         INTELL_VOICE_LOG_ERROR("Get devmgr failed");
@@ -255,6 +252,76 @@ void IntellVoiceService::PerStateChangeCbCustomizeCallback::PermStateChangeCallb
     INTELL_VOICE_LOG_INFO("enter, permStateChangeType: %{public}d", result.permStateChangeType);
     if (result.permStateChangeType == 0) {
         INTELL_VOICE_LOG_ERROR("The permission is canceled.");
+    }
+}
+
+void IntellVoiceService::OnCommonEventServiceChange(bool isAdded)
+{
+    if (isAdded) {
+        INTELL_VOICE_LOG_INFO("comment event service is added");
+        if (systemEventObserver_ != nullptr) {
+            systemEventObserver_->Subscribe();
+        }
+    } else {
+        INTELL_VOICE_LOG_INFO("comment event service is removed");
+    }
+}
+
+void IntellVoiceService::OnDistributedKvDataServiceChange(bool isAdded)
+{
+    if (isAdded) {
+        INTELL_VOICE_LOG_INFO("distributed kv data service is added");
+        const auto &manager = IntellVoiceServiceManager::GetInstance();
+        if (manager == nullptr) {
+            INTELL_VOICE_LOG_INFO("manager is nullptr");
+            return;
+        }
+
+        manager->CreateSwitchProvider();
+
+        if (reasonId_ == static_cast<int32_t>(OHOS::OnDemandReasonId::COMMON_EVENT)) {
+            INTELL_VOICE_LOG_INFO("power on start");
+            if (!manager->QuerySwitchStatus()) {
+                manager->UnloadIntellVoiceService();
+            } else {
+                manager->OnServiceStart();
+            }
+        } else if (reasonId_ == static_cast<int32_t>(OHOS::OnDemandReasonId::INTERFACE_CALL)) {
+            if (manager->QuerySwitchStatus()) {
+                manager->OnServiceStart();
+            }
+        } else {
+            INTELL_VOICE_LOG_INFO("no need to process, reason id:%{public}d", reasonId_);
+        }
+        reasonId_ = -1;
+    } else {
+        INTELL_VOICE_LOG_INFO("distributed kv data service is removed");
+    }
+}
+
+void IntellVoiceService::OnTelephonyStateRegistryServiceChange(bool isAdded)
+{
+    if (isAdded) {
+        INTELL_VOICE_LOG_INFO("telephony state registry service is added");
+        auto triggerMgr = IntellVoiceTrigger::TriggerManager::GetInstance();
+        if (triggerMgr != nullptr) {
+            triggerMgr->AttachTelephonyObserver();
+        }
+    } else {
+        INTELL_VOICE_LOG_INFO("telephony state registry service is removed");
+    }
+}
+
+void IntellVoiceService::OnAudioDistributedServiceChange(bool isAdded)
+{
+    if (isAdded) {
+        INTELL_VOICE_LOG_INFO("audio distributed service is added");
+        auto triggerMgr = IntellVoiceTrigger::TriggerManager::GetInstance();
+        if (triggerMgr != nullptr) {
+            triggerMgr->AttachAudioCaptureListener();
+        }
+    } else {
+        INTELL_VOICE_LOG_INFO("audio distributed service is removed");
     }
 }
 }  // namespace IntellVoiceEngine

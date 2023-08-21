@@ -72,10 +72,14 @@ ohos_unittest("trigger_unit_test") {
   deps = [ "../../../services:intell_voice_server" ]
 
   external_deps = [
+    "audio_framework:audio_client",
     "c_utils:utils",
+    "call_manager:tel_call_manager_api",
+    "core_service:tel_core_service_api",
     "drivers_interface_intelligent_voice:intell_voice_trigger_idl_headers",
     "hilog:libhilog",
     "relational_store:native_rdb",
+    "state_registry:tel_state_registry_api",
   ]
 }
 
@@ -99,11 +103,15 @@ ohos_unittest("trigger_manager_test") {
   deps = [ "../../../services:intell_voice_server" ]
 
   external_deps = [
+    "audio_framework:audio_client",
     "c_utils:utils",
+    "call_manager:tel_call_manager_api",
+    "core_service:tel_core_service_api",
     "drivers_interface_intelligent_voice:intell_voice_trigger_idl_headers",
     "hilog:libhilog",
     "relational_store:native_rdb",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
+    "state_registry:tel_state_registry_api",
   ]
 }

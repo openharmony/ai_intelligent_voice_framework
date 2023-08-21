@@ -121,5 +121,41 @@ void TriggerService::UnloadTriggerModel(int32_t uuid)
 
     triggerHelper_->UnloadGenericTriggerModel(uuid);
 }
+
+void TriggerService::AttachTelephonyObserver()
+{
+    if (triggerHelper_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("trigger helper is nullptr");
+        return;
+    }
+    triggerHelper_->AttachTelephonyObserver();
+}
+
+void TriggerService::DettachTelephonyObserver()
+{
+    if (triggerHelper_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("trigger helper is nullptr");
+        return;
+    }
+    triggerHelper_->DettachTelephonyObserver();
+}
+
+void TriggerService::AttachAudioCaptureListener()
+{
+    if (triggerHelper_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("trigger helper is nullptr");
+        return;
+    }
+    triggerHelper_->AttachAudioCaptureListener();
+}
+
+void TriggerService::DettachAudioCaptureListener()
+{
+    if (triggerHelper_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("trigger helper is nullptr");
+        return;
+    }
+    triggerHelper_->DettachAudioCaptureListener();
+}
 }  // namespace IntellVoiceTrigger
 }  // namespace OHOS

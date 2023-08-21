@@ -34,7 +34,10 @@
                 "napi",
                 "relational_store",
                 "safwk",
-                "samgr"
+                "samgr",
+                "state_registry",
+                "core_service",
+                "call_manager"
             ],
             "third_party": []
         },

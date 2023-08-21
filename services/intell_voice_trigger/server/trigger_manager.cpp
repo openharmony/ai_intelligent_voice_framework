@@ -43,7 +43,7 @@ std::shared_ptr<TriggerManager> TriggerManager::GetInstance()
     if (instance_ == nullptr) {
         std::lock_guard<std::mutex> autoLock(instanceMutex_);
         if (instance_ == nullptr) {
-            instance_ = std::shared_ptr<TriggerManager>(new TriggerManager());
+            instance_ = std::shared_ptr<TriggerManager>(new (std::nothrow) TriggerManager());
         }
     }
     return instance_;
@@ -99,6 +99,42 @@ void TriggerManager::ReleaseTriggerDetector(int32_t uuid)
     }
 
     detectors_.erase(it);
+}
+
+void TriggerManager::AttachTelephonyObserver()
+{
+    if (service_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("service_ is nullptr");
+        return;
+    }
+    return service_->AttachTelephonyObserver();
+}
+
+void TriggerManager::DettachTelephonyObserver()
+{
+    if (service_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("service_ is nullptr");
+        return;
+    }
+    return service_->DettachTelephonyObserver();
+}
+
+void TriggerManager::AttachAudioCaptureListener()
+{
+    if (service_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("service_ is nullptr");
+        return;
+    }
+    return service_->AttachAudioCaptureListener();
+}
+
+void TriggerManager::DettachAudioCaptureListener()
+{
+    if (service_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("service_ is nullptr");
+        return;
+    }
+    return service_->DettachAudioCaptureListener();
 }
 }  // namespace IntellVoiceTrigger
 }  // namespace OHOS

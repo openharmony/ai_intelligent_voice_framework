@@ -80,7 +80,7 @@ HWTEST_F(ClientTest, ClientUtils, TestSize.Level1)
     g_sProxy->CreateIntellVoiceEngine(INTELL_VOICE_ENROLL, engine);
     ASSERT_NE(engine, nullptr);
 
-    sptr<EngineCallbackInner> callback = new(std::nothrow) EngineCallbackInner();
+    sptr<EngineCallbackInner> callback = new (std::nothrow) EngineCallbackInner();
     ASSERT_NE(callback, nullptr);
     cb_ = std::make_shared<EngineEventCallback>(engine, &waitForResult);
     ASSERT_NE(cb_, nullptr);

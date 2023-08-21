@@ -85,7 +85,6 @@ IntellVoiceTriggerProperties TriggerConnector::GetProperties()
 
 void TriggerConnector::OnReceive(const ServiceStatus &serviceStatus)
 {
-    OHOS::IntellVoiceUtils::MemoryGuard memoryGuard;
     INTELL_VOICE_LOG_INFO("enter, service name:%{public}s, status:%{public}d", serviceStatus.serviceName.c_str(),
         serviceStatus.status);
     if (serviceStatus.serviceName != INTELL_VOICE_TRIGGER_SERVICE) {
