@@ -15,13 +15,13 @@
 #ifndef INTELL_VOICE_SERVICE_H
 #define INTELL_VOICE_SERVICE_H
 #include <map>
+#include <functional>
 #include "accesstoken_kit.h"
 #include "ipc_skeleton.h"
 #include "system_ability.h"
 #include "intell_voice_service_stub.h"
 #include "i_intell_voice_engine.h"
 #include "system_event_observer.h"
-#include "audio_capturer_source_change_callback.h"
 
 #include "trigger_manager.h"
 
@@ -50,17 +50,22 @@ protected:
     void OnStop() override;
     void OnAddSystemAbility(int32_t systemAbilityId, const std::string& deviceId) override;
     void OnRemoveSystemAbility(int32_t systemAbilityId, const std::string& deviceId) override;
+
 private:
     void CreateSystemEventObserver();
     bool VerifyClientPermission(const std::string &permissionName);
     void RegisterPermissionCallback(const std::string &permissionName);
     void LoadIntellVoiceHost();
     void UnloadIntellVoiceHost();
+    void OnCommonEventServiceChange(bool isAdded);
+    void OnDistributedKvDataServiceChange(bool isAdded);
+    void OnTelephonyStateRegistryServiceChange(bool isAdded);
+    void OnAudioDistributedServiceChange(bool isAdded);
 
 private:
+    int32_t reasonId_ = -1;
     std::shared_ptr<SystemEventObserver> systemEventObserver_ = nullptr;
-    OHOS::OnDemandReasonId reasonId_;
-    std::shared_ptr<AudioCapturerSourceChangeCallback> audioCapturerSourceChangeCallback_ = nullptr;
+    std::map<int32_t, std::function<void(bool)>> systemAbilityChangeMap_;
 };
 }
 }

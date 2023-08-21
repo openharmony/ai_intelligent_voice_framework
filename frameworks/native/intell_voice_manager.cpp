@@ -55,7 +55,7 @@ IntellVoiceManager *IntellVoiceManager::GetInstance()
 bool IntellVoiceManager::Init()
 {
     std::unique_lock<std::mutex> lock(mutex_);
-    INTELL_VOICE_LOG_INFO("init start");
+    INTELL_VOICE_LOG_INFO("enter");
 
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     if (samgr == nullptr) {
