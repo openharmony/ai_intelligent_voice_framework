@@ -54,6 +54,7 @@ protected:
 private:
     void CreateSystemEventObserver();
     bool VerifyClientPermission(const std::string &permissionName);
+    bool CheckIsSystemApp();
     void RegisterPermissionCallback(const std::string &permissionName);
     void LoadIntellVoiceHost();
     void UnloadIntellVoiceHost();

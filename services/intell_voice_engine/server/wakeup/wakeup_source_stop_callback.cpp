@@ -16,11 +16,11 @@
 #include "intell_voice_log.h"
 #include "intell_voice_service_manager.h"
 
-#define LOG_TAG "WakeUpSourceStopCallback"
+#define LOG_TAG "WakeupSourceStopCallback"
 
 namespace OHOS {
 namespace IntellVoiceEngine {
-void WakeUpSourceStopCallback::OnWakeupClose()
+void WakeupSourceStopCallback::OnWakeupClose()
 {
     INTELL_VOICE_LOG_INFO("enter");
     const auto &manager = IntellVoiceServiceManager::GetInstance();
