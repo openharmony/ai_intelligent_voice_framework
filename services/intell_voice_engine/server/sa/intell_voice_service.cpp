@@ -98,7 +98,7 @@ int32_t IntellVoiceService::ReleaseIntellVoiceEngine(IntellVoiceEngineType type)
 
 void IntellVoiceService::OnStart(const SystemAbilityOnDemandReason& startReason)
 {
-    INTELL_VOICE_LOG_ERROR("enter, reason id:%{public}d", startReason.GetId());
+    INTELL_VOICE_LOG_INFO("enter, reason id:%{public}d", startReason.GetId());
     reasonId_ = static_cast<int32_t>(startReason.GetId());
     LoadIntellVoiceHost();
 
@@ -114,22 +114,23 @@ void IntellVoiceService::OnStart(const SystemAbilityOnDemandReason& startReason)
     AddSystemAbilityListener(TELEPHONY_STATE_REGISTRY_SYS_ABILITY_ID);
     AddSystemAbilityListener(AUDIO_DISTRIBUTED_SERVICE_ID);
     RegisterPermissionCallback(OHOS_PERMISSION_INTELL_VOICE);
-    INTELL_VOICE_LOG_ERROR("publish ok");
+    INTELL_VOICE_LOG_INFO("publish ok");
 }
 
 void IntellVoiceService::OnStop(void)
 {
     INTELL_VOICE_LOG_INFO("enter");
 
+    const auto &manager = IntellVoiceServiceManager::GetInstance();
+    if (manager != nullptr) {
+        manager->OnServiceStop();
+        manager->ReleaseSwitchProvider();
+    }
+
     auto triggerMgr = IntellVoiceTrigger::TriggerManager::GetInstance();
     if (triggerMgr != nullptr) {
         triggerMgr->DettachTelephonyObserver();
         triggerMgr->DettachAudioCaptureListener();
-    }
-
-    const auto &manager = IntellVoiceServiceManager::GetInstance();
-    if (manager != nullptr) {
-        manager->ReleaseSwitchProvider();
     }
 
     if (systemEventObserver_ != nullptr) {
@@ -221,11 +222,11 @@ bool IntellVoiceService::CheckIsSystemApp()
 {
     uint64_t fullTokenId = IPCSkeleton::GetCallingFullTokenID();
     if (!Security::AccessToken::TokenIdKit::IsSystemAppByFullTokenID(fullTokenId)) {
-        INTELL_VOICE_LOG_INFO("Not system app, permission reject tokenid: %{public}lu", fullTokenId);
+        INTELL_VOICE_LOG_INFO("Not system app, permission reject tokenid: %{public}" PRIu64 "", fullTokenId);
         return false;
     }
 
-    INTELL_VOICE_LOG_INFO("System app, fullTokenId:%{public}lu", fullTokenId);
+    INTELL_VOICE_LOG_INFO("System app, fullTokenId:%{public}" PRIu64 "", fullTokenId);
     return true;
 }
 

@@ -59,6 +59,7 @@ public:
     }
 
     void OnServiceStart();
+    void OnServiceStop();
     void CreateSwitchProvider();
     void ReleaseSwitchProvider();
     void StartDetection();
@@ -86,6 +87,7 @@ private:
     static const int32_t g_enrollModelUuid;
     static std::unique_ptr<IntellVoiceServiceManager> g_intellVoiceServiceMgr;
     static std::atomic<bool> enrollResult_;
+    std::atomic<bool> isServiceUnloaded_ = false;
     std::mutex engineMutex_;
     std::mutex detectorMutex_;
     std::map<IntellVoiceEngineType, sptr<EngineBase>> engines_;

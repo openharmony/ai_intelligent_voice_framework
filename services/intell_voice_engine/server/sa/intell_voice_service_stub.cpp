@@ -29,15 +29,19 @@ int32_t IntellVoiceServiceStub::OnRemoteRequest(uint32_t code,
     }
 
     IntellVoiceEngineType type = static_cast<IntellVoiceEngineType>(data.ReadInt32());
-    int32_t ret = 0;
 
-    sptr<IIntellVoiceEngine> engine;
+    int32_t ret = 0;
+    sptr<IIntellVoiceEngine> engine = nullptr;
+
     switch (code) {
         case HDI_INTELL_VOICE_SERVICE_CREATE_ENGINE:
             ret = CreateIntellVoiceEngine(type, engine);
+            if ((ret != 0) || (engine == nullptr)) {
+                INTELL_VOICE_LOG_ERROR("failed to create engine, type:%{public}d", type);
+                return ret;
+            }
             reply.WriteRemoteObject(engine->AsObject());
             return ret;
-
         case HDI_INTELL_VOICE_SERVICE_RELEASE_ENGINE:
             return ReleaseIntellVoiceEngine(type);
         default:

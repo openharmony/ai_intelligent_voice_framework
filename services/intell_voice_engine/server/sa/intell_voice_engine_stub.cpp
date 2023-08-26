@@ -44,6 +44,7 @@ int32_t IntellVoiceEngineStub::OnRemoteRequest(uint32_t code,
             info.bitsPerSample = data.ReadInt32();
             info.sampleRate = data.ReadInt32();
             ret = Attach(info);
+            reply.WriteInt32(ret);
             break;
         case INTELL_VOICE_ENGINE_DETACH:
             ret = Detach();
@@ -57,6 +58,7 @@ int32_t IntellVoiceEngineStub::OnRemoteRequest(uint32_t code,
             break;
         case INTELL_VOICE_ENGINE_START:
             ret = Start(data.ReadBool());
+            reply.WriteInt32(ret);
             break;
         case INTELL_VOICE_ENGINE_STOP:
             ret = Stop();
