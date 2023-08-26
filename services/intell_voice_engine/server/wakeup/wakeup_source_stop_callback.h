@@ -20,7 +20,7 @@
 
 namespace OHOS {
 namespace IntellVoiceEngine {
-class WakeUpSourceStopCallback : public OHOS::AudioStandard::WakeUpSourceCloseCallback {
+class WakeupSourceStopCallback : public OHOS::AudioStandard::WakeUpSourceCloseCallback {
 private:
     void OnWakeupClose() override;
 };

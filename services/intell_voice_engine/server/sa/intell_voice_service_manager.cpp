@@ -63,6 +63,7 @@ sptr<IIntellVoiceEngine> IntellVoiceServiceManager::CreateEngine(IntellVoiceEngi
     INTELL_VOICE_LOG_INFO("enter, type:%{public}d", type);
     if (type == INTELL_VOICE_ENROLL) {
         StopDetection();
+        SetEnrollResult(false);
     }
 
     std::lock_guard<std::mutex> lock(engineMutex_);
@@ -105,7 +106,7 @@ int32_t IntellVoiceServiceManager::ReleaseEngine(IntellVoiceEngineType type)
     }
 
     if (type == INTELL_VOICE_ENROLL) {
-        if ((!GetEnrollResult()) && (!switchProvider_->QuerySwitchStatus())) {
+        if ((!GetEnrollResult()) && (!QuerySwitchStatus())) {
             std::thread(&IntellVoiceServiceManager::UnloadIntellVoiceService, this).detach();
             return 0;
         }
@@ -127,9 +128,7 @@ int32_t IntellVoiceServiceManager::ReleaseEngine(IntellVoiceEngineType type)
             return 0;
         }
         CreateDetector();
-        if (switchProvider_->QuerySwitchStatus()) {
-            StartDetection();
-        }
+        StartDetection();
     }
 
     return 0;
@@ -193,6 +192,11 @@ void IntellVoiceServiceManager::ReleaseSwitchProvider()
 void IntellVoiceServiceManager::CreateDetector()
 {
     std::lock_guard<std::mutex> lock(detectorMutex_);
+    if (isServiceUnloaded_.load()) {
+        INTELL_VOICE_LOG_INFO("service is unloading");
+        return;
+    }
+
     if (detector_ != nullptr) {
         INTELL_VOICE_LOG_INFO("detector is already existed, no need to create");
         return;
@@ -220,6 +224,11 @@ void IntellVoiceServiceManager::CreateDetector()
 void IntellVoiceServiceManager::StartDetection()
 {
     std::lock_guard<std::mutex> lock(detectorMutex_);
+    if (isServiceUnloaded_.load()) {
+        INTELL_VOICE_LOG_INFO("service is unloading");
+        return;
+    }
+
     if (detector_ == nullptr) {
         INTELL_VOICE_LOG_ERROR("detector_ is nullptr");
         return;
@@ -271,6 +280,10 @@ void IntellVoiceServiceManager::OnServiceStart()
 
     {
         std::lock_guard<std::mutex> lock(engineMutex_);
+        if (isServiceUnloaded_.load()) {
+            INTELL_VOICE_LOG_INFO("service is unloading");
+            return;
+        }
         sptr<EngineBase> wakeupEngine = EngineFactory::CreateEngineInst(INTELL_VOICE_WAKEUP);
         if (wakeupEngine == nullptr) {
             INTELL_VOICE_LOG_ERROR("wakeupEngine is nullptr");
@@ -283,16 +296,7 @@ void IntellVoiceServiceManager::OnServiceStart()
     StartDetection();
 }
 
-bool IntellVoiceServiceManager::QuerySwitchStatus()
-{
-    if (switchProvider_ == nullptr) {
-        INTELL_VOICE_LOG_ERROR("switchProvider_ is nullptr");
-        return false;
-    }
-    return switchProvider_->QuerySwitchStatus();
-}
-
-void IntellVoiceServiceManager::UnloadIntellVoiceService()
+void IntellVoiceServiceManager::OnServiceStop()
 {
     {
         std::lock_guard<std::mutex> lock(detectorMutex_);
@@ -310,6 +314,20 @@ void IntellVoiceServiceManager::UnloadIntellVoiceService()
             ReleaseEngineInner(INTELL_VOICE_WAKEUP);
         }
     }
+}
+
+bool IntellVoiceServiceManager::QuerySwitchStatus()
+{
+    if (switchProvider_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("switchProvider_ is nullptr");
+        return false;
+    }
+    return switchProvider_->QuerySwitchStatus();
+}
+
+void IntellVoiceServiceManager::UnloadIntellVoiceService()
+{
+    isServiceUnloaded_.store(true);
 
     auto systemAbilityMgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     if (systemAbilityMgr == nullptr) {
@@ -318,20 +336,15 @@ void IntellVoiceServiceManager::UnloadIntellVoiceService()
     }
     int32_t ret = systemAbilityMgr->UnloadSystemAbility(INTELL_VOICE_SERVICE_ID);
     if (ret != 0) {
-        INTELL_VOICE_LOG_ERROR("failed to unload intellvoice service, ret: %{public}d", ret);
+        INTELL_VOICE_LOG_ERROR("Failed to unload intellvoice service, ret: %{public}d", ret);
         return;
     }
-    INTELL_VOICE_LOG_INFO("success to unload intellvoice service");
+    INTELL_VOICE_LOG_INFO("Success to unload intellvoice service");
 }
 
 void IntellVoiceServiceManager::OnSwitchChange()
 {
-    if (switchProvider_ == nullptr) {
-        INTELL_VOICE_LOG_ERROR("switchProvider_ is nullptr");
-        return;
-    }
-
-    if (!switchProvider_->QuerySwitchStatus()) {
+    if (!QuerySwitchStatus()) {
         INTELL_VOICE_LOG_INFO("switch off");
         UnloadIntellVoiceService();
     }

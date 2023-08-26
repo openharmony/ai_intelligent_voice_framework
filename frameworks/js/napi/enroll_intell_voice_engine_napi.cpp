@@ -213,10 +213,17 @@ napi_value EnrollIntellVoiceEngineNapi::Init(napi_env env, napi_callback_info in
         auto engine = engineNapi->engine_;
         if (engine == nullptr) {
             INTELL_VOICE_LOG_ERROR("get engine instance faild");
+            asyncContext->status_ = napi_object_expected;
+            asyncContext->error_ = "No memory";
             return -1;
         }
 
-        return engine->Init(engineNapi->config_);
+        auto ret = engine->Init(engineNapi->config_);
+        if (ret != 0) {
+            asyncContext->status_ = napi_function_expected;
+            asyncContext->error_ = "Init failed";
+        }
+        return ret;
     };
 
     AsyncExecute execute = [](napi_env env, void *data) {};
@@ -250,10 +257,17 @@ napi_value EnrollIntellVoiceEngineNapi::EnrollForResult(napi_env env, napi_callb
         auto engine = engineNapi->engine_;
         if (engine == nullptr) {
             INTELL_VOICE_LOG_ERROR("get engine instance faild");
+            asyncContext->status_ = napi_object_expected;
+            asyncContext->error_ = "No memory";
             return -1;
         }
 
-        return engine->Start(engineNapi->isLast_);
+        auto ret = engine->Start(engineNapi->isLast_);
+        if (ret != 0) {
+            asyncContext->status_ = napi_function_expected;
+            asyncContext->error_ = "Enroll failed";
+        }
+        return ret;
     };
 
     AsyncExecute execute = [](napi_env env, void *data) {};
@@ -448,10 +462,17 @@ napi_value EnrollIntellVoiceEngineNapi::Commit(napi_env env, napi_callback_info 
         auto engine = engineNapi->engine_;
         if (engine == nullptr) {
             INTELL_VOICE_LOG_ERROR("get engine instance faild");
+            asyncContext->status_ = napi_object_expected;
+            asyncContext->error_ = "No memory";
             return -1;
         }
 
-        return engine->Commit();
+        auto ret = engine->Commit();
+        if (ret != 0) {
+            asyncContext->status_ = napi_function_expected;
+            asyncContext->error_ = "Commit failed";
+        }
+        return ret;
     };
 
     AsyncExecute execute = [](napi_env env, void *data) {};
@@ -510,6 +531,8 @@ void EnrollIntellVoiceEngineNapi::CompleteCallback(napi_env env, napi_status sta
 
     if (asyncContext->processWork == nullptr) {
         INTELL_VOICE_LOG_ERROR("process work is nullptr");
+        asyncContext->status_ = napi_object_expected;
+        asyncContext->error_ = "No memory";
         NapiAsync::CommonCallbackRoutine(asyncContext, result);
         return;
     }
@@ -517,6 +540,8 @@ void EnrollIntellVoiceEngineNapi::CompleteCallback(napi_env env, napi_status sta
     auto cb = reinterpret_cast<EnrollIntellVoiceEngineNapi *>(asyncContext->engineNapi_)->callbackNapi_;
     if (cb == nullptr) {
         INTELL_VOICE_LOG_ERROR("get callback napi faild");
+        asyncContext->status_ = napi_object_expected;
+        asyncContext->error_ = "No memory";
         NapiAsync::CommonCallbackRoutine(asyncContext, result);
         return;
     }
@@ -525,6 +550,7 @@ void EnrollIntellVoiceEngineNapi::CompleteCallback(napi_env env, napi_status sta
     if (asyncContext->processWork(asyncContext) != 0) {
         INTELL_VOICE_LOG_ERROR("process work failed");
         cb->ClearAsyncWork(true, "the request was aborted because intelligent voice processWork error");
+        NapiAsync::CommonCallbackRoutine(asyncContext, result);
     }
 }
 }  // namespace IntellVoiceNapi

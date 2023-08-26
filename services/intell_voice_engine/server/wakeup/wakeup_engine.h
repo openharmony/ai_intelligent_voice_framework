@@ -36,7 +36,6 @@ public:
     int32_t Attach(const IntellVoiceEngineInfo &info) override;
     int32_t Detach(void) override;
     int32_t Start(bool isLast) override;
-    int32_t SetParameter(const std::string &keyValueList) override;
 
     void OnDetected() override;
 
@@ -48,14 +47,14 @@ private:
     bool SetCallback();
     bool StartAudioSource();
     void StartAbility();
-    bool SetParameterInner(const std::string &keyValueList);
     void StopAudioSource();
+    bool CreateWakeupSourceStopCallback();
 
 private:
     bool isPcmFromExternal_ = false;
     std::shared_ptr<WakeupAdapterListener> adapterListener_ = nullptr;
     sptr<OHOS::HDI::IntelligentVoice::Engine::V1_0::IIntellVoiceEngineCallback> callback_ = nullptr;
-    std::shared_ptr<WakeUpSourceStopCallback> wakeUpSourceStopCallback_ = nullptr;
+    std::shared_ptr<WakeupSourceStopCallback> wakeupSourceStopCallback_ = nullptr;
     OHOS::AudioStandard::AudioCapturerOptions capturerOptions_;
     std::unique_ptr<AudioSource> audioSource_ = nullptr;
     friend class IntellVoiceUtils::SptrFactory<WakeupEngine>;

@@ -199,6 +199,14 @@ int32_t WakeupEngine::Start(bool isLast)
 {
     std::lock_guard<std::mutex> lock(mutex_);
     INTELL_VOICE_LOG_INFO("enter");
+    ON_SCOPE_EXIT {
+        INTELL_VOICE_LOG_INFO("failed to start");
+        const auto &manager = IntellVoiceServiceManager::GetInstance();
+        if (manager != nullptr) {
+            manager->StartDetection();
+        }
+    };
+
     if (adapter_ == nullptr) {
         INTELL_VOICE_LOG_ERROR("adapter is nullptr");
         return -1;
@@ -207,7 +215,7 @@ int32_t WakeupEngine::Start(bool isLast)
     if (IntellVoiceServiceManager::GetInstance()->ApplyArbitration(INTELL_VOICE_WAKEUP, ENGINE_EVENT_START) !=
         ARBITRATION_OK) {
         INTELL_VOICE_LOG_ERROR("policy manager reject to start engine");
-        return 0;
+        return -1;
     }
 
     StartInfo info = {
@@ -218,26 +226,20 @@ int32_t WakeupEngine::Start(bool isLast)
         return -1;
     }
 
-    if (isPcmFromExternal_) {
-        INTELL_VOICE_LOG_INFO("pcm is from external");
-        return 0;
-    }
-
-    wakeUpSourceStopCallback_ = std::make_shared<WakeUpSourceStopCallback>();
-    auto audioSystemManager = AudioSystemManager::GetInstance();
-    if (audioSystemManager != nullptr) {
-        audioSystemManager->SetWakeUpSourceCloseCallback(wakeUpSourceStopCallback_);
-    } else {
-        INTELL_VOICE_LOG_ERROR("audioSystemManager is null");
+    if (!CreateWakeupSourceStopCallback()) {
+        INTELL_VOICE_LOG_ERROR("create wakeup source stop callback failed");
+        adapter_->Stop();
+        return -1;
     }
 
     if (!StartAudioSource()) {
-        INTELL_VOICE_LOG_ERROR("start file source failed");
+        INTELL_VOICE_LOG_ERROR("start audio source failed");
         adapter_->Stop();
         return -1;
     }
 
     INTELL_VOICE_LOG_INFO("exit");
+    CANCEL_SCOPE_EXIT;
     return 0;
 }
 
@@ -257,44 +259,6 @@ void WakeupEngine::StartAbility()
     want.SetElementName(bundleName, abilityName);
     want.SetParam("serviceName", std::string("intell_voice"));
     AAFwk::AbilityManagerClient::GetInstance()->StartAbility(want);
-}
-
-int32_t WakeupEngine::SetParameter(const std::string &keyValueList)
-{
-    if (SetParameterInner(keyValueList)) {
-        INTELL_VOICE_LOG_INFO("inner parameter");
-        return 0;
-    }
-
-    return EngineBase::SetParameter(keyValueList);
-}
-
-bool WakeupEngine::SetParameterInner(const std::string &keyValueList)
-{
-    std::lock_guard<std::mutex> lock(mutex_);
-
-    const auto &manager = IntellVoiceServiceManager::GetInstance();
-    if (manager == nullptr) {
-        INTELL_VOICE_LOG_ERROR();
-        return false;
-    }
-
-    std::map<std::string, std::string> kvpairs;
-    SplitStringToKVPair(keyValueList, kvpairs);
-    for (auto it : kvpairs) {
-        if (it.first == std::string("start_stream")) {
-            INTELL_VOICE_LOG_INFO("start stream:%{public}s", it.second.c_str());
-            manager->StopDetection();
-            return true;
-        }
-        if (it.first == std::string("stop_stream")) {
-            INTELL_VOICE_LOG_INFO("stop stream:%{public}s", it.second.c_str());
-            manager->StartDetection();
-            return true;
-        }
-    }
-
-    return false;
 }
 
 bool WakeupEngine::StartAudioSource()
@@ -347,6 +311,29 @@ void WakeupEngine::StopAudioSource()
         audioSource_->Stop();
         audioSource_ = nullptr;
     }
+}
+
+bool WakeupEngine::CreateWakeupSourceStopCallback()
+{
+    if (wakeupSourceStopCallback_ != nullptr) {
+        INTELL_VOICE_LOG_INFO("wakeup close cb is already created");
+        return true;
+    }
+
+    auto audioSystemManager = AudioSystemManager::GetInstance();
+    if (audioSystemManager == nullptr) {
+        INTELL_VOICE_LOG_ERROR("audioSystemManager is nullptr");
+        return false;
+    }
+
+    wakeupSourceStopCallback_ = std::make_shared<WakeupSourceStopCallback>();
+    if (wakeupSourceStopCallback_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("wakeup source stop callback is nullptr");
+        return false;
+    }
+
+    audioSystemManager->SetWakeUpSourceCloseCallback(wakeupSourceStopCallback_);
+    return true;
 }
 }  // namespace IntellVoice
 }  // namespace OHOS

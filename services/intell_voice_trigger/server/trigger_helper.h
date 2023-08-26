@@ -91,9 +91,8 @@ private:
 private:
     class TelephonyStateObserver : public Telephony::TelephonyObserver {
     public:
-        explicit TelephonyStateObserver(const std::shared_ptr<TriggerHelper> helper)
+        explicit TelephonyStateObserver(const std::shared_ptr<TriggerHelper> helper) : helper_(helper)
         {
-            helper_ = helper;
         }
         ~TelephonyStateObserver()
         {
@@ -109,9 +108,8 @@ private:
 private:
     class AudioCapturerSourceChangeCallback : public OHOS::AudioStandard::AudioCapturerSourceCallback {
     public:
-        explicit AudioCapturerSourceChangeCallback(const std::shared_ptr<TriggerHelper> helper)
+        explicit AudioCapturerSourceChangeCallback(const std::shared_ptr<TriggerHelper> helper) : helper_(helper)
         {
-            helper_ = helper;
         }
         ~AudioCapturerSourceChangeCallback()
         {

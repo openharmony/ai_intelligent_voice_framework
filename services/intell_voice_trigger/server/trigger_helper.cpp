@@ -21,11 +21,12 @@
 #include "telephony_types.h"
 #include "call_manager_inner_type.h"
 
+#define LOG_TAG "TriggerHelper"
+
 using namespace OHOS::HDI::IntelligentVoice::Trigger::V1_0;
 using namespace OHOS::AudioStandard;
 using namespace OHOS::Telephony;
 using namespace std;
-#define LOG_TAG "TriggerHelper"
 
 namespace OHOS {
 namespace IntellVoiceTrigger {
@@ -145,6 +146,10 @@ int32_t TriggerHelper::StartGenericRecognition(int32_t uuid, std::shared_ptr<Gen
     modelData->SetCallback(callback);
 
     LoadModel(modelData);
+    if (IsConflictSceneActive()) {
+        INTELL_VOICE_LOG_INFO("conflict state, no need to start");
+        return 0;
+    }
     return StartRecognition(modelData);
 }
 
@@ -351,7 +356,7 @@ bool TriggerHelper::IsConflictSceneActive()
         return false;
     }
 
-    INTELL_VOICE_LOG_INFO("callActive0_ %{public}d, callActive1_ %{public}d, audioCaptureActive_ %{public}d",
+    INTELL_VOICE_LOG_INFO("callActive0_: %{public}d, callActive1_: %{public}d, audioCaptureActive_: %{public}d",
         telephonyObserver0_->callActive_,
         telephonyObserver1_->callActive_,
         audioCapturerSourceChangeCallback_->audioCaptureActive_);

@@ -20,6 +20,7 @@
 #include <unistd.h>
 #include "accesstoken_kit.h"
 #include "ipc_skeleton.h"
+#include "tokenid_kit.h"
 #include "idevmgr_hdi.h"
 #include "audio_system_manager.h"
 #include "intell_voice_log.h"
@@ -45,13 +46,13 @@ IntellVoiceService::IntellVoiceService(int32_t systemAbilityId, bool runOnCreate
     : SystemAbility(INTELL_VOICE_SERVICE_ID, true)
 {
     systemAbilityChangeMap_[COMMON_EVENT_SERVICE_ID] =
-        std::bind(&IntellVoiceService::OnCommonEventServiceChange, this, std::placeholders::_1);
+        [this](bool isAdded) { this->OnCommonEventServiceChange(isAdded); };
     systemAbilityChangeMap_[DISTRIBUTED_KV_DATA_SERVICE_ABILITY_ID] =
-        std::bind(&IntellVoiceService::OnDistributedKvDataServiceChange, this, std::placeholders::_1);
+        [this](bool isAdded) { this->OnDistributedKvDataServiceChange(isAdded); };
     systemAbilityChangeMap_[TELEPHONY_STATE_REGISTRY_SYS_ABILITY_ID] =
-        std::bind(&IntellVoiceService::OnTelephonyStateRegistryServiceChange, this, std::placeholders::_1);
+        [this](bool isAdded) { this->OnTelephonyStateRegistryServiceChange(isAdded); };
     systemAbilityChangeMap_[AUDIO_DISTRIBUTED_SERVICE_ID] =
-        std::bind(&IntellVoiceService::OnAudioDistributedServiceChange, this, std::placeholders::_1);
+        [this](bool isAdded) { this->OnAudioDistributedServiceChange(isAdded); };
 }
 
 IntellVoiceService::~IntellVoiceService()
@@ -60,6 +61,10 @@ IntellVoiceService::~IntellVoiceService()
 
 int32_t IntellVoiceService::CreateIntellVoiceEngine(IntellVoiceEngineType type, sptr<IIntellVoiceEngine> &inst)
 {
+    if (!CheckIsSystemApp()) {
+        INTELL_VOICE_LOG_WARN("not system app");
+        return -1;
+    }
     if (!VerifyClientPermission(OHOS_PERMISSION_INTELL_VOICE)) {
         INTELL_VOICE_LOG_WARN("verify permission");
     }
@@ -93,7 +98,7 @@ int32_t IntellVoiceService::ReleaseIntellVoiceEngine(IntellVoiceEngineType type)
 
 void IntellVoiceService::OnStart(const SystemAbilityOnDemandReason& startReason)
 {
-    INTELL_VOICE_LOG_ERROR("enter, reason id:%{public}d", startReason.GetId());
+    INTELL_VOICE_LOG_INFO("enter, reason id:%{public}d", startReason.GetId());
     reasonId_ = static_cast<int32_t>(startReason.GetId());
     LoadIntellVoiceHost();
 
@@ -109,22 +114,23 @@ void IntellVoiceService::OnStart(const SystemAbilityOnDemandReason& startReason)
     AddSystemAbilityListener(TELEPHONY_STATE_REGISTRY_SYS_ABILITY_ID);
     AddSystemAbilityListener(AUDIO_DISTRIBUTED_SERVICE_ID);
     RegisterPermissionCallback(OHOS_PERMISSION_INTELL_VOICE);
-    INTELL_VOICE_LOG_ERROR("publish ok");
+    INTELL_VOICE_LOG_INFO("publish ok");
 }
 
 void IntellVoiceService::OnStop(void)
 {
     INTELL_VOICE_LOG_INFO("enter");
 
+    const auto &manager = IntellVoiceServiceManager::GetInstance();
+    if (manager != nullptr) {
+        manager->OnServiceStop();
+        manager->ReleaseSwitchProvider();
+    }
+
     auto triggerMgr = IntellVoiceTrigger::TriggerManager::GetInstance();
     if (triggerMgr != nullptr) {
         triggerMgr->DettachTelephonyObserver();
         triggerMgr->DettachAudioCaptureListener();
-    }
-
-    const auto &manager = IntellVoiceServiceManager::GetInstance();
-    if (manager != nullptr) {
-        manager->ReleaseSwitchProvider();
     }
 
     if (systemEventObserver_ != nullptr) {
@@ -192,7 +198,7 @@ static void print_to_file(void *fp, const char *s)
 
 int IntellVoiceService::Dump(int fd, const std::vector<std::u16string> &args)
 {
-    FILE* fp = fdopen(fd, "w+");
+    FILE *fp = fdopen(fd, "w+");
     if (fp != nullptr) {
         malloc_stats_print(print_to_file, fp, "");
         fp = nullptr;
@@ -209,6 +215,18 @@ bool IntellVoiceService::VerifyClientPermission(const std::string &permissionNam
         INTELL_VOICE_LOG_ERROR("Permission denied!");
         return false;
     }
+    return true;
+}
+
+bool IntellVoiceService::CheckIsSystemApp()
+{
+    uint64_t fullTokenId = IPCSkeleton::GetCallingFullTokenID();
+    if (!Security::AccessToken::TokenIdKit::IsSystemAppByFullTokenID(fullTokenId)) {
+        INTELL_VOICE_LOG_INFO("Not system app, permission reject tokenid: %{public}" PRIu64 "", fullTokenId);
+        return false;
+    }
+
+    INTELL_VOICE_LOG_INFO("System app, fullTokenId:%{public}" PRIu64 "", fullTokenId);
     return true;
 }
 
