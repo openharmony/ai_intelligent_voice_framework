@@ -78,8 +78,8 @@ HWTEST(MultipleAudioCapturerUnitTest, Multiple_Audio_Capturer_001, TestSize.Leve
     usleep(200000);
     EXPECT_EQ(-1, wakeupStart);
 
-    audioCapturer1->Release();
-    audioCapturer2->Release();
+    if (audioCapturer1 != nullptr) audioCapturer1->Release();
+    if (audioCapturer2 != nullptr) audioCapturer2->Release();
 }
 
 HWTEST(MultipleAudioCapturerUnitTest, Multiple_Audio_Capturer_002, TestSize.Level1)
