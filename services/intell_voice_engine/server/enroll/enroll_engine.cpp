@@ -152,7 +152,7 @@ int32_t EnrollEngine::Attach(const IntellVoiceEngineInfo &info)
 
 int32_t EnrollEngine::Detach(void)
 {
-    INTELL_VOICE_LOG_ERROR("EnrollEngine::Detach");
+    INTELL_VOICE_LOG_INFO("enter");
     std::lock_guard<std::mutex> lock(mutex_);
     if (adapter_ == nullptr) {
         INTELL_VOICE_LOG_ERROR("adapter is nullptr");
@@ -282,7 +282,7 @@ void EnrollEngine::WriteBufferFromAshmem(uint8_t *&buffer, uint32_t size, sptr<O
 
 void EnrollEngine::ProcDspModel()
 {
-    INTELL_VOICE_LOG_ERROR("enter");
+    INTELL_VOICE_LOG_INFO("enter");
     uint8_t *buffer = nullptr;
     uint32_t size = 0;
     sptr<Ashmem> ashmem;
