@@ -23,7 +23,6 @@
 #define LOG_TAG "EngineEventCallback"
 
 using namespace std;
-using namespace OHOS::IntellVoiceTests;
 
 namespace {
 constexpr int32_t ENROLL_CNT = 3;
@@ -31,7 +30,7 @@ static constexpr uint32_t BUFFER_SIZE = 1280;
 }
 
 namespace OHOS {
-namespace IntellVoiceEngine {
+namespace IntellVoiceTests {
 const std::string TEST_RESOURCE_PATH = "/data/test/resource/";
 
 void EngineEventCallback::OnEvent(

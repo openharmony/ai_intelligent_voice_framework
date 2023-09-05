@@ -30,13 +30,14 @@
 #include "engine_event_callback.h"
 #include "wait_for_result.h"
 
+#define LOG_TAG "ClientTest"
+
 using namespace OHOS::IntellVoiceTests;
 using namespace OHOS::IntellVoiceEngine;
 using namespace OHOS;
 using namespace testing::ext;
 
 static sptr<IIntellVoiceService> g_sProxy = nullptr;
-#define LOG_TAG "ClientTest"
 
 class ClientTest : public testing::Test {
 public:

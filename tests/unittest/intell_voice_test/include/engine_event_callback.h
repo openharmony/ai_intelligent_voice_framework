@@ -21,10 +21,10 @@
 #include "wait_for_result.h"
 
 namespace OHOS {
-namespace IntellVoiceEngine {
-class EngineEventCallback : public IIntellVoiceEngineEventCallback {
+namespace IntellVoiceTests {
+class EngineEventCallback : public OHOS::IntellVoiceEngine::IIntellVoiceEngineEventCallback {
 public:
-    EngineEventCallback(sptr<IIntellVoiceEngine> &engine, OHOS::IntellVoiceTests::WaitForResult *wait)
+    EngineEventCallback(sptr<OHOS::IntellVoiceEngine::IIntellVoiceEngine> &engine, WaitForResult *wait)
     {
         engine_ = engine;
         waitForResult_ = wait;
@@ -37,9 +37,9 @@ private:
 private:
     int32_t startCnt_ = 0;
     uint32_t pcmSize_ = 0;
-    sptr<IIntellVoiceEngine> engine_ = nullptr;
+    sptr<OHOS::IntellVoiceEngine::IIntellVoiceEngine> engine_ = nullptr;
     std::shared_ptr<uint8_t> pcmData_ = nullptr;
-    OHOS::IntellVoiceTests::WaitForResult *waitForResult_;
+    WaitForResult *waitForResult_;
 };
 }
 }
