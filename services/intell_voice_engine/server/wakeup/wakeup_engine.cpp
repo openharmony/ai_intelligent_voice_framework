@@ -201,10 +201,12 @@ int32_t WakeupEngine::Start(bool isLast)
     INTELL_VOICE_LOG_INFO("enter");
     ON_SCOPE_EXIT {
         INTELL_VOICE_LOG_INFO("failed to start");
-        const auto &manager = IntellVoiceServiceManager::GetInstance();
-        if (manager != nullptr) {
-            manager->StartDetection();
-        }
+        std::thread([]() {
+            const auto &manager = IntellVoiceServiceManager::GetInstance();
+            if (manager != nullptr) {
+                manager->StartDetection();
+            }
+        }).detach();
     };
 
     if (adapter_ == nullptr) {
