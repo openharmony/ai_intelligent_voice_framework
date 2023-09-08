@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 #include "trigger_detector_callback.h"
+#include <thread>
 #include "intell_voice_log.h"
 #include "wakeup_engine.h"
 
@@ -26,8 +27,8 @@ TriggerDetectorCallback::TriggerDetectorCallback(OnDetectedCb cb) : cb_(cb)
 
 void TriggerDetectorCallback::OnDetected(const std::shared_ptr<DetectorEvent> &event)
 {
-    if (event == nullptr) {
-        INTELL_VOICE_LOG_ERROR("event is nullptr");
+    if ((event == nullptr) || (cb_ == nullptr)) {
+        INTELL_VOICE_LOG_ERROR("event or cb is nullptr");
         return;
     }
 
@@ -35,7 +36,8 @@ void TriggerDetectorCallback::OnDetected(const std::shared_ptr<DetectorEvent> &e
         INTELL_VOICE_LOG_INFO(
             "receive DetectorEvent dataSize_: %{public}zu, data_[0]: %{public}d", event->data_.size(), event->data_[0]);
     }
-    cb_();
+
+    std::thread([&]() { cb_(); }).detach();
 }
 }  // namespace IntellVoiceTrigger
 }  // namespace OHOS
