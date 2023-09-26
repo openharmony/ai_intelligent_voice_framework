@@ -38,6 +38,10 @@ public:
     int32_t WriteAudio(const uint8_t *buffer, uint32_t size) override;
     int32_t Stop() override;
     virtual void OnDetected() {};
+    virtual bool ResetAdapter()
+    {
+        return true;
+    }
     bool IsRunning()
     {
         return isRunning_;

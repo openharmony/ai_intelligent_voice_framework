@@ -38,6 +38,7 @@ public:
     int32_t Start(bool isLast) override;
 
     void OnDetected() override;
+    bool ResetAdapter() override;
 
 private:
     WakeupEngine();

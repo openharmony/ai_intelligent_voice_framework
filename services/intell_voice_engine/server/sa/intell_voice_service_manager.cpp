@@ -122,11 +122,10 @@ int32_t IntellVoiceServiceManager::ReleaseEngine(IntellVoiceEngineType type)
             return 0;
         }
 
-        auto wakeupEngine = CreateEngineInner(INTELL_VOICE_WAKEUP);
-        if (wakeupEngine == nullptr) {
-            INTELL_VOICE_LOG_WARN("failed to create wakeup engine");
+        if (!CreateOrResetWakeupEngine()) {
             return 0;
         }
+
         CreateDetector();
         StartDetection();
     }
@@ -146,6 +145,27 @@ int32_t IntellVoiceServiceManager::ReleaseEngineInner(IntellVoiceEngineType type
     it->second = nullptr;
     engines_.erase(type);
     return 0;
+}
+
+bool IntellVoiceServiceManager::CreateOrResetWakeupEngine()
+{
+    auto it = engines_.find(INTELL_VOICE_WAKEUP);
+    if ((it != engines_.end()) && (it->second != nullptr)) {
+        INTELL_VOICE_LOG_INFO("wakeup engine is existed");
+        if (GetEnrollResult()) {
+            INTELL_VOICE_LOG_INFO("reset adapter");
+            if (!it->second->ResetAdapter()) {
+                INTELL_VOICE_LOG_ERROR("failed to reset adapter");
+                return false;
+            }
+        }
+    } else {
+        if (CreateEngineInner(INTELL_VOICE_WAKEUP) == nullptr) {
+            INTELL_VOICE_LOG_ERROR("failed to create wakeup engine");
+            return false;
+        }
+    }
+    return true;
 }
 
 void IntellVoiceServiceManager::CreateSwitchProvider()

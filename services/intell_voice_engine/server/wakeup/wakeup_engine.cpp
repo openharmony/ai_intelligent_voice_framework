@@ -38,7 +38,9 @@ namespace OHOS {
 namespace IntellVoiceEngine {
 static constexpr uint32_t MIN_BUFFER_SIZE = 1280;
 static constexpr uint32_t INTERVAL = 50;
-static const std::string RECOGNITION_FILE = "/data/data/recognition.pcm";
+static constexpr int32_t CHANNEL_CNT = 1;
+static constexpr int32_t BITS_PER_SAMPLE = 16;
+static constexpr int32_t SAMPLE_RATE = 16000;
 
 WakeupEngine::WakeupEngine()
 {
@@ -86,7 +88,6 @@ void WakeupEngine::OnWakeupRecognition()
 
 bool WakeupEngine::SetCallback()
 {
-    std::lock_guard<std::mutex> lock(mutex_);
     INTELL_VOICE_LOG_INFO("enter");
     if (adapter_ == nullptr) {
         INTELL_VOICE_LOG_ERROR("adapter is nullptr");
@@ -133,10 +134,10 @@ bool WakeupEngine::Init()
     IntellVoiceEngineInfo info = {
         .wakeupPhrase = "\xE5\xB0\x8F\xE8\x89\xBA\xE5\xB0\x8F\xE8\x89\xBA",
         .isPcmFromExternal = false,
-        .minBufSize = 1280,
-        .sampleChannels = 1,
-        .bitsPerSample = 16,
-        .sampleRate = 16000,
+        .minBufSize = MIN_BUFFER_SIZE,
+        .sampleChannels = CHANNEL_CNT,
+        .bitsPerSample = BITS_PER_SAMPLE,
+        .sampleRate = SAMPLE_RATE,
     };
 
     if (Attach(info) != 0) {
@@ -335,6 +336,47 @@ bool WakeupEngine::CreateWakeupSourceStopCallback()
     }
 
     audioSystemManager->SetWakeUpSourceCloseCallback(wakeupSourceStopCallback_);
+    return true;
+}
+
+bool WakeupEngine::ResetAdapter()
+{
+    if (adapter_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("adapter is nullptr");
+        return false;
+    }
+
+    auto mgr = IIntellVoiceEngineManager::Get();
+    if (mgr == nullptr) {
+        INTELL_VOICE_LOG_ERROR("failed to get engine manager");
+        return false;
+    }
+    adapter_->Detach();
+    mgr->ReleaseAdapter(desc_);
+    adapter_ = nullptr;
+
+    mgr->CreateAdapter(desc_, adapter_);
+    if (adapter_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("adapter is nullptr");
+        return false;
+    }
+
+    adapter_->SetCallback(callback_);
+    IntellVoiceEngineAdapterInfo adapterInfo = {
+        .wakeupPhrase = "\xE5\xB0\x8F\xE8\x89\xBA\xE5\xB0\x8F\xE8\x89\xBA",
+        .minBufSize = MIN_BUFFER_SIZE,
+        .sampleChannels = CHANNEL_CNT,
+        .bitsPerSample = BITS_PER_SAMPLE,
+        .sampleRate = SAMPLE_RATE,
+    };
+
+    if (adapter_->Attach(adapterInfo) != 0) {
+        INTELL_VOICE_LOG_ERROR("failed to attach");
+        mgr->ReleaseAdapter(desc_);
+        adapter_ = nullptr;
+        return false;
+    }
+
     return true;
 }
 }  // namespace IntellVoice
