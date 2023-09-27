@@ -82,6 +82,7 @@ private:
 
     sptr<IIntellVoiceEngine> CreateEngineInner(IntellVoiceEngineType type);
     int32_t ReleaseEngineInner(IntellVoiceEngineType type);
+    bool CreateOrResetWakeupEngine();
 
 private:
     static const int32_t g_enrollModelUuid;
