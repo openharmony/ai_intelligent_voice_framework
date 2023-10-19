@@ -12,10 +12,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef INTELL_VOICE_FUZZER_H
+#define INTELL_VOICE_FUZZER_H
 
-#ifndef EXAMPLE_CALCULATOR_FUZZER_H_
-#define EXAMPLE_CALCULATOR_FUZZER_H_
+#include "i_intell_voice_engine_callback.h"
+#include "i_intell_voice_engine.h"
 
-#define FUZZ_PROJECT_NAME "calculator_fuzzer"
+#define FUZZ_PROJECT_NAME "intell_voice_fuzzer"
 
-#endif // EXAMPLE_CALCULATOR_FUZZER_H_
+namespace OHOS {
+class EngineEventFuzzCallback : public OHOS::IntellVoiceEngine::IIntellVoiceEngineEventCallback {
+public:
+    explicit EngineEventFuzzCallback() = default;
+    virtual ~EngineEventFuzzCallback() = default;
+    virtual void OnEvent(const OHOS::HDI::IntelligentVoice::Engine::V1_0::IntellVoiceEngineCallBackEvent &param) {};
+};
+}
+#endif // INTELL_VOICE_FUZZER_H_
