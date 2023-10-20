@@ -16,10 +16,11 @@ group("intell_voice_unit_test") {
   deps = [
     "unittest/intell_voice_test:client_unit_test",
     "unittest/intell_voice_test:trigger_unit_test",
+    "unittest/multiple_capturer_test:multiple_capturer_test",
   ]
 }
 
 group("intell_voice_fuzz_test") {
   testonly = true
-  deps = [ "fuzztest/Calculator_fuzzer:fuzztest" ]
+  deps = [ "fuzztest/intell_voice_fuzzer:fuzztest" ]
 }
