@@ -12,11 +12,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include <cstddef>
 #include <cstdint>
 
-#include "intell_voice_fuzzer.h"
 #include "intell_voice_manager.h"
 #include "intell_voice_log.h"
 #include "i_intell_voice_engine.h"
@@ -31,6 +29,13 @@ using namespace OHOS::IntellVoiceEngine;
 using namespace OHOS::IntellVoice;
 
 namespace OHOS {
+class EngineEventFuzzCallback : public OHOS::IntellVoiceEngine::IIntellVoiceEngineEventCallback {
+public:
+    explicit EngineEventFuzzCallback() = default;
+    virtual ~EngineEventFuzzCallback() = default;
+    virtual void OnEvent(const OHOS::HDI::IntelligentVoice::Engine::V1_0::IntellVoiceEngineCallBackEvent &param) {};
+};
+
 void IntellVoiceManagerFuzzTest(const uint8_t* data, size_t size)
 {
     if ((data == nullptr) || (size < LIMITSIZE)) {
@@ -61,7 +66,7 @@ void EnrollEngineFuzzTest(const uint8_t* data, size_t size)
     int32_t sensibility = *reinterpret_cast<const int32_t *>(data);
     enrollEngine->SetSensibility(sensibility);
 
-    WakeupHapInfo info = {"com.huawei.hmos.aibase", "WakeUpExtAbility"};
+    WakeupHapInfo info = {"com.aibase", "WakeUpExtAbility"};
     enrollEngine->SetWakeupHapInfo(info);
 
     enrollEngine->SetParameter("key", "value");
@@ -87,7 +92,7 @@ void WakeupEngineFuzzTest(const uint8_t* data, size_t size)
     int32_t sensibility = *reinterpret_cast<const int32_t *>(data);
     wakeEngine->SetSensibility(sensibility);
 
-    WakeupHapInfo info = {"com.huawei.hmos.aibase", "WakeUpExtAbility"};
+    WakeupHapInfo info = {"com.aibase", "WakeUpExtAbility"};
     wakeEngine->SetWakeupHapInfo(info);
 
     wakeEngine->SetParameter("key", "value");
