@@ -128,7 +128,9 @@ void TriggerService::AttachTelephonyObserver()
         INTELL_VOICE_LOG_ERROR("trigger helper is nullptr");
         return;
     }
+    #ifdef SUPPORT_TELEPHONY_SERVICE
     triggerHelper_->AttachTelephonyObserver();
+    #endif
 }
 
 void TriggerService::DettachTelephonyObserver()
@@ -137,7 +139,9 @@ void TriggerService::DettachTelephonyObserver()
         INTELL_VOICE_LOG_ERROR("trigger helper is nullptr");
         return;
     }
+    #ifdef SUPPORT_TELEPHONY_SERVICE
     triggerHelper_->DettachTelephonyObserver();
+    #endif
 }
 
 void TriggerService::AttachAudioCaptureListener()

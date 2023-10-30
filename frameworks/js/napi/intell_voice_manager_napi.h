@@ -20,7 +20,7 @@
 
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
-
+#include "service_change_callback_napi.h"
 #include "intell_voice_manager.h"
 
 namespace OHOS {
@@ -33,12 +33,10 @@ public:
     ~IntellVoiceManagerNapi();
 
     static napi_value Export(napi_env env, napi_value exports);
-    static napi_value CreateEnrollIntelligentVoiceEngine(napi_env env, napi_callback_info info);
-    static napi_value CreateWakeupIntelligentVoiceEngine(napi_env env, napi_callback_info info);
 
 private:
-    static void Destructor(napi_env env, void *nativeObject, void *finalize_hint);
-    static napi_value Constructor(napi_env env, napi_callback_info info);
+    static void Destruct(napi_env env, void *nativeObject, void *finalizeHint);
+    static napi_value Construct(napi_env env, napi_callback_info info);
 
     static napi_value GetCapabilityInfo(napi_env env, napi_callback_info info);
     static napi_value On(napi_env env, napi_callback_info info);
@@ -46,8 +44,14 @@ private:
 
     static napi_value GetIntelligentVoiceManager(napi_env env, napi_callback_info info);
     static napi_value GetIntelligentVoiceManagerWrapper(napi_env env);
-    template<typename T> static napi_value CreatePropertyBase(napi_env env, T &propertyMap, napi_ref ref);
+    template <typename T>
+    static napi_value CreatePropertyBase(napi_env env, T &propertyMap, napi_ref ref);
+    static napi_value RegisterCallback(napi_env env, napi_value jsThis, napi_value *args);
+    static napi_value DeregisterCallback(napi_env env, napi_value jsThis);
 
+public:
+    sptr<ServiceChangeCallbackNapi> serviceChangeCb_ = nullptr;
+private:
     napi_env env_ = nullptr;
     napi_ref wrapper_ = nullptr;
     IntellVoiceManager *manager_ = nullptr;

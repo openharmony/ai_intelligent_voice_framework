@@ -14,6 +14,8 @@
  */
 #include "intell_voice_service_manager.h"
 
+#include <fstream>
+
 #include "intell_voice_log.h"
 #include "engine_factory.h"
 #include "wakeup_engine.h"
@@ -23,28 +25,27 @@
 #include "intell_voice_generic_factory.h"
 #include "trigger_detector_callback.h"
 #include "memory_guard.h"
+#include "iproxy_broker.h"
+#include "v1_0/iintell_voice_engine_manager.h"
+#include "string_util.h"
 
 #define LOG_TAG "IntellVoiceServiceManager"
 
 using namespace OHOS::IntellVoiceTrigger;
 using namespace OHOS::IntellVoiceUtils;
+using namespace OHOS::HDI::IntelligentVoice::Engine::V1_0;
 
 namespace OHOS {
 namespace IntellVoiceEngine {
 const int32_t IntellVoiceServiceManager::g_enrollModelUuid = 1;
-std::atomic<bool> IntellVoiceServiceManager::enrollResult_ = false;
+
+std::atomic<bool> IntellVoiceServiceManager::enrollResult_[ENGINE_TYPE_BUT] = {false, false, false};
 
 std::unique_ptr<IntellVoiceServiceManager> IntellVoiceServiceManager::g_intellVoiceServiceMgr =
     std::unique_ptr<IntellVoiceServiceManager>(new (std::nothrow) IntellVoiceServiceManager());
 
 IntellVoiceServiceManager::IntellVoiceServiceManager()
-{
-    OHOS::IntellVoiceUtils::MemoryGuard memoryGuard;
-    historyInfoMgr_ = std::make_unique<HistoryInfoMgr>();
-    if (historyInfoMgr_ == nullptr) {
-        INTELL_VOICE_LOG_ERROR("historyInfoMgr_ is nullptr");
-    }
-}
+{}
 
 IntellVoiceServiceManager::~IntellVoiceServiceManager()
 {
@@ -63,12 +64,19 @@ sptr<IIntellVoiceEngine> IntellVoiceServiceManager::CreateEngine(IntellVoiceEngi
     INTELL_VOICE_LOG_INFO("enter, type:%{public}d", type);
     if (type == INTELL_VOICE_ENROLL) {
         StopDetection();
-        SetEnrollResult(false);
     }
 
     std::lock_guard<std::mutex> lock(engineMutex_);
 
-    if (ApplyArbitration(type, ENGINE_EVENT_CREATE) != ARBITRATION_OK) {
+    SetEnrollResult(type, false);
+    if (type != INTELL_VOICE_WAKEUP) {
+        auto engine = GetEngine(INTELL_VOICE_WAKEUP, engines_);
+        if (engine != nullptr) {
+            engine->ReleaseAdapter();
+        }
+    }
+
+    if (ApplyArbitration(type, engines_) != ARBITRATION_OK) {
         INTELL_VOICE_LOG_ERROR("policy manager reject create engine, type:%{public}d", type);
         return nullptr;
     }
@@ -80,12 +88,12 @@ sptr<IIntellVoiceEngine> IntellVoiceServiceManager::CreateEngineInner(IntellVoic
 {
     INTELL_VOICE_LOG_INFO("create engine enter, type: %{public}d", type);
     OHOS::IntellVoiceUtils::MemoryGuard memoryGuard;
-    auto it = engines_.find(type);
-    if (it != engines_.end() && it->second != nullptr) {
-        return it->second;
+    sptr<EngineBase> engine = GetEngine(type, engines_);
+    if (engine != nullptr) {
+        return engine;
     }
 
-    sptr<EngineBase> engine = EngineFactory::CreateEngineInst(type);
+    engine = EngineFactory::CreateEngineInst(type);
     if (engine == nullptr) {
         INTELL_VOICE_LOG_ERROR("create engine failed, type:%{public}d", type);
         return nullptr;
@@ -106,7 +114,8 @@ int32_t IntellVoiceServiceManager::ReleaseEngine(IntellVoiceEngineType type)
     }
 
     if (type == INTELL_VOICE_ENROLL) {
-        if ((!GetEnrollResult()) && (!QuerySwitchStatus())) {
+        if ((!GetEnrollResult(type)) && (!QuerySwitchStatus())) {
+            INTELL_VOICE_LOG_INFO("enroll fail, unloadservice");
             std::thread(&IntellVoiceServiceManager::UnloadIntellVoiceService, this).detach();
             return 0;
         }
@@ -144,20 +153,18 @@ int32_t IntellVoiceServiceManager::ReleaseEngineInner(IntellVoiceEngineType type
 
     it->second = nullptr;
     engines_.erase(type);
+
     return 0;
 }
 
 bool IntellVoiceServiceManager::CreateOrResetWakeupEngine()
 {
-    auto it = engines_.find(INTELL_VOICE_WAKEUP);
-    if ((it != engines_.end()) && (it->second != nullptr)) {
+    auto engine = GetEngine(INTELL_VOICE_WAKEUP, engines_);
+    if (engine != nullptr) {
         INTELL_VOICE_LOG_INFO("wakeup engine is existed");
-        if (GetEnrollResult()) {
-            INTELL_VOICE_LOG_INFO("reset adapter");
-            if (!it->second->ResetAdapter()) {
-                INTELL_VOICE_LOG_ERROR("failed to reset adapter");
-                return false;
-            }
+        if (!engine->ResetAdapter()) {
+            INTELL_VOICE_LOG_ERROR("failed to reset adapter");
+            return false;
         }
     } else {
         if (CreateEngineInner(INTELL_VOICE_WAKEUP) == nullptr) {
@@ -171,6 +178,12 @@ bool IntellVoiceServiceManager::CreateOrResetWakeupEngine()
 void IntellVoiceServiceManager::CreateSwitchProvider()
 {
     INTELL_VOICE_LOG_INFO("enter");
+    std::lock_guard<std::mutex> lock(switchMutex_);
+    if (isServiceUnloaded_.load()) {
+        INTELL_VOICE_LOG_INFO("service is unloading");
+        return;
+    }
+
     switchObserver_ = sptr<SwitchObserver>(new (std::nothrow) SwitchObserver());
     if (switchObserver_ == nullptr) {
         INTELL_VOICE_LOG_ERROR("switchObserver_ is nullptr");
@@ -190,13 +203,12 @@ void IntellVoiceServiceManager::CreateSwitchProvider()
         return;
     }
 
-    if (switchObserver_ != nullptr) {
-        switchProvider_->RegisterObserver(switchObserver_);
-    }
+    switchProvider_->RegisterObserver(switchObserver_);
 }
 
 void IntellVoiceServiceManager::ReleaseSwitchProvider()
 {
+    std::lock_guard<std::mutex> lock(switchMutex_);
     if (switchProvider_ == nullptr) {
         INTELL_VOICE_LOG_ERROR("switchProvider_ is nullptr");
         return;
@@ -273,13 +285,11 @@ void IntellVoiceServiceManager::OnDetected()
 
     {
         std::lock_guard<std::mutex> lock(engineMutex_);
-        auto it = engines_.find(INTELL_VOICE_WAKEUP);
-        if ((it == engines_.end()) || (it->second == nullptr)) {
+        engine = GetEngine(INTELL_VOICE_WAKEUP, engines_);
+        if (engine == nullptr) {
             INTELL_VOICE_LOG_ERROR("wakeup engine is not existed");
             return;
         }
-
-        engine = it->second;
     }
 
     engine->OnDetected();
@@ -304,12 +314,10 @@ void IntellVoiceServiceManager::OnServiceStart()
             INTELL_VOICE_LOG_INFO("service is unloading");
             return;
         }
-        sptr<EngineBase> wakeupEngine = EngineFactory::CreateEngineInst(INTELL_VOICE_WAKEUP);
-        if (wakeupEngine == nullptr) {
-            INTELL_VOICE_LOG_ERROR("wakeupEngine is nullptr");
+        if (CreateEngineInner(INTELL_VOICE_WAKEUP) == nullptr) {
+            INTELL_VOICE_LOG_ERROR("failed to create wakeup engine");
             return;
         }
-        engines_[INTELL_VOICE_WAKEUP] = wakeupEngine;
     }
 
     CreateDetector();
@@ -324,20 +332,11 @@ void IntellVoiceServiceManager::OnServiceStop()
             detector_->UnloadTriggerModel();
         }
     }
-
-    {
-        std::lock_guard<std::mutex> lock(engineMutex_);
-        auto it = engines_.find(INTELL_VOICE_WAKEUP);
-        if ((it != engines_.end()) && (it->second != nullptr)) {
-            INTELL_VOICE_LOG_INFO("wakeup engine is existed");
-            it->second->Detach();
-            ReleaseEngineInner(INTELL_VOICE_WAKEUP);
-        }
-    }
 }
 
 bool IntellVoiceServiceManager::QuerySwitchStatus()
 {
+    std::lock_guard<std::mutex> lock(switchMutex_);
     if (switchProvider_ == nullptr) {
         INTELL_VOICE_LOG_ERROR("switchProvider_ is nullptr");
         return false;
@@ -364,75 +363,167 @@ void IntellVoiceServiceManager::UnloadIntellVoiceService()
 
 void IntellVoiceServiceManager::OnSwitchChange()
 {
-    if (!QuerySwitchStatus()) {
+    if (!QuerySwitchStatus() && !IsUpdateEngineOn()) {
         INTELL_VOICE_LOG_INFO("switch off");
         UnloadIntellVoiceService();
+    } else {
+        INTELL_VOICE_LOG_INFO("switch on");
     }
 }
 
-int32_t IntellVoiceServiceManager::ApplyArbitration(IntellVoiceEngineType type, EngineEvent event)
+bool IntellVoiceServiceManager::RegisterHDIDeathRecipient()
 {
-    INTELL_VOICE_LOG_INFO("enter");
-    switch (event) {
-        case ENGINE_EVENT_CREATE:
-            return CreateArbitration(type);
-        case ENGINE_EVENT_START:
-            return StartArbitration(type);
-        default:
-            INTELL_VOICE_LOG_INFO("unknown engine event:%{public}d", event);
-            break;
+    auto mgr = IIntellVoiceEngineManager::Get();
+    if (mgr == nullptr) {
+        INTELL_VOICE_LOG_ERROR("failed to get engine manager");
+        return false;
     }
-    return ARBITRATION_OK;
+    sptr<IRemoteObject> object = OHOS::HDI::hdi_objcast<IIntellVoiceEngineManager>(mgr);
+    INTELL_VOICE_LOG_INFO("enter");
+    if (object == nullptr) {
+        INTELL_VOICE_LOG_ERROR("object is nullptr");
+        return false;
+    }
+    sptr<IntellVoiceDeathRecipient> recipient = new (std::nothrow) IntellVoiceDeathRecipient();
+    if (recipient == nullptr) {
+        INTELL_VOICE_LOG_ERROR("create death recipient failed");
+        return false;
+    }
+
+    recipient->SetServerDiedCallback(std::bind(&IntellVoiceServiceManager::OnHDIDiedCallback, this));
+    return object->AddDeathRecipient(recipient);
 }
 
-int32_t IntellVoiceServiceManager::CreateArbitration(IntellVoiceEngineType type)
+void IntellVoiceServiceManager::OnHDIDiedCallback()
 {
-    INTELL_VOICE_LOG_INFO("enter");
-    if (type == INTELL_VOICE_ENROLL) {
-        auto wakeupEngineIt = engines_.find(INTELL_VOICE_WAKEUP);
-        if (wakeupEngineIt != engines_.end()) {
-            HandlePreemption(wakeupEngineIt->second);
+    INTELL_VOICE_LOG_INFO("receive hdi death recipient");
+    _Exit(0);
+}
+
+bool IntellVoiceServiceManager::RegisterProxyDeathRecipient(const sptr<IRemoteObject> &object)
+{
+    deathRecipientObj_ = object;
+    proxyDeathRecipient_ = new (std::nothrow) IntellVoiceDeathRecipient();
+    if (proxyDeathRecipient_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("create death recipient failed");
+        return false;
+    }
+
+    proxyDeathRecipient_->SetServerDiedCallback(std::bind(&IntellVoiceServiceManager::OnProxyDiedCallback, this));
+    return deathRecipientObj_->AddDeathRecipient(proxyDeathRecipient_);
+}
+
+bool IntellVoiceServiceManager::DeregisterProxyDeathRecipient()
+{
+    if (proxyDeathRecipient_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("death recipient in nullptr");
+        return false;
+    }
+    return deathRecipientObj_->RemoveDeathRecipient(proxyDeathRecipient_);
+}
+
+void IntellVoiceServiceManager::OnProxyDiedCallback()
+{
+    INTELL_VOICE_LOG_INFO("receive proxy death recipient, release enroll engine");
+    {
+        std::lock_guard<std::mutex> lock(engineMutex_);
+        sptr<EngineBase> engineEnroll = GetEngine(INTELL_VOICE_ENROLL, engines_);
+        if (engineEnroll == nullptr) {
+            INTELL_VOICE_LOG_INFO("update engine not existed");
+            return;
         }
 
-        auto enrollEngineIt = engines_.find(INTELL_VOICE_ENROLL);
-        if (enrollEngineIt != engines_.end()) {
-            HandleReplace(enrollEngineIt->second);
-        }
+        engineEnroll->Detach();
     }
-    return ARBITRATION_OK;
+    ReleaseEngine(INTELL_VOICE_ENROLL);
 }
 
-int32_t IntellVoiceServiceManager::StartArbitration(IntellVoiceEngineType type)
+bool IntellVoiceServiceManager::IsUpdateEngineOn()
 {
-    INTELL_VOICE_LOG_INFO("enter");
-    if (type == INTELL_VOICE_WAKEUP) {
-        auto it = engines_.find(INTELL_VOICE_ENROLL);
-        if (it != engines_.end()) {
-            return ARBITRATION_REJECT;
-        }
+    std::lock_guard<std::mutex> lock(engineMutex_);
+    sptr<EngineBase> engineUpdate = GetEngine(INTELL_VOICE_UPDATE, engines_);
+    if (engineUpdate != nullptr) {
+        INTELL_VOICE_LOG_ERROR("already updateing");
+        return true;
     }
-    return ARBITRATION_OK;
+
+    return false;
 }
 
-void IntellVoiceServiceManager::HandlePreemption(sptr<IIntellVoiceEngine> currentEngine)
+bool IntellVoiceServiceManager::CreateUpdateEngine()
 {
-    INTELL_VOICE_LOG_INFO("enter");
-    if (currentEngine == nullptr) {
-        INTELL_VOICE_LOG_ERROR("failed to stop current engine, current engine is null");
+    if (IsUpdateEngineOn()) {
+        INTELL_VOICE_LOG_INFO("no need to update");
+        return true;
+    }
+
+    if (!IsVersionUpdate()) {
+        INTELL_VOICE_LOG_INFO("version not update");
+        return false;
+    }
+
+    sptr<IIntellVoiceEngine> updateEngine = CreateEngine(INTELL_VOICE_UPDATE);
+    if (updateEngine == nullptr) {
+        INTELL_VOICE_LOG_ERROR("updateEngine is nullptr, notify apk");
+        return false;
+    }
+
+    return true;
+}
+
+void IntellVoiceServiceManager::UpdateCompleteInner(int result)
+{
+    INTELL_VOICE_LOG_INFO("++");
+    std::lock_guard<std::mutex> lock(engineMutex_);
+    sptr<EngineBase> engineUpdate = GetEngine(INTELL_VOICE_UPDATE, engines_);
+    if (engineUpdate == nullptr) {
+        INTELL_VOICE_LOG_INFO("update engine not existed");
         return;
     }
-    currentEngine->Stop();
-}
 
-void IntellVoiceServiceManager::HandleReplace(sptr<IIntellVoiceEngine> currentEngine)
-{
-    INTELL_VOICE_LOG_INFO("enter");
-    if (currentEngine == nullptr) {
-        INTELL_VOICE_LOG_ERROR("failed to detach current engine, current engine is null");
+    engineUpdate->Detach();
+    ReleaseEngineInner(INTELL_VOICE_UPDATE);
+
+    sptr<EngineBase> engineEnroll = GetEngine(INTELL_VOICE_ENROLL, engines_);
+    if (engineEnroll != nullptr) {
+        INTELL_VOICE_LOG_INFO("enroll engine is existed, not unloadservice");
         return;
     }
-    currentEngine->Detach();
-    currentEngine = nullptr;
+
+    if (result != 0) {
+        INTELL_VOICE_LOG_INFO("notify apk");
+    }
+
+    if (QuerySwitchStatus()) {
+        INTELL_VOICE_LOG_INFO("restart wakeup");
+        auto triggerMgr = TriggerManager::GetInstance();
+        if (triggerMgr == nullptr) {
+            INTELL_VOICE_LOG_WARN("trigger manager is nullptr");
+            return;
+        }
+        auto model = triggerMgr->GetModel(IntellVoiceServiceManager::GetEnrollModelUuid());
+        if (model == nullptr) {
+            INTELL_VOICE_LOG_WARN("no model");
+            return;
+        }
+
+        if (!CreateOrResetWakeupEngine()) {
+            return;
+        }
+
+        CreateDetector();
+        StartDetection();
+    } else {
+        INTELL_VOICE_LOG_INFO("switch off, unloadservice");
+        UnloadIntellVoiceService();
+    }
+
+    INTELL_VOICE_LOG_INFO("--");
+}
+
+void IntellVoiceServiceManager::OnUpdateComplete(int result)
+{
+    UpdateCompleteInner(result);
 }
 }  // namespace IntellVoiceEngine
 }  // namespace OHOS

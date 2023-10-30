@@ -32,15 +32,15 @@ namespace IntellVoiceTrigger {
 using OHOS::HDI::ServiceManager::V1_0::ServiceStatus;
 using OHOS::HDI::ServiceManager::V1_0::ServStatListenerStub;
 
+using OHOS::HDI::IntelligentVoice::Trigger::V1_0::IIntellVoiceTriggerAdapter;
+using OHOS::HDI::IntelligentVoice::Trigger::V1_0::IIntellVoiceTriggerCallback;
+using OHOS::HDI::IntelligentVoice::Trigger::V1_0::IntellVoiceRecognitionEvent;
 using OHOS::HDI::IntelligentVoice::Trigger::V1_0::IntellVoiceTriggerAdapterDsecriptor;
 using OHOS::HDI::IntelligentVoice::Trigger::V1_0::IntellVoiceTriggerProperties;
-using OHOS::HDI::IntelligentVoice::Trigger::V1_0::IIntellVoiceTriggerAdapter;
-using OHOS::HDI::IntelligentVoice::Trigger::V1_0::IntellVoiceRecognitionEvent;
-using OHOS::HDI::IntelligentVoice::Trigger::V1_0::IIntellVoiceTriggerCallback;
 
 const std::string INTELL_VOICE_TRIGGER_SERVICE = "intell_voice_trigger_manager_service";
 
-class TriggerConnector : public ServStatListenerStub  {
+class TriggerConnector : public ServStatListenerStub {
 public:
     explicit TriggerConnector(const IntellVoiceTriggerAdapterDsecriptor &desc);
     ~TriggerConnector() override;
@@ -48,16 +48,18 @@ public:
         std::shared_ptr<IIntellVoiceTriggerConnectorCallback> callback);
     IntellVoiceTriggerProperties GetProperties();
     void OnReceive(const ServiceStatus &serviceStatus) override;
+    void onServiceStart();
+    void OnHDIDiedCallback();
+    bool RegisterHDIDeathRecipient(sptr<IRemoteObject> object);
 
 private:
     class TriggerSession : public IIntellVoiceTriggerConnectorModule, public OHOS::IntellVoiceUtils::MsgHandleThread {
     public:
-        TriggerSession(std::shared_ptr<IIntellVoiceTriggerConnectorCallback> callback,
-            const sptr<IIntellVoiceTriggerAdapter> &adapter);
+        TriggerSession(TriggerConnector *connector, std::shared_ptr<IIntellVoiceTriggerConnectorCallback> callback);
         ~TriggerSession() override;
         const sptr<IIntellVoiceTriggerAdapter> &GetAdapter()
         {
-            return adapter_;
+            return connector_->adapter_;
         }
         std::shared_ptr<IIntellVoiceTriggerConnectorCallback> GetCallback()
         {
@@ -68,8 +70,8 @@ private:
         int32_t Start(int32_t modelHandle) override;
         int32_t Stop(int32_t modelHandle) override;
 
-        void HandleRecognitionHdiEvent(std::shared_ptr<IntellVoiceRecognitionEvent> event,
-            int32_t modelHandle);
+        void HandleRecognitionHdiEvent(std::shared_ptr<IntellVoiceRecognitionEvent> event, int32_t modelHandle);
+
     private:
         enum MsgType {
             MSG_TYPE_NONE,
@@ -107,28 +109,31 @@ private:
             }
 
         private:
-            explicit Model(TriggerSession *session) : session_(session) {}
+            explicit Model(TriggerSession *session) : session_(session)
+            {}
             sptr<Ashmem> CreateAshmemFromModelData(const std::vector<uint8_t> &modelData);
             int32_t handle_ = 0;
             std::atomic<ModelState> state_ = IDLE;
             TriggerSession *session_ = nullptr;
             sptr<IIntellVoiceTriggerCallback> callback_ = nullptr;
-        }; // Model
+        };  // Model
 
     private:
         bool HandleMsg(OHOS::IntellVoiceUtils::Message &message) override;
         void ProcessRecognitionHdiEvent(const OHOS::IntellVoiceUtils::Message &message);
+
     private:
-        std::mutex mutex_ {};
+        TriggerConnector *connector_ = nullptr;
         std::shared_ptr<IIntellVoiceTriggerConnectorCallback> callback_ = nullptr;
-        const OHOS::sptr<IIntellVoiceTriggerAdapter> &adapter_;
         std::map<int32_t, std::shared_ptr<Model>> loadedModels_;
-    }; // TriggerSession
+    };  // TriggerSession
 
 private:
+    std::mutex mutex_{};
     IntellVoiceTriggerAdapterDsecriptor desc_;
     sptr<IIntellVoiceTriggerAdapter> adapter_ = nullptr;
     std::set<std::shared_ptr<TriggerSession>> activeSessions_;
+    uint16_t serviceState_ = HDI::ServiceManager::V1_0::SERVIE_STATUS_MAX;
 };
 }  // namespace IntellVoiceTrigger
 }  // namespace OHOS

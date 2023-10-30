@@ -26,27 +26,27 @@ namespace IntellVoiceUtils {
 static const uint32_t MSQ_QUEUE_MAX_LEN = 100;
 static const int32_t MSG_MAX_SYNC_TIMEOUT = 5;
 
-MsgHandleThread::MsgHandleThread() : msgQue(MSQ_QUEUE_MAX_LEN), callbackThread(nullptr) {}
+MsgHandleThread::MsgHandleThread() : msgQue_(MSQ_QUEUE_MAX_LEN), callbackThread_(nullptr) {}
 
 MsgHandleThread::MsgHandleThread(std::shared_ptr<MessageQueue> callbackMsgQue)
-    : callbackMsgQue(callbackMsgQue), msgQue(MSQ_QUEUE_MAX_LEN), callbackThread(nullptr)
+    : callbackMsgQue_(callbackMsgQue), msgQue_(MSQ_QUEUE_MAX_LEN), callbackThread_(nullptr)
 {}
 
 MsgHandleThread::MsgHandleThread(MsgHandleThread *callbackThread)
-    : msgQue(MSQ_QUEUE_MAX_LEN), callbackThread(callbackThread)
+    : msgQue_(MSQ_QUEUE_MAX_LEN), callbackThread_(callbackThread)
 {}
 
 MsgHandleThread::~MsgHandleThread() {}
 
 void MsgHandleThread::SetCallbackThread(MsgHandleThread *tmpCallbackThread)
 {
-    callbackThread = tmpCallbackThread;
+    callbackThread_ = tmpCallbackThread;
 }
 
 // the default realization is for debug, subclass should override this func
 bool MsgHandleThread::HandleMsg(Message &msg)
 {
-    INTELL_VOICE_LOG_INFO("run thread %{public}u process msg %{public}u", Gettid(), msg.mWhat);
+    INTELL_VOICE_LOG_INFO("run thread %{public}u process msg %{public}u", Gettid(), msg.what_);
 
     SendbackMsg(msg);
 
@@ -56,7 +56,7 @@ bool MsgHandleThread::HandleMsg(Message &msg)
 bool MsgHandleThread::SendMsg(Message msg)
 {
     try {
-        msgQue.SendMsg(std::make_shared<Message>(msg));
+        msgQue_.SendMsg(std::make_shared<Message>(msg));
     } catch (const std::length_error& err) {
         INTELL_VOICE_LOG_ERROR("length error");
         return false;
@@ -71,7 +71,7 @@ bool MsgHandleThread::SendMsg(std::shared_ptr<Message> msg)
         return false;
     }
 
-    msgQue.SendMsg(msg);
+    msgQue_.SendMsg(msg);
     return true;
 }
 
@@ -81,15 +81,15 @@ bool MsgHandleThread::SendSynMsg(shared_ptr<Message> msg)
         return false;
     }
 
-    msg->result = std::make_shared<SynInfo>();
-    if (msg->result == nullptr) {
+    msg->result_ = std::make_shared<SynInfo>();
+    if (msg->result_ == nullptr) {
         INTELL_VOICE_LOG_ERROR("create sync info failed");
         return false;
     }
 
-    unique_lock<mutex> lock(msg->result->mMutex);
-    msgQue.SendMsg(msg);
-    if (msg->result->mCV.wait_for(lock, chrono::seconds(MSG_MAX_SYNC_TIMEOUT)) == std::cv_status::no_timeout) {
+    unique_lock<mutex> lock(msg->result_->mutex_);
+    msgQue_.SendMsg(msg);
+    if (msg->result_->cv_.wait_for(lock, chrono::seconds(MSG_MAX_SYNC_TIMEOUT)) == std::cv_status::no_timeout) {
         return true;
     } else {
         INTELL_VOICE_LOG_WARN("send syn msg timeout");
@@ -99,12 +99,12 @@ bool MsgHandleThread::SendSynMsg(shared_ptr<Message> msg)
 
 void MsgHandleThread::SendbackMsg(Message msg)
 {
-    if (callbackThread != nullptr) {
-        callbackThread->SendMsg(msg);
+    if (callbackThread_ != nullptr) {
+        callbackThread_->SendMsg(msg);
     }
 
-    if (callbackMsgQue != nullptr) {
-        callbackMsgQue->SendMsg(make_shared<Message>(msg));
+    if (callbackMsgQue_ != nullptr) {
+        callbackMsgQue_->SendMsg(make_shared<Message>(msg));
     }
 }
 
@@ -113,13 +113,13 @@ void MsgHandleThread::Run()
     bool isQuit = false;
 
     while (!isQuit) {
-        shared_ptr<Message> msg = msgQue.ReceiveMsg();
+        shared_ptr<Message> msg = msgQue_.ReceiveMsg();
 
         isQuit = HandleMsg(*msg);
 
-        if (msg->result != nullptr) {
-            unique_lock<mutex> lock(msg->result->mMutex);
-            msg->result->mCV.notify_all();
+        if (msg->result_ != nullptr) {
+            unique_lock<mutex> lock(msg->result_->mutex_);
+            msg->result_->cv_.notify_all();
         }
     }
 }

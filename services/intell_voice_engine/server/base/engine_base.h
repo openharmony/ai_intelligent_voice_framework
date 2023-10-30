@@ -18,17 +18,12 @@
 #include <mutex>
 #include <string>
 #include <map>
+#include <ashmem.h>
 #include "intell_voice_engine_stub.h"
 #include "v1_0/iintell_voice_engine_adapter.h"
 
 namespace OHOS {
 namespace IntellVoiceEngine {
-enum EngineRelationType {
-    CONCURRENCY_TYPE,
-    PREEMPTION_TYPE,
-    REPLACEMENT_TYPE,
-};
-
 class EngineBase : public IntellVoiceEngineStub {
 public:
     ~EngineBase() = default;
@@ -42,30 +37,21 @@ public:
     {
         return true;
     }
-    bool IsRunning()
+    virtual void ReleaseAdapter()
     {
-        return isRunning_;
     }
-    EngineRelationType GetEngineRelationType()
-    {
-        return type_;
-    }
-    int32_t GetPriority()
-    {
-        return priority_;
-    }
-
 protected:
     EngineBase();
     void SplitStringToKVPair(const std::string &inputStr, std::map<std::string, std::string> &kvpairs);
     std::mutex mutex_;
     sptr<OHOS::HDI::IntelligentVoice::Engine::V1_0::IIntellVoiceEngineAdapter> adapter_ = nullptr;
     OHOS::HDI::IntelligentVoice::Engine::V1_0::IntellVoiceEngineAdapterDescriptor desc_;
+    void ProcDspModel();
 
-    bool isRunning_ = false;
-    EngineRelationType type_ = CONCURRENCY_TYPE;
-    int32_t priority_ = 0;
+private:
+    void WriteBufferFromAshmem(uint8_t *&buffer, uint32_t size, sptr<OHOS::Ashmem> ashmem);
 };
+
 }
 }
 #endif

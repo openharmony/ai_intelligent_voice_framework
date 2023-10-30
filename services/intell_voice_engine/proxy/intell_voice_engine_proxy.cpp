@@ -98,6 +98,7 @@ int32_t IntellVoiceEngineProxy::Start(bool isLast)
     MessageOption option;
 
     data.WriteInterfaceToken(IIntellVoiceEngine::GetDescriptor());
+    data.WriteBool(isLast);
 
     Remote()->SendRequest(INTELL_VOICE_ENGINE_START, data, reply, option);
     return reply.ReadInt32();

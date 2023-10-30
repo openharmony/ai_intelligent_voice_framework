@@ -63,6 +63,11 @@ private:
             {
                 delegate_->OnRecognition(modelHandle, event);
             }
+            void OnHdiServiceStart() override
+            {
+                delegate_->OnHdiServiceStart();
+            }
+
         private:
             std::shared_ptr<IIntellVoiceTriggerConnectorCallback> delegate_;
         };

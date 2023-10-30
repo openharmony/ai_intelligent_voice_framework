@@ -42,6 +42,10 @@ public:
     int32_t GetParameter(const std::string &key);
     int32_t Release();
     int32_t SetCallback(std::shared_ptr<IIntellVoiceEngineEventCallback> callback);
+    sptr<IIntellVoiceEngine> GetEngine()
+    {
+        return engine_;
+    }
 
 private:
     sptr<IIntellVoiceEngine> engine_ = nullptr;

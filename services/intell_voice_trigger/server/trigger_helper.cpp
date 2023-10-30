@@ -16,21 +16,29 @@
 #include "intell_voice_log.h"
 
 #include "trigger_connector_mgr.h"
+
+#ifdef SUPPORT_TELEPHONY_SERVICE
 #include "telephony_observer_client.h"
 #include "state_registry_errors.h"
 #include "telephony_types.h"
 #include "call_manager_inner_type.h"
+#endif
 
 #define LOG_TAG "TriggerHelper"
 
 using namespace OHOS::HDI::IntelligentVoice::Trigger::V1_0;
 using namespace OHOS::AudioStandard;
+#ifdef SUPPORT_TELEPHONY_SERVICE
 using namespace OHOS::Telephony;
+#endif
 using namespace std;
 
 namespace OHOS {
 namespace IntellVoiceTrigger {
+using namespace OHOS::AudioStandard;
+#ifdef SUPPORT_TELEPHONY_SERVICE
 static constexpr int32_t SIM_SLOT_ID_1 = DEFAULT_SIM_SLOT_ID + 1;
+#endif
 
 TriggerModelData::TriggerModelData(int32_t uuid)
 {
@@ -38,8 +46,7 @@ TriggerModelData::TriggerModelData(int32_t uuid)
 }
 
 TriggerModelData::~TriggerModelData()
-{
-}
+{}
 
 void TriggerModelData::SetCallback(std::shared_ptr<IIntellVoiceTriggerRecognitionCallback> callback)
 {
@@ -98,7 +105,23 @@ int32_t TriggerModelData::GetModelHandle() const
     return modelHandle_;
 }
 
+void TriggerModelData::SetRequested(bool requested)
+{
+    requested_ = requested;
+}
+
+bool TriggerModelData::GetRequested() const
+{
+    return requested_;
+}
+
 void TriggerModelData::Clear()
+{
+    callback_ = nullptr;
+    state_ = MODEL_NOTLOADED;
+}
+
+void TriggerModelData::ClearCallback()
 {
     callback_ = nullptr;
 }
@@ -133,8 +156,6 @@ int32_t TriggerHelper::StartGenericRecognition(int32_t uuid, std::shared_ptr<Gen
         return -1;
     }
 
-    GetModule();
-
     bool unload = !modelData->SameModel(model);
     int32_t ret = InitRecognition(modelData, unload);
     if (ret != 0) {
@@ -144,17 +165,22 @@ int32_t TriggerHelper::StartGenericRecognition(int32_t uuid, std::shared_ptr<Gen
 
     modelData->SetModel(model);
     modelData->SetCallback(callback);
+    modelData->SetRequested(true);
 
-    LoadModel(modelData);
     if (IsConflictSceneActive()) {
         INTELL_VOICE_LOG_INFO("conflict state, no need to start");
         return 0;
     }
+
+    ret = PrepareForRecognition(modelData);
+    if (ret != 0) {
+        return ret;
+    }
+
     return StartRecognition(modelData);
 }
 
-int32_t TriggerHelper::StopGenericRecognition(
-    int32_t uuid, shared_ptr<IIntellVoiceTriggerRecognitionCallback> callback)
+int32_t TriggerHelper::StopGenericRecognition(int32_t uuid, shared_ptr<IIntellVoiceTriggerRecognitionCallback> callback)
 {
     INTELL_VOICE_LOG_INFO("enter");
     lock_guard<std::mutex> lock(mutex_);
@@ -163,8 +189,13 @@ int32_t TriggerHelper::StopGenericRecognition(
         INTELL_VOICE_LOG_ERROR("failed to get trigger model data");
         return -1;
     }
-    modelData->SetCallback(callback);
-    return StopRecognition(modelData);
+    modelData->SetRequested(false);
+    int32_t ret = StopRecognition(modelData);
+    if (ret != 0) {
+        return ret;
+    }
+    modelData->ClearCallback();
+    return ret;
 }
 
 void TriggerHelper::UnloadGenericTriggerModel(int32_t uuid)
@@ -186,20 +217,21 @@ void TriggerHelper::UnloadGenericTriggerModel(int32_t uuid)
     modelDataMap_.erase(uuid);
 }
 
-void TriggerHelper::GetModule()
+bool TriggerHelper::GetModule()
 {
     if (module_ != nullptr) {
-        return;
+        return true;
     }
     if (moduleDesc_.size() == 0) {
-        INTELL_VOICE_LOG_INFO("moduleDesc_ is empty");
-        return;
+        INTELL_VOICE_LOG_ERROR("moduleDesc_ is empty");
+        return false;
     }
-    module_ =
-        TriggerConnectorMgr::GetInstance()->GetConnectorModule(moduleDesc_[0].adapterName, shared_from_this());
+    module_ = TriggerConnectorMgr::GetInstance()->GetConnectorModule(moduleDesc_[0].adapterName, shared_from_this());
     if (module_ == nullptr) {
         INTELL_VOICE_LOG_ERROR("failed to get connector module");
+        return false;
     }
+    return true;
 }
 
 int32_t TriggerHelper::InitRecognition(std::shared_ptr<TriggerModelData> modelData, bool unload)
@@ -211,9 +243,23 @@ int32_t TriggerHelper::InitRecognition(std::shared_ptr<TriggerModelData> modelDa
     int32_t ret = StopRecognition(modelData);
     if (unload) {
         ret = UnloadModel(modelData);
+        modelData->Clear();
     }
-    modelData->Clear();
+
     return ret;
+}
+
+int32_t TriggerHelper::PrepareForRecognition(std::shared_ptr<TriggerModelData> modelData)
+{
+    INTELL_VOICE_LOG_INFO("enter");
+    if (!GetModule()) {
+        return -1;
+    }
+
+    if (LoadModel(modelData) != 0) {
+        return -1;
+    }
+    return 0;
 }
 
 int32_t TriggerHelper::StartRecognition(shared_ptr<TriggerModelData> modelData)
@@ -231,6 +277,10 @@ int32_t TriggerHelper::StartRecognition(shared_ptr<TriggerModelData> modelData)
         return -1;
     }
     auto ret = module_->Start(modelData->GetModelHandle());
+    if (ret != 0) {
+        INTELL_VOICE_LOG_ERROR("failed to start recognition");
+        return ret;
+    }
     modelData->SetState(MODEL_STARTED);
     return ret;
 }
@@ -250,6 +300,11 @@ int32_t TriggerHelper::StopRecognition(shared_ptr<TriggerModelData> modelData)
         return -1;
     }
     auto ret = module_->Stop(modelData->GetModelHandle());
+    if (ret != 0) {
+        INTELL_VOICE_LOG_ERROR("failed to stop");
+        return ret;
+    }
+
     modelData->SetState(MODEL_LOADED);
     return ret;
 }
@@ -273,6 +328,10 @@ int32_t TriggerHelper::LoadModel(shared_ptr<TriggerModelData> modelData)
 
     int32_t handle;
     auto ret = module_->LoadModel(modelData->GetModel(), handle);
+    if (ret != 0) {
+        INTELL_VOICE_LOG_WARN("failed to load model, ret: %{public}d", ret);
+        return ret;
+    }
     modelData->SetModelHandle(handle);
     modelData->SetState(MODEL_LOADED);
     INTELL_VOICE_LOG_INFO("exit, handle: %{public}d", handle);
@@ -347,51 +406,59 @@ void TriggerHelper::OnRecognition(int32_t modelHandle, const IntellVoiceRecognit
     callback->OnGenericTriggerDetected(genericEvent);
 }
 
+void TriggerHelper::OnHdiServiceStart()
+{
+    INTELL_VOICE_LOG_INFO("enter");
+    lock_guard<std::mutex> lock(mutex_);
+    OnUpdateAllRecognitionState();
+}
+
 bool TriggerHelper::IsConflictSceneActive()
 {
-    if (telephonyObserver0_ == nullptr ||
-        telephonyObserver1_ == nullptr ||
-        audioCapturerSourceChangeCallback_ == nullptr) {
-        INTELL_VOICE_LOG_ERROR("observe nullptr");
-        return false;
-    }
-
-    INTELL_VOICE_LOG_INFO("callActive0_: %{public}d, callActive1_: %{public}d, audioCaptureActive_: %{public}d",
-        telephonyObserver0_->callActive_,
-        telephonyObserver1_->callActive_,
-        audioCapturerSourceChangeCallback_->audioCaptureActive_);
-
-    return (telephonyObserver0_->callActive_ ||
-        telephonyObserver1_->callActive_ ||
-        audioCapturerSourceChangeCallback_->audioCaptureActive_);
+    INTELL_VOICE_LOG_INFO("callActive: %{public}d, audioCaptureActive: %{public}d", callActive_, audioCaptureActive_);
+    return (callActive_ || audioCaptureActive_);
 }
 
 void TriggerHelper::OnUpdateAllRecognitionState()
 {
-    lock_guard<std::mutex> lock(mutex_);
     for (auto iter : modelDataMap_) {
         if (iter.second == nullptr) {
             INTELL_VOICE_LOG_ERROR("uuid: %{public}d, model data is nullptr", iter.first);
             continue;
         }
-        if (IsConflictSceneActive()) {
-            StopRecognition(iter.second);
-        } else {
+        bool needStart =
+            (iter.second->GetRequested() && (!IsConflictSceneActive()));
+        if (needStart == (iter.second->GetState() == MODEL_STARTED)) {
+            INTELL_VOICE_LOG_INFO("no operation, needStart:%{public}d", needStart);
+            continue;
+        }
+        if (needStart) {
+            if (PrepareForRecognition(iter.second) != 0) {
+                return;
+            }
             StartRecognition(iter.second);
+        } else {
+            StopRecognition(iter.second);
         }
     }
 }
 
+#ifdef SUPPORT_TELEPHONY_SERVICE
 void TriggerHelper::AttachTelephonyObserver()
 {
     INTELL_VOICE_LOG_INFO("enter");
+    std::lock_guard<std::mutex> lock(telephonyMutex_);
+    if (isTelephonyDetached_) {
+        INTELL_VOICE_LOG_INFO("telephony is already detached");
+        return;
+    }
     telephonyObserver0_ = std::make_unique<TelephonyStateObserver>(shared_from_this()).release();
     if (telephonyObserver0_ == nullptr) {
         INTELL_VOICE_LOG_ERROR("telephonyObserver0_ is nullptr");
         return;
     }
-    auto res = TelephonyObserverClient::GetInstance().AddStateObserver(telephonyObserver0_, DEFAULT_SIM_SLOT_ID,
-        TelephonyObserverBroker::OBSERVER_MASK_CALL_STATE, false);
+    auto res = TelephonyObserverClient::GetInstance().AddStateObserver(
+        telephonyObserver0_, DEFAULT_SIM_SLOT_ID, TelephonyObserverBroker::OBSERVER_MASK_CALL_STATE, false);
     if (res != TELEPHONY_SUCCESS) {
         INTELL_VOICE_LOG_ERROR("telephonyObserver0_ add failed");
     }
@@ -401,8 +468,8 @@ void TriggerHelper::AttachTelephonyObserver()
         INTELL_VOICE_LOG_ERROR("telephonyObserver1_ is nullptr");
         return;
     }
-    res = TelephonyObserverClient::GetInstance().AddStateObserver(telephonyObserver1_, SIM_SLOT_ID_1,
-        TelephonyObserverBroker::OBSERVER_MASK_CALL_STATE, false);
+    res = TelephonyObserverClient::GetInstance().AddStateObserver(
+        telephonyObserver1_, SIM_SLOT_ID_1, TelephonyObserverBroker::OBSERVER_MASK_CALL_STATE, false);
     if (res != TELEPHONY_SUCCESS) {
         INTELL_VOICE_LOG_ERROR("telephonyObserver1_ add failed");
     }
@@ -411,27 +478,25 @@ void TriggerHelper::AttachTelephonyObserver()
 void TriggerHelper::DettachTelephonyObserver()
 {
     INTELL_VOICE_LOG_INFO("enter");
-    if (telephonyObserver0_) {
+    std::lock_guard<std::mutex> lock(telephonyMutex_);
+    isTelephonyDetached_ = true;
+
+    if (telephonyObserver0_ != nullptr) {
         Telephony::TelephonyObserverClient::GetInstance().RemoveStateObserver(
             DEFAULT_SIM_SLOT_ID, Telephony::TelephonyObserverBroker::OBSERVER_MASK_CALL_STATE);
         telephonyObserver0_ = nullptr;
     }
 
-    if (telephonyObserver1_) {
+    if (telephonyObserver1_ != nullptr) {
         Telephony::TelephonyObserverClient::GetInstance().RemoveStateObserver(
             SIM_SLOT_ID_1, Telephony::TelephonyObserverBroker::OBSERVER_MASK_CALL_STATE);
         telephonyObserver1_ = nullptr;
     }
 }
 
-void TriggerHelper::TelephonyStateObserver::OnCallStateUpdated(int32_t slotId, int32_t callState,
-    const std::u16string &phoneNumber)
+void TriggerHelper::OnCallStateUpdated(int32_t callState)
 {
-    if (helper_ == nullptr) {
-        INTELL_VOICE_LOG_ERROR("helper is nullptr");
-        return;
-    }
-
+    lock_guard<std::mutex> lock(mutex_);
     if (callState < static_cast<int32_t>(TelCallState::CALL_STATUS_UNKNOWN) ||
         callState > static_cast<int32_t>(TelCallState::CALL_STATUS_IDLE)) {
         INTELL_VOICE_LOG_ERROR("callstate err: %{public}d", callState);
@@ -439,18 +504,31 @@ void TriggerHelper::TelephonyStateObserver::OnCallStateUpdated(int32_t slotId, i
     }
 
     bool curCallActive = (callState != static_cast<int32_t>(TelCallState::CALL_STATUS_DISCONNECTED) &&
-        callState != static_cast<int32_t>(TelCallState::CALL_STATUS_IDLE) &&
-        callState != static_cast<int32_t>(TelCallState::CALL_STATUS_UNKNOWN));
-
-    INTELL_VOICE_LOG_INFO("state: %{public}d, slotId: %{public}d, callActive: %{public}d, curCallActive: %{public}d",
-        callState, slotId, callActive_, curCallActive);
+          callState != static_cast<int32_t>(TelCallState::CALL_STATUS_IDLE) &&
+          callState != static_cast<int32_t>(TelCallState::CALL_STATUS_UNKNOWN));
+    INTELL_VOICE_LOG_INFO("state: %{public}d, callActive: %{public}d, curCallActive: %{public}d",
+        callState,
+        callActive_,
+        curCallActive);
     if (callActive_ == curCallActive) {
         return;
     }
 
     callActive_ = curCallActive;
-    helper_->OnUpdateAllRecognitionState();
+    OnUpdateAllRecognitionState();
 }
+
+void TriggerHelper::TelephonyStateObserver::OnCallStateUpdated(
+    int32_t slotId, int32_t callState, const std::u16string &phoneNumber)
+{
+    if (helper_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("helper is nullptr");
+        return;
+    }
+
+    helper_->OnCallStateUpdated(callState);
+}
+#endif
 
 void TriggerHelper::AttachAudioCaptureListener()
 {
@@ -477,6 +555,17 @@ void TriggerHelper::DettachAudioCaptureListener()
     }
 }
 
+void TriggerHelper::OnCapturerStateChange(bool isActive)
+{
+    lock_guard<std::mutex> lock(mutex_);
+    if (audioCaptureActive_ == isActive) {
+        return;
+    }
+
+    audioCaptureActive_ = isActive;
+    OnUpdateAllRecognitionState();
+}
+
 void TriggerHelper::AudioCapturerSourceChangeCallback::OnCapturerState(bool isActive)
 {
     INTELL_VOICE_LOG_INFO("OnCapturerState active: %{public}d", isActive);
@@ -486,13 +575,7 @@ void TriggerHelper::AudioCapturerSourceChangeCallback::OnCapturerState(bool isAc
         return;
     }
 
-    if (audioCaptureActive_ == isActive) {
-        return;
-    }
-
-    audioCaptureActive_ = isActive;
-
-    helper_->OnUpdateAllRecognitionState();
+    helper_->OnCapturerStateChange(isActive);
 }
 }  // namespace IntellVoiceTrigger
 }  // namespace OHOS

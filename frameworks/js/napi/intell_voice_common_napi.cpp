@@ -1,0 +1,55 @@
+/*
+ * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+#include "intell_voice_common_napi.h"
+
+#include <map>
+#include "intell_voice_log.h"
+
+#define LOG_TAG "IntellVoiceCommonNapi"
+
+namespace OHOS {
+namespace IntellVoiceNapi {
+static const std::string NAPI_INTELLIGENT_VOICE_PERMISSION_DENIED_INFO = "Permission denied.";
+static const std::string NAPI_INTELLIGENT_VOICE_NO_MEMORY_INFO = "No memory.";
+static const std::string NAPI_INTELLIGENT_VOICE_INVALID_PARAM_INFO = "Input parameter value error.";
+static const std::string NAPI_INTELLIGENT_VOICE_INIT_FAILED_INFO = "Init failed.";
+static const std::string NAPI_INTELLIGENT_VOICE_COMMIT_ENROLL_FAILED_INFO = "Commit enroll failed.";
+
+std::string IntellVoiceCommonNapi::GetMessageByCode(int32_t code)
+{
+    static const std::map<int32_t, std::string> messageMap = {
+        {NAPI_INTELLIGENT_VOICE_PERMISSION_DENIED, NAPI_INTELLIGENT_VOICE_PERMISSION_DENIED_INFO},
+        {NAPI_INTELLIGENT_VOICE_NO_MEMORY, NAPI_INTELLIGENT_VOICE_NO_MEMORY_INFO},
+        {NAPI_INTELLIGENT_VOICE_INVALID_PARAM, NAPI_INTELLIGENT_VOICE_INVALID_PARAM_INFO},
+        {NAPI_INTELLIGENT_VOICE_INIT_FAILED, NAPI_INTELLIGENT_VOICE_INIT_FAILED_INFO},
+        {NAPI_INTELLIGENT_VOICE_COMMIT_ENROLL_FAILED, NAPI_INTELLIGENT_VOICE_COMMIT_ENROLL_FAILED_INFO}
+    };
+
+    auto iter = messageMap.find(code);
+    if (iter == messageMap.end()) {
+        INTELL_VOICE_LOG_ERROR("invalid code: %{public}d", code);
+        return "";
+    }
+
+    return iter->second;
+}
+
+void IntellVoiceCommonNapi::ThrowError(napi_env env, int32_t code)
+{
+    std::string messageValue = GetMessageByCode(code);
+    napi_throw_error(env, (std::to_string(code)).c_str(), messageValue.c_str());
+}
+}
+}

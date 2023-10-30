@@ -123,7 +123,7 @@ void EnrollIntellVoiceEngineCallbackNapi::UvWorkCallBack(uv_work_t *work, int st
         } else {
             napi_get_undefined(env, &result);
         }
-        NapiAsync::CommonCallbackRoutine(asyncContext, result);
+        NapiAsync::CommonCallbackRoutine(env, asyncContext, result);
     }
 
     delete work;

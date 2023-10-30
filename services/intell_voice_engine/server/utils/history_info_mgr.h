@@ -25,12 +25,20 @@ public:
     HistoryInfoMgr();
     ~HistoryInfoMgr() = default;
 
+    static HistoryInfoMgr& GetInstance()
+    {
+        static HistoryInfoMgr historyInfoMgr;
+        return historyInfoMgr;
+    }
+
     void SetEnrollEngineUid(int32_t uid);
     int32_t GetEnrollEngineUid();
     void SetWakeupEngineBundleName(const std::string &bundleName);
     std::string GetWakeupEngineBundleName();
     void SetWakeupEngineAbilityName(const std::string &abilityName);
     std::string GetWakeupEngineAbilityName();
+    void SetWakeupVesion(const std::string &wakeupVesion);
+    std::string GetWakeupVesion();
 
 private:
     DISALLOW_COPY_AND_MOVE(HistoryInfoMgr);

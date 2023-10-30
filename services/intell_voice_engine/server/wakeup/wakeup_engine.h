@@ -39,6 +39,7 @@ public:
 
     void OnDetected() override;
     bool ResetAdapter() override;
+    void ReleaseAdapter() override;
 
 private:
     WakeupEngine();

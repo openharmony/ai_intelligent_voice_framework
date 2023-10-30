@@ -15,6 +15,7 @@
 #include "intell_voice_manager_napi.h"
 #include "intell_voice_log.h"
 #include "intell_voice_napi_queue.h"
+#include "intell_voice_common_napi.h"
 #include "intell_voice_napi_util.h"
 #include "enroll_intell_voice_engine_napi.h"
 #include "wakeup_intell_voice_engine_napi.h"
@@ -28,6 +29,7 @@ using namespace OHOS::IntellVoice;
 namespace OHOS {
 namespace IntellVoiceNapi {
 static const std::string INTELLIGENT_VOICE_MANAGER_NAPI_CLASS_NAME = "IntelligentVoiceManager";
+static const std::string SERVICE_CHANGE_CALLBACK_NAME = "serviceChange";
 
 static __thread napi_ref g_managerConstructor = nullptr;
 napi_ref IntellVoiceManagerNapi::serviceChangeTypeRef_ = nullptr;
@@ -97,7 +99,7 @@ IntellVoiceManagerNapi::~IntellVoiceManagerNapi()
     }
 }
 
-void IntellVoiceManagerNapi::Destructor(napi_env env, void *nativeObject, void *finalize_hint)
+void IntellVoiceManagerNapi::Destruct(napi_env env, void *nativeObject, void *finalizeHint)
 {
     INTELL_VOICE_LOG_INFO("enter");
     if (nativeObject != nullptr) {
@@ -106,7 +108,7 @@ void IntellVoiceManagerNapi::Destructor(napi_env env, void *nativeObject, void *
     }
 }
 
-napi_value IntellVoiceManagerNapi::Constructor(napi_env env, napi_callback_info info)
+napi_value IntellVoiceManagerNapi::Construct(napi_env env, napi_callback_info info)
 {
     INTELL_VOICE_LOG_INFO("enter");
     napi_status status;
@@ -129,14 +131,14 @@ napi_value IntellVoiceManagerNapi::Constructor(napi_env env, napi_callback_info 
     managerNapi->env_ = env;
     managerNapi->manager_ = IntellVoiceManager::GetInstance();
     if (managerNapi->manager_ == nullptr) {
-        INTELL_VOICE_LOG_ERROR("create native manager faild");
+        INTELL_VOICE_LOG_ERROR("create native manager failed");
         return undefinedResult;
     }
 
     status = napi_wrap(env,
         jsThis,
         static_cast<void *>(managerNapi.get()),
-        IntellVoiceManagerNapi::Destructor,
+        IntellVoiceManagerNapi::Destruct,
         nullptr,
         &(managerNapi->wrapper_));
     if (status == napi_ok) {
@@ -165,16 +167,14 @@ napi_value IntellVoiceManagerNapi::Export(napi_env env, napi_value exports)
 
     napi_property_descriptor staticProperties[] = {
         DECLARE_NAPI_STATIC_FUNCTION("getIntelligentVoiceManager", GetIntelligentVoiceManager),
-        DECLARE_NAPI_PROPERTY("ServiceChangeType", CreatePropertyBase(env, SERVICE_CHANGE_TYPE_MAP,
-            serviceChangeTypeRef_)),
-        DECLARE_NAPI_PROPERTY("IntelligentVoiceEngineType", CreatePropertyBase(env, ENGINE_TYPE_MAP,
-            engineTypeRef_)),
-        DECLARE_NAPI_PROPERTY("SensibilityType", CreatePropertyBase(env, SENSIBILITY_TYPE_MAP,
-            sensibilityTypeRef_)),
-        DECLARE_NAPI_PROPERTY("EnrollIntelligentVoiceEventType", CreatePropertyBase(env, ENROLL_EVENT_TYPE_MAP,
-            enrollEventTypeRef_)),
-        DECLARE_NAPI_PROPERTY("WakeupIntelligentVoiceEventType", CreatePropertyBase(env, WAKEUP_EVENT_TYPE_MAP,
-            wakeupEventTypeRef_)),
+        DECLARE_NAPI_PROPERTY(
+            "ServiceChangeType", CreatePropertyBase(env, SERVICE_CHANGE_TYPE_MAP, serviceChangeTypeRef_)),
+        DECLARE_NAPI_PROPERTY("IntelligentVoiceEngineType", CreatePropertyBase(env, ENGINE_TYPE_MAP, engineTypeRef_)),
+        DECLARE_NAPI_PROPERTY("SensibilityType", CreatePropertyBase(env, SENSIBILITY_TYPE_MAP, sensibilityTypeRef_)),
+        DECLARE_NAPI_PROPERTY(
+            "EnrollIntelligentVoiceEventType", CreatePropertyBase(env, ENROLL_EVENT_TYPE_MAP, enrollEventTypeRef_)),
+        DECLARE_NAPI_PROPERTY(
+            "WakeupIntelligentVoiceEventType", CreatePropertyBase(env, WAKEUP_EVENT_TYPE_MAP, wakeupEventTypeRef_)),
         DECLARE_NAPI_PROPERTY("IntelligentVoiceErrorCode", CreatePropertyBase(env, ERROR_CODE_MAP, errorCodeRef_)),
         DECLARE_NAPI_PROPERTY("EnrollResult", CreatePropertyBase(env, ENROLL_RESULT_MAP, enrollResultRef_)),
     };
@@ -182,7 +182,7 @@ napi_value IntellVoiceManagerNapi::Export(napi_env env, napi_value exports)
     status = napi_define_class(env,
         INTELLIGENT_VOICE_MANAGER_NAPI_CLASS_NAME.c_str(),
         NAPI_AUTO_LENGTH,
-        Constructor,
+        Construct,
         nullptr,
         sizeof(properties) / sizeof(properties[0]),
         properties,
@@ -220,13 +220,123 @@ napi_value IntellVoiceManagerNapi::GetCapabilityInfo(napi_env env, napi_callback
 napi_value IntellVoiceManagerNapi::On(napi_env env, napi_callback_info info)
 {
     INTELL_VOICE_LOG_INFO("enter");
-    return nullptr;
+
+    napi_value undefinedResult = nullptr;
+    napi_get_undefined(env, &undefinedResult);
+
+    const size_t expectArgCount = 2;
+    size_t argCount = 2;
+    napi_value args[expectArgCount] = {0};
+    napi_value jsThis = nullptr;
+
+    napi_status status = napi_get_cb_info(env, info, &argCount, args, &jsThis, nullptr);
+    if (status != napi_ok || argCount != expectArgCount) {
+        INTELL_VOICE_LOG_ERROR("failed to get parameters");
+        return undefinedResult;
+    }
+
+    napi_valuetype eventType = napi_undefined;
+    if (napi_typeof(env, args[0], &eventType) != napi_ok || eventType != napi_string) {
+        INTELL_VOICE_LOG_ERROR("callback event name type mismatch");
+        return undefinedResult;
+    }
+
+    string callbackName = "";
+    status = GetValue(env, args[0], callbackName);
+    if (status != napi_ok) {
+        INTELL_VOICE_LOG_ERROR("failed to get callbackName");
+        return undefinedResult;
+    }
+    INTELL_VOICE_LOG_INFO("callbackName: %{public}s", callbackName.c_str());
+    if (callbackName != SERVICE_CHANGE_CALLBACK_NAME) {
+        INTELL_VOICE_LOG_ERROR("No such off callback supported");
+        return undefinedResult;
+    }
+
+    napi_valuetype handler = napi_undefined;
+    if (napi_typeof(env, args[1], &handler) != napi_ok || handler != napi_function) {
+        INTELL_VOICE_LOG_ERROR("callback handler type mismatch");
+        return undefinedResult;
+    }
+
+    return RegisterCallback(env, jsThis, args);
+}
+
+napi_value IntellVoiceManagerNapi::RegisterCallback(napi_env env, napi_value jsThis, napi_value *args)
+{
+    INTELL_VOICE_LOG_INFO("enter");
+    napi_value result = nullptr;
+    napi_get_undefined(env, &result);
+
+    IntellVoiceManagerNapi *managerNapi = nullptr;
+    napi_status status = napi_unwrap(env, jsThis, reinterpret_cast<void **>(&managerNapi));
+    if (status != napi_ok || managerNapi == nullptr) {
+        INTELL_VOICE_LOG_ERROR("Failed to get engine napi instance");
+        return result;
+    }
+
+    managerNapi->serviceChangeCb_ = new (std::nothrow) ServiceChangeCallbackNapi(env, args[1]);
+    IntellVoiceManager::GetInstance()->RegisterServiceDeathRecipient(managerNapi->serviceChangeCb_);
+    return result;
 }
 
 napi_value IntellVoiceManagerNapi::Off(napi_env env, napi_callback_info info)
 {
     INTELL_VOICE_LOG_INFO("enter");
-    return nullptr;
+    napi_value undefinedResult = nullptr;
+    napi_get_undefined(env, &undefinedResult);
+
+    const size_t expectArgCount = 2;
+    size_t argCount = 2;
+    napi_value args[expectArgCount] = {0};
+    napi_value jsThis = nullptr;
+
+    napi_status status = napi_get_cb_info(env, info, &argCount, args, &jsThis, nullptr);
+    if (status != napi_ok || argCount != expectArgCount) {
+        INTELL_VOICE_LOG_ERROR("failed to get parameters");
+        return undefinedResult;
+    }
+
+    napi_valuetype eventType = napi_undefined;
+    if (napi_typeof(env, args[0], &eventType) != napi_ok || eventType != napi_string) {
+        INTELL_VOICE_LOG_ERROR("callback event name type mismatch");
+        return undefinedResult;
+    }
+
+    string callbackName = "";
+    status = GetValue(env, args[0], callbackName);
+    if (status != napi_ok) {
+        INTELL_VOICE_LOG_ERROR("failed to get callbackName");
+        return undefinedResult;
+    }
+    INTELL_VOICE_LOG_INFO("callbackName: %{public}s", callbackName.c_str());
+    if (callbackName != SERVICE_CHANGE_CALLBACK_NAME) {
+        INTELL_VOICE_LOG_ERROR("No such off callback supported");
+        return undefinedResult;
+    }
+
+    return DeregisterCallback(env, jsThis);
+}
+
+napi_value IntellVoiceManagerNapi::DeregisterCallback(napi_env env, napi_value jsThis)
+{
+    INTELL_VOICE_LOG_INFO("enter");
+    napi_value result = nullptr;
+    napi_get_undefined(env, &result);
+
+    IntellVoiceManagerNapi *managerNapi = nullptr;
+    napi_status status = napi_unwrap(env, jsThis, reinterpret_cast<void **>(&managerNapi));
+    if (status != napi_ok || managerNapi == nullptr) {
+        INTELL_VOICE_LOG_ERROR("Failed to get engine napi instance");
+        return result;
+    }
+    if (managerNapi->serviceChangeCb_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("service change callback is nullptr");
+        return result;
+    }
+    IntellVoiceManager::GetInstance()->DeregisterServiceDeathRecipient(managerNapi->serviceChangeCb_);
+    managerNapi->serviceChangeCb_ = nullptr;
+    return result;
 }
 
 napi_value IntellVoiceManagerNapi::GetIntelligentVoiceManager(napi_env env, napi_callback_info info)
@@ -239,6 +349,7 @@ napi_value IntellVoiceManagerNapi::GetIntelligentVoiceManager(napi_env env, napi
     status = napi_get_cb_info(env, info, &argCount, nullptr, nullptr, nullptr);
     if (status != napi_ok || argCount != 0) {
         INTELL_VOICE_LOG_ERROR("Invalid arguments");
+        IntellVoiceCommonNapi::ThrowError(env, NAPI_INTELLIGENT_VOICE_INVALID_PARAM);
         return nullptr;
     }
 
@@ -258,87 +369,16 @@ napi_value IntellVoiceManagerNapi::GetIntelligentVoiceManagerWrapper(napi_env en
             return result;
         }
     }
+
     INTELL_VOICE_LOG_ERROR("failed to get intell voice manager wrapper");
+    IntellVoiceCommonNapi::ThrowError(env, NAPI_INTELLIGENT_VOICE_NO_MEMORY);
     napi_get_undefined(env, &result);
 
     return result;
 }
 
-napi_value IntellVoiceManagerNapi::CreateEnrollIntelligentVoiceEngine(napi_env env, napi_callback_info info)
-{
-    INTELL_VOICE_LOG_INFO("enter");
-    size_t cbIndex = 1;
-    class CreateContext : public AsyncContext {
-    public:
-        napi_value object = nullptr;
-        napi_ref ref = nullptr;
-    };
-    auto context = make_shared<CreateContext>();
-    if (context == nullptr) {
-        INTELL_VOICE_LOG_ERROR("create CreateContext faild, No memory");
-        return nullptr;
-    }
-
-    CbInfoParser parser = [env, context](size_t argc, napi_value *argv) {
-        context->status_ =
-            napi_new_instance(env, EnrollIntellVoiceEngineNapi::Constructor(env), argc, argv, &(context->object));
-        CHECK_STATUS_RETURN_VOID(context, "new napi instance failed");
-        context->status_ = napi_create_reference(env, context->object, 1, &(context->ref));
-        CHECK_STATUS_RETURN_VOID(context, "create ref failed");
-    };
-    context->GetCbInfo(env, info, cbIndex, parser);
-
-    AsyncExecute execute = [](napi_env env, void *data) {
-        auto asyncContext = static_cast<CreateContext *>(data);
-        asyncContext->status_ = napi_ok;
-    };
-
-    AsyncComplete complete = [](AsyncContext *context, napi_value &result) {
-        auto createContext = static_cast<CreateContext *>(context);
-        napi_get_reference_value(createContext->env_, createContext->ref, &result);
-    };
-
-    return NapiAsync::AsyncWork(context, "CreateEnrollIntelligentVoiceEngine", execute, complete);
-}
-
-napi_value IntellVoiceManagerNapi::CreateWakeupIntelligentVoiceEngine(napi_env env, napi_callback_info info)
-{
-    INTELL_VOICE_LOG_INFO("enter");
-    size_t cbIndex = 1;
-    class CreateContext : public AsyncContext {
-    public:
-        napi_value object = nullptr;
-        napi_ref ref = nullptr;
-    };
-    auto context = make_shared<CreateContext>();
-    if (context == nullptr) {
-        INTELL_VOICE_LOG_ERROR("create CreateContext faild, No memory");
-        return nullptr;
-    }
-
-    CbInfoParser parser = [env, context](size_t argc, napi_value *argv) {
-        context->status_ =
-            napi_new_instance(env, WakeupIntellVoiceEngineNapi::Constructor(env), argc, argv, &(context->object));
-        CHECK_STATUS_RETURN_VOID(context, "new napi instance failed");
-        context->status_ = napi_create_reference(env, context->object, 1, &(context->ref));
-        CHECK_STATUS_RETURN_VOID(context, "create ref failed");
-    };
-    context->GetCbInfo(env, info, cbIndex, parser);
-
-    AsyncExecute execute = [](napi_env env, void *data) {
-        auto asyncContext = static_cast<CreateContext *>(data);
-        asyncContext->status_ = napi_ok;
-    };
-
-    AsyncComplete complete = [](AsyncContext *context, napi_value &result) {
-        auto createContext = static_cast<CreateContext *>(context);
-        napi_get_reference_value(createContext->env_, createContext->ref, &result);
-    };
-
-    return NapiAsync::AsyncWork(context, "CreateWakeupIntelligentVoiceEngine", execute, complete);
-}
-
-template<typename T> napi_value IntellVoiceManagerNapi::CreatePropertyBase(napi_env env, T &propertyMap, napi_ref ref)
+template <typename T>
+napi_value IntellVoiceManagerNapi::CreatePropertyBase(napi_env env, T &propertyMap, napi_ref ref)
 {
     napi_value result = nullptr;
     napi_status status;
@@ -380,35 +420,13 @@ template<typename T> napi_value IntellVoiceManagerNapi::CreatePropertyBase(napi_
     return result;
 }
 
-EXTERN_C_START
 static napi_value Export(napi_env env, napi_value exports)
 {
-    // Export static methods and enum
-    napi_status status;
-    napi_property_descriptor staticProperties[] = {
-        DECLARE_NAPI_STATIC_FUNCTION(
-            "createEnrollIntelligentVoiceEngine", IntellVoiceManagerNapi::CreateEnrollIntelligentVoiceEngine),
-        DECLARE_NAPI_STATIC_FUNCTION(
-            "createWakeupIntelligentVoiceEngine", IntellVoiceManagerNapi::CreateWakeupIntelligentVoiceEngine),
-    };
-    status =
-        napi_define_properties(env, exports, sizeof(staticProperties) / sizeof(staticProperties[0]), staticProperties);
-    INTELL_VOICE_LOG_INFO("init static properties, status: %{public}d", status);
-
-    // Export Class
     IntellVoiceManagerNapi::Export(env, exports);
-
-    status = napi_set_named_property(
-        env, exports, ENROLL_ENGINE_NAPI_CLASS_NAME.c_str(), EnrollIntellVoiceEngineNapi::Constructor(env));
-    INTELL_VOICE_LOG_INFO("init %{public}s, status: %{public}d", ENROLL_ENGINE_NAPI_CLASS_NAME.c_str(), status);
-
-    status = napi_set_named_property(
-        env, exports, WAKEUP_ENGINE_NAPI_CLASS_NAME.c_str(), WakeupIntellVoiceEngineNapi::Constructor(env));
-    INTELL_VOICE_LOG_INFO("init %{public}s, status: %{public}d", WAKEUP_ENGINE_NAPI_CLASS_NAME.c_str(), status);
-
+    EnrollIntellVoiceEngineNapi::Export(env, exports);
+    WakeupIntellVoiceEngineNapi::Export(env, exports);
     return exports;
 }
-EXTERN_C_END
 
 static napi_module g_module = {
     .nm_version = 1,

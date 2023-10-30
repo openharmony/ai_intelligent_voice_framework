@@ -36,6 +36,9 @@ public:
     int32_t ReleaseIntellVoiceEngine(IntellVoiceEngineType type) override;
     int32_t Dump(int fd, const std::vector<std::u16string> &args) override;
 
+    bool RegisterDeathRecipient(const sptr<IRemoteObject> &object) override;
+    bool DeregisterDeathRecipient() override;
+
     class PerStateChangeCbCustomizeCallback : public Security::AccessToken::PermStateChangeCallbackCustomize {
     public:
         explicit PerStateChangeCbCustomizeCallback(const Security::AccessToken::PermStateChangeScope &scopeInfo)
@@ -60,7 +63,9 @@ private:
     void UnloadIntellVoiceHost();
     void OnCommonEventServiceChange(bool isAdded);
     void OnDistributedKvDataServiceChange(bool isAdded);
+#ifdef SUPPORT_TELEPHONY_SERVICE
     void OnTelephonyStateRegistryServiceChange(bool isAdded);
+#endif
     void OnAudioDistributedServiceChange(bool isAdded);
 
 private:

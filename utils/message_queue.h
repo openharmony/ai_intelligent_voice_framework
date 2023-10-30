@@ -26,8 +26,8 @@
 namespace OHOS {
 namespace IntellVoiceUtils {
 struct SynInfo {
-    std::mutex mMutex;
-    std::condition_variable mCV;
+    std::mutex mutex_;
+    std::condition_variable cv_;
 };
 struct Message {
 public:
@@ -39,20 +39,20 @@ public:
     Message(uint32_t what, std::shared_ptr<void> obj2);
     Message(uint32_t what, std::shared_ptr<void> obj2, std::shared_ptr<void> obj3);
     Message(uint32_t what, void* voidPtr);
-    Message(uint32_t what, void* voidPtr, int32_t arg1);
+    Message(uint32_t what, int32_t arg1, void* voidPtr);
     ~Message();
 
-    uint32_t mWhat { 0 };
-    int32_t arg1 { 0 };
-    int32_t arg2 { 0 };
-    float arg3 { 0.0 };
-    std::string obj;
-    std::shared_ptr<void> obj2 { nullptr };
-    std::shared_ptr<void> obj3 { nullptr };
-    void* voidPtr { nullptr };
-    uint32_t mCallbackId { 0 };
+    uint32_t what_ = 0;
+    int32_t arg1_ = 0;
+    int32_t arg2_ = 0;
+    float arg3_ = 0.0f;
+    std::string obj_;
+    std::shared_ptr<void> obj2_ = nullptr;
+    std::shared_ptr<void> obj3_ = nullptr;
+    void *voidPtr_ = nullptr;
+    uint32_t callbackId_ = 0;
 
-    std::shared_ptr<SynInfo> result { nullptr };
+    std::shared_ptr<SynInfo> result_ = nullptr;
 };
 
 class MessageQueue {
@@ -64,13 +64,12 @@ public:
     void Clear();
 
 private:
+    uint32_t size_;
+    pthread_mutex_t lock_;
+    pthread_cond_t cond_;
+    std::queue<std::shared_ptr<Message>> queue_;
     DISALLOW_COPY(MessageQueue);
     DISALLOW_MOVE(MessageQueue);
-
-    uint32_t mSize;
-    pthread_mutex_t mLock;
-    pthread_cond_t mCond;
-    std::queue<std::shared_ptr<Message>> mQueue;
 };
 }
 }

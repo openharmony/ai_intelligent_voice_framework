@@ -23,7 +23,6 @@
 #include "enroll_adapter_listener.h"
 #include "time_util.h"
 #include "scope_guard.h"
-#include "trigger_manager.h"
 #include "adapter_callback_service.h"
 #include "intell_voice_service_manager.h"
 
@@ -52,6 +51,7 @@ EnrollEngine::EnrollEngine()
 
 EnrollEngine::~EnrollEngine()
 {
+    INTELL_VOICE_LOG_INFO("enter");
     auto mgr = IIntellVoiceEngineManager::Get();
     if (mgr != nullptr) {
         mgr->ReleaseAdapter(desc_);
@@ -71,8 +71,7 @@ void EnrollEngine::OnEnrollEvent(int32_t msgId, int32_t result)
     } else if (msgId == INTELL_VOICE_ENGINE_MSG_COMMIT_ENROLL_COMPLETE) {
         std::lock_guard<std::mutex> lock(mutex_);
         enrollResult_ = result;
-        IntellVoiceServiceManager::SetEnrollResult(result == 0 ? true : false);
-    } else {
+        IntellVoiceServiceManager::SetEnrollResult(INTELL_VOICE_ENROLL, result == 0 ? true : false);
     }
 }
 
@@ -161,6 +160,11 @@ int32_t EnrollEngine::Detach(void)
 
     if (enrollResult_ == 0) {
         ProcDspModel();
+        /* save new version number */
+        if (IntellVoiceServiceManager::GetInstance() != NULL) {
+            IntellVoiceServiceManager::GetInstance()->SaveWakeupVesion();
+            INTELL_VOICE_LOG_INFO("enroll save version");
+        }
     }
 
     return adapter_->Detach();
@@ -178,12 +182,6 @@ int32_t EnrollEngine::Start(bool isLast)
     if (adapter_ == nullptr) {
         INTELL_VOICE_LOG_ERROR("adapter is nullptr");
         return -1;
-    }
-
-    if (IntellVoiceServiceManager::GetInstance()->ApplyArbitration(INTELL_VOICE_ENROLL, ENGINE_EVENT_START) !=
-        ARBITRATION_OK) {
-        INTELL_VOICE_LOG_ERROR("policy manager reject to start engine");
-        return 0;
     }
 
     StartInfo info = {
@@ -223,6 +221,8 @@ int32_t EnrollEngine::SetParameter(const std::string &keyValueList)
         return 0;
     }
 
+    INTELL_VOICE_LOG_INFO("EnrollEngine SetParameter:%{public}s", keyValueList.c_str());
+
     return EngineBase::SetParameter(keyValueList);
 }
 
@@ -230,108 +230,24 @@ bool EnrollEngine::SetParameterInner(const std::string &keyValueList)
 {
     std::lock_guard<std::mutex> lock(mutex_);
 
-    const std::unique_ptr<HistoryInfoMgr> &historyInfoMgr =
-        IntellVoiceServiceManager::GetInstance()->GetHistoryInfoMgr();
-    if (historyInfoMgr == nullptr) {
-        INTELL_VOICE_LOG_ERROR("historyInfoMgr is nullptr");
-        return false;
-    }
+    HistoryInfoMgr &historyInfoMgr = HistoryInfoMgr::GetInstance();
 
     std::map<std::string, std::string> kvpairs;
     SplitStringToKVPair(keyValueList, kvpairs);
     for (auto it : kvpairs) {
         if (it.first == std::string("wakeup_bundle_name")) {
             INTELL_VOICE_LOG_INFO("set wakeup bundle name:%{public}s", it.second.c_str());
-            historyInfoMgr->SetWakeupEngineBundleName(it.second);
+            historyInfoMgr.SetWakeupEngineBundleName(it.second);
             return true;
         }
         if (it.first == std::string("wakeup_ability_name")) {
             INTELL_VOICE_LOG_INFO("set wakeup ability name:%{public}s", it.second.c_str());
-            historyInfoMgr->SetWakeupEngineAbilityName(it.second);
+            historyInfoMgr.SetWakeupEngineAbilityName(it.second);
             return true;
         }
     }
 
     return false;
-}
-
-void EnrollEngine::WriteBufferFromAshmem(uint8_t *&buffer, uint32_t size, sptr<OHOS::Ashmem> ashmem)
-{
-    if (!ashmem->MapReadOnlyAshmem()) {
-        INTELL_VOICE_LOG_ERROR("map ashmem failed");
-        return;
-    }
-
-    const uint8_t *tmpBuffer = static_cast<const uint8_t *>(ashmem->ReadFromAshmem(size, 0));
-    if (tmpBuffer == nullptr) {
-        INTELL_VOICE_LOG_ERROR("read from ashmem failed");
-        return;
-    }
-
-    buffer = new (std::nothrow) uint8_t[size];
-    if (buffer == nullptr) {
-        INTELL_VOICE_LOG_ERROR("allocate buffer failed");
-        return;
-    }
-
-    if (memcpy_s(buffer, size, tmpBuffer, size) != 0) {
-        INTELL_VOICE_LOG_ERROR("memcpy_s failed");
-        return;
-    }
-}
-
-void EnrollEngine::ProcDspModel()
-{
-    INTELL_VOICE_LOG_INFO("enter");
-    uint8_t *buffer = nullptr;
-    uint32_t size = 0;
-    sptr<Ashmem> ashmem;
-    adapter_->Read(DSP_MODLE, ashmem);
-    if (ashmem == nullptr) {
-        INTELL_VOICE_LOG_ERROR("ashmem is nullptr");
-        return;
-    }
-
-    ON_SCOPE_EXIT_WITH_NAME(ashmemExit)
-    {
-        INTELL_VOICE_LOG_DEBUG("close ashmem");
-        ashmem->UnmapAshmem();
-        ashmem->CloseAshmem();
-    };
-
-    size = static_cast<uint32_t>(ashmem->GetAshmemSize());
-    if (size == 0) {
-        INTELL_VOICE_LOG_ERROR("size is zero");
-        return;
-    }
-
-    WriteBufferFromAshmem(buffer, size, ashmem);
-    if (buffer == nullptr) {
-        INTELL_VOICE_LOG_ERROR("buffer is nullptr");
-        return;
-    }
-
-    ON_SCOPE_EXIT_WITH_NAME(bufferExit)
-    {
-        INTELL_VOICE_LOG_DEBUG("now delete buffer");
-        delete[] buffer;
-        buffer = nullptr;
-    };
-
-    std::shared_ptr<GenericTriggerModel> model = std::make_shared<GenericTriggerModel>(
-        (IntellVoiceServiceManager::GetEnrollModelUuid()), 1);
-    if (model == nullptr) {
-        INTELL_VOICE_LOG_ERROR("model is null");
-        return;
-    }
-
-    model->SetData(buffer, size);
-    auto triggerMgr = TriggerManager::GetInstance();
-    if (triggerMgr == nullptr) {
-        INTELL_VOICE_LOG_ERROR("trigger manager is nullptr");
-        return;
-    }
-    triggerMgr->UpdateModel(model);
 }
 
 bool EnrollEngine::StartAudioSource()

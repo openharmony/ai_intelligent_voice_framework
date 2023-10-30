@@ -1,0 +1,8 @@
+declare_args() {
+  telephony_service_enable = false
+  if (defined(global_parts_info) &&
+      defined(global_parts_info.telephony_state_registry) && defined(global_parts_info.telephony_core_service) &&
+      defined(global_parts_info.telephony_call_manager)) {
+      telephony_service_enable = true
+  }
+}

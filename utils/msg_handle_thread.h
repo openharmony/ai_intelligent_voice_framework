@@ -41,9 +41,9 @@ protected:
 private:
     void Run() override;
 
-    std::shared_ptr<MessageQueue> callbackMsgQue { nullptr };
-    MessageQueue msgQue;
-    MsgHandleThread *callbackThread;
+    std::shared_ptr<MessageQueue> callbackMsgQue_ = nullptr;
+    MessageQueue msgQue_;
+    MsgHandleThread *callbackThread_;
 };
 }
 }

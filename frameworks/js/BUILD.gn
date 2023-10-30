@@ -31,9 +31,12 @@ ohos_shared_library("intelligentvoice") {
     "napi/engine_event_callback_napi.cpp",
     "napi/enroll_intell_voice_engine_callback_napi.cpp",
     "napi/enroll_intell_voice_engine_napi.cpp",
+    "napi/intell_voice_common_napi.cpp",
     "napi/intell_voice_manager_napi.cpp",
     "napi/intell_voice_napi_queue.cpp",
     "napi/intell_voice_napi_util.cpp",
+    "napi/service_change_callback_napi.cpp",
+    "napi/uv_callback_napi.cpp",
     "napi/wakeup_intell_voice_engine_napi.cpp",
   ]
 

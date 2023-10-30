@@ -16,7 +16,6 @@
 #define ENROLL_ENGINE_H
 #include <memory>
 #include <string>
-#include <ashmem.h>
 #include "engine_base.h"
 #include "v1_0/iintell_voice_engine_callback.h"
 #include "audio_info.h"
@@ -43,8 +42,6 @@ private:
     void StopAudioSource();
     void OnEnrollEvent(int32_t msgId, int32_t result);
     void OnEnrollComplete();
-    void ProcDspModel();
-    void WriteBufferFromAshmem(uint8_t *&buffer, uint32_t size, sptr<OHOS::Ashmem> ashmem);
 
 private:
     std::string name_ = "lp enroll engine instance";

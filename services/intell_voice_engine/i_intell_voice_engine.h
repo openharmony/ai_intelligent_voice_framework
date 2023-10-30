@@ -51,7 +51,7 @@ public:
         INTELL_VOICE_ENGINE_WRITE_AUDIO
     };
 
-    virtual void SetCallback(sptr<IRemoteObject> IntellVoiceEngineStub) = 0;
+    virtual void SetCallback(sptr<IRemoteObject> object) = 0;
     virtual int32_t Attach(const IntellVoiceEngineInfo &info) = 0;
     virtual int32_t Detach(void) = 0;
     virtual int32_t SetParameter(const std::string &keyValueList) = 0;

@@ -101,6 +101,7 @@ void TriggerManager::ReleaseTriggerDetector(int32_t uuid)
     detectors_.erase(it);
 }
 
+#ifdef SUPPORT_TELEPHONY_SERVICE
 void TriggerManager::AttachTelephonyObserver()
 {
     if (service_ == nullptr) {
@@ -118,6 +119,7 @@ void TriggerManager::DettachTelephonyObserver()
     }
     return service_->DettachTelephonyObserver();
 }
+#endif
 
 void TriggerManager::AttachAudioCaptureListener()
 {

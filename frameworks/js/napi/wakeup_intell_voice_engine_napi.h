@@ -23,15 +23,19 @@
 namespace OHOS {
 namespace IntellVoiceNapi {
 using OHOS::IntellVoice::WakeupIntellVoiceEngine;
-
-const std::string WAKEUP_ENGINE_NAPI_CLASS_NAME = "WakeupIntelligentVoiceEngine";
+using OHOS::IntellVoice::WakeupIntelligentVoiceEngineDescriptor;
 
 class WakeupIntellVoiceEngineNapi {
 public:
     WakeupIntellVoiceEngineNapi();
     ~WakeupIntellVoiceEngineNapi();
 
-    static napi_value Constructor(napi_env env);
+    static napi_value Export(napi_env env, napi_value exports);
+
+private:
+    static void Destruct(napi_env env, void *nativeObject, void *finalizeHint);
+    static napi_value Construct(napi_env env, napi_callback_info info);
+    static napi_value CreateWakeupIntelligentVoiceEngine(napi_env env, napi_callback_info info);
 
     static napi_value GetSupportedRegions(napi_env env, napi_callback_info info);
     static napi_value SetSensibility(napi_env env, napi_callback_info info);
@@ -42,18 +46,16 @@ public:
     static napi_value On(napi_env env, napi_callback_info info);
     static napi_value Off(napi_env env, napi_callback_info info);
 
-    std::shared_ptr<WakeupIntellVoiceEngine> engine_ = nullptr;
-    std::shared_ptr<EngineEventCallbackNapi> callbackNapi_ = nullptr;
-
-private:
-    static napi_value New(napi_env env, napi_callback_info info);
-
     static napi_value RegisterCallback(napi_env env, napi_value jsThis, napi_value *args);
     static napi_value UnregisterCallback(napi_env env, napi_value jsThis, const std::string &callbackName);
 
 private:
     napi_env env_ = nullptr;
     napi_ref wrapper_ = nullptr;
+    static WakeupIntelligentVoiceEngineDescriptor g_wakeupEngineDesc_;
+    static int32_t constructResult_;
+    std::shared_ptr<WakeupIntellVoiceEngine> engine_ = nullptr;
+    std::shared_ptr<EngineEventCallbackNapi> callbackNapi_ = nullptr;
 };
 }  // namespace IntellVoiceNapi
 }  // namespace OHOS

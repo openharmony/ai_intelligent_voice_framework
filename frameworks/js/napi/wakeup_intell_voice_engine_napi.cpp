@@ -19,6 +19,7 @@
 #include "iservice_registry.h"
 #include "system_ability_definition.h"
 
+#include "intell_voice_common_napi.h"
 #include "intell_voice_napi_util.h"
 #include "intell_voice_napi_queue.h"
 
@@ -32,7 +33,12 @@ using namespace OHOS::IntellVoice;
 
 namespace OHOS {
 namespace IntellVoiceNapi {
-static const std::string INTELL_VOICE_EVENT_CALLBACK_NAME = "IntellVoiceEvent";
+static __thread napi_ref g_wakeupEngineConstructor = nullptr;
+WakeupIntelligentVoiceEngineDescriptor WakeupIntellVoiceEngineNapi::g_wakeupEngineDesc_;
+int32_t WakeupIntellVoiceEngineNapi::constructResult_ = NAPI_INTELLIGENT_VOICE_SUCCESS;
+
+static const std::string WAKEUP_ENGINE_NAPI_CLASS_NAME = "WakeupIntelligentVoiceEngine";
+static const std::string INTELL_VOICE_EVENT_CALLBACK_NAME = "wakeupIntelligentVoiceEvent";
 
 WakeupIntellVoiceEngineNapi::WakeupIntellVoiceEngineNapi()
 {
@@ -47,62 +53,13 @@ WakeupIntellVoiceEngineNapi::~WakeupIntellVoiceEngineNapi()
     }
 }
 
-napi_value WakeupIntellVoiceEngineNapi::New(napi_env env, napi_callback_info info)
+napi_value WakeupIntellVoiceEngineNapi::Export(napi_env env, napi_value exports)
 {
-    INTELL_VOICE_LOG_INFO("enter");
-    size_t argc = 1;
-    napi_value args[1] = {nullptr};
-
-    napi_value jsThis = nullptr;
-    napi_value undefinedResult = nullptr;
-    napi_get_undefined(env, &undefinedResult);
-
-    NAPI_CALL(env, napi_get_cb_info(env, info, &argc, args, &jsThis, nullptr));
-
-    unique_ptr<WakeupIntellVoiceEngineNapi> engineNapi = make_unique<WakeupIntellVoiceEngineNapi>();
-    if (engineNapi == nullptr) {
-        INTELL_VOICE_LOG_ERROR("Failed to create WakeupIntellVoiceEngineNapi, No memory.");
-        return undefinedResult;
-    }
-    engineNapi->env_ = env;
-
-    WakeupIntelligentVoiceEngineDescriptor descriptor = {};
-    napi_value value = nullptr;
-    if (napi_get_named_property(env, args[0], "needReconfirm", &value) == napi_ok) {
-        GetValue(env, value, descriptor.needReconfirm);
-    }
-    if (napi_get_named_property(env, args[0], "wakeupPhrase", &value) == napi_ok) {
-        GetValue(env, value, descriptor.wakeupPhrase);
-    }
-    INTELL_VOICE_LOG_INFO("EngineDescriptor needReconfirm: %{public}d", descriptor.needReconfirm);
-    INTELL_VOICE_LOG_INFO("EngineDescriptor wakeupPhrase: %{public}s", descriptor.wakeupPhrase.c_str());
-
-    engineNapi->engine_ = std::make_shared<WakeupIntellVoiceEngine>(descriptor);
-    if (engineNapi->engine_ == nullptr) {
-        INTELL_VOICE_LOG_ERROR("create intell voice engine faild.");
-        return undefinedResult;
-    }
-
-    auto finalize = [](napi_env env, void *data, void *hint) {
-        INTELL_VOICE_LOG_INFO("WakeupIntellVoiceEngineNapi finalize callback");
-        if (data != nullptr) {
-            auto obj = static_cast<WakeupIntellVoiceEngineNapi *>(data);
-            delete obj;
-        }
-    };
-
-    NAPI_CALL(env,
-        napi_wrap(env, jsThis, static_cast<void *>(engineNapi.get()), finalize, nullptr, &(engineNapi->wrapper_)));
-    engineNapi.release();
-    return jsThis;
-}
-
-napi_value WakeupIntellVoiceEngineNapi::Constructor(napi_env env)
-{
-    INTELL_VOICE_LOG_INFO("enter");
     napi_status status;
     napi_value constructor;
-    napi_get_undefined(env, &constructor);
+    napi_value result = nullptr;
+    const int32_t refCount = 1;
+    napi_get_undefined(env, &result);
 
     napi_property_descriptor properties[] = {
         DECLARE_NAPI_FUNCTION("getSupportedRegions", GetSupportedRegions),
@@ -115,209 +72,338 @@ napi_value WakeupIntellVoiceEngineNapi::Constructor(napi_env env)
         DECLARE_NAPI_FUNCTION("off", Off),
     };
 
+    napi_property_descriptor static_prop[] = {
+        DECLARE_NAPI_STATIC_FUNCTION(
+            "createWakeupIntelligentVoiceEngine", CreateWakeupIntelligentVoiceEngine)
+    };
+
     status = napi_define_class(env,
         WAKEUP_ENGINE_NAPI_CLASS_NAME.c_str(),
         NAPI_AUTO_LENGTH,
-        New,
+        Construct,
         nullptr,
         sizeof(properties) / sizeof(properties[0]),
         properties,
         &constructor);
+    if (status != napi_ok) {
+        return result;
+    }
 
-    return constructor;
+    status = napi_create_reference(env, constructor, refCount, &g_wakeupEngineConstructor);
+    if (status == napi_ok) {
+        status = napi_set_named_property(env, exports, WAKEUP_ENGINE_NAPI_CLASS_NAME.c_str(), constructor);
+        if (status == napi_ok) {
+            status = napi_define_properties(env, exports,
+                                            sizeof(static_prop) / sizeof(static_prop[0]), static_prop);
+            if (status == napi_ok) {
+                return exports;
+            }
+        }
+    }
+
+    return result;
+}
+
+void WakeupIntellVoiceEngineNapi::Destruct(napi_env env, void *nativeObject, void *finalizeHint)
+{
+    if (nativeObject != nullptr) {
+        auto obj = static_cast<WakeupIntellVoiceEngineNapi *>(nativeObject);
+        delete obj;
+    }
+}
+
+napi_value WakeupIntellVoiceEngineNapi::Construct(napi_env env, napi_callback_info info)
+{
+    INTELL_VOICE_LOG_INFO("enter");
+    napi_status status;
+    size_t argc = ARGC_ONE;
+    napi_value args[ARGC_ONE] = { nullptr };
+
+    napi_value jsThis = nullptr;
+    napi_value undefinedResult = nullptr;
+    napi_get_undefined(env, &undefinedResult);
+
+    constructResult_ = NAPI_INTELLIGENT_VOICE_SUCCESS;
+    NAPI_CALL(env, napi_get_cb_info(env, info, &argc, args, &jsThis, nullptr));
+
+    unique_ptr<WakeupIntellVoiceEngineNapi> engineNapi = make_unique<WakeupIntellVoiceEngineNapi>();
+    if (engineNapi == nullptr) {
+        INTELL_VOICE_LOG_ERROR("Failed to create WakeupIntellVoiceEngineNapi, No memory");
+        constructResult_ = NAPI_INTELLIGENT_VOICE_NO_MEMORY;
+        return undefinedResult;
+    }
+
+    engineNapi->env_ = env;
+    engineNapi->engine_ = std::make_shared<WakeupIntellVoiceEngine>(g_wakeupEngineDesc_);
+    if (engineNapi->engine_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("create intell voice engine failed");
+        constructResult_ = NAPI_INTELLIGENT_VOICE_NO_MEMORY;
+        return undefinedResult;
+    }
+
+    if (engineNapi->engine_->GetEngine() == nullptr) {
+        INTELL_VOICE_LOG_ERROR("create wakeup engine failed");
+        constructResult_ = NAPI_INTELLIGENT_VOICE_PERMISSION_DENIED;
+        return undefinedResult;
+    }
+
+    status = napi_wrap(env, jsThis, static_cast<void *>(engineNapi.get()), WakeupIntellVoiceEngineNapi::Destruct,
+        nullptr, &(engineNapi->wrapper_));
+    if (status == napi_ok) {
+        engineNapi.release();
+        return jsThis;
+    }
+
+    INTELL_VOICE_LOG_ERROR("wrap wakeup intell voice engine failed");
+    return undefinedResult;
+}
+
+napi_value WakeupIntellVoiceEngineNapi::CreateWakeupIntelligentVoiceEngine(napi_env env, napi_callback_info info)
+{
+    INTELL_VOICE_LOG_INFO("enter");
+    size_t cbIndex = ARG_INDEX_1;
+    auto context = std::make_shared<AsyncContext>(env);
+    if (context == nullptr) {
+        INTELL_VOICE_LOG_ERROR("create context failed, No memory");
+        return nullptr;
+    }
+
+    CbInfoParser parser = [env, context](size_t argc, napi_value *argv) -> bool {
+        CHECK_CONDITION_RETURN_FALSE((argc < ARGC_ONE), "argc less than 1");
+        napi_valuetype valueType = napi_undefined;
+        napi_typeof(env, argv[0], &valueType);
+        CHECK_CONDITION_RETURN_FALSE((valueType != napi_object), "arg type mismatch");
+        napi_value temp = nullptr;
+        napi_status status = napi_get_named_property(env, argv[0], "needReconfirm", &temp);
+        CHECK_CONDITION_RETURN_FALSE((status != napi_ok), "get property failed");
+        status = GetValue(env, temp, g_wakeupEngineDesc_.needReconfirm);
+        CHECK_CONDITION_RETURN_FALSE((status != napi_ok), "get need reconfirm failed");
+        status = napi_get_named_property(env, argv[0], "wakeupPhrase", &temp);
+        CHECK_CONDITION_RETURN_FALSE((status != napi_ok), "get property failed");
+        status = GetValue(env, temp, g_wakeupEngineDesc_.wakeupPhrase);
+        CHECK_CONDITION_RETURN_FALSE((status != napi_ok), "get wakeup phrase failed");
+        INTELL_VOICE_LOG_INFO("needReconfirm: %{public}d", g_wakeupEngineDesc_.needReconfirm);
+        INTELL_VOICE_LOG_INFO("wakeupPhrase: %{public}s", g_wakeupEngineDesc_.wakeupPhrase.c_str());
+        return true;
+    };
+
+    context->result_ = (context->GetCbInfo(env, info, cbIndex, parser) ? NAPI_INTELLIGENT_VOICE_SUCCESS :
+        NAPI_INTELLIGENT_VOICE_INVALID_PARAM);
+
+    AsyncExecute execute = [](napi_env env, void *data) {};
+
+    context->complete_ = [](napi_env env, AsyncContext *asyncContext, napi_value &result) {
+        napi_value constructor = nullptr;
+        napi_status status = napi_get_reference_value(env, g_wakeupEngineConstructor, &constructor);
+        if (status != napi_ok) {
+            asyncContext->result_ = NAPI_INTELLIGENT_VOICE_NO_MEMORY;
+            napi_get_undefined(env, &result);
+            return;
+        }
+
+        status = napi_new_instance(env, constructor, 0, nullptr, &result);
+        asyncContext->result_ = constructResult_;
+        if (status != napi_ok) {
+            napi_get_undefined(env, &result);
+        }
+    };
+
+    return NapiAsync::AsyncWork(env, context, "CreateWakeupIntelligentVoiceEngine", execute);
 }
 
 napi_value WakeupIntellVoiceEngineNapi::GetSupportedRegions(napi_env env, napi_callback_info info)
 {
     INTELL_VOICE_LOG_INFO("enter");
-    size_t cbIndex = 0;
-    shared_ptr<AsyncContext> context = make_shared<AsyncContext>();
+    size_t cbIndex = ARG_INDEX_0;
+    shared_ptr<AsyncContext> context = make_shared<AsyncContext>(env);
     if (context == nullptr) {
-        INTELL_VOICE_LOG_ERROR("create AsyncContext faild, No memory");
+        INTELL_VOICE_LOG_ERROR("create AsyncContext failed, No memory");
         return nullptr;
     }
 
-    context->GetCbInfo(env, info, cbIndex, nullptr);
+    context->result_ = (context->GetCbInfo(env, info, cbIndex, nullptr) ? NAPI_INTELLIGENT_VOICE_SUCCESS :
+        NAPI_INTELLIGENT_VOICE_INVALID_PARAM);
 
-    AsyncExecute execute = [](napi_env env, void *data) {
-        auto asyncContext = static_cast<AsyncContext *>(data);
-        asyncContext->status_ = napi_ok;
+    AsyncExecute execute = [](napi_env env, void *data) {};
+
+    context->complete_ = [](napi_env env, AsyncContext *asyncContext, napi_value &result) {
+        napi_create_array(env, &result);
+        napi_set_element(env, result, 0, SetValue(env, "CN"));
     };
 
-    AsyncComplete complete = [](AsyncContext *context, napi_value &result) {
-        INTELL_VOICE_LOG_INFO("get supported regions complete");
-        napi_create_array(context->env_, &result);
-        napi_set_element(context->env_, result, 0, SetValue(context->env_, "CN"));
-    };
-
-    return NapiAsync::AsyncWork(context, "GetSupportedRegions", execute, complete);
+    return NapiAsync::AsyncWork(env, context, "GetSupportedRegions", execute);
 }
 
 napi_value WakeupIntellVoiceEngineNapi::SetParameter(napi_env env, napi_callback_info info)
 {
     INTELL_VOICE_LOG_INFO("enter");
-    size_t cbIndex = 2;
+    size_t cbIndex = ARG_INDEX_2;
     class SetParameterContext : public AsyncContext {
     public:
+        explicit SetParameterContext(napi_env napiEnv) : AsyncContext(napiEnv) {};
         string key;
         string value;
     };
-    auto context = make_shared<SetParameterContext>();
+    auto context = make_shared<SetParameterContext>(env);
     if (context == nullptr) {
-        INTELL_VOICE_LOG_ERROR("create SetParameterContext faild, No memory");
+        INTELL_VOICE_LOG_ERROR("create SetParameterContext failed, No memory");
         return nullptr;
     }
 
-    CbInfoParser parser = [env, context](size_t argc, napi_value *argv) {
-        context->status_ = GetValue(env, argv[0], context->key);
-        CHECK_STATUS_RETURN_VOID(context, "Failed to get key");
-        context->status_ = GetValue(env, argv[1], context->value);
-        CHECK_STATUS_RETURN_VOID(context, "Failed to get value");
+    CbInfoParser parser = [env, context](size_t argc, napi_value *argv) -> bool {
+        CHECK_CONDITION_RETURN_FALSE((argc < ARGC_TWO), "argc less than 2");
+        CHECK_CONDITION_RETURN_FALSE((GetValue(env, argv[ARG_INDEX_0], context->key) != napi_ok), "Failed to get key");
+        CHECK_CONDITION_RETURN_FALSE((GetValue(env, argv[ARG_INDEX_1], context->value) != napi_ok),
+            "Failed to get value");
+        return true;
     };
 
-    context->GetCbInfo(env, info, cbIndex, parser);
+    context->result_ = (context->GetCbInfo(env, info, cbIndex, parser) ? NAPI_INTELLIGENT_VOICE_SUCCESS :
+        NAPI_INTELLIGENT_VOICE_INVALID_PARAM);
 
-    AsyncExecute execute = [](napi_env env, void *data) {
-        auto asyncContext = static_cast<SetParameterContext *>(data);
-        auto engine = reinterpret_cast<WakeupIntellVoiceEngineNapi *>(asyncContext->engineNapi_)->engine_;
-        if (engine == nullptr) {
-            INTELL_VOICE_LOG_ERROR("get engine instance faild");
-            return;
-        }
-        asyncContext->result_ = engine->SetParameter(asyncContext->key, asyncContext->value);
-        asyncContext->status_ = napi_ok;
-    };
-
-    return NapiAsync::AsyncWork(context, "SetParameter", execute);
+    AsyncExecute execute;
+    if (context->result_ == NAPI_INTELLIGENT_VOICE_SUCCESS) {
+        execute = [](napi_env env, void *data) {
+            CHECK_CONDITION_RETURN_VOID((data == nullptr), "data is nullptr");
+            auto asyncContext = static_cast<SetParameterContext *>(data);
+            auto engine = reinterpret_cast<WakeupIntellVoiceEngineNapi *>(asyncContext->engineNapi_)->engine_;
+            CHECK_CONDITION_RETURN_VOID((engine == nullptr), "get engine instance failed");
+            engine->SetParameter(asyncContext->key, asyncContext->value);
+        };
+    } else {
+        execute = [](napi_env env, void *data) {};
+    }
+    return NapiAsync::AsyncWork(env, context, "SetParameter", execute);
 }
 
 napi_value WakeupIntellVoiceEngineNapi::GetParameter(napi_env env, napi_callback_info info)
 {
     INTELL_VOICE_LOG_INFO("enter");
-    size_t cbIndex = 1;
-    shared_ptr<AsyncContext> context = make_shared<AsyncContext>();
+    size_t cbIndex = ARG_INDEX_1;
+    shared_ptr<AsyncContext> context = make_shared<AsyncContext>(env);
     if (context == nullptr) {
-        INTELL_VOICE_LOG_ERROR("create AsyncContext faild, No memory");
+        INTELL_VOICE_LOG_ERROR("create AsyncContext failed, No memory");
         return nullptr;
     }
 
-    context->GetCbInfo(env, info, cbIndex, nullptr);
+    context->result_ = (context->GetCbInfo(env, info, cbIndex, nullptr) ? NAPI_INTELLIGENT_VOICE_SUCCESS :
+        NAPI_INTELLIGENT_VOICE_INVALID_PARAM);
 
-    AsyncExecute execute = [](napi_env env, void *data) {
-        auto asyncContext = static_cast<AsyncContext *>(data);
-        asyncContext->status_ = napi_ok;
+    AsyncExecute execute = [](napi_env env, void *data) {};
+
+    context->complete_ = [](napi_env env, AsyncContext *asyncContext, napi_value &result) {
+        INTELL_VOICE_LOG_INFO("get parameter enter");
+        result = SetValue(env, "value");
     };
 
-    AsyncComplete complete = [](AsyncContext *context, napi_value &result) {
-        INTELL_VOICE_LOG_INFO("get parameter complete");
-        result = SetValue(context->env_, "value");
-    };
-    return NapiAsync::AsyncWork(context, "GetParameter", execute, complete);
+    return NapiAsync::AsyncWork(env, context, "GetParameter", execute);
 }
 
 napi_value WakeupIntellVoiceEngineNapi::SetSensibility(napi_env env, napi_callback_info info)
 {
     INTELL_VOICE_LOG_INFO("enter");
-    size_t cbIndex = 1;
+    size_t cbIndex = ARG_INDEX_1;
     class SetSensibilityContext : public AsyncContext {
     public:
+        explicit SetSensibilityContext(napi_env napiEnv) : AsyncContext(napiEnv) {};
         int32_t sensibility;
     };
-    auto context = make_shared<SetSensibilityContext>();
+    auto context = make_shared<SetSensibilityContext>(env);
     if (context == nullptr) {
-        INTELL_VOICE_LOG_ERROR("create SetSensibilityContext faild, No memory");
+        INTELL_VOICE_LOG_ERROR("create SetSensibilityContext failed, No memory");
         return nullptr;
     }
 
-    CbInfoParser parser = [env, context](size_t argc, napi_value *argv) {
-        context->status_ = GetValue(env, argv[0], context->sensibility);
-        CHECK_STATUS_RETURN_VOID(context, "Failed to get sensibility");
+    CbInfoParser parser = [env, context](size_t argc, napi_value *argv) -> bool {
+        CHECK_CONDITION_RETURN_FALSE((argc < ARGC_ONE), "argc less than 1");
+        CHECK_CONDITION_RETURN_FALSE((GetValue(env, argv[0], context->sensibility) != napi_ok),
+            "Failed to get sensibility");
+        return true;
     };
 
-    context->GetCbInfo(env, info, cbIndex, parser);
+    context->result_ = (context->GetCbInfo(env, info, cbIndex, parser) ? NAPI_INTELLIGENT_VOICE_SUCCESS :
+        NAPI_INTELLIGENT_VOICE_INVALID_PARAM);
 
     AsyncExecute execute = [](napi_env env, void *data) {
+        CHECK_CONDITION_RETURN_VOID((data == nullptr), "data is nullptr");
         auto asyncContext = static_cast<SetSensibilityContext *>(data);
+        CHECK_CONDITION_RETURN_VOID((asyncContext->result_ != NAPI_INTELLIGENT_VOICE_SUCCESS), "no need to execute");
         auto engine = reinterpret_cast<WakeupIntellVoiceEngineNapi *>(asyncContext->engineNapi_)->engine_;
-        if (engine == nullptr) {
-            INTELL_VOICE_LOG_ERROR("get engine instance faild");
-            return;
-        }
-        asyncContext->result_ = engine->SetSensibility(asyncContext->sensibility);
-        asyncContext->status_ = napi_ok;
+        CHECK_CONDITION_RETURN_VOID((engine == nullptr), "get engine instance failed");
+        engine->SetSensibility(asyncContext->sensibility);
     };
 
-    return NapiAsync::AsyncWork(context, "SetSensibility", execute);
+    return NapiAsync::AsyncWork(env, context, "SetSensibility", execute);
 }
 
 napi_value WakeupIntellVoiceEngineNapi::SetWakeupHapInfo(napi_env env, napi_callback_info info)
 {
     INTELL_VOICE_LOG_INFO("enter");
-    size_t cbIndex = 1;
+    size_t cbIndex = ARG_INDEX_1;
     class SetWakeupHapContext : public AsyncContext {
     public:
+        explicit SetWakeupHapContext(napi_env napiEnv) : AsyncContext(napiEnv) {};
         WakeupHapInfo hapInfo;
     };
-    auto context = make_shared<SetWakeupHapContext>();
+    auto context = make_shared<SetWakeupHapContext>(env);
     if (context == nullptr) {
-        INTELL_VOICE_LOG_ERROR("create SetWakeupHapContext faild, No memory");
+        INTELL_VOICE_LOG_ERROR("create SetWakeupHapContext failed, No memory");
         return nullptr;
     }
 
-    CbInfoParser parser = [env, context](size_t argc, napi_value *argv) {
+    CbInfoParser parser = [env, context](size_t argc, napi_value *argv) -> bool {
+        CHECK_CONDITION_RETURN_FALSE((argc < ARGC_ONE), "argc less than 1");
         napi_value temp = nullptr;
-        if (napi_get_named_property(env, argv[0], "bundleName", &temp) == napi_ok) {
-            GetValue(env, temp, context->hapInfo.bundleName);
-        }
-        if (napi_get_named_property(env, argv[0], "abilityName", &temp) == napi_ok) {
-            GetValue(env, temp, context->hapInfo.abilityName);
-        }
+        CHECK_CONDITION_RETURN_FALSE((napi_get_named_property(env, argv[0], "bundleName", &temp) != napi_ok),
+            "get property failed");
+        CHECK_CONDITION_RETURN_FALSE((GetValue(env, temp, context->hapInfo.bundleName) != napi_ok),
+            "get bundle name failed");
+        CHECK_CONDITION_RETURN_FALSE((napi_get_named_property(env, argv[0], "abilityName", &temp) != napi_ok),
+            "get property failed");
+        CHECK_CONDITION_RETURN_FALSE((GetValue(env, temp, context->hapInfo.abilityName) != napi_ok),
+            "get ability name failed");
+        return true;
     };
 
-    context->GetCbInfo(env, info, cbIndex, parser);
+    context->result_ = (context->GetCbInfo(env, info, cbIndex, parser) ? NAPI_INTELLIGENT_VOICE_SUCCESS :
+        NAPI_INTELLIGENT_VOICE_INVALID_PARAM);
 
     AsyncExecute execute = [](napi_env env, void *data) {
+        CHECK_CONDITION_RETURN_VOID((data == nullptr), "data is nullptr");
         auto asyncContext = static_cast<SetWakeupHapContext *>(data);
+        CHECK_CONDITION_RETURN_VOID((asyncContext->result_ != NAPI_INTELLIGENT_VOICE_SUCCESS), "no need to execute");
         auto engine = reinterpret_cast<WakeupIntellVoiceEngineNapi *>(asyncContext->engineNapi_)->engine_;
-        if (engine == nullptr) {
-            INTELL_VOICE_LOG_ERROR("get engine instance faild");
-            return;
-        }
-        asyncContext->result_ = engine->SetWakeupHapInfo(asyncContext->hapInfo);
-        asyncContext->status_ = napi_ok;
+        CHECK_CONDITION_RETURN_VOID((engine == nullptr), "get engine instance failed");
+        engine->SetWakeupHapInfo(asyncContext->hapInfo);
     };
 
-    return NapiAsync::AsyncWork(context, "SetWakeupHapInfo", execute);
+    return NapiAsync::AsyncWork(env, context, "SetWakeupHapInfo", execute);
 }
 
 napi_value WakeupIntellVoiceEngineNapi::Release(napi_env env, napi_callback_info info)
 {
     INTELL_VOICE_LOG_INFO("enter");
-    size_t cbIndex = 0;
-    shared_ptr<AsyncContext> context = make_shared<AsyncContext>();
+    size_t cbIndex = ARG_INDEX_0;
+    shared_ptr<AsyncContext> context = make_shared<AsyncContext>(env);
     if (context == nullptr) {
-        INTELL_VOICE_LOG_ERROR("create AsyncContext faild, No memory");
+        INTELL_VOICE_LOG_ERROR("create AsyncContext failed, No memory");
         return nullptr;
     }
 
-    context->GetCbInfo(env, info, cbIndex, nullptr);
+    context->result_ = (context->GetCbInfo(env, info, cbIndex, nullptr) ? NAPI_INTELLIGENT_VOICE_SUCCESS :
+        NAPI_INTELLIGENT_VOICE_INVALID_PARAM);
 
     AsyncExecute execute = [](napi_env env, void *data) {
+        CHECK_CONDITION_RETURN_VOID((data == nullptr), "data is nullptr");
         auto asyncContext = static_cast<AsyncContext *>(data);
+        CHECK_CONDITION_RETURN_VOID((asyncContext->result_ != NAPI_INTELLIGENT_VOICE_SUCCESS), "no need to execute");
         auto engine = reinterpret_cast<WakeupIntellVoiceEngineNapi *>(asyncContext->engineNapi_)->engine_;
-        if (engine == nullptr) {
-            INTELL_VOICE_LOG_ERROR("get engine instance faild");
-            return;
-        }
-        asyncContext->result_ = engine->Release();
-        asyncContext->status_ = napi_ok;
+        CHECK_CONDITION_RETURN_VOID((engine == nullptr), "get engine instance failed");
+        engine->Release();
         reinterpret_cast<WakeupIntellVoiceEngineNapi *>(asyncContext->engineNapi_)->engine_ = nullptr;
     };
 
-    AsyncComplete complete = [](AsyncContext *context, napi_value &result) {
-        INTELL_VOICE_LOG_INFO("release engine complete");
-    };
-    return NapiAsync::AsyncWork(context, "Release", execute, complete);
+    return NapiAsync::AsyncWork(env, context, "Release", execute);
 }
 
 napi_value WakeupIntellVoiceEngineNapi::On(napi_env env, napi_callback_info info)
@@ -327,25 +413,24 @@ napi_value WakeupIntellVoiceEngineNapi::On(napi_env env, napi_callback_info info
     napi_value undefinedResult = nullptr;
     napi_get_undefined(env, &undefinedResult);
 
-    const size_t expectArgCount = 2;
-    size_t argCount = 2;
-    napi_value args[expectArgCount] = {0};
+    size_t argCount = ARGC_TWO;
+    napi_value args[ARGC_TWO] = {0};
     napi_value jsThis = nullptr;
 
     napi_status status = napi_get_cb_info(env, info, &argCount, args, &jsThis, nullptr);
-    if (status != napi_ok || argCount != expectArgCount) {
+    if (status != napi_ok || argCount != ARGC_TWO) {
         INTELL_VOICE_LOG_ERROR("failed to get parameters");
         return undefinedResult;
     }
 
     napi_valuetype eventType = napi_undefined;
-    if (napi_typeof(env, args[0], &eventType) != napi_ok || eventType != napi_string) {
+    if (napi_typeof(env, args[ARG_INDEX_0], &eventType) != napi_ok || eventType != napi_string) {
         INTELL_VOICE_LOG_ERROR("callback event name type mismatch");
         return undefinedResult;
     }
 
     string callbackName = "";
-    status = GetValue(env, args[0], callbackName);
+    status = GetValue(env, args[ARG_INDEX_0], callbackName);
     if (status != napi_ok) {
         INTELL_VOICE_LOG_ERROR("failed to get callbackName");
         return undefinedResult;
@@ -353,7 +438,7 @@ napi_value WakeupIntellVoiceEngineNapi::On(napi_env env, napi_callback_info info
     INTELL_VOICE_LOG_INFO("callbackName: %{public}s", callbackName.c_str());
 
     napi_valuetype handler = napi_undefined;
-    if (napi_typeof(env, args[1], &handler) != napi_ok || handler != napi_function) {
+    if (napi_typeof(env, args[ARG_INDEX_1], &handler) != napi_ok || handler != napi_function) {
         INTELL_VOICE_LOG_ERROR("callback handler type mismatch");
         return undefinedResult;
     }
@@ -379,7 +464,7 @@ napi_value WakeupIntellVoiceEngineNapi::RegisterCallback(napi_env env, napi_valu
         return result;
     }
 
-    engineNapi->callbackNapi_ = make_shared<EngineEventCallbackNapi>(env, args[1]);
+    engineNapi->callbackNapi_ = make_shared<EngineEventCallbackNapi>(env, args[ARG_INDEX_1]);
     engineNapi->engine_->SetCallback(engineNapi->callbackNapi_);
     INTELL_VOICE_LOG_INFO("Set callback finish");
     return result;
@@ -392,13 +477,12 @@ napi_value WakeupIntellVoiceEngineNapi::Off(napi_env env, napi_callback_info inf
     napi_value undefinedResult = nullptr;
     napi_get_undefined(env, &undefinedResult);
 
-    const size_t expectArgCount = 1;
-    size_t argCount = 1;
-    napi_value args[expectArgCount] = {0};
+    size_t argCount = ARGC_ONE;
+    napi_value args[ARGC_ONE] = { nullptr };
     napi_value jsThis = nullptr;
 
     napi_status status = napi_get_cb_info(env, info, &argCount, args, &jsThis, nullptr);
-    if (status != napi_ok || argCount != expectArgCount) {
+    if (status != napi_ok || argCount != ARGC_ONE) {
         INTELL_VOICE_LOG_ERROR("failed to get parameters");
         return undefinedResult;
     }
@@ -437,6 +521,7 @@ napi_value WakeupIntellVoiceEngineNapi::UnregisterCallback(napi_env env, napi_va
         INTELL_VOICE_LOG_ERROR("No such off callback supported");
         return result;
     }
+    engineNapi->callbackNapi_ = nullptr;
 
     return result;
 }

@@ -45,19 +45,23 @@ const std::string OHOS_PERMISSION_INTELL_VOICE = "ohos.permission.MANAGE_INTELLI
 IntellVoiceService::IntellVoiceService(int32_t systemAbilityId, bool runOnCreate)
     : SystemAbility(INTELL_VOICE_SERVICE_ID, true)
 {
-    systemAbilityChangeMap_[COMMON_EVENT_SERVICE_ID] =
-        [this](bool isAdded) { this->OnCommonEventServiceChange(isAdded); };
-    systemAbilityChangeMap_[DISTRIBUTED_KV_DATA_SERVICE_ABILITY_ID] =
-        [this](bool isAdded) { this->OnDistributedKvDataServiceChange(isAdded); };
-    systemAbilityChangeMap_[TELEPHONY_STATE_REGISTRY_SYS_ABILITY_ID] =
-        [this](bool isAdded) { this->OnTelephonyStateRegistryServiceChange(isAdded); };
-    systemAbilityChangeMap_[AUDIO_DISTRIBUTED_SERVICE_ID] =
-        [this](bool isAdded) { this->OnAudioDistributedServiceChange(isAdded); };
+    systemAbilityChangeMap_[COMMON_EVENT_SERVICE_ID] = [this](
+                                                           bool isAdded) { this->OnCommonEventServiceChange(isAdded); };
+    systemAbilityChangeMap_[DISTRIBUTED_KV_DATA_SERVICE_ABILITY_ID] = [this](bool isAdded) {
+        this->OnDistributedKvDataServiceChange(isAdded);
+    };
+#ifdef SUPPORT_TELEPHONY_SERVICE
+    systemAbilityChangeMap_[TELEPHONY_STATE_REGISTRY_SYS_ABILITY_ID] = [this](bool isAdded) {
+        this->OnTelephonyStateRegistryServiceChange(isAdded);
+    };
+#endif
+    systemAbilityChangeMap_[AUDIO_DISTRIBUTED_SERVICE_ID] = [this](bool isAdded) {
+        this->OnAudioDistributedServiceChange(isAdded);
+    };
 }
 
 IntellVoiceService::~IntellVoiceService()
-{
-}
+{}
 
 int32_t IntellVoiceService::CreateIntellVoiceEngine(IntellVoiceEngineType type, sptr<IIntellVoiceEngine> &inst)
 {
@@ -96,7 +100,7 @@ int32_t IntellVoiceService::ReleaseIntellVoiceEngine(IntellVoiceEngineType type)
     return mgr->ReleaseEngine(type);
 }
 
-void IntellVoiceService::OnStart(const SystemAbilityOnDemandReason& startReason)
+void IntellVoiceService::OnStart(const SystemAbilityOnDemandReason &startReason)
 {
     INTELL_VOICE_LOG_INFO("enter, reason id:%{public}d", startReason.GetId());
     reasonId_ = static_cast<int32_t>(startReason.GetId());
@@ -129,7 +133,9 @@ void IntellVoiceService::OnStop(void)
 
     auto triggerMgr = IntellVoiceTrigger::TriggerManager::GetInstance();
     if (triggerMgr != nullptr) {
+#ifdef SUPPORT_TELEPHONY_SERVICE
         triggerMgr->DettachTelephonyObserver();
+#endif
         triggerMgr->DettachAudioCaptureListener();
     }
 
@@ -158,8 +164,7 @@ void IntellVoiceService::OnAddSystemAbility(int32_t systemAbilityId, const std::
 }
 
 void IntellVoiceService::OnRemoveSystemAbility(int32_t systemAbilityId, const std::string &deviceId)
-{
-}
+{}
 
 void IntellVoiceService::CreateSystemEventObserver()
 {
@@ -233,12 +238,19 @@ bool IntellVoiceService::CheckIsSystemApp()
 void IntellVoiceService::LoadIntellVoiceHost()
 {
     auto devmgr = IDeviceManager::Get();
-    if (devmgr != nullptr) {
-        INTELL_VOICE_LOG_INFO("Get devmgr success");
-        devmgr->LoadDevice("intell_voice_engine_manager_service");
-    } else {
+    if (devmgr == nullptr) {
         INTELL_VOICE_LOG_ERROR("Get devmgr failed");
+        return;
     }
+    INTELL_VOICE_LOG_INFO("Get devmgr success");
+    devmgr->UnloadDevice("intell_voice_engine_manager_service");
+    devmgr->LoadDevice("intell_voice_engine_manager_service");
+    const auto &manager = IntellVoiceServiceManager::GetInstance();
+    if (manager == nullptr) {
+        INTELL_VOICE_LOG_INFO("manager is nullptr");
+        return;
+    }
+    manager->RegisterHDIDeathRecipient();
 }
 
 void IntellVoiceService::UnloadIntellVoiceHost()
@@ -265,7 +277,7 @@ void IntellVoiceService::RegisterPermissionCallback(const std::string &permissio
 }
 
 void IntellVoiceService::PerStateChangeCbCustomizeCallback::PermStateChangeCallback(
-    Security::AccessToken::PermStateChangeInfo& result)
+    Security::AccessToken::PermStateChangeInfo &result)
 {
     INTELL_VOICE_LOG_INFO("enter, permStateChangeType: %{public}d", result.permStateChangeType);
     if (result.permStateChangeType == 0) {
@@ -299,12 +311,15 @@ void IntellVoiceService::OnDistributedKvDataServiceChange(bool isAdded)
 
         if (reasonId_ == static_cast<int32_t>(OHOS::OnDemandReasonId::COMMON_EVENT)) {
             INTELL_VOICE_LOG_INFO("power on start");
-            if (!manager->QuerySwitchStatus()) {
-                manager->UnloadIntellVoiceService();
-            } else {
+            if (manager->CreateUpdateEngine()) {
+                INTELL_VOICE_LOG_INFO("update in");
+            } else if (manager->QuerySwitchStatus()) {
                 manager->OnServiceStart();
+            } else {
+                manager->UnloadIntellVoiceService();
             }
         } else if (reasonId_ == static_cast<int32_t>(OHOS::OnDemandReasonId::INTERFACE_CALL)) {
+            INTELL_VOICE_LOG_INFO("interface call start");
             if (manager->QuerySwitchStatus()) {
                 manager->OnServiceStart();
             }
@@ -317,6 +332,7 @@ void IntellVoiceService::OnDistributedKvDataServiceChange(bool isAdded)
     }
 }
 
+#ifdef SUPPORT_TELEPHONY_SERVICE
 void IntellVoiceService::OnTelephonyStateRegistryServiceChange(bool isAdded)
 {
     if (isAdded) {
@@ -329,6 +345,7 @@ void IntellVoiceService::OnTelephonyStateRegistryServiceChange(bool isAdded)
         INTELL_VOICE_LOG_INFO("telephony state registry service is removed");
     }
 }
+#endif
 
 void IntellVoiceService::OnAudioDistributedServiceChange(bool isAdded)
 {
@@ -341,6 +358,26 @@ void IntellVoiceService::OnAudioDistributedServiceChange(bool isAdded)
     } else {
         INTELL_VOICE_LOG_INFO("audio distributed service is removed");
     }
+}
+
+bool IntellVoiceService::RegisterDeathRecipient(const sptr<IRemoteObject> &object)
+{
+    const auto &manager = IntellVoiceServiceManager::GetInstance();
+    if (manager == nullptr) {
+        INTELL_VOICE_LOG_INFO("manager is nullptr");
+        return false;
+    }
+    return manager->RegisterProxyDeathRecipient(object);
+}
+
+bool IntellVoiceService::DeregisterDeathRecipient()
+{
+    const auto &manager = IntellVoiceServiceManager::GetInstance();
+    if (manager == nullptr) {
+        INTELL_VOICE_LOG_INFO("manager is nullptr");
+        return false;
+    }
+    return manager->DeregisterProxyDeathRecipient();
 }
 }  // namespace IntellVoiceEngine
 }  // namespace OHOS

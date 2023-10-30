@@ -49,6 +49,7 @@ struct EnrollCallbackInfo {
 
 class EnrollAsyncContext : public AsyncContext {
 public:
+    explicit EnrollAsyncContext(napi_env env) : AsyncContext(env) {};
     EnrollAsyncWorkType type = ASYNC_WORK_INVALID;
     ProcessWorkFunc processWork = nullptr;
     EnrollCallbackInfo callbackInfo;

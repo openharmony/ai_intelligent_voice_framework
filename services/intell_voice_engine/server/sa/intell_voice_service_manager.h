@@ -22,20 +22,13 @@
 #include "switch_observer.h"
 #include "switch_provider.h"
 #include "history_info_mgr.h"
+#include "intell_voice_engine_arbitration.h"
+#include "intell_voice_death_recipient.h"
+#include "update_engine_controller.h"
 
 namespace OHOS {
 namespace IntellVoiceEngine {
-enum EngineEvent {
-    ENGINE_EVENT_CREATE = 0,
-    ENGINE_EVENT_START,
-};
-
-enum ArbitrationResult {
-    ARBITRATION_OK = 0,
-    ARBITRATION_REJECT,
-};
-
-class IntellVoiceServiceManager {
+class IntellVoiceServiceManager : private IntellVoiceEngineArbitration, private UpdateEngineController {
 public:
     ~IntellVoiceServiceManager();
     static std::unique_ptr<IntellVoiceServiceManager> &GetInstance();
@@ -43,20 +36,24 @@ public:
     {
         return g_enrollModelUuid;
     }
-    static void SetEnrollResult(bool result)
+    static void SetEnrollResult(IntellVoiceEngineType type, bool result)
     {
-        enrollResult_.store(result);
+        if (type >= ENGINE_TYPE_BUT) {
+            return;
+        }
+
+        enrollResult_[type].store(result);
     }
-    static bool GetEnrollResult()
+    static bool GetEnrollResult(IntellVoiceEngineType type)
     {
-        return enrollResult_.load();
+        if (type >= ENGINE_TYPE_BUT) {
+            return false;
+        }
+
+        return enrollResult_[type].load();
     }
     sptr<IIntellVoiceEngine> CreateEngine(IntellVoiceEngineType type);
     int32_t ReleaseEngine(IntellVoiceEngineType type);
-    const std::unique_ptr<HistoryInfoMgr> &GetHistoryInfoMgr() const
-    {
-        return historyInfoMgr_;
-    }
 
     void OnServiceStart();
     void OnServiceStop();
@@ -67,36 +64,46 @@ public:
     bool QuerySwitchStatus();
     void UnloadIntellVoiceService();
 
-    int32_t ApplyArbitration(IntellVoiceEngineType type, EngineEvent event);
+    bool RegisterHDIDeathRecipient();
+    bool RegisterProxyDeathRecipient(const sptr<IRemoteObject> &object);
+    bool DeregisterProxyDeathRecipient();
 
+    using UpdateEngineController::SaveWakeupVesion;
+    using UpdateEngineController::OnUpdateComplete;
+    using UpdateEngineController::CreateUpdateEngine;
+
+    bool CreateUpdateEngine() override;
+    void OnUpdateComplete(int result) override;
 private:
     IntellVoiceServiceManager();
     void OnSwitchChange();
     void OnDetected();
     void CreateDetector();
 
-    int32_t CreateArbitration(IntellVoiceEngineType type);
-    int32_t StartArbitration(IntellVoiceEngineType type);
-    void HandlePreemption(sptr<IIntellVoiceEngine> currentEngine);
-    void HandleReplace(sptr<IIntellVoiceEngine> currentEngine);
-
     sptr<IIntellVoiceEngine> CreateEngineInner(IntellVoiceEngineType type);
     int32_t ReleaseEngineInner(IntellVoiceEngineType type);
     bool CreateOrResetWakeupEngine();
 
+    void OnHDIDiedCallback();
+    void OnProxyDiedCallback();
+
+    void UpdateCompleteInner(int result);
+    bool IsUpdateEngineOn();
 private:
     static const int32_t g_enrollModelUuid;
     static std::unique_ptr<IntellVoiceServiceManager> g_intellVoiceServiceMgr;
-    static std::atomic<bool> enrollResult_;
+    static std::atomic<bool> enrollResult_[ENGINE_TYPE_BUT];
     std::atomic<bool> isServiceUnloaded_ = false;
     std::mutex engineMutex_;
     std::mutex detectorMutex_;
+    std::mutex switchMutex_;
     std::map<IntellVoiceEngineType, sptr<EngineBase>> engines_;
     std::shared_ptr<IntellVoiceTrigger::TriggerDetector> detector_ = nullptr;
     sptr<SwitchObserver> switchObserver_ = nullptr;
     IntellVoiceUtils::UniqueProductType<SwitchProvider> switchProvider_ =
         IntellVoiceUtils::UniqueProductType<SwitchProvider> {nullptr, nullptr};
-    std::unique_ptr<HistoryInfoMgr> historyInfoMgr_ = nullptr;
+    sptr<IntellVoiceUtils::IntellVoiceDeathRecipient> proxyDeathRecipient_ = nullptr;
+    sptr<IRemoteObject> deathRecipientObj_ = nullptr;
 };
 }  // namespace IntellVoice
 }  // namespace OHOS

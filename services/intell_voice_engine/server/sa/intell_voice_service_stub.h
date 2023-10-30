@@ -22,9 +22,12 @@ namespace OHOS {
 namespace IntellVoiceEngine {
 class IntellVoiceServiceStub : public IRemoteStub<IIntellVoiceService> {
 public:
-    int32_t OnRemoteRequest(uint32_t code,
-        MessageParcel &data, MessageParcel &reply, MessageOption &option) override;
+    int32_t OnRemoteRequest(uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option) override;
+
+protected:
+    virtual bool RegisterDeathRecipient(const sptr<IRemoteObject> &object) = 0;
+    virtual bool DeregisterDeathRecipient() = 0;
 };
-}
-}
+}  // namespace IntellVoiceEngine
+}  // namespace OHOS
 #endif

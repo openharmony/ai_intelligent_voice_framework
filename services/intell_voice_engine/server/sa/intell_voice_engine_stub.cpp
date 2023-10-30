@@ -21,6 +21,31 @@
 
 namespace OHOS {
 namespace IntellVoiceEngine {
+IntellVoiceEngineStub::IntellVoiceEngineStub()
+{
+    processFuncMap_[INTELL_VOICE_ENGINE_SET_CALLBACK] = [this](MessageParcel &data,
+        MessageParcel &reply) -> int32_t { return this->SetCallbackInner(data, reply); };
+    processFuncMap_[INTELL_VOICE_ENGINE_ATTACH] = [this](MessageParcel &data,
+        MessageParcel &reply) -> int32_t { return this->AttachInner(data, reply); };
+    processFuncMap_[INTELL_VOICE_ENGINE_DETACH] = [this](MessageParcel &data,
+        MessageParcel &reply) -> int32_t { return this->DetachInner(data, reply); };
+    processFuncMap_[INTELL_VOICE_ENGINE_SET_PARAMETER] = [this](MessageParcel &data,
+        MessageParcel &reply) -> int32_t { return this->SetParameterInner(data, reply); };
+    processFuncMap_[INTELL_VOICE_ENGINE_GET_PARAMETER] = [this](MessageParcel &data,
+        MessageParcel &reply) -> int32_t { return this->GetParameterInner(data, reply); };
+    processFuncMap_[INTELL_VOICE_ENGINE_START] = [this](MessageParcel &data,
+        MessageParcel &reply) -> int32_t { return this->StartInner(data, reply); };
+    processFuncMap_[INTELL_VOICE_ENGINE_STOP] = [this](MessageParcel &data,
+        MessageParcel &reply) -> int32_t { return this->StopInner(data, reply); };
+    processFuncMap_[INTELL_VOICE_ENGINE_WRITE_AUDIO] = [this](MessageParcel &data,
+        MessageParcel &reply) -> int32_t { return this->WriteAudioInner(data, reply); };
+}
+
+IntellVoiceEngineStub::~IntellVoiceEngineStub()
+{
+    processFuncMap_.clear();
+}
+
 int32_t IntellVoiceEngineStub::OnRemoteRequest(uint32_t code,
     MessageParcel &data, MessageParcel &reply, MessageOption &option)
 {
@@ -29,50 +54,79 @@ int32_t IntellVoiceEngineStub::OnRemoteRequest(uint32_t code,
         return -1;
     }
 
-    int32_t ret = 0;
-
-    switch (code) {
-        case INTELL_VOICE_ENGINE_SET_CALLBACK:
-            object = data.ReadRemoteObject();
-            SetCallback(object);
-            break;
-        case INTELL_VOICE_ENGINE_ATTACH:
-            info.wakeupPhrase = data.ReadString();
-            info.isPcmFromExternal = data.ReadBool();
-            info.minBufSize = data.ReadInt32();
-            info.sampleChannels = data.ReadInt32();
-            info.bitsPerSample = data.ReadInt32();
-            info.sampleRate = data.ReadInt32();
-            ret = Attach(info);
-            reply.WriteInt32(ret);
-            break;
-        case INTELL_VOICE_ENGINE_DETACH:
-            ret = Detach();
-            break;
-        case INTELL_VOICE_ENGINE_SET_PARAMETER:
-            ret = SetParameter(data.ReadString());
-            break;
-        case INTELL_VOICE_ENGINE_GET_PARAMETER:
-            str = GetParameter(data.ReadString());
-            reply.WriteString(str);
-            break;
-        case INTELL_VOICE_ENGINE_START:
-            ret = Start(data.ReadBool());
-            reply.WriteInt32(ret);
-            break;
-        case INTELL_VOICE_ENGINE_STOP:
-            ret = Stop();
-            break;
-        case INTELL_VOICE_ENGINE_WRITE_AUDIO:
-            size = data.ReadInt32();
-            buffer = data.ReadBuffer(size);
-            ret = WriteAudio(buffer, size);
-            break;
-        default:
-            ret = IPCObjectStub::OnRemoteRequest(code, data, reply, option);
-            break;
+    auto it = processFuncMap_.find(code);
+    if ((it != processFuncMap_.end()) && (it->second != nullptr)) {
+        return it->second(data, reply);
     }
 
+    INTELL_VOICE_LOG_WARN("invalid code:%{public}u", code);
+    return IPCObjectStub::OnRemoteRequest(code, data, reply, option);
+}
+
+int32_t IntellVoiceEngineStub::SetCallbackInner(MessageParcel &data, MessageParcel & /* reply */)
+{
+    sptr<IRemoteObject> object = data.ReadRemoteObject();
+    SetCallback(object);
+    return 0;
+}
+
+int32_t IntellVoiceEngineStub::AttachInner(MessageParcel &data, MessageParcel &reply)
+{
+    IntellVoiceEngineInfo info = {
+        .wakeupPhrase = data.ReadString(),
+        .isPcmFromExternal = data.ReadBool(),
+        .minBufSize = data.ReadInt32(),
+        .sampleChannels = data.ReadInt32(),
+        .bitsPerSample = data.ReadInt32(),
+        .sampleRate = data.ReadInt32(),
+    };
+
+    int32_t ret = Attach(info);
+    reply.WriteInt32(ret);
+    return ret;
+}
+
+int32_t IntellVoiceEngineStub::DetachInner(MessageParcel & /* data */, MessageParcel &reply)
+{
+    int32_t ret = Detach();
+    reply.WriteInt32(ret);
+    return ret;
+}
+
+int32_t IntellVoiceEngineStub::SetParameterInner(MessageParcel &data, MessageParcel &reply)
+{
+    int32_t ret = SetParameter(data.ReadString());
+    reply.WriteInt32(ret);
+    return ret;
+}
+
+int32_t IntellVoiceEngineStub::GetParameterInner(MessageParcel &data, MessageParcel &reply)
+{
+    std::string value = GetParameter(data.ReadString());
+    reply.WriteString(value);
+    return 0;
+}
+
+int32_t IntellVoiceEngineStub::StartInner(MessageParcel &data, MessageParcel &reply)
+{
+    int32_t ret = Start(data.ReadBool());
+    reply.WriteInt32(ret);
+    return ret;
+}
+
+int32_t IntellVoiceEngineStub::StopInner(MessageParcel & /* data */, MessageParcel &reply)
+{
+    int32_t ret = Stop();
+    reply.WriteInt32(ret);
+    return ret;
+}
+
+int32_t IntellVoiceEngineStub::WriteAudioInner(MessageParcel &data, MessageParcel &reply)
+{
+    int32_t size = data.ReadInt32();
+    const uint8_t *buffer = data.ReadBuffer(size);
+    int32_t ret = WriteAudio(buffer, size);
+    reply.WriteInt32(ret);
     return ret;
 }
 }
