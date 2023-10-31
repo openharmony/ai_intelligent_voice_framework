@@ -22,13 +22,12 @@
 
 namespace OHOS {
 namespace IntellVoiceEngine {
-
 using OnEnrollEventCb = std::function<void(int32_t, int32_t)>;
 
-class UpdateEngineCallback : public HDI::IntelligentVoice::Engine::V1_0::IIntellVoiceEngineCallback {
+class UpdateAdapterListener : public HDI::IntelligentVoice::Engine::V1_0::IIntellVoiceEngineCallback {
 public:
-    explicit UpdateEngineCallback(OnEnrollEventCb enrollEventCb);
-    ~UpdateEngineCallback();
+    explicit UpdateAdapterListener(OnEnrollEventCb enrollEventCb);
+    ~UpdateAdapterListener();
 
     int OnIntellVoiceHdiEvent(
         const OHOS::HDI::IntelligentVoice::Engine::V1_0::IntellVoiceEngineCallBackEvent& event) override;

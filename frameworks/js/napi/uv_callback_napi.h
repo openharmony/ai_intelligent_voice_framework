@@ -28,10 +28,15 @@ using OHOS::IntellVoiceEngine::IntellVoiceEngineCallBackEvent;
 
 class UvCallbackNapi {
 public:
-    explicit UvCallbackNapi(napi_env env, napi_value callback);
+    UvCallbackNapi(napi_env env, napi_value callback);
     virtual ~UvCallbackNapi() = default;
 
     void OnUvCallback(napi_value &cbInfo);
+
+protected:
+    napi_env env_ = nullptr;
+    uv_loop_s *loop_ = nullptr;
+    std::shared_ptr<IntellVoiceRef> callbackRef_ = nullptr;
 
 private:
     struct UvCallbackData {
@@ -39,11 +44,6 @@ private:
         napi_value cbInfo;
         std::shared_ptr<IntellVoiceRef> callback;
     };
-
-protected:
-    napi_env env_ = nullptr;
-    uv_loop_s *loop_ = nullptr;
-    std::shared_ptr<IntellVoiceRef> callbackRef_ = nullptr;
 };
 }  // namespace IntellVoiceNapi
 }  // namespace OHOS

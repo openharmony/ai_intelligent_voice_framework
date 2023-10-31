@@ -170,6 +170,5 @@ void EngineBase::ProcDspModel()
     }
     triggerMgr->UpdateModel(model);
 }
-
 }
 }

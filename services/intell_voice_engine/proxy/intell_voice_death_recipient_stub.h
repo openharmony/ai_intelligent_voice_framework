@@ -22,7 +22,7 @@ namespace OHOS {
 namespace IntellVoiceEngine {
 class IntellVoiceDeathRecipientStub : public IRemoteStub<IIntelligentVoiceEngineCallback> {
 public:
-    explicit IntellVoiceDeathRecipientStub(){};
+    explicit IntellVoiceDeathRecipientStub() {};
     ~IntellVoiceDeathRecipientStub() override = default;
     int OnRemoteRequest(uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option) override
     {

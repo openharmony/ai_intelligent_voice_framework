@@ -52,16 +52,13 @@ EnrollEngine::EnrollEngine()
 EnrollEngine::~EnrollEngine()
 {
     INTELL_VOICE_LOG_INFO("enter");
+    StopAudioSource();
     auto mgr = IIntellVoiceEngineManager::Get();
     if (mgr != nullptr) {
         mgr->ReleaseAdapter(desc_);
     }
     adapter_ = nullptr;
     callback_ = nullptr;
-    if (audioSource_ != nullptr) {
-        audioSource_->Stop();
-        audioSource_ = nullptr;
-    }
 }
 
 void EnrollEngine::OnEnrollEvent(int32_t msgId, int32_t result)
@@ -161,8 +158,9 @@ int32_t EnrollEngine::Detach(void)
     if (enrollResult_ == 0) {
         ProcDspModel();
         /* save new version number */
-        if (IntellVoiceServiceManager::GetInstance() != NULL) {
-            IntellVoiceServiceManager::GetInstance()->SaveWakeupVesion();
+        const auto &mgr = IntellVoiceServiceManager::GetInstance();
+        if (mgr != nullptr) {
+            mgr->SaveWakeupVesion();
             INTELL_VOICE_LOG_INFO("enroll save version");
         }
     }

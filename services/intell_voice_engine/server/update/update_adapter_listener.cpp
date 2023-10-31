@@ -23,17 +23,17 @@ using namespace OHOS::HDI::IntelligentVoice::Engine::V1_0;
 
 namespace OHOS {
 namespace IntellVoiceEngine {
-UpdateEngineCallback::UpdateEngineCallback(OnEnrollEventCb enrollEventCb) : enrollEventCb_(enrollEventCb)
+UpdateAdapterListener::UpdateAdapterListener(OnEnrollEventCb enrollEventCb) : enrollEventCb_(enrollEventCb)
 {
     INTELL_VOICE_LOG_INFO("constructor");
 }
 
-UpdateEngineCallback::~UpdateEngineCallback()
+UpdateAdapterListener::~UpdateAdapterListener()
 {
     INTELL_VOICE_LOG_INFO("destructor");
 }
 
-int UpdateEngineCallback::OnIntellVoiceHdiEvent(const IntellVoiceEngineCallBackEvent& event)
+int UpdateAdapterListener::OnIntellVoiceHdiEvent(const IntellVoiceEngineCallBackEvent& event)
 {
     INTELL_VOICE_LOG_INFO("OnIntellVoiceHdiEvent update msgId %{public}d result %{public}d", event.msgId, event.result);
 

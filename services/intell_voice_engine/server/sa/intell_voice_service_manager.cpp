@@ -69,16 +69,17 @@ sptr<IIntellVoiceEngine> IntellVoiceServiceManager::CreateEngine(IntellVoiceEngi
     std::lock_guard<std::mutex> lock(engineMutex_);
 
     SetEnrollResult(type, false);
+
+    if (ApplyArbitration(type, engines_) != ARBITRATION_OK) {
+        INTELL_VOICE_LOG_ERROR("policy manager reject create engine, type:%{public}d", type);
+        return nullptr;
+    }
+
     if (type != INTELL_VOICE_WAKEUP) {
         auto engine = GetEngine(INTELL_VOICE_WAKEUP, engines_);
         if (engine != nullptr) {
             engine->ReleaseAdapter();
         }
-    }
-
-    if (ApplyArbitration(type, engines_) != ARBITRATION_OK) {
-        INTELL_VOICE_LOG_ERROR("policy manager reject create engine, type:%{public}d", type);
-        return nullptr;
     }
 
     return CreateEngineInner(type);
@@ -384,13 +385,13 @@ bool IntellVoiceServiceManager::RegisterHDIDeathRecipient()
         INTELL_VOICE_LOG_ERROR("object is nullptr");
         return false;
     }
-    sptr<IntellVoiceDeathRecipient> recipient = new (std::nothrow) IntellVoiceDeathRecipient();
+    sptr<IntellVoiceDeathRecipient> recipient = new (std::nothrow) IntellVoiceDeathRecipient(
+        std::bind(&IntellVoiceServiceManager::OnHDIDiedCallback, this));
     if (recipient == nullptr) {
         INTELL_VOICE_LOG_ERROR("create death recipient failed");
         return false;
     }
 
-    recipient->SetServerDiedCallback(std::bind(&IntellVoiceServiceManager::OnHDIDiedCallback, this));
     return object->AddDeathRecipient(recipient);
 }
 
@@ -403,13 +404,13 @@ void IntellVoiceServiceManager::OnHDIDiedCallback()
 bool IntellVoiceServiceManager::RegisterProxyDeathRecipient(const sptr<IRemoteObject> &object)
 {
     deathRecipientObj_ = object;
-    proxyDeathRecipient_ = new (std::nothrow) IntellVoiceDeathRecipient();
+    proxyDeathRecipient_ = new (std::nothrow) IntellVoiceDeathRecipient(
+        std::bind(&IntellVoiceServiceManager::OnProxyDiedCallback, this));
     if (proxyDeathRecipient_ == nullptr) {
         INTELL_VOICE_LOG_ERROR("create death recipient failed");
         return false;
     }
 
-    proxyDeathRecipient_->SetServerDiedCallback(std::bind(&IntellVoiceServiceManager::OnProxyDiedCallback, this));
     return deathRecipientObj_->AddDeathRecipient(proxyDeathRecipient_);
 }
 
@@ -464,7 +465,7 @@ bool IntellVoiceServiceManager::CreateUpdateEngine()
 
     sptr<IIntellVoiceEngine> updateEngine = CreateEngine(INTELL_VOICE_UPDATE);
     if (updateEngine == nullptr) {
-        INTELL_VOICE_LOG_ERROR("updateEngine is nullptr, notify apk");
+        INTELL_VOICE_LOG_ERROR("updateEngine is nullptr");
         return false;
     }
 
@@ -491,7 +492,7 @@ void IntellVoiceServiceManager::UpdateCompleteInner(int result)
     }
 
     if (result != 0) {
-        INTELL_VOICE_LOG_INFO("notify apk");
+        INTELL_VOICE_LOG_INFO("update failed");
     }
 
     if (QuerySwitchStatus()) {

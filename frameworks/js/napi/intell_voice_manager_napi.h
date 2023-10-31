@@ -49,11 +49,10 @@ private:
     static napi_value RegisterCallback(napi_env env, napi_value jsThis, napi_value *args);
     static napi_value DeregisterCallback(napi_env env, napi_value jsThis);
 
-public:
-    sptr<ServiceChangeCallbackNapi> serviceChangeCb_ = nullptr;
 private:
     napi_env env_ = nullptr;
     napi_ref wrapper_ = nullptr;
+    sptr<ServiceChangeCallbackNapi> serviceChangeCb_ = nullptr;
     IntellVoiceManager *manager_ = nullptr;
     static napi_ref serviceChangeTypeRef_;
     static napi_ref engineTypeRef_;

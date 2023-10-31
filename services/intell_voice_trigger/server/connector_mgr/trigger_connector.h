@@ -129,7 +129,7 @@ private:
     };  // TriggerSession
 
 private:
-    std::mutex mutex_{};
+    std::mutex mutex_ {};
     IntellVoiceTriggerAdapterDsecriptor desc_;
     sptr<IIntellVoiceTriggerAdapter> adapter_ = nullptr;
     std::set<std::shared_ptr<TriggerSession>> activeSessions_;

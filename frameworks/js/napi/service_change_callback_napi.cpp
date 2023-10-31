@@ -26,16 +26,14 @@ using namespace OHOS::IntellVoice;
 
 namespace OHOS {
 namespace IntellVoiceNapi {
-
 void ServiceChangeCallbackNapi::OnRemoteDied(const wptr <IRemoteObject> &remote)
 {
     INTELL_VOICE_LOG_INFO("receive sa death callback");
     (void)remote;
     int32_t status = ServiceChangeType::SERVICE_UNAVAILABLE;
-    
+
     napi_value jsCbInfo = SetValue(env_, status);
     return OnUvCallback(jsCbInfo);
 }
-
 }  // namespace IntellVoiceNapi
 }  // namespace OHOS

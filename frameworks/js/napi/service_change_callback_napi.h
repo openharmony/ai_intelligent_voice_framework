@@ -24,10 +24,9 @@
 
 namespace OHOS {
 namespace IntellVoiceNapi {
-
 class ServiceChangeCallbackNapi : public IRemoteObject::DeathRecipient, UvCallbackNapi {
 public:
-    explicit ServiceChangeCallbackNapi(napi_env env, napi_value callback) : UvCallbackNapi(env, callback){};
+    ServiceChangeCallbackNapi(napi_env env, napi_value callback) : UvCallbackNapi(env, callback) {};
     ~ServiceChangeCallbackNapi() override {};
 
     void OnRemoteDied(const wptr <IRemoteObject> &remote) override;

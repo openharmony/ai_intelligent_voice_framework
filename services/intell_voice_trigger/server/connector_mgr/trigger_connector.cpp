@@ -144,13 +144,13 @@ bool TriggerConnector::RegisterHDIDeathRecipient(sptr<IRemoteObject> object)
         INTELL_VOICE_LOG_ERROR("object is nullptr");
         return false;
     }
-    sptr<IntellVoiceDeathRecipient> recipient = new (std::nothrow) IntellVoiceDeathRecipient();
+    sptr<IntellVoiceDeathRecipient> recipient = new (std::nothrow) IntellVoiceDeathRecipient(
+        std::bind(&TriggerConnector::OnHDIDiedCallback, this));
     if (recipient == nullptr) {
         INTELL_VOICE_LOG_ERROR("create death recipient failed");
         return false;
     }
 
-    recipient->SetServerDiedCallback(std::bind(&TriggerConnector::OnHDIDiedCallback, this));
     return object->AddDeathRecipient(recipient);
 }
 

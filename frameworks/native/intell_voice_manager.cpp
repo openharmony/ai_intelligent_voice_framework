@@ -171,6 +171,5 @@ int32_t IntellVoiceManager::DeregisterServiceDeathRecipient(sptr<OHOS::IRemoteOb
     }
     return 0;
 }
-
 }  // namespace IntellVoice
 }  // namespace OHOS

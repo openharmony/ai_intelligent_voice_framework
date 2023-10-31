@@ -16,8 +16,9 @@
 
 #include "string_util.h"
 
-using namespace OHOS::IntellVoiceUtils;
 #define LOG_TAG "HistoryInfoMgr"
+
+using namespace OHOS::IntellVoiceUtils;
 
 namespace OHOS {
 namespace IntellVoiceEngine {
@@ -72,6 +73,5 @@ std::string HistoryInfoMgr::GetWakeupVesion()
 {
     return GetValue(KEY_WAKEUP_VESRION);
 }
-
 }
 }

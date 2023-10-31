@@ -23,28 +23,21 @@ namespace OHOS {
 namespace IntellVoiceUtils {
 class IntellVoiceDeathRecipient : public IRemoteObject::DeathRecipient {
 public:
-    explicit IntellVoiceDeathRecipient(){};
-
+    using ServerDiedCallback = std::function<void()>;
+    explicit IntellVoiceDeathRecipient(ServerDiedCallback callback) : callback_(callback) {};
     ~IntellVoiceDeathRecipient() override = default;
-    DISALLOW_COPY_AND_MOVE(IntellVoiceDeathRecipient);
 
     void OnRemoteDied(const wptr<IRemoteObject> &remote) override
     {
         (void)remote;
-        if (m_callback != nullptr) {
-            m_callback();
+        if (callback_ != nullptr) {
+            callback_();
         }
     }
 
-    using ServerDiedCallback = std::function<void()>;
-
-    void SetServerDiedCallback(ServerDiedCallback callback)
-    {
-        m_callback = callback;
-    }
-
 private:
-    ServerDiedCallback m_callback = nullptr;
+    ServerDiedCallback callback_ = nullptr;
+    DISALLOW_COPY_AND_MOVE(IntellVoiceDeathRecipient);
 };
 }  // namespace IntellVoiceEngine
 }  // namespace OHOS

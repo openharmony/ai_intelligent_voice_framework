@@ -24,7 +24,7 @@ namespace OHOS {
 namespace IntellVoiceEngine {
 IntellVoiceEngineArbitration::IntellVoiceEngineArbitration()
 {
-    engineRelationTbl_[INTELL_VOICE_ENROLL][INTELL_VOICE_WAKEUP] = CONCURRENCY_TYPE;
+    engineRelationTbl_[INTELL_VOICE_ENROLL][INTELL_VOICE_WAKEUP] = PREEMPTION_TYPE;
     engineRelationTbl_[INTELL_VOICE_ENROLL][INTELL_VOICE_UPDATE] = REPLACEMENT_TYPE;
     engineRelationTbl_[INTELL_VOICE_WAKEUP][INTELL_VOICE_ENROLL] = CONCURRENCY_TYPE;
     engineRelationTbl_[INTELL_VOICE_UPDATE][INTELL_VOICE_ENROLL] = REJECTION_TYPE;
@@ -96,7 +96,7 @@ void IntellVoiceEngineArbitration::HandlePreemption(IntellVoiceEngineType type,
         }
 
         engine->Stop();
-        INTELL_VOICE_LOG_INFO("preemption, type: %{public}d %{public}d", type, it.first);
+        INTELL_VOICE_LOG_INFO("preemption, type: %{public}d, %{public}d", type, it.first);
     }
 }
 
@@ -112,15 +112,16 @@ void IntellVoiceEngineArbitration::HandleReplace(IntellVoiceEngineType type,
         if (it.second != REPLACEMENT_TYPE) {
             continue;
         }
-        auto it_ = engines.find(it.first);
-        if (it_ == engines.end()) {
+
+        auto engineIter = engines.find(it.first);
+        if ((engineIter == engines.end()) || (engineIter->second == nullptr)) {
             continue;
         }
 
-        it_->second->Detach();
-        it_->second = nullptr;
+        engineIter->second->Detach();
+        engineIter->second = nullptr;
         engines.erase(it.first);
-        INTELL_VOICE_LOG_INFO("replace, type: %{public}d %{public}d", type, it.first);
+        INTELL_VOICE_LOG_INFO("replace, type: %{public}d, %{public}d", type, it.first);
     }
 }
 }

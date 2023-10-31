@@ -25,7 +25,6 @@ using namespace OHOS::IntellVoiceEngine;
 
 namespace OHOS {
 namespace IntellVoiceNapi {
-
 void EngineEventCallbackNapi::OnEvent(const IntellVoiceEngineCallBackEvent &event)
 {
     INTELL_VOICE_LOG_INFO("enter");

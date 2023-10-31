@@ -56,12 +56,14 @@ WakeupEngine::WakeupEngine()
 
 WakeupEngine::~WakeupEngine()
 {
+    StopAudioSource();
     auto mgr = IIntellVoiceEngineManager::Get();
     if (mgr != nullptr) {
         mgr->ReleaseAdapter(desc_);
     }
     adapter_ = nullptr;
     callback_ = nullptr;
+    wakeupSourceStopCallback_ = nullptr;
 }
 
 void WakeupEngine::OnDetected()
@@ -83,7 +85,6 @@ void WakeupEngine::OnWakeupRecognition()
 {
     INTELL_VOICE_LOG_INFO("on wakeup recognition");
     Stop();
-    StopAudioSource();
 }
 
 bool WakeupEngine::SetCallback()
@@ -240,6 +241,13 @@ int32_t WakeupEngine::Start(bool isLast)
     return 0;
 }
 
+int32_t WakeupEngine::Stop()
+{
+    StopAudioSource();
+
+    return EngineBase::Stop();
+}
+
 void WakeupEngine::StartAbility()
 {
     AAFwk::Want want;
@@ -292,18 +300,16 @@ bool WakeupEngine::StartAudioSource()
 
 void WakeupEngine::StopAudioSource()
 {
+    std::lock_guard<std::mutex> lock(mutex_);
     INTELL_VOICE_LOG_INFO("enter");
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
 
-        if (audioSource_ == nullptr) {
-            INTELL_VOICE_LOG_INFO("already stop audio source");
-            return;
-        }
-
-        audioSource_->Stop();
-        audioSource_ = nullptr;
+    if (audioSource_ == nullptr) {
+        INTELL_VOICE_LOG_INFO("audio source is nullptr, no need to stop");
+        return;
     }
+
+    audioSource_->Stop();
+    audioSource_ = nullptr;
 }
 
 bool WakeupEngine::CreateWakeupSourceStopCallback()

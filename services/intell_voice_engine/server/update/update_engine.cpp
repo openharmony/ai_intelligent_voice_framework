@@ -36,7 +36,6 @@ using namespace OHOS::AudioStandard;
 
 namespace OHOS {
 namespace IntellVoiceEngine {
-
 UpdateEngine::UpdateEngine()
 {
     INTELL_VOICE_LOG_INFO("enter");
@@ -107,7 +106,7 @@ void UpdateEngine::SetCallback(sptr<IRemoteObject> object)
 {
     std::lock_guard<std::mutex> lock(mutex_);
 
-    callback_ = sptr<IIntellVoiceEngineCallback>(new (std::nothrow) UpdateEngineCallback(
+    callback_ = sptr<IIntellVoiceEngineCallback>(new (std::nothrow) UpdateAdapterListener(
         std::bind(&UpdateEngine::OnEnrollEvent, this, std::placeholders::_1, std::placeholders::_2)));
     if (callback_ == nullptr) {
         INTELL_VOICE_LOG_ERROR("callback_ is nullptr");

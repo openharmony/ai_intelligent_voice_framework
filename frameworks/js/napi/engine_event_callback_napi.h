@@ -36,7 +36,7 @@ struct EngineCallBackInfo {
 
 class EngineEventCallbackNapi : public IIntellVoiceEngineEventCallback, UvCallbackNapi {
 public:
-    explicit EngineEventCallbackNapi(napi_env env, napi_value callback) : UvCallbackNapi(env, callback){};
+    EngineEventCallbackNapi(napi_env env, napi_value callback) : UvCallbackNapi(env, callback) {};
     ~EngineEventCallbackNapi() override {};
 
     void OnEvent(const IntellVoiceEngineCallBackEvent &event) override;

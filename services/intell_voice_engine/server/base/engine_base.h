@@ -51,7 +51,6 @@ protected:
 private:
     void WriteBufferFromAshmem(uint8_t *&buffer, uint32_t size, sptr<OHOS::Ashmem> ashmem);
 };
-
 }
 }
 #endif
