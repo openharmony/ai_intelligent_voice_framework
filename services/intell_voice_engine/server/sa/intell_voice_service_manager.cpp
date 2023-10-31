@@ -14,8 +14,6 @@
  */
 #include "intell_voice_service_manager.h"
 
-#include <fstream>
-
 #include "intell_voice_log.h"
 #include "engine_factory.h"
 #include "wakeup_engine.h"

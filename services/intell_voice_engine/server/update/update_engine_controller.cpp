@@ -37,7 +37,6 @@ using namespace OHOS::AudioStandard;
 
 namespace OHOS {
 namespace IntellVoiceEngine {
-
 const std::string INTELL_VOICE_DEFAULT_RES_PATH = "/sys_prod/variant/region_comm/china/etc/intellvoice/wakeup/";
 const std::string INTELL_VOICE_CONDICT_PATH_DSP = "/dsp/condict/";
 static constexpr uint32_t WAKEUP_VERSION_SPLIT_NUM = 2;
