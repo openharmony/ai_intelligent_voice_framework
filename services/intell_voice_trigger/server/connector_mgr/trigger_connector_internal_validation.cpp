@@ -58,6 +58,10 @@ std::shared_ptr<IIntellVoiceTriggerConnectorModule> TriggerConnectorInternalVali
     const std::string &adapterName, std::shared_ptr<IIntellVoiceTriggerConnectorCallback> callback)
 {
     std::lock_guard<std::mutex> lock(mutex_);
+    if (callback == nullptr) {
+        INTELL_VOICE_LOG_ERROR("callback is nullptr");
+        return nullptr;
+    }
     if (moduleDescs_.count(adapterName) == 0) {
         INTELL_VOICE_LOG_ERROR("adapter name:%{public}s does not exist", adapterName.c_str());
         return nullptr;

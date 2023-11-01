@@ -26,18 +26,20 @@ namespace OHOS {
 namespace IntellVoiceNapi {
 using OHOS::IntellVoice::EnrollIntellVoiceEngine;
 using OHOS::IntellVoice::EngineConfig;
-
-const std::string ENROLL_ENGINE_NAPI_CLASS_NAME = "EnrollIntelligentVoiceEngine";
+using OHOS::IntellVoice::EnrollIntelligentVoiceEngineDescriptor;
 
 class EnrollIntellVoiceEngineNapi {
 public:
     EnrollIntellVoiceEngineNapi();
     ~EnrollIntellVoiceEngineNapi();
 
-    static napi_value Constructor(napi_env env);
+    static napi_value Export(napi_env env, napi_value exports);
+    static napi_value CreateEnrollIntelligentVoiceEngineWrapper(napi_env env, AsyncContext *context);
 
 private:
-    static napi_value New(napi_env env, napi_callback_info info);
+    static void Destruct(napi_env env, void *nativeObject, void *finalizeHint);
+    static napi_value Construct(napi_env env, napi_callback_info info);
+    static napi_value CreateEnrollIntelligentVoiceEngine(napi_env env, napi_callback_info info);
 
     static napi_value GetSupportedRegions(napi_env env, napi_callback_info info);
     static napi_value Init(napi_env env, napi_callback_info info);
@@ -51,16 +53,16 @@ private:
     static napi_value Release(napi_env env, napi_callback_info info);
 
     static void CompleteCallback(napi_env env, napi_status status, void *data);
-    static void UpdateAsyncContextInfo(AsyncContext *context);
-
-    std::shared_ptr<EnrollIntellVoiceEngine> engine_ = nullptr;
-    std::shared_ptr<EnrollIntellVoiceEngineCallbackNapi> callbackNapi_ = nullptr;
-    EngineConfig config_;
-    bool isLast_ = false;
 
 private:
     napi_env env_ = nullptr;
     napi_ref wrapper_ = nullptr;
+    static EnrollIntelligentVoiceEngineDescriptor g_enrollEngineDesc_;
+    static int32_t constructResult_;
+    std::shared_ptr<EnrollIntellVoiceEngine> engine_ = nullptr;
+    std::shared_ptr<EnrollIntellVoiceEngineCallbackNapi> callbackNapi_ = nullptr;
+    EngineConfig config_;
+    bool isLast_ = false;
 };
 }  // namespace IntellVoiceNapi
 }  // namespace OHOS

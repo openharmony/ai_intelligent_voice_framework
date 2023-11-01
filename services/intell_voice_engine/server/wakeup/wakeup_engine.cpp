@@ -56,12 +56,14 @@ WakeupEngine::WakeupEngine()
 
 WakeupEngine::~WakeupEngine()
 {
+    StopAudioSource();
     auto mgr = IIntellVoiceEngineManager::Get();
     if (mgr != nullptr) {
         mgr->ReleaseAdapter(desc_);
     }
     adapter_ = nullptr;
     callback_ = nullptr;
+    wakeupSourceStopCallback_ = nullptr;
 }
 
 void WakeupEngine::OnDetected()
@@ -83,7 +85,6 @@ void WakeupEngine::OnWakeupRecognition()
 {
     INTELL_VOICE_LOG_INFO("on wakeup recognition");
     Stop();
-    StopAudioSource();
 }
 
 bool WakeupEngine::SetCallback()
@@ -215,12 +216,6 @@ int32_t WakeupEngine::Start(bool isLast)
         return -1;
     }
 
-    if (IntellVoiceServiceManager::GetInstance()->ApplyArbitration(INTELL_VOICE_WAKEUP, ENGINE_EVENT_START) !=
-        ARBITRATION_OK) {
-        INTELL_VOICE_LOG_ERROR("policy manager reject to start engine");
-        return -1;
-    }
-
     StartInfo info = {
         .isLast = isLast,
     };
@@ -246,21 +241,24 @@ int32_t WakeupEngine::Start(bool isLast)
     return 0;
 }
 
+int32_t WakeupEngine::Stop()
+{
+    StopAudioSource();
+
+    return EngineBase::Stop();
+}
+
 void WakeupEngine::StartAbility()
 {
     AAFwk::Want want;
-    const std::unique_ptr<HistoryInfoMgr> &historyInfoMgr =
-        IntellVoiceServiceManager::GetInstance()->GetHistoryInfoMgr();
-    if (historyInfoMgr == nullptr) {
-        INTELL_VOICE_LOG_ERROR("historyInfoMgr is nullptr");
-        return;
-    }
+    HistoryInfoMgr &historyInfoMgr = HistoryInfoMgr::GetInstance();
 
-    std::string bundleName = historyInfoMgr->GetWakeupEngineBundleName();
-    std::string abilityName = historyInfoMgr->GetWakeupEngineAbilityName();
+    std::string bundleName = historyInfoMgr.GetWakeupEngineBundleName();
+    std::string abilityName = historyInfoMgr.GetWakeupEngineAbilityName();
     INTELL_VOICE_LOG_INFO("bundleName:%{public}s, abilityName:%{public}s", bundleName.c_str(), abilityName.c_str());
     want.SetElementName(bundleName, abilityName);
     want.SetParam("serviceName", std::string("intell_voice"));
+    want.SetParam("servicePid", getpid());
     AAFwk::AbilityManagerClient::GetInstance()->StartAbility(want);
 }
 
@@ -302,18 +300,16 @@ bool WakeupEngine::StartAudioSource()
 
 void WakeupEngine::StopAudioSource()
 {
+    std::lock_guard<std::mutex> lock(mutex_);
     INTELL_VOICE_LOG_INFO("enter");
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
 
-        if (audioSource_ == nullptr) {
-            INTELL_VOICE_LOG_INFO("already stop audio source");
-            return;
-        }
-
-        audioSource_->Stop();
-        audioSource_ = nullptr;
+    if (audioSource_ == nullptr) {
+        INTELL_VOICE_LOG_INFO("audio source is nullptr, no need to stop");
+        return;
     }
+
+    audioSource_->Stop();
+    audioSource_ = nullptr;
 }
 
 bool WakeupEngine::CreateWakeupSourceStopCallback()
@@ -341,19 +337,20 @@ bool WakeupEngine::CreateWakeupSourceStopCallback()
 
 bool WakeupEngine::ResetAdapter()
 {
-    if (adapter_ == nullptr) {
-        INTELL_VOICE_LOG_ERROR("adapter is nullptr");
-        return false;
-    }
+    std::lock_guard<std::mutex> lock(mutex_);
 
     auto mgr = IIntellVoiceEngineManager::Get();
     if (mgr == nullptr) {
         INTELL_VOICE_LOG_ERROR("failed to get engine manager");
         return false;
     }
-    adapter_->Detach();
-    mgr->ReleaseAdapter(desc_);
-    adapter_ = nullptr;
+
+    if (adapter_ != nullptr) {
+        INTELL_VOICE_LOG_WARN("adapter is existed");
+        adapter_->Detach();
+        mgr->ReleaseAdapter(desc_);
+        adapter_ = nullptr;
+    }
 
     mgr->CreateAdapter(desc_, adapter_);
     if (adapter_ == nullptr) {
@@ -378,6 +375,25 @@ bool WakeupEngine::ResetAdapter()
     }
 
     return true;
+}
+
+void WakeupEngine::ReleaseAdapter()
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    INTELL_VOICE_LOG_INFO("enter");
+    if (adapter_ == nullptr) {
+        return;
+    }
+
+    auto mgr = IIntellVoiceEngineManager::Get();
+    if (mgr == nullptr) {
+        INTELL_VOICE_LOG_ERROR("failed to get engine manager");
+        return;
+    }
+
+    adapter_->Detach();
+    mgr->ReleaseAdapter(desc_);
+    adapter_ = nullptr;
 }
 }  // namespace IntellVoice
 }  // namespace OHOS

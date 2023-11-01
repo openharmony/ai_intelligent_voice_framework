@@ -46,7 +46,7 @@ AudioSource::AudioSource(uint32_t minBufferSize, uint32_t bufferCnt,
 
 AudioSource::~AudioSource()
 {
-    audioCapturer_ = nullptr;
+    Stop();
 }
 
 bool AudioSource::Start()

@@ -35,8 +35,10 @@ public:
     std::shared_ptr<TriggerDetector> CreateTriggerDetector(
         int32_t uuid, std::shared_ptr<IIntellVoiceTriggerDetectorCallback> callback);
     void ReleaseTriggerDetector(int32_t uuid);
+#ifdef SUPPORT_TELEPHONY_SERVICE
     void AttachTelephonyObserver();
     void DettachTelephonyObserver();
+#endif
     void AttachAudioCaptureListener();
     void DettachAudioCaptureListener();
 

@@ -25,30 +25,9 @@ using namespace OHOS::IntellVoiceEngine;
 
 namespace OHOS {
 namespace IntellVoiceNapi {
-EngineEventCallbackNapi::EngineEventCallbackNapi(napi_env env, napi_value callback)
-{
-    INTELL_VOICE_LOG_INFO("enter");
-    env_ = env;
-    if (env_ != nullptr) {
-        napi_get_uv_event_loop(env_, &loop_);
-    }
-    callbackRef_ = make_shared<IntellVoiceRef>(env_, callback);
-}
-
-EngineEventCallbackNapi::~EngineEventCallbackNapi()
-{
-    INTELL_VOICE_LOG_INFO("enter");
-    callbackRef_ = nullptr;
-}
-
 void EngineEventCallbackNapi::OnEvent(const IntellVoiceEngineCallBackEvent &event)
 {
     INTELL_VOICE_LOG_INFO("enter");
-    if (callbackRef_ == nullptr) {
-        INTELL_VOICE_LOG_ERROR("Failed to get engine event callback");
-        return;
-    }
-
     if (event.msgId != HDI::IntelligentVoice::Engine::V1_0::INTELL_VOICE_ENGINE_MSG_RECOGNIZE_COMPLETE) {
         INTELL_VOICE_LOG_ERROR("error msgId");
         return;
@@ -61,66 +40,23 @@ void EngineEventCallbackNapi::OnEvent(const IntellVoiceEngineCallBackEvent &even
         cbInfo.eventId,
         cbInfo.isSuccess,
         cbInfo.context.c_str());
-
-    return OnEventUvCallback(cbInfo);
+    napi_value jsCbInfo = GetCallBackInfoNapiValue(cbInfo);
+    return OnUvCallback(jsCbInfo);
 }
 
-void EngineEventCallbackNapi::OnEventUvCallback(EngineCallBackInfo &cbInfo)
+napi_value EngineEventCallbackNapi::GetCallBackInfoNapiValue(const EngineCallBackInfo &callbackInfo)
 {
-    CHECK_RETURN_VOID(loop_ != nullptr, "loop is nullptr");
-    uv_work_t *work = new (nothrow) uv_work_t;
-    CHECK_RETURN_VOID(work != nullptr, "Create uv work failed, no memory");
-
-    work->data = new EngineEventUvCallback {env_, cbInfo, callbackRef_};
-
-    uv_queue_work(
-        loop_,
-        work,
-        [](uv_work_t *work) {},
-        [](uv_work_t *work, int uvStatus) {
-            shared_ptr<EngineEventUvCallback> uvCallback(
-                static_cast<EngineEventUvCallback *>(work->data), [work](EngineEventUvCallback *data) {
-                    delete data;
-                    delete work;
-                });
-            CHECK_RETURN_VOID(uvCallback != nullptr, "uvCallback is nullptr");
-            CHECK_RETURN_VOID(uvCallback->callback != nullptr, "uvCallback callback is nullptr");
-            napi_env env = uvCallback->env_;
-            INTELL_VOICE_LOG_INFO("uv_queue_work start");
-
-            napi_value jsCallback = uvCallback->callback->GetRefValue();
-            if (jsCallback == nullptr) {
-                INTELL_VOICE_LOG_ERROR("get reference value fail");
-                return;
-            }
-
-            const size_t argc = 1;
-            napi_value args[argc] = {nullptr};
-            GetJsCallbackInfo(env, uvCallback->cbInfo, args[0]);
-            if (args[0] == nullptr) {
-                INTELL_VOICE_LOG_ERROR("failed to create engine event callback");
-                return;
-            }
-
-            napi_value result = nullptr;
-            napi_status status = napi_call_function(env, nullptr, jsCallback, argc, args, &result);
-            if (status != napi_ok) {
-                INTELL_VOICE_LOG_ERROR("failed to call engine event callback, error: %{public}d", status);
-            }
-        });
-}
-
-void GetJsCallbackInfo(const napi_env &env, const EngineCallBackInfo &callbackInfo, napi_value &jsObj)
-{
-    napi_status status = napi_create_object(env, &jsObj);
-    if (status != napi_ok || jsObj == nullptr) {
+    napi_value result;
+    napi_status status = napi_create_object(env_, &result);
+    if (status != napi_ok || result == nullptr) {
         INTELL_VOICE_LOG_ERROR("failed to create js callbackInfo, error: %{public}d", status);
-        return;
+        return nullptr;
     }
 
-    napi_set_named_property(env, jsObj, "eventId", SetValue(env, callbackInfo.eventId));
-    napi_set_named_property(env, jsObj, "isSuccess", SetValue(env, callbackInfo.isSuccess));
-    napi_set_named_property(env, jsObj, "context", SetValue(env, callbackInfo.context));
+    napi_set_named_property(env_, result, "eventId", SetValue(env_, callbackInfo.eventId));
+    napi_set_named_property(env_, result, "isSuccess", SetValue(env_, callbackInfo.isSuccess));
+    napi_set_named_property(env_, result, "context", SetValue(env_, callbackInfo.context));
+    return result;
 }
 }  // namespace IntellVoiceNapi
 }  // namespace OHOS

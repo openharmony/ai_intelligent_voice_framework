@@ -36,9 +36,11 @@ public:
     int32_t Attach(const IntellVoiceEngineInfo &info) override;
     int32_t Detach(void) override;
     int32_t Start(bool isLast) override;
+    int32_t Stop() override;
 
     void OnDetected() override;
     bool ResetAdapter() override;
+    void ReleaseAdapter() override;
 
 private:
     WakeupEngine();

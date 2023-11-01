@@ -38,8 +38,8 @@ protected:
 
 private:
     static void *RunInThread(void *arg);
-    pthread_t tid;
-    bool isRuning;
+    pthread_t tid_;
+    bool isRuning_;
     std::mutex mutex_ {};
 };
 }

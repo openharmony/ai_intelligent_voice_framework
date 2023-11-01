@@ -12,9 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifdef TRIGGER_MANAGER_TEST
 #include <thread>
-#endif
 
 #include "trigger_connector_internal_impl.h"
 #include "intell_voice_log.h"
@@ -22,6 +20,8 @@
 #include "scope_guard.h"
 #include "trigger_callback_impl.h"
 #include "memory_guard.h"
+#include "iproxy_broker.h"
+#include "intell_voice_death_recipient.h"
 
 #define LOG_TAG "TriggerConnector"
 
@@ -41,6 +41,7 @@ TriggerConnector::TriggerConnector(const IntellVoiceTriggerAdapterDsecriptor &de
         if (adapter_ == nullptr) {
             INTELL_VOICE_LOG_ERROR("failed to load adapter, adapterName is %{public}s", desc_.adapterName.c_str());
         }
+        RegisterHDIDeathRecipient(OHOS::HDI::hdi_objcast<IIntellVoiceTriggerManager>(mgr));
     } else {
         INTELL_VOICE_LOG_INFO("can not get intell voice trigger manager");
     }
@@ -58,21 +59,18 @@ TriggerConnector::~TriggerConnector()
 std::shared_ptr<IIntellVoiceTriggerConnectorModule> TriggerConnector::GetModule(
     std::shared_ptr<IIntellVoiceTriggerConnectorCallback> callback)
 {
-    if (adapter_ == nullptr) {
-        INTELL_VOICE_LOG_ERROR("adapter is nullptr");
-        return nullptr;
-    }
-
+    std::lock_guard<std::mutex> lock(mutex_);
     if (callback == nullptr) {
         INTELL_VOICE_LOG_ERROR("callback is nullptr");
         return nullptr;
     }
 
-    std::shared_ptr<TriggerSession> session = std::make_shared<TriggerSession>(callback, adapter_);
+    std::shared_ptr<TriggerSession> session = std::make_shared<TriggerSession>(this, callback);
     if (session == nullptr) {
         INTELL_VOICE_LOG_ERROR("failed to malloc session");
         return nullptr;
     }
+
     activeSessions_.insert(session);
     return session;
 }
@@ -83,52 +81,101 @@ IntellVoiceTriggerProperties TriggerConnector::GetProperties()
     return properties;
 }
 
+void TriggerConnector::onServiceStart()
+{
+    if (adapter_ != nullptr) {
+        return;
+    }
+    auto mgr = IIntellVoiceTriggerManager::Get();
+    if (mgr == nullptr) {
+        INTELL_VOICE_LOG_ERROR("failed to get trigger manager");
+        return;
+    }
+
+    mgr->LoadAdapter(desc_, adapter_);
+    if (adapter_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("failed to load adapter, adapterName is %{public}s", desc_.adapterName.c_str());
+        return;
+    }
+    RegisterHDIDeathRecipient(OHOS::HDI::hdi_objcast<IIntellVoiceTriggerManager>(mgr));
+
+    for (auto session : activeSessions_) {
+        if (session != nullptr) {
+            std::thread([&]() { session->GetCallback()->OnHdiServiceStart(); }).detach();
+        }
+    }
+}
+
 void TriggerConnector::OnReceive(const ServiceStatus &serviceStatus)
 {
-    INTELL_VOICE_LOG_INFO("enter, service name:%{public}s, status:%{public}d", serviceStatus.serviceName.c_str(),
-        serviceStatus.status);
     if (serviceStatus.serviceName != INTELL_VOICE_TRIGGER_SERVICE) {
         return;
     }
 
+    std::lock_guard<std::mutex> lock(mutex_);
+    INTELL_VOICE_LOG_INFO(
+        "enter, service name:%{public}s, status:%{public}d", serviceStatus.serviceName.c_str(), serviceStatus.status);
+
+    if (serviceStatus.status == serviceState_) {
+        return;
+    }
+
     if (serviceStatus.status != SERVIE_STATUS_START) {
-        INTELL_VOICE_LOG_INFO("status: %{public}d is not start", serviceStatus.status);
-        return;
+        INTELL_VOICE_LOG_INFO("service unavailable");
+        adapter_ = nullptr;
     }
 
-    if (adapter_ != nullptr) {
-        return;
+    if (serviceState_ == SERVIE_STATUS_MAX && serviceStatus.status == SERVIE_STATUS_START) {
+        onServiceStart();
+    }
+    serviceState_ = serviceStatus.status;
+}
+
+void TriggerConnector::OnHDIDiedCallback()
+{
+    INTELL_VOICE_LOG_INFO("receive hdi death recipient, restart sa");
+    _Exit(0);
+}
+
+bool TriggerConnector::RegisterHDIDeathRecipient(sptr<IRemoteObject> object)
+{
+    INTELL_VOICE_LOG_INFO("enter");
+    if (object == nullptr) {
+        INTELL_VOICE_LOG_ERROR("object is nullptr");
+        return false;
+    }
+    sptr<IntellVoiceDeathRecipient> recipient = new (std::nothrow) IntellVoiceDeathRecipient(
+        std::bind(&TriggerConnector::OnHDIDiedCallback, this));
+    if (recipient == nullptr) {
+        INTELL_VOICE_LOG_ERROR("create death recipient failed");
+        return false;
     }
 
-    auto mgr = IIntellVoiceTriggerManager::Get();
-    if (mgr != nullptr) {
-        mgr->LoadAdapter(desc_, adapter_);
-        if (adapter_ == nullptr) {
-            INTELL_VOICE_LOG_ERROR("failed to load adapter, adapterName is %{public}s", desc_.adapterName.c_str());
-        }
-    } else {
-        INTELL_VOICE_LOG_ERROR("failed to get trigger manager");
-    }
+    return object->AddDeathRecipient(recipient);
 }
 
 TriggerConnector::TriggerSession::TriggerSession(
-    std::shared_ptr<IIntellVoiceTriggerConnectorCallback> callback, const sptr<IIntellVoiceTriggerAdapter> &adapter)
-    : callback_(callback), adapter_(adapter)
+    TriggerConnector *connector, std::shared_ptr<IIntellVoiceTriggerConnectorCallback> callback)
+    : connector_(connector), callback_(callback)
 {
     BaseThread::Start();
 }
 
 TriggerConnector::TriggerSession::~TriggerSession()
 {
+    loadedModels_.clear();
     Message msg(MSG_TYPE_QUIT);
     SendMsg(msg);
     Join();
 }
 
-int32_t TriggerConnector::TriggerSession::LoadModel(
-    std::shared_ptr<GenericTriggerModel> model, int32_t &modelHandle)
+int32_t TriggerConnector::TriggerSession::LoadModel(std::shared_ptr<GenericTriggerModel> model, int32_t &modelHandle)
 {
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::lock_guard<std::mutex> lock(connector_->mutex_);
+    if (GetAdapter() == nullptr) {
+        INTELL_VOICE_LOG_ERROR("adapter is nullptr");
+        return -1;
+    }
     std::shared_ptr<Model> loadedModle = Model::Create(this);
     if (loadedModle == nullptr) {
         INTELL_VOICE_LOG_ERROR("failed to malloc intell voice model");
@@ -146,7 +193,11 @@ int32_t TriggerConnector::TriggerSession::LoadModel(
 
 int32_t TriggerConnector::TriggerSession::UnloadModel(int32_t modelHandle)
 {
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::lock_guard<std::mutex> lock(connector_->mutex_);
+    if (GetAdapter() == nullptr) {
+        INTELL_VOICE_LOG_ERROR("adapter is nullptr");
+        return -1;
+    }
     auto it = loadedModels_.find(modelHandle);
     if ((it == loadedModels_.end()) || (it->second == nullptr)) {
         INTELL_VOICE_LOG_ERROR("failed to find model");
@@ -160,7 +211,11 @@ int32_t TriggerConnector::TriggerSession::UnloadModel(int32_t modelHandle)
 
 int32_t TriggerConnector::TriggerSession::Start(int32_t modelHandle)
 {
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::lock_guard<std::mutex> lock(connector_->mutex_);
+    if (GetAdapter() == nullptr) {
+        INTELL_VOICE_LOG_ERROR("adapter is nullptr");
+        return -1;
+    }
     auto it = loadedModels_.find(modelHandle);
     if ((it == loadedModels_.end()) || (it->second == nullptr)) {
         INTELL_VOICE_LOG_ERROR("failed to find model");
@@ -171,7 +226,11 @@ int32_t TriggerConnector::TriggerSession::Start(int32_t modelHandle)
 
 int32_t TriggerConnector::TriggerSession::Stop(int32_t modelHandle)
 {
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::lock_guard<std::mutex> lock(connector_->mutex_);
+    if (GetAdapter() == nullptr) {
+        INTELL_VOICE_LOG_ERROR("adapter is nullptr");
+        return -1;
+    }
     auto it = loadedModels_.find(modelHandle);
     if ((it == loadedModels_.end()) || (it->second == nullptr)) {
         INTELL_VOICE_LOG_ERROR("failed to find model");
@@ -180,28 +239,31 @@ int32_t TriggerConnector::TriggerSession::Stop(int32_t modelHandle)
     return it->second->Stop();
 }
 
-void TriggerConnector::TriggerSession::HandleRecognitionHdiEvent(std::shared_ptr<IntellVoiceRecognitionEvent> event,
-    int32_t modelHandle)
+void TriggerConnector::TriggerSession::HandleRecognitionHdiEvent(
+    std::shared_ptr<IntellVoiceRecognitionEvent> event, int32_t modelHandle)
 {
     Message msg(MSG_TYPE_RECOGNITION_HDI_EVENT);
 
-    msg.obj2 = static_pointer_cast<void>(event);
-    msg.arg1 = modelHandle;
+    msg.obj2_ = static_pointer_cast<void>(event);
+    msg.arg1_ = modelHandle;
     SendMsg(msg);
 }
 
 void TriggerConnector::TriggerSession::ProcessRecognitionHdiEvent(const Message &message)
 {
-    int32_t modelHandle = message.arg1;
+    int32_t modelHandle = message.arg1_;
     std::shared_ptr<IntellVoiceRecognitionEvent> event =
-        static_pointer_cast<IntellVoiceRecognitionEvent>(message.obj2);
+        static_pointer_cast<IntellVoiceRecognitionEvent>(message.obj2_);
     if (event == nullptr) {
         INTELL_VOICE_LOG_ERROR("event is nullptr");
         return;
     }
+    if (connector_ == nullptr) {
+        return;
+    }
 
     {
-        std::lock_guard<std::mutex> lock(mutex_);
+        std::lock_guard<std::mutex> lock(connector_->mutex_);
         auto it = loadedModels_.find(modelHandle);
         if ((it != loadedModels_.end()) && (it->second != nullptr)) {
             INTELL_VOICE_LOG_INFO("receive recognition event");
@@ -215,16 +277,16 @@ bool TriggerConnector::TriggerSession::HandleMsg(Message &message)
 {
     bool quit = false;
 
-    switch (message.mWhat) {
+    switch (message.what_) {
         case MSG_TYPE_RECOGNITION_HDI_EVENT:
             ProcessRecognitionHdiEvent(message);
             break;
         default:
-            INTELL_VOICE_LOG_WARN("invalid msg id: %{public}d", message.mWhat);
+            INTELL_VOICE_LOG_WARN("invalid msg id: %{public}d", message.what_);
             break;
     }
 
-    if (message.mWhat == MSG_TYPE_QUIT) {
+    if (message.what_ == MSG_TYPE_QUIT) {
         quit = true;
     }
 
@@ -237,8 +299,7 @@ std::shared_ptr<TriggerConnector::TriggerSession::Model> TriggerConnector::Trigg
     return std::shared_ptr<Model>(new (std::nothrow) Model(session));
 }
 
-int32_t TriggerConnector::TriggerSession::Model::Load(
-    std::shared_ptr<GenericTriggerModel> model, int32_t &modelHandle)
+int32_t TriggerConnector::TriggerSession::Model::Load(std::shared_ptr<GenericTriggerModel> model, int32_t &modelHandle)
 {
     INTELL_VOICE_LOG_INFO("enter");
     if (GetState() != IDLE) {
@@ -261,7 +322,8 @@ int32_t TriggerConnector::TriggerSession::Model::Load(
     triggerModel.type = static_cast<IntellVoiceTriggerModelType>(model->GetType());
     triggerModel.uid = static_cast<uint32_t>(model->GetUuid());
 
-    ON_SCOPE_EXIT {
+    ON_SCOPE_EXIT
+    {
         INTELL_VOICE_LOG_INFO("close ashmem");
         triggerModel.data->UnmapAshmem();
         triggerModel.data->CloseAshmem();
@@ -350,8 +412,8 @@ void TriggerConnector::TriggerSession::Model::TriggerManagerCallbackTest()
 }
 #endif
 
-void TriggerConnector::TriggerSession::Model::OnRecognitionHdiEvent(const IntellVoiceRecognitionEvent& event,
-    int32_t cookie)
+void TriggerConnector::TriggerSession::Model::OnRecognitionHdiEvent(
+    const IntellVoiceRecognitionEvent &event, int32_t cookie)
 {
     (void)cookie;
     std::shared_ptr<IntellVoiceRecognitionEvent> recognitionEvent = std::make_shared<IntellVoiceRecognitionEvent>();
@@ -368,8 +430,7 @@ void TriggerConnector::TriggerSession::Model::OnRecognitionHdiEvent(const Intell
     session_->HandleRecognitionHdiEvent(recognitionEvent, handle_);
 }
 
-sptr<Ashmem> TriggerConnector::TriggerSession::Model::CreateAshmemFromModelData(
-    const std::vector<uint8_t> &modelData)
+sptr<Ashmem> TriggerConnector::TriggerSession::Model::CreateAshmemFromModelData(const std::vector<uint8_t> &modelData)
 {
     if (modelData.size() == 0) {
         INTELL_VOICE_LOG_ERROR("data is empty");

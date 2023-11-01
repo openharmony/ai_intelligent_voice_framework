@@ -14,6 +14,7 @@
  */
 
 #include "intell_voice_napi_queue.h"
+#include "intell_voice_common_napi.h"
 #include "intell_voice_napi_util.h"
 #include "intell_voice_log.h"
 
@@ -23,12 +24,11 @@ using namespace std;
 
 namespace OHOS {
 namespace IntellVoiceNapi {
-AsyncComplete NapiAsync::complete_ = nullptr;
-
-AsyncContext::AsyncContext()
+AsyncContext::AsyncContext(napi_env env) : env_(env)
 {
     INTELL_VOICE_LOG_INFO("enter");
 }
+
 AsyncContext::~AsyncContext()
 {
     INTELL_VOICE_LOG_INFO("enter");
@@ -43,156 +43,170 @@ AsyncContext::~AsyncContext()
     }
 }
 
-void AsyncContext::GetCbInfo(napi_env env, napi_callback_info info, size_t callBackIndex, CbInfoParser parser)
+bool AsyncContext::GetCbInfo(napi_env env, napi_callback_info info, size_t callBackIndex, CbInfoParser parser)
 {
     INTELL_VOICE_LOG_INFO("enter");
+    napi_status status;
     napi_value jsThis = nullptr;
     const int32_t refCount = 1;
     size_t argc = ARGC_MAX;
-    napi_value args[ARGC_MAX] = {nullptr};
+    napi_value args[ARGC_MAX] = { nullptr };
 
-    env_ = env;
-    status_ = napi_get_cb_info(env, info, &argc, args, &jsThis, nullptr);
-    CHECK_STATUS_RETURN_VOID(this, "Failed to get cb info");
+    status = napi_get_cb_info(env, info, &argc, args, &jsThis, nullptr);
+    CHECK_CONDITION_RETURN_FALSE((status != napi_ok), "Failed to get cb info");
 
-    status_ = napi_unwrap(env, jsThis, &engineNapi_);
-    CHECK_STATUS_RETURN_VOID(this, "Failed to get engine napi instance");
+    status = napi_unwrap(env, jsThis, &engineNapi_);
+    CHECK_CONDITION_RETURN_FALSE((status != napi_ok), "Failed to get engine napi instance");
 
     if (argc > callBackIndex) {
         napi_valuetype valueType = napi_undefined;
         napi_typeof(env, args[callBackIndex], &valueType);
-        if (valueType == napi_function) {
-            status_ = napi_create_reference(env, args[callBackIndex], refCount, &callbackRef_);
-            CHECK_STATUS_RETURN_VOID(this, "Failed to create callback reference");
-        } else {
-            INTELL_VOICE_LOG_ERROR("Failed to get asyncCallback, type mismatch");
-        }
+        CHECK_CONDITION_RETURN_FALSE((valueType != napi_function), "Failed to get asyncCallback, type mismatch");
+
+        status = napi_create_reference(env, args[callBackIndex], refCount, &callbackRef_);
+        CHECK_CONDITION_RETURN_FALSE((status != napi_ok), "Failed to create callback reference");
     }
 
     if (parser) {
-        parser(argc, args);
+        return parser(argc, args);
     }
+
+    return true;
 }
 
-napi_value NapiAsync::AsyncWork(
-    shared_ptr<AsyncContext> context, const string &name, AsyncExecute execute, AsyncComplete complete)
+napi_value NapiAsync::AsyncWork(napi_env env, shared_ptr<AsyncContext> context, const string &name,
+    AsyncExecute execute)
 {
     INTELL_VOICE_LOG_INFO("enter");
     napi_value result = nullptr;
     if (context->callbackRef_ == nullptr) {
-        napi_create_promise(context->env_, &context->deferred_, &result);
+        napi_create_promise(env, &context->deferred_, &result);
     } else {
-        napi_get_undefined(context->env_, &result);
+        napi_get_undefined(env, &result);
     }
 
     napi_value resource = nullptr;
-    complete_ = complete;
-    napi_create_string_utf8(context->env_, name.c_str(), NAPI_AUTO_LENGTH, &resource);
-    napi_create_async_work(context->env_,
-        nullptr,
-        resource,
-        execute,
-        AsyncCompleteCallback,
-        static_cast<void *>(context.get()),
-        &context->work_);
+    napi_create_string_utf8(env, name.c_str(), NAPI_AUTO_LENGTH, &resource);
+    napi_status status = napi_create_async_work(env, nullptr, resource, execute, AsyncCompleteCallback,
+        static_cast<void *>(context.get()), &context->work_);
+    if (status != napi_ok) {
+        INTELL_VOICE_LOG_ERROR("failed to create async work");
+        result = nullptr;
+        return result;
+    }
 
-    napi_queue_async_work(context->env_, context->work_);
+    status = napi_queue_async_work(env, context->work_);
+    if (status != napi_ok) {
+        INTELL_VOICE_LOG_ERROR("failed to queue async work");
+        result = nullptr;
+    } else {
+        context->contextSp_ = context;
+    }
+
+    return result;
+}
+
+napi_value NapiAsync::AsyncWork(napi_env env, shared_ptr<AsyncContext> context, const string &name,
+    AsyncExecute execute, napi_async_complete_callback complete)
+{
+    INTELL_VOICE_LOG_INFO("enter");
+    napi_value result = nullptr;
+    if (context->callbackRef_ == nullptr) {
+        napi_create_promise(env, &context->deferred_, &result);
+    } else {
+        napi_get_undefined(env, &result);
+    }
+
+    napi_value resource = nullptr;
+    napi_create_string_utf8(env, name.c_str(), NAPI_AUTO_LENGTH, &resource);
+    napi_status status = napi_create_async_work(env, nullptr, resource, execute, complete,
+        static_cast<void *>(context.get()), &context->work_);
+    if (status != napi_ok) {
+        INTELL_VOICE_LOG_ERROR("failed to create async work");
+        result = nullptr;
+        return result;
+    }
+
+    status = napi_queue_async_work(env, context->work_);
     context->contextSp_ = context;
 
     return result;
 }
 
-napi_value NapiAsync::AsyncWork(
-    shared_ptr<AsyncContext> context, const string &name, AsyncExecute execute, napi_async_complete_callback complete)
+void NapiAsync::CommonCallbackRoutine(napi_env env, AsyncContext *context, const napi_value &data)
 {
-    INTELL_VOICE_LOG_INFO("enter");
-    napi_value result = nullptr;
-    if (context->callbackRef_ == nullptr) {
-        napi_create_promise(context->env_, &context->deferred_, &result);
-    } else {
-        napi_get_undefined(context->env_, &result);
-    }
-
-    napi_value resource = nullptr;
-    napi_create_string_utf8(context->env_, name.c_str(), NAPI_AUTO_LENGTH, &resource);
-    napi_create_async_work(
-        context->env_, nullptr, resource, execute, complete, static_cast<void *>(context.get()), &context->work_);
-
-    napi_queue_async_work(context->env_, context->work_);
-    context->contextSp_ = context;
-
-    return result;
-}
-
-void NapiAsync::CommonCallbackRoutine(AsyncContext *context, const napi_value &data)
-{
-    CHECK_RETURN_VOID(context != nullptr, "async context is null");
+    CHECK_CONDITION_RETURN_VOID((context == nullptr), "async context is null");
 
     if (context->deferred_) {
-        HandlePromise(context, data);
+        HandlePromise(env, context, data);
     } else {
-        HandleAsyncCallback(context, data);
+        HandleAsyncCallback(env, context, data);
     }
     context->contextSp_.reset();
 }
 
-void NapiAsync::HandlePromise(AsyncContext *context, const napi_value &data)
+void NapiAsync::HandlePromise(napi_env env, AsyncContext *context, const napi_value &data)
 {
     INTELL_VOICE_LOG_INFO("enter");
     napi_value result = nullptr;
     napi_value error = nullptr;
-    napi_get_undefined(context->env_, &result);
-    napi_get_undefined(context->env_, &error);
+    napi_get_undefined(env, &result);
+    napi_get_undefined(env, &error);
 
-    if (context->status_ == napi_ok) {
+    if (context->result_ == NAPI_INTELLIGENT_VOICE_SUCCESS) {
         result = data;
-        napi_resolve_deferred(context->env_, context->deferred_, result);
+        napi_resolve_deferred(env, context->deferred_, result);
         return;
     }
-    napi_value message = nullptr;
-    napi_value err_code = nullptr;
-    napi_create_string_utf8(context->env_, context->error_.c_str(), NAPI_AUTO_LENGTH, &message);
-    napi_create_string_utf8(context->env_, std::to_string(context->result_).c_str(), NAPI_AUTO_LENGTH, &err_code);
-    napi_create_error(context->env_, err_code, message, &error);
-    napi_reject_deferred(context->env_, context->deferred_, error);
+    napi_value errMessage = nullptr;
+    napi_value errCode = nullptr;
+    std::string msg = IntellVoiceCommonNapi::GetMessageByCode(context->result_);
+    napi_create_string_utf8(env, msg.c_str(), NAPI_AUTO_LENGTH, &errMessage);
+    napi_create_string_utf8(env, std::to_string(context->result_).c_str(), NAPI_AUTO_LENGTH, &errCode);
+    napi_create_error(env, errCode, errMessage, &error);
+    napi_reject_deferred(env, context->deferred_, error);
 }
 
-void NapiAsync::HandleAsyncCallback(AsyncContext *context, const napi_value &data)
+void NapiAsync::HandleAsyncCallback(napi_env env, AsyncContext *context, const napi_value &data)
 {
-    const size_t argc = 2;
-    napi_value args[argc] = {nullptr, nullptr};
+    napi_value args[ARGC_TWO] = {nullptr, nullptr};
     napi_value callback = nullptr;
     napi_value ret = nullptr;
-    if (context->status_ == napi_ok) {
-        napi_get_undefined(context->env_, &args[0]);
-        args[1] = data;
+    if (context->result_ == NAPI_INTELLIGENT_VOICE_SUCCESS) {
+        napi_get_undefined(env, &args[ARG_INDEX_0]);
+        args[ARG_INDEX_1] = data;
     } else {
-        napi_value message = nullptr;
-        napi_value err_code = nullptr;
-        napi_create_string_utf8(context->env_, context->error_.c_str(), NAPI_AUTO_LENGTH, &message);
-        napi_create_string_utf8(context->env_, std::to_string(context->result_).c_str(), NAPI_AUTO_LENGTH, &err_code);
-        napi_create_error(context->env_, err_code, message, &args[0]);
-        napi_get_undefined(context->env_, &args[1]);
+        napi_value errMessage = nullptr;
+        napi_value errCode = nullptr;
+        std::string msg = IntellVoiceCommonNapi::GetMessageByCode(context->result_);
+        napi_create_string_utf8(env, msg.c_str(), NAPI_AUTO_LENGTH, &errMessage);
+        napi_create_string_utf8(env, std::to_string(context->result_).c_str(), NAPI_AUTO_LENGTH, &errCode);
+        napi_create_error(env, errCode, errMessage, &args[ARG_INDEX_0]);
+        napi_get_undefined(env, &args[ARG_INDEX_1]);
     }
-    napi_get_reference_value(context->env_, context->callbackRef_, &callback);
-    napi_call_function(context->env_, nullptr, callback, argc, args, &ret);
+    napi_get_reference_value(env, context->callbackRef_, &callback);
+    napi_call_function(env, nullptr, callback, ARGC_TWO, args, &ret);
 }
 
 void NapiAsync::AsyncCompleteCallback(napi_env env, napi_status status, void *data)
 {
     INTELL_VOICE_LOG_INFO("enter");
-    CHECK_RETURN_VOID(data != nullptr, "async complete callback data is null");
+    CHECK_CONDITION_RETURN_VOID((data == nullptr), "async complete callback data is null");
     napi_value result = nullptr;
-    napi_get_undefined(env, &result);
     auto context = static_cast<AsyncContext *>(data);
-    if ((status != napi_ok) && (context->status_ == napi_ok)) {
-        context->status_ = status;
+
+    if (context->result_ != NAPI_INTELLIGENT_VOICE_SUCCESS) {
+        napi_get_undefined(env, &result);
+        NapiAsync::CommonCallbackRoutine(env, context, result);
+        return;
     }
 
-    if (context->status_ == napi_ok && (complete_ != nullptr)) {
-        complete_(context, result);
+    if (context->complete_ != nullptr) {
+        context->complete_(env, context, result);
+    } else {
+        napi_get_undefined(env, &result);
     }
-    CommonCallbackRoutine(context, result);
+    CommonCallbackRoutine(env, context, result);
 }
 }  // namespace IntellVoiceNapi
 }  // namespace OHOS

@@ -16,9 +16,9 @@ import("//build/test.gni")
 
 module_output_path = "ai_intell_voice_framework/audio_intell_voice"
 
-ohos_fuzztest("intell_voice_fuzzTest") {
+ohos_fuzztest("IntellvoiceFuzzTest") {
   module_out_path = module_output_path
-  fuzz_config_file = "../intell_voice_fuzzer"
+  fuzz_config_file = "../intellvoice_fuzzer"
 
   include_dirs = [
     "../../../services/intell_voice_engine",
@@ -34,7 +34,7 @@ ohos_fuzztest("intell_voice_fuzzTest") {
     "-Wno-unused-variable",
     "-fno-omit-frame-pointer",
   ]
-  sources = [ "intell_voice_fuzzer.cpp" ]
+  sources = [ "intellvoice_fuzzer.cpp" ]
 
   deps = [ "../../../frameworks/native:intellvoice_native" ]
 
@@ -48,5 +48,5 @@ ohos_fuzztest("intell_voice_fuzzTest") {
 
 group("fuzztest") {
   testonly = true
-  deps = [ ":intell_voice_fuzzTest" ]
+  deps = [ ":IntellvoiceFuzzTest" ]
 }

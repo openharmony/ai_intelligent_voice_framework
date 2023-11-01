@@ -42,10 +42,9 @@ public:
     uint32_t TimeElapseS();
 
 private:
-
-    std::string mLogInfo;
-    timespec mTimeStart { 0, 0 };
-    bool mIsReset { true };
+    std::string logInfo_;
+    timespec timeStart_ { 0, 0 };
+    bool isReset_ { true };
 };
 
 class TimeUtil {

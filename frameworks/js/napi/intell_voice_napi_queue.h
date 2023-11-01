@@ -24,56 +24,41 @@ namespace OHOS {
 namespace IntellVoiceNapi {
 constexpr size_t ARGC_MAX = 4;
 
-using CbInfoParser = std::function<void(size_t argc, napi_value *argv)>;
-
-#define CHECK_STATUS_RETURN_VOID(context, message) \
-    do {                                           \
-        if ((context)->status_ != napi_ok) {       \
-            (context)->error_ = std::string(message);   \
-            INTELL_VOICE_LOG_ERROR(message);       \
-            return;                                \
-        }                                          \
-    } while (0)
+class AsyncContext;
+using CbInfoParser = std::function<bool(size_t argc, napi_value *argv)>;
+using AsyncExecute = napi_async_execute_callback;
+using AsyncComplete = std::function<void(napi_env, AsyncContext *, napi_value &)>;
 
 class AsyncContext {
 public:
-    AsyncContext();
+    explicit AsyncContext(napi_env env);
     ~AsyncContext();
-    void GetCbInfo(napi_env env, napi_callback_info info, size_t callBackIndex, CbInfoParser parser);
+    bool GetCbInfo(napi_env env, napi_callback_info info, size_t callBackIndex, CbInfoParser parser);
 
     napi_env env_ = nullptr;
     void *engineNapi_ = nullptr;
 
-    napi_status status_ = napi_invalid_arg;
-    std::string error_;
     int32_t result_ = -1;
+    AsyncComplete complete_ = nullptr;
 
-private:
     napi_async_work work_ = nullptr;
     napi_deferred deferred_ = nullptr;
     napi_ref callbackRef_ = nullptr;
     std::shared_ptr<AsyncContext> contextSp_ = nullptr;
-
-    friend class NapiAsync;
 };
-
-using AsyncExecute = napi_async_execute_callback;
-using AsyncComplete = std::function<void(AsyncContext *, napi_value &)>;
 
 class NapiAsync {
 public:
-    static napi_value AsyncWork(std::shared_ptr<AsyncContext> context, const std::string &name, AsyncExecute execute,
-        AsyncComplete complete = nullptr);
-    static napi_value AsyncWork(std::shared_ptr<AsyncContext> context, const std::string &name, AsyncExecute execute,
-        napi_async_complete_callback complete);
-    static void CommonCallbackRoutine(AsyncContext *context, const napi_value &data);
+    static napi_value AsyncWork(napi_env env, std::shared_ptr<AsyncContext> context, const std::string &name,
+        AsyncExecute execute);
+    static napi_value AsyncWork(napi_env env, std::shared_ptr<AsyncContext> context, const std::string &name,
+        AsyncExecute execute, napi_async_complete_callback complete);
+    static void CommonCallbackRoutine(napi_env env, AsyncContext *context, const napi_value &data);
 
 private:
     static void AsyncCompleteCallback(napi_env env, napi_status status, void *data);
-    static void HandlePromise(AsyncContext *context, const napi_value &data);
-    static void HandleAsyncCallback(AsyncContext *context, const napi_value &data);
-
-    static AsyncComplete complete_;
+    static void HandlePromise(napi_env env, AsyncContext *context, const napi_value &data);
+    static void HandleAsyncCallback(napi_env env, AsyncContext *context, const napi_value &data);
 };
 }  // namespace IntellVoiceNapi
 }  // namespace OHOS

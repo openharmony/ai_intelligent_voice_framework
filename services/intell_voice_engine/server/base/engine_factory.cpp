@@ -16,6 +16,7 @@
 #include "engine_factory.h"
 #include "enroll_engine.h"
 #include "wakeup_engine.h"
+#include "update_engine.h"
 #include "intell_voice_log.h"
 #include "intell_voice_generic_factory.h"
 
@@ -35,6 +36,8 @@ sptr<EngineBase> EngineFactory::CreateEngineInst(IntellVoiceEngineType type)
             engine = SptrFactory<WakeupEngine>::CreateInstance();
             break;
         case INTELL_VOICE_UPDATE:
+            engine = SptrFactory<UpdateEngine>::CreateInstance();
+            break;
         default:
             INTELL_VOICE_LOG_INFO("create engine enter, type:%{public}d", type);
             break;

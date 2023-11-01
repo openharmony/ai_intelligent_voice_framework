@@ -19,7 +19,6 @@
 #include "system_ability_definition.h"
 #include "intell_voice_log.h"
 #include "intell_voice_load_callback.h"
-#include "i_intell_voice_service.h"
 #include "intell_voice_service_proxy.h"
 
 using namespace std;
@@ -28,10 +27,7 @@ using namespace OHOS::IntellVoiceEngine;
 
 namespace OHOS {
 namespace IntellVoice {
-static sptr<IIntellVoiceService> g_sProxy = nullptr;
 constexpr int32_t LOADSA_TIMEOUT_MS = 5000;
-std::mutex IntellVoiceManager::mutex_;
-std::condition_variable IntellVoiceManager::proxyConVar_;
 
 IntellVoiceManager::IntellVoiceManager()
 {
@@ -63,9 +59,15 @@ bool IntellVoiceManager::Init()
         return false;
     }
 
-    sptr<IntellVoiceLoadCallback> loadCallback = new (std::nothrow) IntellVoiceLoadCallback(
-        std::bind(&IntellVoiceManager::LoadSystemAbilitySuccess, this, std::placeholders::_1),
-        std::bind(&IntellVoiceManager::LoadSystemAbilityFail, this));
+    auto object = samgr->CheckSystemAbility(INTELL_VOICE_SERVICE_ID);
+    if (object != nullptr) {
+        g_sProxy = iface_cast<IIntellVoiceService>(object);
+        return true;
+    }
+
+    sptr<IntellVoiceLoadCallback> loadCallback = new (std::nothrow)
+        IntellVoiceLoadCallback(std::bind(&IntellVoiceManager::LoadSystemAbilitySuccess, this, std::placeholders::_1),
+            std::bind(&IntellVoiceManager::LoadSystemAbilityFail, this));
     if (loadCallback == nullptr) {
         INTELL_VOICE_LOG_ERROR("loadCallback is nullptr");
         return false;
@@ -78,13 +80,12 @@ bool IntellVoiceManager::Init()
     }
 
     auto waitStatus = proxyConVar_.wait_for(lock, std::chrono::milliseconds(LOADSA_TIMEOUT_MS));
-    if (waitStatus == std::cv_status::no_timeout) {
-        INTELL_VOICE_LOG_INFO("Load systemAbility success");
-        return true;
+    if (waitStatus != std::cv_status::no_timeout) {
+        INTELL_VOICE_LOG_ERROR("Load systemAbility timeout");
+        return false;
     }
-
-    INTELL_VOICE_LOG_ERROR("Load systemAbility timeout");
-    return false;
+    INTELL_VOICE_LOG_INFO("Load systemAbility success");
+    return true;
 }
 
 void IntellVoiceManager::LoadSystemAbilitySuccess(const sptr<IRemoteObject> &object)
@@ -128,5 +129,47 @@ int32_t IntellVoiceManager::ReleaseIntellVoiceEngine(IntellVoiceEngineType type)
     }
     return g_sProxy->ReleaseIntellVoiceEngine(type);
 }
+
+int32_t IntellVoiceManager::RegisterServiceDeathRecipient(sptr<OHOS::IRemoteObject::DeathRecipient> callback)
+{
+    INTELL_VOICE_LOG_INFO("enter");
+    if (g_sProxy == nullptr) {
+        INTELL_VOICE_LOG_ERROR("IntellVoiceService Proxy is null");
+        return -1;
+    }
+
+    if (callback == nullptr) {
+        INTELL_VOICE_LOG_ERROR("service death recipient is null");
+        return -1;
+    }
+
+    bool ret = g_sProxy->AsObject()->AddDeathRecipient(callback);
+    if (!ret) {
+        INTELL_VOICE_LOG_ERROR("failed to add death recipient");
+        return -1;
+    }
+    return 0;
 }
+
+int32_t IntellVoiceManager::DeregisterServiceDeathRecipient(sptr<OHOS::IRemoteObject::DeathRecipient> callback)
+{
+    INTELL_VOICE_LOG_INFO("enter");
+    if (g_sProxy == nullptr) {
+        INTELL_VOICE_LOG_ERROR("IntellVoiceService Proxy is null");
+        return -1;
+    }
+
+    if (callback == nullptr) {
+        INTELL_VOICE_LOG_ERROR("service death recipient is null");
+        return -1;
+    }
+
+    bool ret = g_sProxy->AsObject()->RemoveDeathRecipient(callback);
+    if (!ret) {
+        INTELL_VOICE_LOG_ERROR("failed to remove death recipient");
+        return -1;
+    }
+    return 0;
 }
+}  // namespace IntellVoice
+}  // namespace OHOS

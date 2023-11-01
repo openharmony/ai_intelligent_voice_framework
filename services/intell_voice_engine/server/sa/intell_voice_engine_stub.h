@@ -15,20 +15,30 @@
 
 #ifndef INTELL_VOICE_ENGINE_STUB_H
 #define INTELL_VOICE_ENGINE_STUB_H
+#include <map>
+#include <functional>
 #include "iremote_stub.h"
 #include "i_intell_voice_engine.h"
 namespace OHOS {
 namespace IntellVoiceEngine {
 class IntellVoiceEngineStub : public IRemoteStub<IIntellVoiceEngine> {
 public:
+    IntellVoiceEngineStub();
+    ~IntellVoiceEngineStub();
     int32_t OnRemoteRequest(uint32_t code,
         MessageParcel &data, MessageParcel &reply, MessageOption &option) override;
+
 private:
-    sptr<IRemoteObject> object;
-    IntellVoiceEngineInfo info;
-    std::string str;
-    int size = 0;
-    const uint8_t *buffer = nullptr;
+    int32_t SetCallbackInner(MessageParcel &data, MessageParcel &reply);
+    int32_t AttachInner(MessageParcel &data, MessageParcel &reply);
+    int32_t DetachInner(MessageParcel &data, MessageParcel &reply);
+    int32_t SetParameterInner(MessageParcel &data, MessageParcel &reply);
+    int32_t GetParameterInner(MessageParcel &data, MessageParcel &reply);
+    int32_t StartInner(MessageParcel &data, MessageParcel &reply);
+    int32_t StopInner(MessageParcel &data, MessageParcel &reply);
+    int32_t WriteAudioInner(MessageParcel &data, MessageParcel &reply);
+
+    std::map<uint32_t, std::function<int32_t(MessageParcel &data, MessageParcel &reply)>> processFuncMap_;
 };
 }
 }

@@ -16,8 +16,9 @@
 
 #include "string_util.h"
 
-using namespace OHOS::IntellVoiceUtils;
 #define LOG_TAG "HistoryInfoMgr"
+
+using namespace OHOS::IntellVoiceUtils;
 
 namespace OHOS {
 namespace IntellVoiceEngine {
@@ -25,6 +26,7 @@ constexpr int decimalNotation = 10;
 const std::string KEY_ENROLL_ENGINE_UID = "EnrollEngineUid";
 const std::string KEY_WAKEUP_ENGINE_BUNDLE_NAME = "WakeupEngineBundleName";
 const std::string KEY_WAKEUP_ENGINE_ABILITY_NAME = "WakeupEngineAbilityName";
+const std::string KEY_WAKEUP_VESRION = "WakeupVersion";
 
 HistoryInfoMgr::HistoryInfoMgr()
     : ServiceDbHelper("intell_voice_service_manager", "local_intell_voice_history_mgr_storeId")
@@ -60,6 +62,16 @@ void HistoryInfoMgr::SetWakeupEngineAbilityName(const std::string &abilityName)
 std::string HistoryInfoMgr::GetWakeupEngineAbilityName()
 {
     return GetValue(KEY_WAKEUP_ENGINE_ABILITY_NAME);
+}
+
+void HistoryInfoMgr::SetWakeupVesion(const std::string &wakeupVesion)
+{
+    SetValue(KEY_WAKEUP_VESRION, wakeupVesion);
+}
+
+std::string HistoryInfoMgr::GetWakeupVesion()
+{
+    return GetValue(KEY_WAKEUP_VESRION);
 }
 }
 }

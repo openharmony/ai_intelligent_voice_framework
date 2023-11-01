@@ -22,14 +22,14 @@ using namespace std;
 
 namespace OHOS {
 namespace IntellVoiceUtils {
-BaseThread::BaseThread() : tid(0), isRuning(false)
+BaseThread::BaseThread() : tid_(0), isRuning_(false)
 {
 }
 
 BaseThread::~BaseThread()
 {
-    if (isRuning) {
-        pthread_detach(tid);
+    if (isRuning_) {
+        pthread_detach(tid_);
     }
 }
 
@@ -45,35 +45,35 @@ void BaseThread::Start()
 {
     std::lock_guard<std::mutex> lock(mutex_);
 
-    int ret = pthread_create(&tid, nullptr, BaseThread::RunInThread, this);
+    int ret = pthread_create(&tid_, nullptr, BaseThread::RunInThread, this);
     if (ret != 0) {
         INTELL_VOICE_LOG_ERROR("create thread failed");
         return;
     }
 
-    isRuning = true;
+    isRuning_ = true;
 }
 
 void BaseThread::Join()
 {
     std::lock_guard<std::mutex> lock(mutex_);
 
-    if (!isRuning) {
+    if (!isRuning_) {
         return;
     }
 
-    pthread_join(tid, nullptr);
-    isRuning = false;
+    pthread_join(tid_, nullptr);
+    isRuning_ = false;
 }
 
 bool BaseThread::IsRuning() const
 {
-    return isRuning;
+    return isRuning_;
 }
 
 pid_t BaseThread::Gettid() const
 {
-    return tid;
+    return tid_;
 }
 }
 }

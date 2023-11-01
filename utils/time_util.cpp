@@ -33,21 +33,21 @@ AutoTimer::AutoTimer()
     Reset();
 }
 
-AutoTimer::AutoTimer(const std::string &logInfo) : mLogInfo(logInfo)
+AutoTimer::AutoTimer(const std::string &logInfo) : logInfo_(logInfo)
 {
     Reset();
 }
 
 AutoTimer::~AutoTimer()
 {
-    if (mIsReset) {
+    if (isReset_) {
         PrintTimeElapse();
     }
 }
 
 void AutoTimer::PrintTimeElapse()
 {
-    PrintTimeElapse(mLogInfo);
+    PrintTimeElapse(logInfo_);
 }
 
 void AutoTimer::PrintTimeElapse(const std::string &logInfo)
@@ -58,7 +58,7 @@ void AutoTimer::PrintTimeElapse(const std::string &logInfo)
         if (!logInfo.empty()) {
             log += logInfo + " ";
         } else {
-            log += mLogInfo + " ";
+            log += logInfo_ + " ";
         }
 
         std::ostringstream ss;
@@ -71,23 +71,23 @@ void AutoTimer::PrintTimeElapse(const std::string &logInfo)
 
     INTELL_VOICE_LOG_DEBUG("%{public}s", log.c_str());
 
-    mIsReset = false;
+    isReset_ = false;
 }
 
 void AutoTimer::Reset()
 {
-    TimeUtil::GetTime(mTimeStart);
-    mIsReset = true;
+    TimeUtil::GetTime(timeStart_);
+    isReset_ = true;
 }
 
 long AutoTimer::TimeElapseUs()
 {
-    mIsReset = false;
+    isReset_ = false;
 
     timespec timeEnd;
     TimeUtil::GetTime(timeEnd);
 
-    return TimeUtil::TimeElapseUs(mTimeStart, timeEnd);
+    return TimeUtil::TimeElapseUs(timeStart_, timeEnd);
 }
 
 uint32_t AutoTimer::TimeElapseMs()

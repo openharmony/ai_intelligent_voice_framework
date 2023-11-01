@@ -15,6 +15,7 @@
 
 #include "intell_voice_service_proxy.h"
 #include "intell_voice_log.h"
+#include "intell_voice_death_recipient_stub.h"
 
 #define LOG_TAG "IntellVoiceServiceProxy"
 namespace OHOS {
@@ -27,6 +28,11 @@ int32_t IntellVoiceServiceProxy::CreateIntellVoiceEngine(IntellVoiceEngineType t
 
     data.WriteInterfaceToken(IIntellVoiceService::GetDescriptor());
     data.WriteInt32(static_cast<int>(type));
+
+    if (type == INTELL_VOICE_ENROLL) {
+        auto stub = new IntellVoiceDeathRecipientStub();
+        data.WriteRemoteObject(stub);
+    }
 
     Remote()->SendRequest(HDI_INTELL_VOICE_SERVICE_CREATE_ENGINE, data, reply, option);
 
@@ -52,5 +58,5 @@ int32_t IntellVoiceServiceProxy::ReleaseIntellVoiceEngine(IntellVoiceEngineType 
     Remote()->SendRequest(HDI_INTELL_VOICE_SERVICE_RELEASE_ENGINE, data, reply, option);
     return reply.ReadInt32();
 }
-}
-}
+}  // namespace IntellVoiceEngine
+}  // namespace OHOS

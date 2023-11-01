@@ -14,11 +14,16 @@
  */
 #include "engine_base.h"
 
+#include <ashmem.h>
 #include "intell_voice_log.h"
 #include "string_util.h"
+#include "scope_guard.h"
+#include "trigger_manager.h"
+#include "intell_voice_service_manager.h"
 
 using namespace OHOS::IntellVoiceUtils;
 using namespace OHOS::HDI::IntelligentVoice::Engine::V1_0;
+using namespace OHOS::IntellVoiceTrigger;
 #define LOG_TAG "EngineBase"
 
 namespace OHOS {
@@ -85,6 +90,85 @@ void EngineBase::SplitStringToKVPair(const std::string &inputStr, std::map<std::
             INTELL_VOICE_LOG_INFO("key:%{public}s, value:%{public}s", key.c_str(), value.c_str());
         }
     }
+}
+
+void EngineBase::WriteBufferFromAshmem(uint8_t *&buffer, uint32_t size, sptr<OHOS::Ashmem> ashmem)
+{
+    if (!ashmem->MapReadOnlyAshmem()) {
+        INTELL_VOICE_LOG_ERROR("map ashmem failed");
+        return;
+    }
+
+    const uint8_t *tmpBuffer = static_cast<const uint8_t *>(ashmem->ReadFromAshmem(size, 0));
+    if (tmpBuffer == nullptr) {
+        INTELL_VOICE_LOG_ERROR("read from ashmem failed");
+        return;
+    }
+
+    buffer = new (std::nothrow) uint8_t[size];
+    if (buffer == nullptr) {
+        INTELL_VOICE_LOG_ERROR("allocate buffer failed");
+        return;
+    }
+
+    if (memcpy_s(buffer, size, tmpBuffer, size) != 0) {
+        INTELL_VOICE_LOG_ERROR("memcpy_s failed");
+        return;
+    }
+}
+
+void EngineBase::ProcDspModel()
+{
+    INTELL_VOICE_LOG_INFO("enter");
+    uint8_t *buffer = nullptr;
+    uint32_t size = 0;
+    sptr<Ashmem> ashmem;
+    adapter_->Read(DSP_MODLE, ashmem);
+    if (ashmem == nullptr) {
+        INTELL_VOICE_LOG_ERROR("ashmem is nullptr");
+        return;
+    }
+
+    ON_SCOPE_EXIT_WITH_NAME(ashmemExit)
+    {
+        INTELL_VOICE_LOG_DEBUG("close ashmem");
+        ashmem->UnmapAshmem();
+        ashmem->CloseAshmem();
+    };
+
+    size = static_cast<uint32_t>(ashmem->GetAshmemSize());
+    if (size == 0) {
+        INTELL_VOICE_LOG_ERROR("size is zero");
+        return;
+    }
+
+    WriteBufferFromAshmem(buffer, size, ashmem);
+    if (buffer == nullptr) {
+        INTELL_VOICE_LOG_ERROR("buffer is nullptr");
+        return;
+    }
+
+    ON_SCOPE_EXIT_WITH_NAME(bufferExit)
+    {
+        INTELL_VOICE_LOG_DEBUG("now delete buffer");
+        delete[] buffer;
+        buffer = nullptr;
+    };
+
+    std::shared_ptr<GenericTriggerModel> model = std::make_shared<GenericTriggerModel>(
+        (IntellVoiceServiceManager::GetEnrollModelUuid()), 1);
+    if (model == nullptr) {
+        INTELL_VOICE_LOG_ERROR("model is null");
+        return;
+    }
+
+    model->SetData(buffer, size);
+    auto triggerMgr = TriggerManager::GetInstance();
+    if (triggerMgr == nullptr) {
+        INTELL_VOICE_LOG_ERROR("trigger manager is nullptr");
+        return;
+    }
+    triggerMgr->UpdateModel(model);
 }
 }
 }

@@ -25,7 +25,10 @@
 #include "i_intell_voice_trigger_connector_callback.h"
 #include "trigger_connector_common_type.h"
 
+#ifdef SUPPORT_TELEPHONY_SERVICE
 #include "telephony_observer.h"
+#endif
+
 #include "audio_system_manager.h"
 
 namespace OHOS {
@@ -44,9 +47,12 @@ public:
     ModelState GetState() const;
     void SetModelHandle(int32_t handle);
     int32_t GetModelHandle() const;
+    void SetRequested(bool requested);
+    bool GetRequested() const;
 
     bool SameModel(std::shared_ptr<GenericTriggerModel> model);
     void Clear();
+    void ClearCallback();
 
 public:
     int32_t uuid_ = -1;
@@ -56,10 +62,10 @@ private:
     std::shared_ptr<GenericTriggerModel> model_ = nullptr;
     std::shared_ptr<IIntellVoiceTriggerRecognitionCallback> callback_ = nullptr;
     int32_t modelHandle_ = 0;
+    bool requested_ = false;
 };
 
-class TriggerHelper : public IIntellVoiceTriggerConnectorCallback,
-    public std::enable_shared_from_this<TriggerHelper> {
+class TriggerHelper : public IIntellVoiceTriggerConnectorCallback, public std::enable_shared_from_this<TriggerHelper> {
 public:
     ~TriggerHelper();
 
@@ -70,15 +76,18 @@ public:
     int32_t StopGenericRecognition(int32_t uuid, std::shared_ptr<IIntellVoiceTriggerRecognitionCallback> callback);
     void UnloadGenericTriggerModel(int32_t uuid);
     std::shared_ptr<TriggerModelData> GetTriggerModelData(int32_t uuid);
-    void AttachTelephonyObserver();
-    void DettachTelephonyObserver();
     void AttachAudioCaptureListener();
     void DettachAudioCaptureListener();
+#ifdef SUPPORT_TELEPHONY_SERVICE
+    void AttachTelephonyObserver();
+    void DettachTelephonyObserver();
+#endif
 
 private:
     TriggerHelper();
-    void GetModule();
+    bool GetModule();
     int32_t InitRecognition(std::shared_ptr<TriggerModelData> modelData, bool unload);
+    int32_t PrepareForRecognition(std::shared_ptr<TriggerModelData> modelData);
     int32_t StartRecognition(std::shared_ptr<TriggerModelData> modelData);
     int32_t StopRecognition(std::shared_ptr<TriggerModelData> modelData);
     int32_t LoadModel(std::shared_ptr<TriggerModelData> modelData);
@@ -87,13 +96,15 @@ private:
     bool IsConflictSceneActive();
 
     void OnRecognition(int32_t modelHandle, const IntellVoiceRecognitionEvent &event) override;
+    void OnHdiServiceStart() override;
+    void OnCapturerStateChange(bool isActive);
 
-private:
+#ifdef SUPPORT_TELEPHONY_SERVICE
+    void OnCallStateUpdated(int32_t callState);
     class TelephonyStateObserver : public Telephony::TelephonyObserver {
     public:
         explicit TelephonyStateObserver(const std::shared_ptr<TriggerHelper> helper) : helper_(helper)
-        {
-        }
+        {}
         ~TelephonyStateObserver()
         {
             helper_ = nullptr;
@@ -102,15 +113,17 @@ private:
 
     public:
         std::shared_ptr<TriggerHelper> helper_ = nullptr;
-        bool callActive_ = false;
     };
 
 private:
+    sptr<TelephonyStateObserver> telephonyObserver0_ = nullptr;
+    sptr<TelephonyStateObserver> telephonyObserver1_ = nullptr;
+#endif
+
     class AudioCapturerSourceChangeCallback : public OHOS::AudioStandard::AudioCapturerSourceCallback {
     public:
         explicit AudioCapturerSourceChangeCallback(const std::shared_ptr<TriggerHelper> helper) : helper_(helper)
-        {
-        }
+        {}
         ~AudioCapturerSourceChangeCallback()
         {
             helper_ = nullptr;
@@ -118,19 +131,23 @@ private:
         void OnCapturerState(bool isActive) override;
 
     public:
-        bool audioCaptureActive_ = false;
         std::shared_ptr<TriggerHelper> helper_ = nullptr;
     };
 
 private:
     std::mutex mutex_;
+    std::mutex telephonyMutex_;
 
     std::map<int32_t, std::shared_ptr<TriggerModelData>> modelDataMap_;
     std::shared_ptr<IIntellVoiceTriggerConnectorModule> module_ = nullptr;
     std::vector<TriggerConnectorModuleDesc> moduleDesc_;
-    sptr<TelephonyStateObserver> telephonyObserver0_ = nullptr;
-    sptr<TelephonyStateObserver> telephonyObserver1_ = nullptr;
     std::shared_ptr<AudioCapturerSourceChangeCallback> audioCapturerSourceChangeCallback_ = nullptr;
+
+    bool callActive_ = false;
+    bool audioCaptureActive_ = false;
+#ifdef SUPPORT_TELEPHONY_SERVICE
+    bool isTelephonyDetached_ = false;
+#endif
 };
 }  // namespace IntellVoiceTrigger
 }  // namespace OHOS

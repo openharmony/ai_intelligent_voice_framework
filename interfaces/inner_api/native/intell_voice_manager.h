@@ -17,8 +17,10 @@
 #define INTELL_VOICE_MANAGER_H
 
 #include <condition_variable>
-
+#include "iremote_object.h"
+#include "iremote_broker.h"
 #include "i_intell_voice_engine.h"
+#include "i_intell_voice_service.h"
 
 namespace OHOS {
 namespace IntellVoice {
@@ -35,12 +37,16 @@ public:
     void LoadSystemAbilityFail();
     bool Init();
 
+    int32_t RegisterServiceDeathRecipient(sptr<OHOS::IRemoteObject::DeathRecipient> callback);
+    int32_t DeregisterServiceDeathRecipient(sptr<OHOS::IRemoteObject::DeathRecipient> callback);
+
 private:
     IntellVoiceManager();
     ~IntellVoiceManager();
 
-    static std::mutex mutex_;
-    static std::condition_variable proxyConVar_;
+    std::mutex mutex_;
+    std::condition_variable proxyConVar_;
+    sptr<IIntellVoiceService> g_sProxy;
 };
 }  // namespace IntellVoice
 }  // namespace OHOS

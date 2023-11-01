@@ -31,10 +31,7 @@ FileSource::FileSource(uint32_t minBufferSize, uint32_t bufferCnt, const std::st
 
 FileSource::~FileSource()
 {
-    if (isReading_.load()) {
-        isReading_.store(false);
-        readThread_.join();
-    }
+    Stop();
 }
 
 bool FileSource::Start()
