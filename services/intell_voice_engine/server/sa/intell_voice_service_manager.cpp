@@ -331,6 +331,15 @@ void IntellVoiceServiceManager::OnServiceStop()
             detector_->UnloadTriggerModel();
         }
     }
+    {
+        std::lock_guard<std::mutex> lock(engineMutex_);
+        sptr<EngineBase> wakeupEngine = GetEngine(INTELL_VOICE_WAKEUP, engines_);
+        if (wakeupEngine == nullptr) {
+            INTELL_VOICE_LOG_INFO("wakeup engine is not existed");
+            return;
+        }
+        wakeupEngine->Detach();
+    }
 }
 
 bool IntellVoiceServiceManager::QuerySwitchStatus()
@@ -362,7 +371,7 @@ void IntellVoiceServiceManager::UnloadIntellVoiceService()
 
 void IntellVoiceServiceManager::OnSwitchChange()
 {
-    if (!QuerySwitchStatus() && !IsUpdateEngineOn()) {
+    if (!QuerySwitchStatus() && !IsEngineExist(INTELL_VOICE_UPDATE) && !IsEngineExist(INTELL_VOICE_ENROLL)) {
         INTELL_VOICE_LOG_INFO("switch off");
         UnloadIntellVoiceService();
     } else {
@@ -428,7 +437,7 @@ void IntellVoiceServiceManager::OnProxyDiedCallback()
         std::lock_guard<std::mutex> lock(engineMutex_);
         sptr<EngineBase> engineEnroll = GetEngine(INTELL_VOICE_ENROLL, engines_);
         if (engineEnroll == nullptr) {
-            INTELL_VOICE_LOG_INFO("update engine not existed");
+            INTELL_VOICE_LOG_INFO("enroll engine is not existed");
             return;
         }
 
@@ -437,12 +446,12 @@ void IntellVoiceServiceManager::OnProxyDiedCallback()
     ReleaseEngine(INTELL_VOICE_ENROLL);
 }
 
-bool IntellVoiceServiceManager::IsUpdateEngineOn()
+bool IntellVoiceServiceManager::IsEngineExist(IntellVoiceEngineType type)
 {
     std::lock_guard<std::mutex> lock(engineMutex_);
-    sptr<EngineBase> engineUpdate = GetEngine(INTELL_VOICE_UPDATE, engines_);
-    if (engineUpdate != nullptr) {
-        INTELL_VOICE_LOG_ERROR("already updateing");
+    sptr<EngineBase> engine = GetEngine(type, engines_);
+    if (engine != nullptr) {
+        INTELL_VOICE_LOG_INFO("engine exist, type:%{public}d", type);
         return true;
     }
 
@@ -451,7 +460,7 @@ bool IntellVoiceServiceManager::IsUpdateEngineOn()
 
 bool IntellVoiceServiceManager::CreateUpdateEngine()
 {
-    if (IsUpdateEngineOn()) {
+    if (IsEngineExist(INTELL_VOICE_UPDATE)) {
         INTELL_VOICE_LOG_INFO("no need to update");
         return true;
     }
