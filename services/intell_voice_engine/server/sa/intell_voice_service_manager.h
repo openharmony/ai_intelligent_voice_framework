@@ -88,7 +88,7 @@ private:
     void OnProxyDiedCallback();
 
     void UpdateCompleteInner(int result);
-    bool IsUpdateEngineOn();
+    bool IsEngineExist(IntellVoiceEngineType type);
 private:
     static const int32_t g_enrollModelUuid;
     static std::unique_ptr<IntellVoiceServiceManager> g_intellVoiceServiceMgr;
