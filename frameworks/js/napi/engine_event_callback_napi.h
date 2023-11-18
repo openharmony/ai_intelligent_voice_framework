@@ -16,12 +16,13 @@
 #ifndef ENGINE_EVENT_CALLBACK_H
 #define ENGINE_EVENT_CALLBACK_H
 
+#include <set>
+#include <mutex>
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
 
 #include "intell_voice_napi_util.h"
 #include "i_intell_voice_engine_callback.h"
-#include "uv_callback_napi.h"
 
 namespace OHOS {
 namespace IntellVoiceNapi {
@@ -34,13 +35,30 @@ struct EngineCallBackInfo {
     std::string context;
 };
 
-class EngineEventCallbackNapi : public IIntellVoiceEngineEventCallback, UvCallbackNapi {
+class EngineEventCallbackNapi : public IIntellVoiceEngineEventCallback {
 public:
-    EngineEventCallbackNapi(napi_env env, napi_value callback) : UvCallbackNapi(env, callback) {};
+    explicit EngineEventCallbackNapi(napi_env env);
     ~EngineEventCallbackNapi() override {};
 
+    void SaveCallbackReference(napi_value callback);
+    void RemoveCallbackReference(napi_value callback);
+    void RemoveAllCallbackReference();
+    uint32_t GetCbReferenceSetSize();
     void OnEvent(const IntellVoiceEngineCallBackEvent &event) override;
-    napi_value GetCallBackInfoNapiValue(const EngineCallBackInfo &callbackInfo);
+
+private:
+    struct EngineEventCallbackData {
+        EngineCallBackInfo cbInfo;
+        std::shared_ptr<IntellVoiceRef> callback;
+    };
+
+    static napi_value GetCallBackInfoNapiValue(napi_env env, const EngineCallBackInfo &callbackInfo);
+    void OnJsCallbackEngineEvent(const EngineCallBackInfo &cbInfo, std::shared_ptr<IntellVoiceRef> cbRef);
+
+    std::mutex mutex_;
+    napi_env env_ = nullptr;
+    uv_loop_s *loop_ = nullptr;
+    std::set<std::shared_ptr<IntellVoiceRef>> callbackRefSet_;
 };
 }  // namespace IntellVoiceNapi
 }  // namespace OHOS

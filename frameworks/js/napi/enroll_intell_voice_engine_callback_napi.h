@@ -71,6 +71,7 @@ private:
 private:
     std::mutex mutex_;
     napi_env env_ = nullptr;
+    uv_loop_s *loop_ = nullptr;
 
     std::map<EnrollAsyncWorkType, std::queue<EnrollAsyncContext *>> contextMap_;
 };

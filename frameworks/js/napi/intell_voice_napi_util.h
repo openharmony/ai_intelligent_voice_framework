@@ -21,21 +21,12 @@
 
 namespace OHOS {
 namespace IntellVoiceNapi {
-#define CHECK_RETURN_VOID(condition, message) \
-    do {                                      \
-        if (!(condition)) {                   \
-            INTELL_VOICE_LOG_ERROR(message);        \
-            return;                           \
-        }                                     \
-    } while (0)
-
 class IntellVoiceRef {
 public:
-    IntellVoiceRef(napi_env env, napi_value value);
+    IntellVoiceRef(napi_env env, napi_ref ref);
     ~IntellVoiceRef();
     napi_value GetRefValue();
 
-private:
     napi_env env_ = nullptr;
     napi_ref ref_ = nullptr;
 };

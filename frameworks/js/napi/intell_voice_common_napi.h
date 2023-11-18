@@ -65,6 +65,7 @@ public:
     ~IntellVoiceCommonNapi() = default;
     static std::string GetMessageByCode(const int32_t code);
     static void ThrowError(napi_env env, int32_t code);
+    static bool IsSameCallback(napi_env env, napi_value callback, napi_ref callbackRef);
 };
 }
 }

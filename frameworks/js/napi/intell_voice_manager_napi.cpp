@@ -224,9 +224,9 @@ napi_value IntellVoiceManagerNapi::On(napi_env env, napi_callback_info info)
     napi_value undefinedResult = nullptr;
     napi_get_undefined(env, &undefinedResult);
 
-    const size_t expectArgCount = 2;
-    size_t argCount = 2;
-    napi_value args[expectArgCount] = {0};
+    const size_t expectArgCount = ARGC_TWO;
+    size_t argCount = ARGC_TWO;
+    napi_value args[expectArgCount] = { nullptr, nullptr };
     napi_value jsThis = nullptr;
 
     napi_status status = napi_get_cb_info(env, info, &argCount, args, &jsThis, nullptr);
@@ -242,7 +242,7 @@ napi_value IntellVoiceManagerNapi::On(napi_env env, napi_callback_info info)
     }
 
     string callbackName = "";
-    status = GetValue(env, args[0], callbackName);
+    status = GetValue(env, args[ARG_INDEX_0], callbackName);
     if (status != napi_ok) {
         INTELL_VOICE_LOG_ERROR("failed to get callbackName");
         return undefinedResult;
@@ -254,7 +254,7 @@ napi_value IntellVoiceManagerNapi::On(napi_env env, napi_callback_info info)
     }
 
     napi_valuetype handler = napi_undefined;
-    if (napi_typeof(env, args[1], &handler) != napi_ok || handler != napi_function) {
+    if (napi_typeof(env, args[ARG_INDEX_1], &handler) != napi_ok || handler != napi_function) {
         INTELL_VOICE_LOG_ERROR("callback handler type mismatch");
         return undefinedResult;
     }
@@ -275,7 +275,13 @@ napi_value IntellVoiceManagerNapi::RegisterCallback(napi_env env, napi_value jsT
         return result;
     }
 
-    managerNapi->serviceChangeCb_ = new (std::nothrow) ServiceChangeCallbackNapi(env, args[1]);
+    managerNapi->serviceChangeCb_ = new (std::nothrow) ServiceChangeCallbackNapi(env);
+    if (managerNapi->serviceChangeCb_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("allocate service change callback failed");
+        return result;
+    }
+
+    managerNapi->serviceChangeCb_->SaveCallbackReference(args[ARG_INDEX_1]);
     IntellVoiceManager::GetInstance()->RegisterServiceDeathRecipient(managerNapi->serviceChangeCb_);
     return result;
 }
@@ -286,8 +292,8 @@ napi_value IntellVoiceManagerNapi::Off(napi_env env, napi_callback_info info)
     napi_value undefinedResult = nullptr;
     napi_get_undefined(env, &undefinedResult);
 
-    const size_t expectArgCount = 2;
-    size_t argCount = 2;
+    const size_t expectArgCount = ARGC_TWO;
+    size_t argCount = ARGC_TWO;
     napi_value args[expectArgCount] = {0};
     napi_value jsThis = nullptr;
 
@@ -298,13 +304,13 @@ napi_value IntellVoiceManagerNapi::Off(napi_env env, napi_callback_info info)
     }
 
     napi_valuetype eventType = napi_undefined;
-    if (napi_typeof(env, args[0], &eventType) != napi_ok || eventType != napi_string) {
+    if (napi_typeof(env, args[ARG_INDEX_0], &eventType) != napi_ok || eventType != napi_string) {
         INTELL_VOICE_LOG_ERROR("callback event name type mismatch");
         return undefinedResult;
     }
 
     string callbackName = "";
-    status = GetValue(env, args[0], callbackName);
+    status = GetValue(env, args[ARG_INDEX_0], callbackName);
     if (status != napi_ok) {
         INTELL_VOICE_LOG_ERROR("failed to get callbackName");
         return undefinedResult;
@@ -334,6 +340,7 @@ napi_value IntellVoiceManagerNapi::DeregisterCallback(napi_env env, napi_value j
         INTELL_VOICE_LOG_ERROR("service change callback is nullptr");
         return result;
     }
+
     IntellVoiceManager::GetInstance()->DeregisterServiceDeathRecipient(managerNapi->serviceChangeCb_);
     managerNapi->serviceChangeCb_ = nullptr;
     return result;

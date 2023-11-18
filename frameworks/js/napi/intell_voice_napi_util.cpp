@@ -24,11 +24,9 @@ namespace OHOS {
 namespace IntellVoiceNapi {
 static const int32_t MAX_STRING_BUFFSIZE = 1024;
 
-IntellVoiceRef::IntellVoiceRef(napi_env env, napi_value value)
+IntellVoiceRef::IntellVoiceRef(napi_env env, napi_ref ref) : env_(env), ref_(ref)
 {
     INTELL_VOICE_LOG_INFO("enter");
-    env_ = env;
-    napi_create_reference(env_, value, 1, &ref_);
 }
 
 IntellVoiceRef::~IntellVoiceRef()
