@@ -16,20 +16,33 @@
 #ifndef SERVICE_CHANGE_CALLBACK_H
 #define SERVICE_CHANGE_CALLBACK_H
 
+#include <mutex>
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
 #include "iremote_object.h"
 #include "intell_voice_napi_util.h"
-#include "uv_callback_napi.h"
 
 namespace OHOS {
 namespace IntellVoiceNapi {
-class ServiceChangeCallbackNapi : public IRemoteObject::DeathRecipient, UvCallbackNapi {
+class ServiceChangeCallbackNapi : public IRemoteObject::DeathRecipient {
 public:
-    ServiceChangeCallbackNapi(napi_env env, napi_value callback) : UvCallbackNapi(env, callback) {};
+    explicit ServiceChangeCallbackNapi(napi_env env);
     ~ServiceChangeCallbackNapi() override {};
-
+    void SaveCallbackReference(napi_value callback);
     void OnRemoteDied(const wptr <IRemoteObject> &remote) override;
+
+private:
+    struct ServiceChangeCallbackData {
+        int32_t status;
+        std::shared_ptr<IntellVoiceRef> callback;
+    };
+
+    void OnJsCallbackServiceChange(int32_t status);
+
+    std::mutex mutex_;
+    napi_env env_ = nullptr;
+    uv_loop_s *loop_ = nullptr;
+    std::shared_ptr<IntellVoiceRef> callbackRef_ = nullptr;
 };
 }  // namespace IntellVoiceNapi
 }  // namespace OHOS

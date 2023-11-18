@@ -51,5 +51,20 @@ void IntellVoiceCommonNapi::ThrowError(napi_env env, int32_t code)
     std::string messageValue = GetMessageByCode(code);
     napi_throw_error(env, (std::to_string(code)).c_str(), messageValue.c_str());
 }
+
+bool IntellVoiceCommonNapi::IsSameCallback(napi_env env, napi_value callback, napi_ref callbackRef)
+{
+    bool isEqual = false;
+    napi_value copyValue = nullptr;
+
+    napi_get_reference_value(env, callbackRef, &copyValue);
+    napi_status status = napi_strict_equals(env, copyValue, callback, &isEqual);
+    if (status != napi_ok) {
+        INTELL_VOICE_LOG_ERROR("get napi_strict_equals failed, status:%{public}d", status);
+        return false;
+    }
+
+    return isEqual;
+}
 }
 }

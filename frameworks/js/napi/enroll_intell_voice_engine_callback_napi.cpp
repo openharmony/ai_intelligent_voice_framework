@@ -36,6 +36,9 @@ void EnrollCallbackInfo::GetCallBackInfoNapiValue(const napi_env &env, napi_valu
 
 EnrollIntellVoiceEngineCallbackNapi::EnrollIntellVoiceEngineCallbackNapi(const napi_env env) : env_(env)
 {
+    if (env_ != nullptr) {
+        napi_get_uv_event_loop(env_, &loop_);
+    }
     contextMap_.clear();
 }
 
@@ -132,14 +135,12 @@ void EnrollIntellVoiceEngineCallbackNapi::UvWorkCallBack(uv_work_t *work, int st
 void EnrollIntellVoiceEngineCallbackNapi::OnJsCallBack(EnrollAsyncContext *context)
 {
     INTELL_VOICE_LOG_INFO("enter");
-    uv_loop_s *loop = nullptr;
-    napi_get_uv_event_loop(env_, &loop);
-    if (loop != nullptr) {
+    if (loop_ != nullptr) {
         uv_work_t *work = new (std::nothrow) uv_work_t;
         if (work != nullptr) {
             work->data = reinterpret_cast<void *>(context);
             int ret = uv_queue_work(
-                loop, work, [](uv_work_t *work) {}, UvWorkCallBack);
+                loop_, work, [](uv_work_t *work) {}, UvWorkCallBack);
             if (ret != 0) {
                 INTELL_VOICE_LOG_INFO("Failed to execute libuv work queue");
                 delete context;

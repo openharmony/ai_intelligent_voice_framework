@@ -47,7 +47,8 @@ private:
     static napi_value Off(napi_env env, napi_callback_info info);
 
     static napi_value RegisterCallback(napi_env env, napi_value jsThis, napi_value *args);
-    static napi_value UnregisterCallback(napi_env env, napi_value jsThis, const std::string &callbackName);
+    static napi_value UnregisterCallback(napi_env env, napi_value jsThis, const std::string &callbackName,
+        napi_value callback);
 
 private:
     napi_env env_ = nullptr;

@@ -414,7 +414,7 @@ napi_value WakeupIntellVoiceEngineNapi::On(napi_env env, napi_callback_info info
     napi_get_undefined(env, &undefinedResult);
 
     size_t argCount = ARGC_TWO;
-    napi_value args[ARGC_TWO] = {0};
+    napi_value args[ARGC_TWO] = { nullptr, nullptr };
     napi_value jsThis = nullptr;
 
     napi_status status = napi_get_cb_info(env, info, &argCount, args, &jsThis, nullptr);
@@ -436,6 +436,11 @@ napi_value WakeupIntellVoiceEngineNapi::On(napi_env env, napi_callback_info info
         return undefinedResult;
     }
     INTELL_VOICE_LOG_INFO("callbackName: %{public}s", callbackName.c_str());
+
+    if (callbackName != INTELL_VOICE_EVENT_CALLBACK_NAME) {
+        INTELL_VOICE_LOG_ERROR("no such supported event");
+        return undefinedResult;
+    }
 
     napi_valuetype handler = napi_undefined;
     if (napi_typeof(env, args[ARG_INDEX_1], &handler) != napi_ok || handler != napi_function) {
@@ -461,10 +466,16 @@ napi_value WakeupIntellVoiceEngineNapi::RegisterCallback(napi_env env, napi_valu
 
     if (engineNapi->engine_ == nullptr) {
         INTELL_VOICE_LOG_ERROR("engine is null");
+        IntellVoiceCommonNapi::ThrowError(env, NAPI_INTELLIGENT_VOICE_PERMISSION_DENIED);
         return result;
     }
 
-    engineNapi->callbackNapi_ = make_shared<EngineEventCallbackNapi>(env, args[ARG_INDEX_1]);
+    engineNapi->callbackNapi_ = std::make_shared<EngineEventCallbackNapi>(env);
+    if (engineNapi->callbackNapi_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("allocate callback napi failed");
+        return result;
+    }
+    engineNapi->callbackNapi_->SaveCallbackReference(args[ARG_INDEX_1]);
     engineNapi->engine_->SetCallback(engineNapi->callbackNapi_);
     INTELL_VOICE_LOG_INFO("Set callback finish");
     return result;
@@ -477,34 +488,46 @@ napi_value WakeupIntellVoiceEngineNapi::Off(napi_env env, napi_callback_info inf
     napi_value undefinedResult = nullptr;
     napi_get_undefined(env, &undefinedResult);
 
-    size_t argCount = ARGC_ONE;
-    napi_value args[ARGC_ONE] = { nullptr };
+    const size_t minArgCount = ARGC_ONE;
+    size_t argCount = ARGC_TWO;
+    napi_value args[ARGC_TWO] = { nullptr, nullptr };
     napi_value jsThis = nullptr;
 
     napi_status status = napi_get_cb_info(env, info, &argCount, args, &jsThis, nullptr);
-    if (status != napi_ok || argCount != ARGC_ONE) {
+    if (status != napi_ok || argCount < minArgCount) {
         INTELL_VOICE_LOG_ERROR("failed to get parameters");
         return undefinedResult;
     }
 
     napi_valuetype eventType = napi_undefined;
-    if (napi_typeof(env, args[0], &eventType) != napi_ok || eventType != napi_string) {
+    if (napi_typeof(env, args[ARG_INDEX_0], &eventType) != napi_ok || eventType != napi_string) {
         INTELL_VOICE_LOG_ERROR("callback event name type mismatch");
         return undefinedResult;
     }
 
     string callbackName = "";
-    status = GetValue(env, args[0], callbackName);
+    status = GetValue(env, args[ARG_INDEX_0], callbackName);
     if (status != napi_ok) {
         INTELL_VOICE_LOG_ERROR("failed to get callbackName");
         return undefinedResult;
     }
     INTELL_VOICE_LOG_INFO("callbackName: %{public}s", callbackName.c_str());
 
-    return UnregisterCallback(env, jsThis, callbackName);
+    if (argCount > minArgCount) {
+        napi_valuetype secondArgType = napi_undefined;
+        if (napi_typeof(env, args[ARG_INDEX_1], &secondArgType) != napi_ok || secondArgType != napi_function) {
+            INTELL_VOICE_LOG_ERROR("failed to get callback function instance");
+            return undefinedResult;
+        }
+    } else {
+        args[ARG_INDEX_1] = nullptr;
+    }
+
+    return UnregisterCallback(env, jsThis, callbackName, args[ARG_INDEX_1]);
 }
 
-napi_value WakeupIntellVoiceEngineNapi::UnregisterCallback(napi_env env, napi_value jsThis, const string &callbackName)
+napi_value WakeupIntellVoiceEngineNapi::UnregisterCallback(napi_env env, napi_value jsThis,
+    const std::string &callbackName, napi_value callback)
 {
     INTELL_VOICE_LOG_INFO("enter");
     napi_value result = nullptr;
@@ -521,8 +544,21 @@ napi_value WakeupIntellVoiceEngineNapi::UnregisterCallback(napi_env env, napi_va
         INTELL_VOICE_LOG_ERROR("No such off callback supported");
         return result;
     }
-    engineNapi->callbackNapi_ = nullptr;
 
+    if (engineNapi->callbackNapi_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("callback napi is nullptr");
+        return result;
+    }
+
+    if (callback != nullptr) {
+        engineNapi->callbackNapi_->RemoveCallbackReference(callback);
+        if (engineNapi->callbackNapi_->GetCbReferenceSetSize() == 0) {
+            engineNapi->callbackNapi_ = nullptr;
+        }
+    } else {
+        engineNapi->callbackNapi_->RemoveAllCallbackReference();
+        engineNapi->callbackNapi_ = nullptr;
+    }
     return result;
 }
 }  // namespace IntellVoiceNapi
