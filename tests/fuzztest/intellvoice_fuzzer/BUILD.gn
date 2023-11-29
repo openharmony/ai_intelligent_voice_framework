@@ -14,7 +14,7 @@
 import("//build/config/features.gni")
 import("//build/test.gni")
 
-module_output_path = "ai_intell_voice_framework/audio_intell_voice"
+module_output_path = "intelligent_voice_framework/intelligent_voice_framework"
 
 ohos_fuzztest("IntellvoiceFuzzTest") {
   module_out_path = module_output_path

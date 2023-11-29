@@ -620,7 +620,6 @@ void EnrollIntellVoiceEngineNapi::CompleteCallback(napi_env env, napi_status sta
     if (asyncContext->processWork(asyncContext) != 0) {
         INTELL_VOICE_LOG_ERROR("process work failed");
         cb->ClearAsyncWork(true, "the request was aborted because intelligent voice processWork error");
-        NapiAsync::CommonCallbackRoutine(env, asyncContext, result);
     }
 }
 }  // namespace IntellVoiceNapi
