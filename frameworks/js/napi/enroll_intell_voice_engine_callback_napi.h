@@ -65,6 +65,7 @@ public:
     void ClearAsyncWork(bool error, const std::string &msg);
 
 private:
+    int32_t ConvertEventId(EnrollAsyncWorkType type);
     void OnJsCallBack(EnrollAsyncContext *context);
     static void UvWorkCallBack(uv_work_t *work, int status);
 

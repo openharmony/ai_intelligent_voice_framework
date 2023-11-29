@@ -15,10 +15,13 @@
 
 #include "enroll_intell_voice_engine_callback_napi.h"
 #include "intell_voice_log.h"
+#include "intell_voice_common_napi.h"
+
+#define LOG_TAG "EnrollEngineCallbackNapi"
 
 using namespace std;
 using namespace OHOS::IntellVoiceEngine;
-#define LOG_TAG "EnrollIntellVoiceEngineCallbackNapi"
+using namespace OHOS::HDI::IntelligentVoice::Engine::V1_0;
 
 namespace OHOS {
 namespace IntellVoiceNapi {
@@ -59,18 +62,57 @@ void EnrollIntellVoiceEngineCallbackNapi::QueueAsyncWork(EnrollAsyncContext *con
     }
 }
 
+int32_t EnrollIntellVoiceEngineCallbackNapi::ConvertEventId(EnrollAsyncWorkType type)
+{
+    int32_t eventId = HDI::IntelligentVoice::Engine::V1_0::INTELL_VOICE_ENGINE_MSG_NONE;
+    switch (type) {
+        case ASYNC_WORK_INIT:
+            eventId = HDI::IntelligentVoice::Engine::V1_0::INTELL_VOICE_ENGINE_MSG_INIT_DONE;
+            break;
+        case ASYNC_WORK_START:
+            eventId = HDI::IntelligentVoice::Engine::V1_0::INTELL_VOICE_ENGINE_MSG_ENROLL_COMPLETE;
+            break;
+        case ASYNC_WORK_COMMIT:
+            eventId = HDI::IntelligentVoice::Engine::V1_0::INTELL_VOICE_ENGINE_MSG_COMMIT_ENROLL_COMPLETE;
+            break;
+        default:
+            break;
+    }
+
+    return eventId;
+}
+
 void EnrollIntellVoiceEngineCallbackNapi::ClearAsyncWork(bool error, const std::string &msg)
 {
     INTELL_VOICE_LOG_INFO("%{public}s", msg.c_str());
     std::lock_guard<std::mutex> lock(mutex_);
     for (auto it = contextMap_.begin(); it != contextMap_.end(); it++) {
         auto &contextQue = it->second;
+        int32_t eventId = ConvertEventId(it->first);
         while (!contextQue.empty()) {
             EnrollAsyncContext *context = contextQue.front();
             contextQue.pop();
             if (error) {
                 INTELL_VOICE_LOG_WARN("error occured");
             }
+            if (context == nullptr) {
+                continue;
+            }
+
+            context->callbackInfo.eventId = eventId;
+            if (eventId == static_cast<int32_t>(INTELL_VOICE_ENGINE_MSG_INIT_DONE)) {
+                context->result_ = NAPI_INTELLIGENT_VOICE_INIT_FAILED;
+            } else if (eventId == static_cast<int32_t>(INTELL_VOICE_ENGINE_MSG_ENROLL_COMPLETE)) {
+                context->result_ = NAPI_INTELLIGENT_VOICE_SUCCESS;
+                context->callbackInfo.result = UNKNOWN_ERROR;
+                context->callbackInfo.context = "";
+            } else if (eventId == static_cast<int32_t>(INTELL_VOICE_ENGINE_MSG_COMMIT_ENROLL_COMPLETE)) {
+                context->result_ = NAPI_INTELLIGENT_VOICE_COMMIT_ENROLL_FAILED;
+            } else {
+                INTELL_VOICE_LOG_WARN("invalid type:%{public}d", it->first);
+                continue;
+            }
+
             OnJsCallBack(context);
         }
     }
@@ -110,6 +152,13 @@ void EnrollIntellVoiceEngineCallbackNapi::OnEvent(const IntellVoiceEngineCallBac
     contextMap_.at(asyncType).pop();
 
     context->callbackInfo = {event.msgId, event.result, event.info};
+    if (event.result != 0) {
+        if (event.msgId == INTELL_VOICE_ENGINE_MSG_INIT_DONE) {
+            context->result_ = NAPI_INTELLIGENT_VOICE_INIT_FAILED;
+        } else if (event.msgId == INTELL_VOICE_ENGINE_MSG_COMMIT_ENROLL_COMPLETE) {
+            context->result_ = NAPI_INTELLIGENT_VOICE_COMMIT_ENROLL_FAILED;
+        }
+    }
     OnJsCallBack(context);
 }
 
@@ -134,7 +183,7 @@ void EnrollIntellVoiceEngineCallbackNapi::UvWorkCallBack(uv_work_t *work, int st
 
 void EnrollIntellVoiceEngineCallbackNapi::OnJsCallBack(EnrollAsyncContext *context)
 {
-    INTELL_VOICE_LOG_INFO("enter");
+    INTELL_VOICE_LOG_INFO("enter, event id:%{public}d", context->callbackInfo.eventId);
     if (loop_ != nullptr) {
         uv_work_t *work = new (std::nothrow) uv_work_t;
         if (work != nullptr) {
