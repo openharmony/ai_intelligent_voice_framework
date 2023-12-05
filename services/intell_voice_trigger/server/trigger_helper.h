@@ -25,10 +25,7 @@
 #include "i_intell_voice_trigger_connector_callback.h"
 #include "trigger_connector_common_type.h"
 
-#ifdef SUPPORT_TELEPHONY_SERVICE
 #include "telephony_observer.h"
-#endif
-
 #include "audio_system_manager.h"
 
 namespace OHOS {
@@ -78,10 +75,8 @@ public:
     std::shared_ptr<TriggerModelData> GetTriggerModelData(int32_t uuid);
     void AttachAudioCaptureListener();
     void DettachAudioCaptureListener();
-#ifdef SUPPORT_TELEPHONY_SERVICE
     void AttachTelephonyObserver();
     void DettachTelephonyObserver();
-#endif
 
 private:
     TriggerHelper();
@@ -98,8 +93,6 @@ private:
     void OnRecognition(int32_t modelHandle, const IntellVoiceRecognitionEvent &event) override;
     void OnHdiServiceStart() override;
     void OnCapturerStateChange(bool isActive);
-
-#ifdef SUPPORT_TELEPHONY_SERVICE
     void OnCallStateUpdated(int32_t callState);
     class TelephonyStateObserver : public Telephony::TelephonyObserver {
     public:
@@ -118,7 +111,6 @@ private:
 private:
     sptr<TelephonyStateObserver> telephonyObserver0_ = nullptr;
     sptr<TelephonyStateObserver> telephonyObserver1_ = nullptr;
-#endif
 
     class AudioCapturerSourceChangeCallback : public OHOS::AudioStandard::AudioCapturerSourceCallback {
     public:
@@ -145,9 +137,7 @@ private:
 
     bool callActive_ = false;
     bool audioCaptureActive_ = false;
-#ifdef SUPPORT_TELEPHONY_SERVICE
     bool isTelephonyDetached_ = false;
-#endif
 };
 }  // namespace IntellVoiceTrigger
 }  // namespace OHOS

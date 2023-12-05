@@ -59,12 +59,6 @@ bool IntellVoiceManager::Init()
         return false;
     }
 
-    auto object = samgr->CheckSystemAbility(INTELL_VOICE_SERVICE_ID);
-    if (object != nullptr) {
-        g_sProxy = iface_cast<IIntellVoiceService>(object);
-        return true;
-    }
-
     sptr<IntellVoiceLoadCallback> loadCallback = new (std::nothrow)
         IntellVoiceLoadCallback(std::bind(&IntellVoiceManager::LoadSystemAbilitySuccess, this, std::placeholders::_1),
             std::bind(&IntellVoiceManager::LoadSystemAbilityFail, this));

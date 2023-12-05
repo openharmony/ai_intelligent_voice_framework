@@ -16,29 +16,22 @@
 #include "intell_voice_log.h"
 
 #include "trigger_connector_mgr.h"
-
-#ifdef SUPPORT_TELEPHONY_SERVICE
 #include "telephony_observer_client.h"
 #include "state_registry_errors.h"
 #include "telephony_types.h"
 #include "call_manager_inner_type.h"
-#endif
 
 #define LOG_TAG "TriggerHelper"
 
 using namespace OHOS::HDI::IntelligentVoice::Trigger::V1_0;
 using namespace OHOS::AudioStandard;
-#ifdef SUPPORT_TELEPHONY_SERVICE
 using namespace OHOS::Telephony;
-#endif
+using namespace OHOS::AudioStandard;
 using namespace std;
 
 namespace OHOS {
 namespace IntellVoiceTrigger {
-using namespace OHOS::AudioStandard;
-#ifdef SUPPORT_TELEPHONY_SERVICE
 static constexpr int32_t SIM_SLOT_ID_1 = DEFAULT_SIM_SLOT_ID + 1;
-#endif
 
 TriggerModelData::TriggerModelData(int32_t uuid)
 {
@@ -443,7 +436,6 @@ void TriggerHelper::OnUpdateAllRecognitionState()
     }
 }
 
-#ifdef SUPPORT_TELEPHONY_SERVICE
 void TriggerHelper::AttachTelephonyObserver()
 {
     INTELL_VOICE_LOG_INFO("enter");
@@ -528,7 +520,6 @@ void TriggerHelper::TelephonyStateObserver::OnCallStateUpdated(
 
     helper_->OnCallStateUpdated(callState);
 }
-#endif
 
 void TriggerHelper::AttachAudioCaptureListener()
 {

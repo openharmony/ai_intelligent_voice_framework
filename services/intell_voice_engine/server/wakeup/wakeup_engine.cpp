@@ -56,12 +56,7 @@ WakeupEngine::WakeupEngine()
 
 WakeupEngine::~WakeupEngine()
 {
-    StopAudioSource();
-    auto mgr = IIntellVoiceEngineManager::Get();
-    if (mgr != nullptr) {
-        mgr->ReleaseAdapter(desc_);
-    }
-    adapter_ = nullptr;
+    INTELL_VOICE_LOG_INFO("enter");
     callback_ = nullptr;
     wakeupSourceStopCallback_ = nullptr;
 }
@@ -189,12 +184,16 @@ int32_t WakeupEngine::Attach(const IntellVoiceEngineInfo &info)
 
 int32_t WakeupEngine::Detach(void)
 {
+    StopAudioSource();
+
     std::lock_guard<std::mutex> lock(mutex_);
     if (adapter_ == nullptr) {
-        INTELL_VOICE_LOG_ERROR("adapter is nullptr");
-        return -1;
+        INTELL_VOICE_LOG_WARN("already detach");
+        return 0;
     }
-    return adapter_->Detach();
+    int32_t ret = adapter_->Detach();
+    ReleaseAdapterInner();
+    return ret;
 }
 
 int32_t WakeupEngine::Start(bool isLast)

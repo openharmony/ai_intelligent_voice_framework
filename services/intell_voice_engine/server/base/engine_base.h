@@ -43,10 +43,11 @@ public:
 protected:
     EngineBase();
     void SplitStringToKVPair(const std::string &inputStr, std::map<std::string, std::string> &kvpairs);
+    void ProcDspModel();
+    void ReleaseAdapterInner();
     std::mutex mutex_;
     sptr<OHOS::HDI::IntelligentVoice::Engine::V1_0::IIntellVoiceEngineAdapter> adapter_ = nullptr;
     OHOS::HDI::IntelligentVoice::Engine::V1_0::IntellVoiceEngineAdapterDescriptor desc_;
-    void ProcDspModel();
 
 private:
     void WriteBufferFromAshmem(uint8_t *&buffer, uint32_t size, sptr<OHOS::Ashmem> ashmem);

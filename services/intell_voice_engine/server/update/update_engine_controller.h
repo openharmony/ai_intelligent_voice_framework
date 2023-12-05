@@ -20,28 +20,51 @@
 #include "engine_base.h"
 #include "v1_0/iintell_voice_engine_callback.h"
 #include "intell_voice_generic_factory.h"
+#include "timer_mgr.h"
+#include "update_state.h"
 
 namespace OHOS {
 namespace IntellVoiceEngine {
-class UpdateEngineController {
+
+class UpdateEngineController : private ITimerObserver, private TimerMgr {
 public:
     virtual ~UpdateEngineController();
     UpdateEngineController();
 
     bool IsVersionUpdate();
     void SaveWakeupVesion();
+    void GetCurWakeupVesion(std::string &versionNumber);
     virtual bool CreateUpdateEngine()
     {
         return false;
     }
-    virtual void OnUpdateComplete(int result) {};
+    virtual void ReleaseUpdateEngine() {};
+    virtual void UpdateCompleteHandler(UpdateState result, bool islast) {};
+    void OnUpdateComplete(UpdateState result);
+    bool CreateUpdateEngineUntilTime(int delaySecond = 0);
 
-public:
-    void SetUpdateState(bool result);
-    bool GetUpdateState();
-    void GetCurWakeupVesion(std::string &versionNumber);
+    static bool GetUpdateState()
+    {
+        return isUpdating_.load();
+    }
+private:
+    virtual void OnTimerEvent(TimerEvent& info);
+    void OnUpdateRetry();
+    void StartUpdateTimer();
+    void StopUpdateTimer();
+    bool IsNeedRetryUpdate();
+    static void SetUpdateState(bool state)
+    {
+        isUpdating_.store(state);
+    }
+    void clearRetryState(void);
 private:
     static std::atomic<bool> isUpdating_;
+    int timerId_ = INVALID_ID;
+    int retryTimes = 0;
+    int delaySecond_;
+    std::mutex updateEngineMutex_;
+    UpdateState updateResult_ = UPDATE_STATE_DEFAULT;
 };
 }
 }

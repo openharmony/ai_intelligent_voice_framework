@@ -52,12 +52,6 @@ EnrollEngine::EnrollEngine()
 EnrollEngine::~EnrollEngine()
 {
     INTELL_VOICE_LOG_INFO("enter");
-    StopAudioSource();
-    auto mgr = IIntellVoiceEngineManager::Get();
-    if (mgr != nullptr) {
-        mgr->ReleaseAdapter(desc_);
-    }
-    adapter_ = nullptr;
     callback_ = nullptr;
 }
 
@@ -149,10 +143,12 @@ int32_t EnrollEngine::Attach(const IntellVoiceEngineInfo &info)
 int32_t EnrollEngine::Detach(void)
 {
     INTELL_VOICE_LOG_INFO("enter");
+    StopAudioSource();
+
     std::lock_guard<std::mutex> lock(mutex_);
     if (adapter_ == nullptr) {
-        INTELL_VOICE_LOG_ERROR("adapter is nullptr");
-        return -1;
+        INTELL_VOICE_LOG_WARN("already detach");
+        return 0;
     }
 
     if (enrollResult_ == 0) {
@@ -165,7 +161,9 @@ int32_t EnrollEngine::Detach(void)
         }
     }
 
-    return adapter_->Detach();
+    int32_t ret = adapter_->Detach();
+    ReleaseAdapterInner();
+    return ret;
 }
 
 int32_t EnrollEngine::Start(bool isLast)
@@ -286,6 +284,7 @@ void EnrollEngine::StopAudioSource()
     std::lock_guard<std::mutex> lock(mutex_);
     INTELL_VOICE_LOG_INFO("enter");
     if (audioSource_ != nullptr) {
+        INTELL_VOICE_LOG_INFO("stop audio sopurce");
         audioSource_->Stop();
         audioSource_ = nullptr;
     }

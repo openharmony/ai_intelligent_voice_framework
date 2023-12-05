@@ -23,7 +23,7 @@ using namespace OHOS::HDI::IntelligentVoice::Engine::V1_0;
 
 namespace OHOS {
 namespace IntellVoiceEngine {
-UpdateAdapterListener::UpdateAdapterListener(OnEnrollEventCb enrollEventCb) : enrollEventCb_(enrollEventCb)
+UpdateAdapterListener::UpdateAdapterListener(OnUpdateEventCb updateEventCb) : updateEventCb_(updateEventCb)
 {
     INTELL_VOICE_LOG_INFO("constructor");
 }
@@ -37,7 +37,7 @@ int UpdateAdapterListener::OnIntellVoiceHdiEvent(const IntellVoiceEngineCallBack
 {
     INTELL_VOICE_LOG_INFO("OnIntellVoiceHdiEvent update msgId %{public}d result %{public}d", event.msgId, event.result);
 
-    enrollEventCb_(event.msgId, event.result);
+    updateEventCb_(event.msgId, event.result);
 
     return 0;
 }

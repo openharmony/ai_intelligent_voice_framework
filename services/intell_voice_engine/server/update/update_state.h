@@ -12,29 +12,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef UPDATE_ADAPTER_LISTENER_H
-#define UPDATE_ADAPTER_LISTENER_H
-
-#include <functional>
-#include "intell_voice_adapter_listener.h"
-#include "i_intell_voice_engine_callback.h"
-#include "update_engine.h"
+#ifndef UPDATE_STATE_H
+#define UPDATE_STATE_H
 
 namespace OHOS {
 namespace IntellVoiceEngine {
-using OnUpdateEventCb = std::function<void(int32_t, int32_t)>;
 
-class UpdateAdapterListener : public HDI::IntelligentVoice::Engine::V1_0::IIntellVoiceEngineCallback {
-public:
-    explicit UpdateAdapterListener(OnUpdateEventCb updateEventCb);
-    ~UpdateAdapterListener();
-
-    int OnIntellVoiceHdiEvent(
-        const OHOS::HDI::IntelligentVoice::Engine::V1_0::IntellVoiceEngineCallBackEvent& event) override;
-
-private:
-    OnUpdateEventCb updateEventCb_;
+enum UpdateState {
+    UPDATE_STATE_DEFAULT = -1,
+    UPDATE_STATE_COMPLETE_SUCCESS,
+    UPDATE_STATE_COMPLETE_FAIL,
+    UPDATE_STATE_BUTT,
 };
+
+#define UPDATE_DELAY_TIME_SECONDS  30
 }
 }
 #endif

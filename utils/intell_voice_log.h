@@ -33,4 +33,28 @@
 #define INTELL_VOICE_LOG_FATAL(fmt, ...) \
     HILOG_FATAL(LOG_CORE, "[%{public}s:%{public}d]: " fmt, __func__, __LINE__, ##__VA_ARGS__)
 
+#define CHECK_CONDITION_RETURN_VOID(condition, message) \
+    do {                                           \
+        if (condition) {       \
+            INTELL_VOICE_LOG_ERROR(message);       \
+            return;                                \
+        }                                          \
+    } while (0)
+
+#define CHECK_CONDITION_RETURN_FALSE(condition, message) \
+    do {                                           \
+        if (condition) {       \
+            INTELL_VOICE_LOG_ERROR(message);       \
+            return false;                                \
+        }                                          \
+    } while (0)
+
+#define CHECK_CONDITION_RETURN_RET(condition, result, message) \
+    do {                                           \
+        if (condition) {       \
+            INTELL_VOICE_LOG_ERROR(message);       \
+            return result;                                \
+        }                                          \
+    } while (0)
+
 #endif

@@ -15,6 +15,8 @@
 #include "engine_base.h"
 
 #include <ashmem.h>
+
+#include "v1_0/iintell_voice_engine_manager.h"
 #include "intell_voice_log.h"
 #include "string_util.h"
 #include "scope_guard.h"
@@ -169,6 +171,15 @@ void EngineBase::ProcDspModel()
         return;
     }
     triggerMgr->UpdateModel(model);
+}
+
+void EngineBase::ReleaseAdapterInner()
+{
+    auto mgr = IIntellVoiceEngineManager::Get();
+    if (mgr != nullptr) {
+        mgr->ReleaseAdapter(desc_);
+    }
+    adapter_ = nullptr;
 }
 }
 }

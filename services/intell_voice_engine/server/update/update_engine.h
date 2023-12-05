@@ -21,6 +21,7 @@
 #include "audio_info.h"
 #include "audio_source.h"
 #include "intell_voice_generic_factory.h"
+#include "update_state.h"
 
 namespace OHOS {
 namespace IntellVoiceEngine {
@@ -37,11 +38,12 @@ public:
 
 private:
     UpdateEngine();
-    void OnEnrollEvent(int32_t msgId, int32_t result);
+    void OnUpdateEvent(int32_t msgId, int32_t result);
+    void OnCommitEnrollComplete(int32_t result);
 
 private:
     std::string name_ = "update engine instance";
-    int32_t enrollResult_ = -1;
+    UpdateState updateResult_ = UPDATE_STATE_DEFAULT;
     sptr<OHOS::HDI::IntelligentVoice::Engine::V1_0::IIntellVoiceEngineCallback> callback_ = nullptr;
     friend class IntellVoiceUtils::SptrFactory<UpdateEngine>;
 };

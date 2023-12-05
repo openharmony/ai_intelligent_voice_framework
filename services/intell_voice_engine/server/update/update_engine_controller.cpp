@@ -41,25 +41,18 @@ const std::string INTELL_VOICE_DEFAULT_RES_PATH = "/sys_prod/variant/region_comm
 const std::string INTELL_VOICE_CONDICT_PATH_DSP = "/dsp/condict/";
 static constexpr uint32_t WAKEUP_VERSION_SPLIT_NUM = 2;
 static constexpr uint32_t WAKEUP_VERSION_NUMBERS = 3;
+static constexpr int32_t MS_PER_S = 1000;
+static constexpr int32_t SILENCE_UPDATE_RETRY_TIMES = 5;
 
 std::atomic<bool> UpdateEngineController::isUpdating_ = false;
 
 UpdateEngineController::UpdateEngineController()
 {
+    TimerMgr::Start(nullptr);
 }
 
 UpdateEngineController::~UpdateEngineController()
 {
-}
-
-void UpdateEngineController::SetUpdateState(bool result)
-{
-    isUpdating_.store(result);
-}
-
-bool UpdateEngineController::GetUpdateState()
-{
-    return isUpdating_.load();
 }
 
 void UpdateEngineController::GetCurWakeupVesion(std::string &versionNumber)
@@ -145,6 +138,138 @@ bool UpdateEngineController::IsVersionUpdate()
     }
 
     return false;
+}
+
+void UpdateEngineController::OnTimerEvent(TimerEvent &info)
+{
+    INTELL_VOICE_LOG_INFO("TimerEvent %d", timerId_);
+    OnUpdateRetry();
+}
+
+void UpdateEngineController::OnUpdateRetry()
+{
+    std::lock_guard<std::mutex> lock(updateEngineMutex_);
+
+    if (IsVersionUpdate()) {
+        if (CreateUpdateEngine()) {
+            INTELL_VOICE_LOG_INFO("retry update, times %{public}d", retryTimes);
+            timerId_ = INVALID_ID;
+            return;
+        }
+        updateResult_ = UPDATE_STATE_COMPLETE_FAIL;
+    } else {
+        updateResult_ = UPDATE_STATE_COMPLETE_SUCCESS;
+    }
+
+    INTELL_VOICE_LOG_INFO("retry err, times %{public}d, result %{public}d", retryTimes, updateResult_);
+    ReleaseUpdateEngine();
+    UpdateCompleteHandler(updateResult_, true);
+    clearRetryState();
+}
+
+bool UpdateEngineController::CreateUpdateEngineUntilTime(int delaySecond)
+{
+    std::lock_guard<std::mutex> lock(updateEngineMutex_);
+
+    if (GetUpdateState()) {
+        INTELL_VOICE_LOG_INFO("update exit");
+        return true;
+    }
+
+    if (!IsVersionUpdate()) {
+        INTELL_VOICE_LOG_INFO("version not update");
+        return false;
+    }
+
+    delaySecond_ = delaySecond;
+    if (CreateUpdateEngine()) {
+        INTELL_VOICE_LOG_INFO("create update engine success");
+        SetUpdateState(true);
+        return true;
+    }
+
+    return false;
+}
+
+void UpdateEngineController::StartUpdateTimer()
+{
+    if (timerId_ != INVALID_ID) {
+        INTELL_VOICE_LOG_INFO("timer already start %d", timerId_);
+        return;
+    }
+
+    timerId_ = SetTimer(0, delaySecond_ * MS_PER_S * US_PER_MS, 0, this);
+    if (timerId_ == INVALID_ID) {
+        INTELL_VOICE_LOG_ERROR("timerId %{public}d is invalid", timerId_);
+        return;
+    }
+
+    retryTimes++;
+
+    INTELL_VOICE_LOG_INFO("start update timer");
+}
+
+void UpdateEngineController::StopUpdateTimer()
+{
+    if (timerId_ == INVALID_ID) {
+        INTELL_VOICE_LOG_INFO("timer already stop");
+        return;
+    }
+
+    KillTimer(timerId_);
+    INTELL_VOICE_LOG_INFO("stop update timer");
+}
+
+bool UpdateEngineController::IsNeedRetryUpdate()
+{
+    if (delaySecond_ == 0) {
+        INTELL_VOICE_LOG_INFO("not start timer");
+        return false;
+    }
+
+    if (updateResult_ == UPDATE_STATE_COMPLETE_SUCCESS) {
+        INTELL_VOICE_LOG_INFO("update success");
+        return false;
+    }
+
+    if (retryTimes >= SILENCE_UPDATE_RETRY_TIMES) {
+        INTELL_VOICE_LOG_INFO("retry limit");
+        return false;
+    }
+
+    if (!IsVersionUpdate()) {
+        return false;
+    }
+
+    return true;
+}
+
+void UpdateEngineController::clearRetryState()
+{
+    retryTimes = 0;
+    delaySecond_ = 0;
+    updateResult_ = UPDATE_STATE_DEFAULT;
+    timerId_ = INVALID_ID;
+    SetUpdateState(false);
+}
+
+void UpdateEngineController::OnUpdateComplete(UpdateState result)
+{
+    std::lock_guard<std::mutex> lock(updateEngineMutex_);
+    bool isLast = false;
+
+    updateResult_ = result;
+    StopUpdateTimer();
+
+    if (IsNeedRetryUpdate()) {
+        StartUpdateTimer();
+    } else {
+        clearRetryState();
+        isLast = true;
+    }
+
+    ReleaseUpdateEngine();
+    UpdateCompleteHandler(result, isLast);
 }
 }
 }

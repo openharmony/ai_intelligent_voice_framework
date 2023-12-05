@@ -28,6 +28,7 @@
 #include "intell_voice_service_manager.h"
 #include "common_event_manager.h"
 #include "common_event_support.h"
+#include "update_state.h"
 
 #define LOG_TAG "IntellVoiceService"
 
@@ -50,18 +51,17 @@ IntellVoiceService::IntellVoiceService(int32_t systemAbilityId, bool runOnCreate
     systemAbilityChangeMap_[DISTRIBUTED_KV_DATA_SERVICE_ABILITY_ID] = [this](bool isAdded) {
         this->OnDistributedKvDataServiceChange(isAdded);
     };
-#ifdef SUPPORT_TELEPHONY_SERVICE
     systemAbilityChangeMap_[TELEPHONY_STATE_REGISTRY_SYS_ABILITY_ID] = [this](bool isAdded) {
         this->OnTelephonyStateRegistryServiceChange(isAdded);
     };
-#endif
     systemAbilityChangeMap_[AUDIO_DISTRIBUTED_SERVICE_ID] = [this](bool isAdded) {
         this->OnAudioDistributedServiceChange(isAdded);
     };
 }
 
 IntellVoiceService::~IntellVoiceService()
-{}
+{
+}
 
 int32_t IntellVoiceService::CreateIntellVoiceEngine(IntellVoiceEngineType type, sptr<IIntellVoiceEngine> &inst)
 {
@@ -133,9 +133,7 @@ void IntellVoiceService::OnStop(void)
 
     auto triggerMgr = IntellVoiceTrigger::TriggerManager::GetInstance();
     if (triggerMgr != nullptr) {
-#ifdef SUPPORT_TELEPHONY_SERVICE
         triggerMgr->DettachTelephonyObserver();
-#endif
         triggerMgr->DettachAudioCaptureListener();
     }
 
@@ -251,13 +249,18 @@ void IntellVoiceService::LoadIntellVoiceHost()
         return;
     }
     manager->RegisterHDIDeathRecipient();
+    manager->SetDataOprCallback();
 }
 
 void IntellVoiceService::UnloadIntellVoiceHost()
 {
     auto devmgr = IDeviceManager::Get();
     if (devmgr != nullptr) {
-        INTELL_VOICE_LOG_ERROR("Get devmgr success");
+        INTELL_VOICE_LOG_INFO("Get devmgr success");
+        const auto &manager = IntellVoiceServiceManager::GetInstance();
+        if (manager != nullptr) {
+            manager->DeregisterHDIDeathRecipient();
+        }
         devmgr->UnloadDevice("intell_voice_engine_manager_service");
     } else {
         INTELL_VOICE_LOG_ERROR("Get devmgr failed");
@@ -311,7 +314,7 @@ void IntellVoiceService::OnDistributedKvDataServiceChange(bool isAdded)
 
         if (reasonId_ == static_cast<int32_t>(OHOS::OnDemandReasonId::COMMON_EVENT)) {
             INTELL_VOICE_LOG_INFO("power on start");
-            if (manager->CreateUpdateEngine()) {
+            if (manager->CreateUpdateEngineUntilTime(UPDATE_DELAY_TIME_SECONDS)) {
                 INTELL_VOICE_LOG_INFO("update in");
             } else if (manager->QuerySwitchStatus()) {
                 manager->OnServiceStart();
@@ -320,7 +323,7 @@ void IntellVoiceService::OnDistributedKvDataServiceChange(bool isAdded)
             }
         } else if (reasonId_ == static_cast<int32_t>(OHOS::OnDemandReasonId::INTERFACE_CALL)) {
             INTELL_VOICE_LOG_INFO("interface call start");
-            if (manager->QuerySwitchStatus()) {
+            if (manager->QuerySwitchStatus() && !manager->CreateUpdateEngineUntilTime(UPDATE_DELAY_TIME_SECONDS)) {
                 manager->OnServiceStart();
             }
         } else {
@@ -332,7 +335,6 @@ void IntellVoiceService::OnDistributedKvDataServiceChange(bool isAdded)
     }
 }
 
-#ifdef SUPPORT_TELEPHONY_SERVICE
 void IntellVoiceService::OnTelephonyStateRegistryServiceChange(bool isAdded)
 {
     if (isAdded) {
@@ -345,7 +347,6 @@ void IntellVoiceService::OnTelephonyStateRegistryServiceChange(bool isAdded)
         INTELL_VOICE_LOG_INFO("telephony state registry service is removed");
     }
 }
-#endif
 
 void IntellVoiceService::OnAudioDistributedServiceChange(bool isAdded)
 {
