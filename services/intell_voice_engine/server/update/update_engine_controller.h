@@ -25,8 +25,8 @@
 
 namespace OHOS {
 namespace IntellVoiceEngine {
-
-class UpdateEngineController : private ITimerObserver, private TimerMgr {
+class UpdateEngineController : private OHOS::IntellVoiceUtils::ITimerObserver,
+    private OHOS::IntellVoiceUtils::TimerMgr {
 public:
     virtual ~UpdateEngineController();
     UpdateEngineController();
@@ -47,8 +47,9 @@ public:
     {
         return isUpdating_.load();
     }
+
 private:
-    virtual void OnTimerEvent(TimerEvent& info);
+    void OnTimerEvent(OHOS::IntellVoiceUtils::TimerEvent& info) override;
     void OnUpdateRetry();
     void StartUpdateTimer();
     void StopUpdateTimer();
@@ -57,14 +58,14 @@ private:
     {
         isUpdating_.store(state);
     }
-    void clearRetryState(void);
+    void ClearRetryState(void);
 private:
     static std::atomic<bool> isUpdating_;
-    int timerId_ = INVALID_ID;
+    int timerId_ = OHOS::IntellVoiceUtils::INVALID_ID;
     int retryTimes = 0;
     int delaySecond_;
     std::mutex updateEngineMutex_;
-    UpdateState updateResult_ = UPDATE_STATE_DEFAULT;
+    UpdateState updateResult_ = UpdateState::UPDATE_STATE_DEFAULT;
 };
 }
 }

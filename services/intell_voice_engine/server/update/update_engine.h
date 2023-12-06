@@ -43,7 +43,7 @@ private:
 
 private:
     std::string name_ = "update engine instance";
-    UpdateState updateResult_ = UPDATE_STATE_DEFAULT;
+    UpdateState updateResult_ = UpdateState::UPDATE_STATE_DEFAULT;
     sptr<OHOS::HDI::IntelligentVoice::Engine::V1_0::IIntellVoiceEngineCallback> callback_ = nullptr;
     friend class IntellVoiceUtils::SptrFactory<UpdateEngine>;
 };

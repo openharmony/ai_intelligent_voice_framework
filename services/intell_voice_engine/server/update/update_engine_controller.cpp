@@ -156,15 +156,15 @@ void UpdateEngineController::OnUpdateRetry()
             timerId_ = INVALID_ID;
             return;
         }
-        updateResult_ = UPDATE_STATE_COMPLETE_FAIL;
+        updateResult_ = UpdateState::UPDATE_STATE_COMPLETE_FAIL;
     } else {
-        updateResult_ = UPDATE_STATE_COMPLETE_SUCCESS;
+        updateResult_ = UpdateState::UPDATE_STATE_COMPLETE_SUCCESS;
     }
 
     INTELL_VOICE_LOG_INFO("retry err, times %{public}d, result %{public}d", retryTimes, updateResult_);
     ReleaseUpdateEngine();
     UpdateCompleteHandler(updateResult_, true);
-    clearRetryState();
+    ClearRetryState();
 }
 
 bool UpdateEngineController::CreateUpdateEngineUntilTime(int delaySecond)
@@ -227,7 +227,7 @@ bool UpdateEngineController::IsNeedRetryUpdate()
         return false;
     }
 
-    if (updateResult_ == UPDATE_STATE_COMPLETE_SUCCESS) {
+    if (updateResult_ == UpdateState::UPDATE_STATE_COMPLETE_SUCCESS) {
         INTELL_VOICE_LOG_INFO("update success");
         return false;
     }
@@ -244,11 +244,11 @@ bool UpdateEngineController::IsNeedRetryUpdate()
     return true;
 }
 
-void UpdateEngineController::clearRetryState()
+void UpdateEngineController::ClearRetryState()
 {
     retryTimes = 0;
     delaySecond_ = 0;
-    updateResult_ = UPDATE_STATE_DEFAULT;
+    updateResult_ = UpdateState::UPDATE_STATE_DEFAULT;
     timerId_ = INVALID_ID;
     SetUpdateState(false);
 }
@@ -264,7 +264,7 @@ void UpdateEngineController::OnUpdateComplete(UpdateState result)
     if (IsNeedRetryUpdate()) {
         StartUpdateTimer();
     } else {
-        clearRetryState();
+        ClearRetryState();
         isLast = true;
     }
 

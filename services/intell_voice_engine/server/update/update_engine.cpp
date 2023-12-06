@@ -56,8 +56,9 @@ void UpdateEngine::OnCommitEnrollComplete(int32_t result)
         return;
     }
 
-    updateResult_ = (result == 0 ? UPDATE_STATE_COMPLETE_SUCCESS : UPDATE_STATE_COMPLETE_FAIL);
-    if (updateResult_ == UPDATE_STATE_COMPLETE_SUCCESS) {
+    updateResult_ = (result == 0 ? UpdateState::UPDATE_STATE_COMPLETE_SUCCESS :
+        UpdateState::UPDATE_STATE_COMPLETE_FAIL);
+    if (updateResult_ == UpdateState::UPDATE_STATE_COMPLETE_SUCCESS) {
         ProcDspModel();
         /* save new version number */
         const auto &manager = IntellVoiceServiceManager::GetInstance();
@@ -162,12 +163,12 @@ int32_t UpdateEngine::Detach(void)
     int ret =  adapter_->Detach();
     ReleaseAdapterInner();
 
-    if (updateResult_ == UPDATE_STATE_DEFAULT) {
+    if (updateResult_ == UpdateState::UPDATE_STATE_DEFAULT) {
         INTELL_VOICE_LOG_WARN("detach defore receive commit enroll msg");
         std::thread([]() {
             const auto &manager = IntellVoiceServiceManager::GetInstance();
             if (manager != nullptr) {
-                manager->OnUpdateComplete(UPDATE_STATE_DEFAULT);
+                manager->OnUpdateComplete(UpdateState::UPDATE_STATE_DEFAULT);
             }
         }).detach();
     }

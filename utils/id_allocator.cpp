@@ -20,8 +20,8 @@ using namespace std;
 
 #define LOG_TAG "IdAllocator"
 
-const int INVALID_ID = 0xffff;
-
+namespace OHOS {
+namespace IntellVoiceUtils {
 IdAllocator::IdAllocator(int maxTimerNum)
 {
     for (int i = 0; i < maxTimerNum; i++) {
@@ -56,4 +56,6 @@ void IdAllocator::ClearId()
     for (unsigned int i = 0; i < idFlags.size(); i++) {
         idFlags[i] = false;
     }
+}
+}
 }

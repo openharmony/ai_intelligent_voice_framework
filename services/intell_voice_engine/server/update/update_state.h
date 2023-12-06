@@ -17,15 +17,14 @@
 
 namespace OHOS {
 namespace IntellVoiceEngine {
+#define UPDATE_DELAY_TIME_SECONDS  30
 
-enum UpdateState {
+enum class UpdateState {
     UPDATE_STATE_DEFAULT = -1,
     UPDATE_STATE_COMPLETE_SUCCESS,
     UPDATE_STATE_COMPLETE_FAIL,
     UPDATE_STATE_BUTT,
 };
-
-#define UPDATE_DELAY_TIME_SECONDS  30
 }
 }
 #endif

@@ -142,7 +142,8 @@ sptr<Ashmem> DataOperationCallback::CreateAshmemFromArrayBuffer(
     }
 
     CANCEL_SCOPE_EXIT;
-    INTELL_VOICE_LOG_INFO("create ashmem success, size:%{public}lu", buffer->GetSize() * sizeof(uint8_t));
+    INTELL_VOICE_LOG_INFO("create ashmem success, size:%{public}u",
+        static_cast<uint32_t>(buffer->GetSize() * sizeof(uint8_t)));
     return ashmem;
 }
 }

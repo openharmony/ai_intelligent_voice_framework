@@ -23,9 +23,9 @@
 
 using namespace std;
 
-const int32_t US_PER_MS = 1000;
-
-void LogTime(const string& prefix)
+namespace OHOS {
+namespace IntellVoiceUtils {
+static void LogTime(const string& prefix)
 {
     struct timeval now;
     if (gettimeofday(&now, nullptr) < 0) {
@@ -44,7 +44,7 @@ void LogTime(const string& prefix)
     INTELL_VOICE_LOG_INFO("%s %s.%lld", prefix.c_str(), tmbuf, static_cast<long long>(now.tv_usec));
 }
 
-int64_t NowTimeUs()
+static int64_t NowTimeUs()
 {
     struct timespec t;
     if (clock_gettime(CLOCK_MONOTONIC, &t) < 0) {
@@ -60,7 +60,8 @@ TimerItem::TimerItem(int id, int type, int cookie, int64_t delayUs, ITimerObserv
     tgtUs = NowTimeUs() + delayUs;
 }
 
-TimerMgr::TimerMgr(int maxTimerNum) : IdAllocator(maxTimerNum), status(TIMER_STATUS_INIT), timerObserver(nullptr)
+TimerMgr::TimerMgr(int maxTimerNum) : IdAllocator(maxTimerNum), status_(TimerStatus::TIMER_STATUS_INIT),
+    timerObserver_(nullptr)
 {
 }
 
@@ -71,39 +72,39 @@ TimerMgr::~TimerMgr()
 
 void TimerMgr::Start(ITimerObserver* observer)
 {
-    unique_lock<mutex> lock(mTimeMutex);
+    unique_lock<mutex> lock(timeMutex_);
 
-    if (status == TIMER_STATUS_STARTED) {
+    if (status_ == TimerStatus::TIMER_STATUS_STARTED) {
         return;
     }
 
-    if (status != TIMER_STATUS_INIT) {
+    if (status_ != TimerStatus::TIMER_STATUS_INIT) {
         INTELL_VOICE_LOG_ERROR("status is not init");
         return;
     }
 
-    mWorkThread = thread(&TimerMgr::WorkThread, this);
+    workThread_ = thread(&TimerMgr::WorkThread, this);
 
-    timerObserver = observer;
-    status = TIMER_STATUS_STARTED;
+    timerObserver_ = observer;
+    status_ = TimerStatus::TIMER_STATUS_STARTED;
     LogTime("start timermgr");
 }
 
 void TimerMgr::Stop()
 {
     {
-        lock_guard<mutex> lock(mTimeMutex);
-        if (status != TIMER_STATUS_STARTED) {
+        lock_guard<mutex> lock(timeMutex_);
+        if (status_ != TimerStatus::TIMER_STATUS_STARTED) {
             INTELL_VOICE_LOG_ERROR("status is not started");
             return;
         }
-        status = TIMER_STATUS_TO_QUIT;
+        status_ = TimerStatus::TIMER_STATUS_TO_QUIT;
         LogTime("stop timermgr");
-        mCV.notify_all();
+        cv_.notify_all();
     }
 
-    if (mWorkThread.joinable()) {
-        mWorkThread.join();
+    if (workThread_.joinable()) {
+        workThread_.join();
     }
 
     Clear();
@@ -111,14 +112,14 @@ void TimerMgr::Stop()
 
 int TimerMgr::SetTimer(int type, int64_t delayUs, int cookie, ITimerObserver* currObserver)
 {
-    unique_lock<mutex> lock(mTimeMutex);
+    unique_lock<mutex> lock(timeMutex_);
 
-    if (status != TIMER_STATUS_STARTED) {
+    if (status_ != TimerStatus::TIMER_STATUS_STARTED) {
         INTELL_VOICE_LOG_ERROR("timer mgr not started");
         return INVALID_ID;
     }
 
-    ITimerObserver* observer = currObserver == nullptr ? timerObserver : currObserver;
+    ITimerObserver* observer = currObserver == nullptr ? timerObserver_ : currObserver;
     if (observer == nullptr) {
         INTELL_VOICE_LOG_ERROR("observer is null");
         return INVALID_ID;
@@ -137,16 +138,16 @@ int TimerMgr::SetTimer(int type, int64_t delayUs, int cookie, ITimerObserver* cu
         return INVALID_ID;
     }
 
-    auto it = itemQueue.begin();
-    while (it != itemQueue.end() && (*it)->tgtUs < addItem->tgtUs) {
+    auto it = itemQueue_.begin();
+    while (it != itemQueue_.end() && (*it)->tgtUs < addItem->tgtUs) {
         ++it;
     }
 
-    bool needNotify = (it == itemQueue.begin());
-    itemQueue.insert(it, addItem);
+    bool needNotify = (it == itemQueue_.begin());
+    itemQueue_.insert(it, addItem);
 
     if (needNotify) {
-        mCV.notify_one();
+        cv_.notify_one();
     }
 
     ostringstream oss;
@@ -159,15 +160,15 @@ int TimerMgr::SetTimer(int type, int64_t delayUs, int cookie, ITimerObserver* cu
 int TimerMgr::ResetTimer(int timerId, int type, int64_t delayUs, int cookie, ITimerObserver* currObserver)
 {
     {
-        unique_lock<mutex> lock(mTimeMutex);
-        if (itemQueue.size() == 1) {
-            auto it = itemQueue.begin();
+        unique_lock<mutex> lock(timeMutex_);
+        if (itemQueue_.size() == 1) {
+            auto it = itemQueue_.begin();
             if ((*it)->timerId != timerId) {
                 INTELL_VOICE_LOG_ERROR("id %d can not correspond with timerId %d", (*it)->timerId, timerId);
                 return INVALID_ID;
             }
             (*it)->tgtUs = NowTimeUs() + delayUs;
-            mCV.notify_one();
+            cv_.notify_one();
             return timerId;
         }
     }
@@ -177,15 +178,15 @@ int TimerMgr::ResetTimer(int timerId, int type, int64_t delayUs, int cookie, ITi
 
 void TimerMgr::KillTimer(int& timerId)
 {
-    unique_lock<mutex> lock(mTimeMutex);
+    unique_lock<mutex> lock(timeMutex_);
     INTELL_VOICE_LOG_INFO("kill timer %d", timerId);
-    for (auto it = itemQueue.begin(); it != itemQueue.end(); it++) {
+    for (auto it = itemQueue_.begin(); it != itemQueue_.end(); it++) {
         shared_ptr<TimerItem> curItem = *it;
         if (curItem->timerId == timerId) {
             INTELL_VOICE_LOG_INFO("kill timer id %d type %d path %d", timerId, curItem->type, curItem->cookie);
 
             ReleaseId(curItem->timerId);
-            itemQueue.erase(it);
+            itemQueue_.erase(it);
             timerId = INVALID_ID;
             break;
         }
@@ -194,13 +195,13 @@ void TimerMgr::KillTimer(int& timerId)
 
 void TimerMgr::Clear()
 {
-    lock_guard<mutex> lock(mTimeMutex);
+    lock_guard<mutex> lock(timeMutex_);
 
-    itemQueue.clear();
+    itemQueue_.clear();
     IdAllocator::ClearId();
 
-    status = TIMER_STATUS_INIT;
-    timerObserver = nullptr;
+    status_ = TimerStatus::TIMER_STATUS_INIT;
+    timerObserver_ = nullptr;
 }
 
 void TimerMgr::WorkThread()
@@ -208,25 +209,25 @@ void TimerMgr::WorkThread()
     while (true) {
         TimerItem item;
         {
-            unique_lock<mutex> lock(mTimeMutex);
+            unique_lock<mutex> lock(timeMutex_);
 
-            if (status != TIMER_STATUS_STARTED) {
+            if (status_ != TimerStatus::TIMER_STATUS_STARTED) {
                 break;
             }
 
-            if (itemQueue.empty()) {
-                mCV.wait(lock);
+            if (itemQueue_.empty()) {
+                cv_.wait(lock);
                 continue;
             }
 
-            item = *itemQueue.front();
+            item = *itemQueue_.front();
             int64_t now = NowTimeUs();
             if (now < item.tgtUs) {
-                mCV.wait_for(lock, chrono::microseconds(item.tgtUs - now));
+                cv_.wait_for(lock, chrono::microseconds(item.tgtUs - now));
                 continue;
             }
             ReleaseId(item.timerId);
-            itemQueue.pop_front();
+            itemQueue_.pop_front();
         }
 
         if (item.observer != nullptr) {
@@ -237,4 +238,5 @@ void TimerMgr::WorkThread()
 
     INTELL_VOICE_LOG_INFO("timer thread exit");
 }
-
+}
+}

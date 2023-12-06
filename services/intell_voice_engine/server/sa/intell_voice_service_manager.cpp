@@ -526,8 +526,8 @@ void IntellVoiceServiceManager::UpdateCompleteHandler(UpdateState result, bool i
         return;
     }
 
-    if (result == UPDATE_STATE_COMPLETE_FAIL && isLast) {
-        INTELL_VOICE_LOG_INFO("notify apk");
+    if (result == UpdateState::UPDATE_STATE_COMPLETE_FAIL && isLast) {
+        INTELL_VOICE_LOG_INFO("update failed");
     }
 
     if (QuerySwitchStatus()) {

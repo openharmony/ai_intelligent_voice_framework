@@ -26,8 +26,8 @@ using namespace std;
 
 namespace OHOS {
 namespace IntellVoiceUtils {
-static char ALIAS_NAME[] = "IntelligentVoiceKey";
-static char AAD_VALUE[] = "IntelligentVoiceAAD";
+static char g_aliasName[] = "IntelligentVoiceKey";
+static char g_aadValue[] = "IntelligentVoiceAAD";
 
 static constexpr uint32_t MAX_UPDATE_SIZE = 64 * 1024;
 static constexpr uint32_t MAX_OUTDATA_SIZE = 128 * 1024;
@@ -84,8 +84,8 @@ int32_t HuksAesAdapter::CreateEncryptParamSet(struct HksParamSet **encryptParamS
         }, {
             .tag = HKS_TAG_ASSOCIATED_DATA,
             .blob = {
-                .size = static_cast<uint32_t>(strlen(AAD_VALUE)),
-                .data = reinterpret_cast<uint8_t*>(AAD_VALUE)
+                .size = static_cast<uint32_t>(strlen(g_aadValue)),
+                .data = reinterpret_cast<uint8_t*>(g_aadValue)
             }
         }, {
             .tag = HKS_TAG_NONCE,
@@ -127,8 +127,8 @@ int32_t HuksAesAdapter::CreateDecryptParamSet(struct HksParamSet **decryptParamS
         }, {
             .tag = HKS_TAG_ASSOCIATED_DATA,
             .blob = {
-                .size = static_cast<uint32_t>(strlen(AAD_VALUE)),
-                .data = reinterpret_cast<uint8_t*>(AAD_VALUE)
+                .size = static_cast<uint32_t>(strlen(g_aadValue)),
+                .data = reinterpret_cast<uint8_t*>(g_aadValue)
             }
         }, {
             .tag = HKS_TAG_NONCE,
@@ -157,7 +157,7 @@ int32_t HuksAesAdapter::Encrypt(std::unique_ptr<Uint8ArrayBuffer> &inBuffer,
 {
     CHECK_CONDITION_RETURN_RET(((inBuffer == nullptr) || (inBuffer->GetSize() == 0)), HKS_ERROR_INVALID_ARGUMENT,
         "invalid arguments");
-    struct HksBlob keyAlias = { static_cast<uint32_t>(strlen(ALIAS_NAME)), reinterpret_cast<uint8_t *>(ALIAS_NAME) };
+    struct HksBlob keyAlias = { static_cast<uint32_t>(strlen(g_aliasName)), reinterpret_cast<uint8_t *>(g_aliasName) };
     int32_t ret = GenerateKey(&keyAlias);
     if (ret != HKS_SUCCESS) {
         return ret;
@@ -210,7 +210,7 @@ int32_t HuksAesAdapter::Decrypt(std::unique_ptr<Uint8ArrayBuffer> &inBuffer,
         return HKS_ERROR_INVALID_ARGUMENT;
     }
 
-    struct HksBlob keyAlias = { static_cast<uint32_t>(strlen(ALIAS_NAME)), reinterpret_cast<uint8_t *>(ALIAS_NAME) };
+    struct HksBlob keyAlias = { static_cast<uint32_t>(strlen(g_aliasName)), reinterpret_cast<uint8_t *>(g_aliasName) };
     int32_t ret = GenerateKey(&keyAlias);
     if (ret != HKS_SUCCESS) {
         return ret;

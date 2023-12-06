@@ -17,6 +17,10 @@
 
 #include <vector>
 
+namespace OHOS {
+namespace IntellVoiceUtils {
+constexpr int INVALID_ID = 0xffff;
+
 struct IdAllocator {
     explicit IdAllocator(int maxTimerNum = 100);
     virtual ~IdAllocator(){};
@@ -26,6 +30,6 @@ struct IdAllocator {
 private:
     std::vector<bool> idFlags;
 };
-
-extern const int INVALID_ID;
+}
+}
 #endif

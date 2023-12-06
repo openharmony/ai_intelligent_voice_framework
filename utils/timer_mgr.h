@@ -22,6 +22,9 @@
 #include <condition_variable>
 #include "id_allocator.h"
 
+namespace OHOS {
+namespace IntellVoiceUtils {
+constexpr int32_t US_PER_MS = 1000;
 // struct for set timer
 struct TimerCfg {
     explicit TimerCfg(int type = 0, int64_t delayUs = 0, int cookie = 0)
@@ -49,7 +52,7 @@ struct ITimerObserver {
     virtual void OnTimerEvent(TimerEvent& info) = 0;
 };
 
-enum TimerStatus {
+enum class TimerStatus {
     TIMER_STATUS_INIT,
     TIMER_STATUS_STARTED,
     TIMER_STATUS_TO_QUIT
@@ -90,16 +93,14 @@ private:
     void WorkThread();
 
 private:
-    TimerStatus status;
-    ITimerObserver* timerObserver;
-    std::list<std::shared_ptr<TimerItem>> itemQueue;
+    TimerStatus status_;
+    ITimerObserver* timerObserver_;
+    std::list<std::shared_ptr<TimerItem>> itemQueue_;
 
-    std::mutex mTimeMutex;
-    std::condition_variable mCV;
-    std::thread mWorkThread;
+    std::mutex timeMutex_;
+    std::condition_variable cv_;
+    std::thread workThread_;
 };
-
-void LogTime(const std::string& prefix);
-int64_t NowTimeUs();
-extern const int32_t US_PER_MS;
+}
+}
 #endif
