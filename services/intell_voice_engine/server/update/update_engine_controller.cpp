@@ -48,7 +48,6 @@ std::atomic<bool> UpdateEngineController::isUpdating_ = false;
 
 UpdateEngineController::UpdateEngineController()
 {
-    TimerMgr::Start(nullptr);
 }
 
 UpdateEngineController::~UpdateEngineController()
@@ -165,6 +164,7 @@ void UpdateEngineController::OnUpdateRetry()
     ReleaseUpdateEngine();
     UpdateCompleteHandler(updateResult_, true);
     ClearRetryState();
+    TimerMgr::Stop();
 }
 
 bool UpdateEngineController::CreateUpdateEngineUntilTime(int delaySecond)
@@ -185,6 +185,7 @@ bool UpdateEngineController::CreateUpdateEngineUntilTime(int delaySecond)
     if (CreateUpdateEngine()) {
         INTELL_VOICE_LOG_INFO("create update engine success");
         SetUpdateState(true);
+        TimerMgr::Start(nullptr);
         return true;
     }
 
@@ -266,6 +267,7 @@ void UpdateEngineController::OnUpdateComplete(UpdateState result)
     } else {
         ClearRetryState();
         isLast = true;
+        TimerMgr::Stop();
     }
 
     ReleaseUpdateEngine();

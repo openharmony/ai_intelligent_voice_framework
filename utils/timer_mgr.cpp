@@ -40,8 +40,9 @@ static void LogTime(const string& prefix)
     }
 
     char tmbuf[64] = {0};
-    strftime(tmbuf, sizeof(tmbuf), "%Y-%m-%d %H:%M:%S", nowtm);
-    INTELL_VOICE_LOG_INFO("%s %s.%lld", prefix.c_str(), tmbuf, static_cast<long long>(now.tv_usec));
+    if (strftime(tmbuf, sizeof(tmbuf), "%Y-%m-%d %H:%M:%S", nowtm)) {
+        INTELL_VOICE_LOG_INFO("%s %s.%lld", prefix.c_str(), tmbuf, static_cast<long long>(now.tv_usec));
+    }
 }
 
 static int64_t NowTimeUs()
