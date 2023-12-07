@@ -44,26 +44,42 @@ UpdateEngine::UpdateEngine()
 UpdateEngine::~UpdateEngine()
 {
     INTELL_VOICE_LOG_INFO("enter");
-    auto mgr = IIntellVoiceEngineManager::Get();
-    if (mgr != nullptr) {
-        mgr->ReleaseAdapter(desc_);
-    }
-    adapter_ = nullptr;
     callback_ = nullptr;
 }
 
-void UpdateEngine::OnEnrollEvent(int32_t msgId, int32_t result)
+void UpdateEngine::OnCommitEnrollComplete(int32_t result)
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    INTELL_VOICE_LOG_INFO("commit enroll complete, result %{public}d", result);
+    if (adapter_ == nullptr) {
+        INTELL_VOICE_LOG_INFO("already detach");
+        return;
+    }
+
+    updateResult_ = (result == 0 ? UpdateState::UPDATE_STATE_COMPLETE_SUCCESS :
+        UpdateState::UPDATE_STATE_COMPLETE_FAIL);
+    if (updateResult_ == UpdateState::UPDATE_STATE_COMPLETE_SUCCESS) {
+        ProcDspModel();
+        /* save new version number */
+        const auto &manager = IntellVoiceServiceManager::GetInstance();
+        if (manager != NULL) {
+            manager->SaveWakeupVesion();
+            INTELL_VOICE_LOG_INFO("update save version");
+        }
+    }
+
+    std::thread([=]() {
+        const auto &manager = IntellVoiceServiceManager::GetInstance();
+        if (manager != nullptr) {
+            manager->OnUpdateComplete(updateResult_);
+        }
+    }).detach();
+}
+
+void UpdateEngine::OnUpdateEvent(int32_t msgId, int32_t result)
 {
     if (msgId == INTELL_VOICE_ENGINE_MSG_COMMIT_ENROLL_COMPLETE) {
-        std::lock_guard<std::mutex> lock(mutex_);
-        INTELL_VOICE_LOG_INFO("INTELL_VOICE_ENGINE_MSG_COMMIT_ENROLL_COMPLETE result %{public}d", result);
-        enrollResult_ = result;
-        std::thread([=]() {
-            const auto &manager = IntellVoiceServiceManager::GetInstance();
-            if (manager != nullptr) {
-                manager->OnUpdateComplete(result);
-            }
-        }).detach();
+        std::thread([this, result]() { this->OnCommitEnrollComplete(result); }).detach();
     }
 }
 
@@ -107,7 +123,7 @@ void UpdateEngine::SetCallback(sptr<IRemoteObject> object)
     std::lock_guard<std::mutex> lock(mutex_);
 
     callback_ = sptr<IIntellVoiceEngineCallback>(new (std::nothrow) UpdateAdapterListener(
-        std::bind(&UpdateEngine::OnEnrollEvent, this, std::placeholders::_1, std::placeholders::_2)));
+        std::bind(&UpdateEngine::OnUpdateEvent, this, std::placeholders::_1, std::placeholders::_2)));
     if (callback_ == nullptr) {
         INTELL_VOICE_LOG_ERROR("callback_ is nullptr");
         return;
@@ -140,20 +156,23 @@ int32_t UpdateEngine::Detach(void)
     INTELL_VOICE_LOG_INFO("enter");
     std::lock_guard<std::mutex> lock(mutex_);
     if (adapter_ == nullptr) {
-        INTELL_VOICE_LOG_ERROR("adapter is nullptr");
-        return -1;
+        INTELL_VOICE_LOG_WARN("already detach");
+        return 0;
     }
 
-    if (enrollResult_ == 0) {
-        ProcDspModel();
-        /* save new version number */
-        if (IntellVoiceServiceManager::GetInstance() != NULL) {
-            IntellVoiceServiceManager::GetInstance()->SaveWakeupVesion();
-            INTELL_VOICE_LOG_INFO("update save version");
-        }
-    }
+    int ret =  adapter_->Detach();
+    ReleaseAdapterInner();
 
-    return adapter_->Detach();
+    if (updateResult_ == UpdateState::UPDATE_STATE_DEFAULT) {
+        INTELL_VOICE_LOG_WARN("detach defore receive commit enroll msg");
+        std::thread([]() {
+            const auto &manager = IntellVoiceServiceManager::GetInstance();
+            if (manager != nullptr) {
+                manager->OnUpdateComplete(UpdateState::UPDATE_STATE_DEFAULT);
+            }
+        }).detach();
+    }
+    return ret;
 }
 
 int32_t UpdateEngine::Start(bool isLast)

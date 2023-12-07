@@ -37,7 +37,8 @@
                 "samgr",
                 "state_registry",
                 "core_service",
-                "call_manager"
+                "call_manager",
+                "huks"
             ],
             "third_party": []
         },

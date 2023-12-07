@@ -19,30 +19,6 @@
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
 
-#define CHECK_CONDITION_RETURN_VOID(condition, message) \
-    do {                                           \
-        if (condition) {       \
-            INTELL_VOICE_LOG_ERROR(message);       \
-            return;                                \
-        }                                          \
-    } while (0)
-
-#define CHECK_CONDITION_RETURN_FALSE(condition, message) \
-    do {                                           \
-        if (condition) {       \
-            INTELL_VOICE_LOG_ERROR(message);       \
-            return false;                                \
-        }                                          \
-    } while (0)
-
-#define CHECK_CONDITION_RETURN_RET(condition, result, message) \
-    do {                                           \
-        if (condition) {       \
-            INTELL_VOICE_LOG_ERROR(message);       \
-            return result;                                \
-        }                                          \
-    } while (0)
-
 namespace OHOS {
 namespace IntellVoiceNapi {
 constexpr int ARGC_ONE = 1;

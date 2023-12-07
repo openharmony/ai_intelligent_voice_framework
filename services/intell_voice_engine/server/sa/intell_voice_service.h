@@ -63,9 +63,7 @@ private:
     void UnloadIntellVoiceHost();
     void OnCommonEventServiceChange(bool isAdded);
     void OnDistributedKvDataServiceChange(bool isAdded);
-#ifdef SUPPORT_TELEPHONY_SERVICE
     void OnTelephonyStateRegistryServiceChange(bool isAdded);
-#endif
     void OnAudioDistributedServiceChange(bool isAdded);
 
 private:

@@ -17,12 +17,16 @@ ohos_shared_library("intell_voice_utils") {
   configs = [ "//build/config/compiler:exceptions" ]
 
   sources = [
+    "array_buffer_util.cpp",
     "base_thread.cpp",
+    "huks_aes_adapter.cpp",
+    "id_allocator.cpp",
     "memory_guard.cpp",
     "message_queue.cpp",
     "msg_handle_thread.cpp",
     "string_util.cpp",
     "time_util.cpp",
+    "timer_mgr.cpp",
   ]
 
   defines = []
@@ -35,6 +39,7 @@ ohos_shared_library("intell_voice_utils") {
   external_deps = [
     "c_utils:utils",
     "hilog:libhilog",
+    "huks:libhukssdk",
   ]
 
   subsystem_name = "ai"
