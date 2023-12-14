@@ -46,7 +46,7 @@ bool EngineHostManager::Init()
     uint32_t minorVer = 0;
     engineHostProxy1_0_->GetVersion(majorVer, minorVer);
     INTELL_VOICE_LOG_INFO("major ver is %{public}u, minor ver is %{public}u", majorVer, minorVer);
-    if (CheckHdiVersion(1, 1)(majorVer, minorVer) == VersionCheckType::EQUAL) {
+    if (GetHdiVersionId(majorVer, minorVer) == GetHdiVersionId(1, 1)) {
         INTELL_VOICE_LOG_INFO("version is 1.1");
         auto castResult_V1_1 =
             OHOS::HDI::IntelligentVoice::Engine::V1_1::IIntellVoiceEngineManager::CastFrom(engineHostProxy1_0_);

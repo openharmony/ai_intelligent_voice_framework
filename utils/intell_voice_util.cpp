@@ -12,13 +12,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef INTELL_VOICE_UTIL_H
-#define INTELL_VOICE_UTIL_H
-#include <cstdint>
+#include "intell_voice_util.h"
 
 namespace OHOS {
 namespace IntellVoiceUtils {
-uint32_t GetHdiVersionId(uint32_t majorVer, uint32_t minorVer);
+constexpr uint32_t g_offset = 8;
+
+uint32_t GetHdiVersionId(uint32_t majorVer, uint32_t minorVer)
+{
+    return ((majorVer << g_offset) | minorVer);
 }
 }
-#endif
+}
