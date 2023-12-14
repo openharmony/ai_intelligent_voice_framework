@@ -19,12 +19,13 @@
 
 #define LOG_TAG "DataOperationCb"
 
-using namespace OHOS::HDI::IntelligentVoice::Engine::V1_0;
 using namespace OHOS::IntellVoiceUtils;
 
 namespace OHOS {
 namespace IntellVoiceEngine {
-int32_t DataOperationCallback::OnIntellVoiceDataOprEvent(IntellVoiceDataOprType type, const sptr<Ashmem> &inBuffer,
+int32_t DataOperationCallback::OnIntellVoiceDataOprEvent(
+    OHOS::HDI::IntelligentVoice::Engine::V1_1::IntellVoiceDataOprType type,
+    const sptr<Ashmem> &inBuffer,
     sptr<Ashmem> &outBuffer)
 {
     INTELL_VOICE_LOG_INFO("enter, type:%{public}d", type);
@@ -39,7 +40,8 @@ int32_t DataOperationCallback::OnIntellVoiceDataOprEvent(IntellVoiceDataOprType 
         inBuffer->CloseAshmem();
     };
 
-    if ((type < ENCRYPT_TYPE) || (type > DECRYPT_TYPE)) {
+    if ((type < OHOS::HDI::IntelligentVoice::Engine::V1_1::ENCRYPT_TYPE) ||
+        (type > OHOS::HDI::IntelligentVoice::Engine::V1_1::DECRYPT_TYPE)) {
         INTELL_VOICE_LOG_ERROR("invalid type:%{public}d", type);
         return -1;
     }
@@ -53,14 +55,14 @@ int32_t DataOperationCallback::OnIntellVoiceDataOprEvent(IntellVoiceDataOprType 
     int32_t ret = HKS_SUCCESS;
     std::unique_ptr<OHOS::IntellVoiceUtils::Uint8ArrayBuffer> outData = nullptr;
 
-    if (type == ENCRYPT_TYPE) {
+    if (type == OHOS::HDI::IntelligentVoice::Engine::V1_1::ENCRYPT_TYPE) {
         ret = HuksAesAdapter::Encrypt(inData, outData);
         if (ret != HKS_SUCCESS) {
             INTELL_VOICE_LOG_ERROR("encrypt failed, ret:%{public}d", ret);
             return -1;
         }
         outBuffer = CreateAshmemFromArrayBuffer(outData, "EnryptOutIntellVoiceData");
-    } else if (type == DECRYPT_TYPE) {
+    } else if (type == OHOS::HDI::IntelligentVoice::Engine::V1_1::DECRYPT_TYPE) {
         ret = HuksAesAdapter::Decrypt(inData, outData);
         if (ret != HKS_SUCCESS) {
             INTELL_VOICE_LOG_ERROR("decrypt failed, ret:%{public}d", ret);

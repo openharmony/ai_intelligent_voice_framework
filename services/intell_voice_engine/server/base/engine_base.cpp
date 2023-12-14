@@ -16,12 +16,12 @@
 
 #include <ashmem.h>
 
-#include "v1_0/iintell_voice_engine_manager.h"
 #include "intell_voice_log.h"
 #include "string_util.h"
 #include "scope_guard.h"
 #include "trigger_manager.h"
 #include "intell_voice_service_manager.h"
+#include "engine_host_manager.h"
 
 using namespace OHOS::IntellVoiceUtils;
 using namespace OHOS::HDI::IntelligentVoice::Engine::V1_0;
@@ -175,10 +175,7 @@ void EngineBase::ProcDspModel()
 
 void EngineBase::ReleaseAdapterInner()
 {
-    auto mgr = IIntellVoiceEngineManager::Get();
-    if (mgr != nullptr) {
-        mgr->ReleaseAdapter(desc_);
-    }
+    EngineHostManager::GetInstance().ReleaseEngineAdapter(desc_);
     adapter_ = nullptr;
 }
 }

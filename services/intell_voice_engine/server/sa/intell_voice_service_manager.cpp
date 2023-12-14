@@ -24,7 +24,6 @@
 #include "trigger_detector_callback.h"
 #include "memory_guard.h"
 #include "iproxy_broker.h"
-#include "v1_0/iintell_voice_engine_manager.h"
 #include "string_util.h"
 
 #define LOG_TAG "IntellVoiceServiceManager"
@@ -381,80 +380,6 @@ void IntellVoiceServiceManager::OnSwitchChange()
         INTELL_VOICE_LOG_INFO("switch on");
         OnServiceStart();
     }
-}
-
-bool IntellVoiceServiceManager::RegisterHDIDeathRecipient()
-{
-    INTELL_VOICE_LOG_INFO("enter");
-    auto mgr = IIntellVoiceEngineManager::Get();
-    if (mgr == nullptr) {
-        INTELL_VOICE_LOG_ERROR("failed to get engine manager");
-        return false;
-    }
-    sptr<IRemoteObject> object = OHOS::HDI::hdi_objcast<IIntellVoiceEngineManager>(mgr);
-    if (object == nullptr) {
-        INTELL_VOICE_LOG_ERROR("object is nullptr");
-        return false;
-    }
-    engineHdiDeathRecipient_ = new (std::nothrow) IntellVoiceDeathRecipient(
-        std::bind(&IntellVoiceServiceManager::OnHDIDiedCallback, this));
-    if (engineHdiDeathRecipient_ == nullptr) {
-        INTELL_VOICE_LOG_ERROR("create death recipient failed");
-        return false;
-    }
-
-    return object->AddDeathRecipient(engineHdiDeathRecipient_);
-}
-
-void IntellVoiceServiceManager::DeregisterHDIDeathRecipient()
-{
-    INTELL_VOICE_LOG_INFO("enter");
-    if (engineHdiDeathRecipient_ == nullptr) {
-        INTELL_VOICE_LOG_ERROR("recipient is nullptr");
-        return;
-    }
-
-    auto mgr = IIntellVoiceEngineManager::Get();
-    if (mgr == nullptr) {
-        INTELL_VOICE_LOG_ERROR("failed to get engine manager");
-        return;
-    }
-
-    sptr<IRemoteObject> object = OHOS::HDI::hdi_objcast<IIntellVoiceEngineManager>(mgr);
-    if (object == nullptr) {
-        INTELL_VOICE_LOG_ERROR("death recipient is nullptr");
-        return;
-    }
-
-    object->RemoveDeathRecipient(engineHdiDeathRecipient_);
-}
-
-void IntellVoiceServiceManager::SetDataOprCallback()
-{
-    if (dataOprCb_ != nullptr) {
-        INTELL_VOICE_LOG_INFO("already set data opr callback");
-        return;
-    }
-
-    auto mgr = IIntellVoiceEngineManager::Get();
-    if (mgr == nullptr) {
-        INTELL_VOICE_LOG_ERROR("failed to get engine manager");
-        return;
-    }
-
-    dataOprCb_ = sptr<IIntellVoiceDataOprCallback>(new (std::nothrow) DataOperationCallback());
-    if (dataOprCb_ == nullptr) {
-        INTELL_VOICE_LOG_ERROR("create data opr callback failed");
-        return;
-    }
-
-    mgr->SetDataOprCallback(dataOprCb_);
-}
-
-void IntellVoiceServiceManager::OnHDIDiedCallback()
-{
-    INTELL_VOICE_LOG_INFO("receive hdi death recipient");
-    _Exit(0);
 }
 
 bool IntellVoiceServiceManager::RegisterProxyDeathRecipient(const sptr<IRemoteObject> &object)

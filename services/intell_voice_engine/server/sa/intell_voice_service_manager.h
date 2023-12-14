@@ -25,7 +25,6 @@
 #include "intell_voice_engine_arbitration.h"
 #include "intell_voice_death_recipient.h"
 #include "update_engine_controller.h"
-#include "data_operation_callback.h"
 
 namespace OHOS {
 namespace IntellVoiceEngine {
@@ -65,11 +64,8 @@ public:
     bool QuerySwitchStatus();
     void UnloadIntellVoiceService();
 
-    bool RegisterHDIDeathRecipient();
-    void DeregisterHDIDeathRecipient();
     bool RegisterProxyDeathRecipient(const sptr<IRemoteObject> &object);
     bool DeregisterProxyDeathRecipient();
-    void SetDataOprCallback();
 
     using UpdateEngineController::SaveWakeupVesion;
     using UpdateEngineController::OnUpdateComplete;
@@ -84,10 +80,7 @@ private:
     sptr<IIntellVoiceEngine> CreateEngineInner(IntellVoiceEngineType type);
     int32_t ReleaseEngineInner(IntellVoiceEngineType type);
     bool CreateOrResetWakeupEngine();
-
-    void OnHDIDiedCallback();
     void OnProxyDiedCallback();
-
     bool IsEngineExist(IntellVoiceEngineType type);
     void ReleaseUpdateEngine() override;
     bool CreateUpdateEngine() override;
@@ -107,8 +100,6 @@ private:
         IntellVoiceUtils::UniqueProductType<SwitchProvider> {nullptr, nullptr};
     sptr<IntellVoiceUtils::IntellVoiceDeathRecipient> proxyDeathRecipient_ = nullptr;
     sptr<IRemoteObject> deathRecipientObj_ = nullptr;
-    sptr<OHOS::IntellVoiceUtils::IntellVoiceDeathRecipient> engineHdiDeathRecipient_ = nullptr;
-    sptr<IIntellVoiceDataOprCallback> dataOprCb_ = nullptr;
 };
 }  // namespace IntellVoice
 }  // namespace OHOS

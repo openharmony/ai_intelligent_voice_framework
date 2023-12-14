@@ -17,9 +17,6 @@
 #include "securec.h"
 #include "intell_voice_log.h"
 
-#include "v1_0/iintell_voice_engine_manager.h"
-#include "v1_0/iintell_voice_engine_callback.h"
-
 #include "update_adapter_listener.h"
 #include "history_info_mgr.h"
 #include "time_util.h"

@@ -18,13 +18,13 @@
 #include <ashmem.h>
 #include <memory>
 #include <string>
-#include "v1_0/iintell_voice_data_opr_callback.h"
+#include "v1_1/iintell_voice_data_opr_callback.h"
 #include "array_buffer_util.h"
 
 namespace OHOS {
 namespace IntellVoiceEngine {
-using OHOS::HDI::IntelligentVoice::Engine::V1_0::IntellVoiceDataOprType;
-using OHOS::HDI::IntelligentVoice::Engine::V1_0::IIntellVoiceDataOprCallback;
+using OHOS::HDI::IntelligentVoice::Engine::V1_1::IntellVoiceDataOprType;
+using OHOS::HDI::IntelligentVoice::Engine::V1_1::IIntellVoiceDataOprCallback;
 
 class DataOperationCallback final : public IIntellVoiceDataOprCallback {
 public:
