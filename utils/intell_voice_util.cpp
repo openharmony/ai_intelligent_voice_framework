@@ -16,11 +16,11 @@
 
 namespace OHOS {
 namespace IntellVoiceUtils {
-constexpr uint32_t g_offset = 8;
+static constexpr uint32_t VERSION_OFFSET = 8;
 
 uint32_t GetHdiVersionId(uint32_t majorVer, uint32_t minorVer)
 {
-    return ((majorVer << g_offset) | minorVer);
+    return ((majorVer << VERSION_OFFSET) | minorVer);
 }
 }
 }
