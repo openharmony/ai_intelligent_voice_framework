@@ -29,6 +29,7 @@
 #include "common_event_manager.h"
 #include "common_event_support.h"
 #include "update_state.h"
+#include "engine_host_manager.h"
 
 #define LOG_TAG "IntellVoiceService"
 
@@ -243,13 +244,14 @@ void IntellVoiceService::LoadIntellVoiceHost()
     INTELL_VOICE_LOG_INFO("Get devmgr success");
     devmgr->UnloadDevice("intell_voice_engine_manager_service");
     devmgr->LoadDevice("intell_voice_engine_manager_service");
-    const auto &manager = IntellVoiceServiceManager::GetInstance();
-    if (manager == nullptr) {
-        INTELL_VOICE_LOG_INFO("manager is nullptr");
+
+    if (!EngineHostManager::GetInstance().Init()) {
+        INTELL_VOICE_LOG_ERROR("init engine host failed");
         return;
     }
-    manager->RegisterHDIDeathRecipient();
-    manager->SetDataOprCallback();
+
+    EngineHostManager::GetInstance().RegisterEngineHDIDeathRecipient();
+    EngineHostManager::GetInstance().SetDataOprCallback();
 }
 
 void IntellVoiceService::UnloadIntellVoiceHost()
@@ -257,10 +259,7 @@ void IntellVoiceService::UnloadIntellVoiceHost()
     auto devmgr = IDeviceManager::Get();
     if (devmgr != nullptr) {
         INTELL_VOICE_LOG_INFO("Get devmgr success");
-        const auto &manager = IntellVoiceServiceManager::GetInstance();
-        if (manager != nullptr) {
-            manager->DeregisterHDIDeathRecipient();
-        }
+        EngineHostManager::GetInstance().DeregisterEngineHDIDeathRecipient();
         devmgr->UnloadDevice("intell_voice_engine_manager_service");
     } else {
         INTELL_VOICE_LOG_ERROR("Get devmgr failed");

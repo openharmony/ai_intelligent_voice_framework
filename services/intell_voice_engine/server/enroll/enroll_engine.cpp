@@ -17,14 +17,12 @@
 #include "securec.h"
 #include "intell_voice_log.h"
 
-#include "v1_0/iintell_voice_engine_manager.h"
-#include "v1_0/iintell_voice_engine_callback.h"
-
 #include "enroll_adapter_listener.h"
 #include "time_util.h"
 #include "scope_guard.h"
 #include "adapter_callback_service.h"
 #include "intell_voice_service_manager.h"
+#include "engine_host_manager.h"
 
 #define LOG_TAG "EnrollEngine"
 
@@ -74,13 +72,7 @@ void EnrollEngine::OnEnrollComplete()
 bool EnrollEngine::Init()
 {
     desc_.adapterType = ENROLL_ADAPTER_TYPE;
-    auto mgr = IIntellVoiceEngineManager::Get();
-    if (mgr == nullptr) {
-        INTELL_VOICE_LOG_ERROR("failed to get engine manager");
-        return false;
-    }
-
-    mgr->CreateAdapter(desc_, adapter_);
+    adapter_ = EngineHostManager::GetInstance().CreateEngineAdapter(desc_);
     if (adapter_ == nullptr) {
         INTELL_VOICE_LOG_ERROR("adapter is nullptr");
         return false;

@@ -17,9 +17,6 @@
 #include "securec.h"
 #include "intell_voice_log.h"
 
-#include "v1_0/iintell_voice_engine_manager.h"
-#include "v1_0/iintell_voice_engine_callback.h"
-
 #include "time_util.h"
 #include "scope_guard.h"
 #include "audio_system_manager.h"
@@ -27,6 +24,7 @@
 #include "intell_voice_service_manager.h"
 #include "ability_manager_client.h"
 #include "memory_guard.h"
+#include "engine_host_manager.h"
 
 #define LOG_TAG "WakeupEngine"
 
@@ -110,13 +108,7 @@ bool WakeupEngine::SetCallback()
 bool WakeupEngine::Init()
 {
     desc_.adapterType = WAKEUP_ADAPTER_TYPE;
-    auto mgr = IIntellVoiceEngineManager::Get();
-    if (mgr == nullptr) {
-        INTELL_VOICE_LOG_ERROR("failed to get engine manager");
-        return false;
-    }
-
-    mgr->CreateAdapter(desc_, adapter_);
+    adapter_ = EngineHostManager::GetInstance().CreateEngineAdapter(desc_);
     if (adapter_ == nullptr) {
         INTELL_VOICE_LOG_ERROR("adapter is nullptr");
         return false;
@@ -338,20 +330,13 @@ bool WakeupEngine::ResetAdapter()
 {
     std::lock_guard<std::mutex> lock(mutex_);
 
-    auto mgr = IIntellVoiceEngineManager::Get();
-    if (mgr == nullptr) {
-        INTELL_VOICE_LOG_ERROR("failed to get engine manager");
-        return false;
-    }
-
     if (adapter_ != nullptr) {
         INTELL_VOICE_LOG_WARN("adapter is existed");
         adapter_->Detach();
-        mgr->ReleaseAdapter(desc_);
-        adapter_ = nullptr;
+        ReleaseAdapterInner();
     }
 
-    mgr->CreateAdapter(desc_, adapter_);
+    adapter_ = EngineHostManager::GetInstance().CreateEngineAdapter(desc_);
     if (adapter_ == nullptr) {
         INTELL_VOICE_LOG_ERROR("adapter is nullptr");
         return false;
@@ -368,7 +353,7 @@ bool WakeupEngine::ResetAdapter()
 
     if (adapter_->Attach(adapterInfo) != 0) {
         INTELL_VOICE_LOG_ERROR("failed to attach");
-        mgr->ReleaseAdapter(desc_);
+        EngineHostManager::GetInstance().ReleaseEngineAdapter(desc_);
         adapter_ = nullptr;
         return false;
     }
@@ -384,15 +369,8 @@ void WakeupEngine::ReleaseAdapter()
         return;
     }
 
-    auto mgr = IIntellVoiceEngineManager::Get();
-    if (mgr == nullptr) {
-        INTELL_VOICE_LOG_ERROR("failed to get engine manager");
-        return;
-    }
-
     adapter_->Detach();
-    mgr->ReleaseAdapter(desc_);
-    adapter_ = nullptr;
+    ReleaseAdapterInner();
 }
 }  // namespace IntellVoice
 }  // namespace OHOS

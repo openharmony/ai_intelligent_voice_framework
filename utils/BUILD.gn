@@ -21,6 +21,7 @@ ohos_shared_library("intell_voice_utils") {
     "base_thread.cpp",
     "huks_aes_adapter.cpp",
     "id_allocator.cpp",
+    "intell_voice_util.cpp",
     "memory_guard.cpp",
     "message_queue.cpp",
     "msg_handle_thread.cpp",

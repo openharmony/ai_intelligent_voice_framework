@@ -18,7 +18,6 @@
 #include <string>
 #include <atomic>
 #include "engine_base.h"
-#include "v1_0/iintell_voice_engine_callback.h"
 #include "intell_voice_generic_factory.h"
 #include "timer_mgr.h"
 #include "update_state.h"
