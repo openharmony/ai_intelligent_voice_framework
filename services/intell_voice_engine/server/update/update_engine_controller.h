@@ -38,7 +38,7 @@ public:
         return false;
     }
     virtual void ReleaseUpdateEngine() {};
-    virtual void UpdateCompleteHandler(UpdateState result, bool islast) {};
+    virtual void UpdateCompleteHandler(UpdateState result, bool isLast) {};
     void OnUpdateComplete(UpdateState result);
     bool CreateUpdateEngineUntilTime(int delaySecond = 0);
 
@@ -62,7 +62,7 @@ private:
     static std::atomic<bool> isUpdating_;
     int timerId_ = OHOS::IntellVoiceUtils::INVALID_ID;
     int retryTimes = 0;
-    int delaySecond_;
+    int delaySecond_ = 0;
     std::mutex updateEngineMutex_;
     UpdateState updateResult_ = UpdateState::UPDATE_STATE_DEFAULT;
 };

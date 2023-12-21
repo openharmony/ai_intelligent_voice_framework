@@ -58,6 +58,9 @@ IntellVoiceService::IntellVoiceService(int32_t systemAbilityId, bool runOnCreate
     systemAbilityChangeMap_[AUDIO_DISTRIBUTED_SERVICE_ID] = [this](bool isAdded) {
         this->OnAudioDistributedServiceChange(isAdded);
     };
+    systemAbilityChangeMap_[AUDIO_POLICY_SERVICE_ID] = [this](bool isAdded) {
+        this->OnAudioPolicyServiceChange(isAdded);
+    };
 }
 
 IntellVoiceService::~IntellVoiceService()
@@ -71,7 +74,8 @@ int32_t IntellVoiceService::CreateIntellVoiceEngine(IntellVoiceEngineType type, 
         return -1;
     }
     if (!VerifyClientPermission(OHOS_PERMISSION_INTELL_VOICE)) {
-        INTELL_VOICE_LOG_WARN("verify permission");
+        INTELL_VOICE_LOG_WARN("verify permission denied");
+        return -1;
     }
 
     INTELL_VOICE_LOG_INFO("enter, type: %{public}d", type);
@@ -118,6 +122,7 @@ void IntellVoiceService::OnStart(const SystemAbilityOnDemandReason &startReason)
     AddSystemAbilityListener(DISTRIBUTED_KV_DATA_SERVICE_ABILITY_ID);
     AddSystemAbilityListener(TELEPHONY_STATE_REGISTRY_SYS_ABILITY_ID);
     AddSystemAbilityListener(AUDIO_DISTRIBUTED_SERVICE_ID);
+    AddSystemAbilityListener(AUDIO_POLICY_SERVICE_ID);
     RegisterPermissionCallback(OHOS_PERMISSION_INTELL_VOICE);
     INTELL_VOICE_LOG_INFO("publish ok");
 }
@@ -134,8 +139,9 @@ void IntellVoiceService::OnStop(void)
 
     auto triggerMgr = IntellVoiceTrigger::TriggerManager::GetInstance();
     if (triggerMgr != nullptr) {
-        triggerMgr->DettachTelephonyObserver();
-        triggerMgr->DettachAudioCaptureListener();
+        triggerMgr->DetachTelephonyObserver();
+        triggerMgr->DetachAudioCaptureListener();
+        triggerMgr->DetachAudioRendererEventListener();
     }
 
     if (systemEventObserver_ != nullptr) {
@@ -357,6 +363,19 @@ void IntellVoiceService::OnAudioDistributedServiceChange(bool isAdded)
         }
     } else {
         INTELL_VOICE_LOG_INFO("audio distributed service is removed");
+    }
+}
+
+void IntellVoiceService::OnAudioPolicyServiceChange(bool isAdded)
+{
+    if (isAdded) {
+        INTELL_VOICE_LOG_INFO("audio policy service is added");
+        auto triggerMgr = IntellVoiceTrigger::TriggerManager::GetInstance();
+        if (triggerMgr != nullptr) {
+            triggerMgr->AttachAudioRendererEventListener();
+        }
+    } else {
+        INTELL_VOICE_LOG_INFO("audio policy service is removed");
     }
 }
 

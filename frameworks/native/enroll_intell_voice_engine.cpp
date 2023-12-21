@@ -54,6 +54,9 @@ int32_t EnrollIntellVoiceEngine::Init(const EngineConfig &config)
         return -1;
     }
 
+    engine_->SetParameter("language=" + config.language);
+    engine_->SetParameter("area=" + config.region);
+
     IntellVoiceEngineInfo info = {};
     info.wakeupPhrase = descriptor_->wakeupPhrase;
     info.isPcmFromExternal = false;

@@ -20,16 +20,20 @@
 #include "msg_handle_thread.h"
 #include "trigger_base_type.h"
 #include "i_intell_voice_trigger_recognition_callback.h"
-
 #include "i_intell_voice_trigger_connector_module.h"
 #include "i_intell_voice_trigger_connector_callback.h"
 #include "trigger_connector_common_type.h"
-
 #include "telephony_observer.h"
 #include "audio_system_manager.h"
+#include "audio_stream_manager.h"
+#include "audio_info.h"
 
 namespace OHOS {
 namespace IntellVoiceTrigger {
+using OHOS::AudioStandard::AudioCapturerSourceCallback;
+using OHOS::AudioStandard::AudioRendererStateChangeCallback;
+using OHOS::AudioStandard::AudioRendererChangeInfo;
+
 enum ModelState { MODEL_NOTLOADED, MODEL_LOADED, MODEL_STARTED, MODEL_STATE_BUT };
 
 class TriggerModelData {
@@ -72,15 +76,20 @@ public:
         std::shared_ptr<IIntellVoiceTriggerRecognitionCallback> callback);
     int32_t StopGenericRecognition(int32_t uuid, std::shared_ptr<IIntellVoiceTriggerRecognitionCallback> callback);
     void UnloadGenericTriggerModel(int32_t uuid);
-    std::shared_ptr<TriggerModelData> GetTriggerModelData(int32_t uuid);
+    int32_t SetParameter(const std::string &key, const std::string &value);
+    std::string GetParameter(const std::string &key);
     void AttachAudioCaptureListener();
-    void DettachAudioCaptureListener();
+    void DetachAudioCaptureListener();
+    void AttachAudioRendererEventListener();
+    void DetachAudioRendererEventListener();
     void AttachTelephonyObserver();
-    void DettachTelephonyObserver();
+    void DetachTelephonyObserver();
 
 private:
     TriggerHelper();
     bool GetModule();
+    std::shared_ptr<TriggerModelData> GetTriggerModelData(int32_t uuid);
+    std::shared_ptr<TriggerModelData> CreateTriggerModelData(int32_t uuid);
     int32_t InitRecognition(std::shared_ptr<TriggerModelData> modelData, bool unload);
     int32_t PrepareForRecognition(std::shared_ptr<TriggerModelData> modelData);
     int32_t StartRecognition(std::shared_ptr<TriggerModelData> modelData);
@@ -91,8 +100,8 @@ private:
     bool IsConflictSceneActive();
 
     void OnRecognition(int32_t modelHandle, const IntellVoiceRecognitionEvent &event) override;
-    void OnHdiServiceStart() override;
     void OnCapturerStateChange(bool isActive);
+    void OnUpdateRendererState(int32_t streamUsage, bool isPlaying);
     void OnCallStateUpdated(int32_t callState);
     class TelephonyStateObserver : public Telephony::TelephonyObserver {
     public:
@@ -112,7 +121,7 @@ private:
     sptr<TelephonyStateObserver> telephonyObserver0_ = nullptr;
     sptr<TelephonyStateObserver> telephonyObserver1_ = nullptr;
 
-    class AudioCapturerSourceChangeCallback : public OHOS::AudioStandard::AudioCapturerSourceCallback {
+    class AudioCapturerSourceChangeCallback : public AudioCapturerSourceCallback {
     public:
         explicit AudioCapturerSourceChangeCallback(const std::shared_ptr<TriggerHelper> helper) : helper_(helper)
         {}
@@ -126,18 +135,39 @@ private:
         std::shared_ptr<TriggerHelper> helper_ = nullptr;
     };
 
+    class AudioRendererStateChangeCallbackImpl : public AudioRendererStateChangeCallback {
+        public:
+            explicit AudioRendererStateChangeCallbackImpl(const std::shared_ptr<TriggerHelper> helper)
+                : helper_(helper)
+            {}
+            ~AudioRendererStateChangeCallbackImpl()
+            {
+                helper_ = nullptr;
+                rendererStateMap_.clear();
+            }
+
+            void OnRendererStateChange(
+                const std::vector<std::unique_ptr<AudioRendererChangeInfo>> &audioRendererChangeInfos) override;
+        private:
+            std::mutex mutex_;
+            std::shared_ptr<TriggerHelper> helper_ = nullptr;
+            std::map<int32_t, bool> rendererStateMap_;
+    };
+
 private:
     std::mutex mutex_;
     std::mutex telephonyMutex_;
+    std::mutex rendererMutex_;
 
     std::map<int32_t, std::shared_ptr<TriggerModelData>> modelDataMap_;
     std::shared_ptr<IIntellVoiceTriggerConnectorModule> module_ = nullptr;
     std::vector<TriggerConnectorModuleDesc> moduleDesc_;
     std::shared_ptr<AudioCapturerSourceChangeCallback> audioCapturerSourceChangeCallback_ = nullptr;
-
+    std::shared_ptr<AudioRendererStateChangeCallbackImpl> audioRendererStateChangeCallback_ = nullptr;
     bool callActive_ = false;
     bool audioCaptureActive_ = false;
     bool isTelephonyDetached_ = false;
+    bool isRendererDetached_ = false;
 };
 }  // namespace IntellVoiceTrigger
 }  // namespace OHOS

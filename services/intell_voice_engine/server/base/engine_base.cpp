@@ -23,13 +23,16 @@
 #include "intell_voice_service_manager.h"
 #include "engine_host_manager.h"
 
+#define LOG_TAG "EngineBase"
+
 using namespace OHOS::IntellVoiceUtils;
 using namespace OHOS::HDI::IntelligentVoice::Engine::V1_0;
 using namespace OHOS::IntellVoiceTrigger;
-#define LOG_TAG "EngineBase"
 
 namespace OHOS {
 namespace IntellVoiceEngine {
+static const std::string KEY_GET_WAKEUP_FEATURE = "wakeup_features";
+
 EngineBase::EngineBase()
 {
     INTELL_VOICE_LOG_INFO("constructor");
@@ -78,6 +81,29 @@ int32_t EngineBase::Stop()
         return -1;
     }
     return adapter_->Stop();
+}
+
+bool EngineBase::SetDspFeatures()
+{
+    if (adapter_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("adapter is nullptr");
+        return false;
+    }
+
+    auto triggerMgr = TriggerManager::GetInstance();
+    if (triggerMgr == nullptr) {
+        INTELL_VOICE_LOG_ERROR("trigger manager is nullptr");
+        return false;
+    }
+
+    std::string features = triggerMgr->GetParameter(KEY_GET_WAKEUP_FEATURE);
+    if (features == "") {
+        INTELL_VOICE_LOG_ERROR("trigger manager is nullptr");
+        return false;
+    }
+
+    std::string kvPair = KEY_GET_WAKEUP_FEATURE + "=" + features;
+    return adapter_->SetParameter(kvPair);
 }
 
 void EngineBase::SplitStringToKVPair(const std::string &inputStr, std::map<std::string, std::string> &kvpairs)

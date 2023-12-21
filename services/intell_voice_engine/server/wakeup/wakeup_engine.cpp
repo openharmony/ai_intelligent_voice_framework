@@ -39,6 +39,8 @@ static constexpr uint32_t INTERVAL = 50;
 static constexpr int32_t CHANNEL_CNT = 1;
 static constexpr int32_t BITS_PER_SAMPLE = 16;
 static constexpr int32_t SAMPLE_RATE = 16000;
+static const std::string LANGUAGE_TEXT = "language=";
+static const std::string AREA_TEXT = "area=";
 
 WakeupEngine::WakeupEngine()
 {
@@ -118,6 +120,10 @@ bool WakeupEngine::Init()
         INTELL_VOICE_LOG_ERROR("failed to set callback");
         return false;
     }
+
+    adapter_->SetParameter(LANGUAGE_TEXT + HistoryInfoMgr::GetInstance().GetLanguage());
+    adapter_->SetParameter(AREA_TEXT + HistoryInfoMgr::GetInstance().GetArea());
+    SetDspFeatures();
 
     IntellVoiceEngineInfo info = {
         .wakeupPhrase = "\xE5\xB0\x8F\xE8\x89\xBA\xE5\xB0\x8F\xE8\x89\xBA",
@@ -343,6 +349,10 @@ bool WakeupEngine::ResetAdapter()
     }
 
     adapter_->SetCallback(callback_);
+    adapter_->SetParameter(LANGUAGE_TEXT + HistoryInfoMgr::GetInstance().GetLanguage());
+    adapter_->SetParameter(AREA_TEXT + HistoryInfoMgr::GetInstance().GetArea());
+    SetDspFeatures();
+
     IntellVoiceEngineAdapterInfo adapterInfo = {
         .wakeupPhrase = "\xE5\xB0\x8F\xE8\x89\xBA\xE5\xB0\x8F\xE8\x89\xBA",
         .minBufSize = MIN_BUFFER_SIZE,

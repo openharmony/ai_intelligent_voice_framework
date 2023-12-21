@@ -32,7 +32,7 @@ public:
 
         return data_.get();
     }
-    uint32_t GetSize()
+    uint32_t GetSize() const
     {
         return size_;
     }

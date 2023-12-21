@@ -120,6 +120,7 @@ int32_t EnrollEngine::Attach(const IntellVoiceEngineInfo &info)
         return -1;
     }
 
+    SetDspFeatures();
     isPcmFromExternal_ = info.isPcmFromExternal;
 
     IntellVoiceEngineAdapterInfo adapterInfo = {
@@ -232,6 +233,16 @@ bool EnrollEngine::SetParameterInner(const std::string &keyValueList)
             INTELL_VOICE_LOG_INFO("set wakeup ability name:%{public}s", it.second.c_str());
             historyInfoMgr.SetWakeupEngineAbilityName(it.second);
             return true;
+        }
+        if (it.first == std::string("language")) {
+            INTELL_VOICE_LOG_INFO("set language:%{public}s", it.second.c_str());
+            historyInfoMgr.SetLanguage(it.second);
+            continue;
+        }
+        if (it.first == std::string("area")) {
+            INTELL_VOICE_LOG_INFO("set area:%{public}s", it.second.c_str());
+            historyInfoMgr.SetArea(it.second);
+            continue;
         }
     }
 

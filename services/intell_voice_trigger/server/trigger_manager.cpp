@@ -101,6 +101,24 @@ void TriggerManager::ReleaseTriggerDetector(int32_t uuid)
     detectors_.erase(it);
 }
 
+int32_t TriggerManager::SetParameter(const std::string &key, const std::string &value)
+{
+    if (service_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("service_ is nullptr");
+        return -1;
+    }
+    return service_->SetParameter(key, value);
+}
+
+std::string TriggerManager::GetParameter(const std::string &key)
+{
+    if (service_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("service_ is nullptr");
+        return "";
+    }
+    return service_->GetParameter(key);
+}
+
 void TriggerManager::AttachTelephonyObserver()
 {
     if (service_ == nullptr) {
@@ -110,13 +128,13 @@ void TriggerManager::AttachTelephonyObserver()
     return service_->AttachTelephonyObserver();
 }
 
-void TriggerManager::DettachTelephonyObserver()
+void TriggerManager::DetachTelephonyObserver()
 {
     if (service_ == nullptr) {
         INTELL_VOICE_LOG_ERROR("service_ is nullptr");
         return;
     }
-    return service_->DettachTelephonyObserver();
+    return service_->DetachTelephonyObserver();
 }
 
 void TriggerManager::AttachAudioCaptureListener()
@@ -128,13 +146,31 @@ void TriggerManager::AttachAudioCaptureListener()
     return service_->AttachAudioCaptureListener();
 }
 
-void TriggerManager::DettachAudioCaptureListener()
+void TriggerManager::DetachAudioCaptureListener()
 {
     if (service_ == nullptr) {
         INTELL_VOICE_LOG_ERROR("service_ is nullptr");
         return;
     }
-    return service_->DettachAudioCaptureListener();
+    return service_->DetachAudioCaptureListener();
+}
+
+void TriggerManager::AttachAudioRendererEventListener()
+{
+    if (service_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("service_ is nullptr");
+        return;
+    }
+    return service_->AttachAudioRendererEventListener();
+}
+
+void TriggerManager::DetachAudioRendererEventListener()
+{
+    if (service_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("service_ is nullptr");
+        return;
+    }
+    return service_->DetachAudioRendererEventListener();
 }
 }  // namespace IntellVoiceTrigger
 }  // namespace OHOS

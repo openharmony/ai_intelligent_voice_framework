@@ -27,7 +27,6 @@ public:
     virtual ~IIntellVoiceTriggerConnectorCallback() = default;
 
     virtual void OnRecognition(int32_t modelHandle, const struct IntellVoiceRecognitionEvent &event) = 0;
-    virtual void OnHdiServiceStart() = 0;
 };
 }
 }
