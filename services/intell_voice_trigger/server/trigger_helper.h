@@ -136,22 +136,22 @@ private:
     };
 
     class AudioRendererStateChangeCallbackImpl : public AudioRendererStateChangeCallback {
-        public:
-            explicit AudioRendererStateChangeCallbackImpl(const std::shared_ptr<TriggerHelper> helper)
-                : helper_(helper)
-            {}
-            ~AudioRendererStateChangeCallbackImpl()
-            {
-                helper_ = nullptr;
-                rendererStateMap_.clear();
-            }
+    public:
+        explicit AudioRendererStateChangeCallbackImpl(const std::shared_ptr<TriggerHelper> helper)
+            : helper_(helper)
+        {}
+        ~AudioRendererStateChangeCallbackImpl()
+        {
+            helper_ = nullptr;
+            rendererStateMap_.clear();
+        }
 
-            void OnRendererStateChange(
-                const std::vector<std::unique_ptr<AudioRendererChangeInfo>> &audioRendererChangeInfos) override;
-        private:
-            std::mutex mutex_;
-            std::shared_ptr<TriggerHelper> helper_ = nullptr;
-            std::map<int32_t, bool> rendererStateMap_;
+        void OnRendererStateChange(
+           const std::vector<std::unique_ptr<AudioRendererChangeInfo>> &audioRendererChangeInfos) override;
+    private:
+        std::mutex mutex_;
+        std::shared_ptr<TriggerHelper> helper_ = nullptr;
+        std::map<int32_t, bool> rendererStateMap_;
     };
 
 private:
