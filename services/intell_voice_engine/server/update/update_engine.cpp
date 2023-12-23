@@ -34,6 +34,9 @@ using namespace OHOS::AudioStandard;
 
 namespace OHOS {
 namespace IntellVoiceEngine {
+static const std::string LANGUAGE_TEXT = "language=";
+static const std::string AREA_TEXT = "area=";
+
 UpdateEngine::UpdateEngine()
 {
     INTELL_VOICE_LOG_INFO("enter");
@@ -92,6 +95,9 @@ bool UpdateEngine::Init()
     }
 
     SetCallback(object);
+    adapter_->SetParameter(LANGUAGE_TEXT + HistoryInfoMgr::GetInstance().GetLanguage());
+    adapter_->SetParameter(AREA_TEXT + HistoryInfoMgr::GetInstance().GetArea());
+    SetDspFeatures();
 
     IntellVoiceEngineInfo info = {
         .wakeupPhrase = "\xE5\xB0\x8F\xE8\x89\xBA\xE5\xB0\x8F\xE8\x89\xBA",

@@ -42,6 +42,7 @@ public:
     }
 protected:
     EngineBase();
+    bool SetDspFeatures();
     void SplitStringToKVPair(const std::string &inputStr, std::map<std::string, std::string> &kvpairs);
     void ProcDspModel();
     void ReleaseAdapterInner();

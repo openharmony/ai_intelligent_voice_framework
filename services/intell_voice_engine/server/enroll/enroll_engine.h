@@ -27,7 +27,7 @@ namespace IntellVoiceEngine {
 class EnrollEngine : public EngineBase {
 public:
     ~EnrollEngine();
-    virtual bool Init() override;
+    bool Init() override;
     void SetCallback(sptr<IRemoteObject> object) override;
     int32_t Attach(const IntellVoiceEngineInfo &info) override;
     int32_t Detach(void) override;

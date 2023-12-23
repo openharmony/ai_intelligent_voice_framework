@@ -30,6 +30,8 @@ public:
     virtual int32_t UnloadModel(int32_t modelHandle) = 0;
     virtual int32_t Start(int32_t modelHandle) = 0;
     virtual int32_t Stop(int32_t modelHandle) = 0;
+    virtual int32_t SetParams(const std::string &key, const std::string &value) = 0;
+    virtual int32_t GetParams(const std::string& key, std::string &value) = 0;
 };
 }
 }

@@ -65,6 +65,7 @@ private:
     void OnDistributedKvDataServiceChange(bool isAdded);
     void OnTelephonyStateRegistryServiceChange(bool isAdded);
     void OnAudioDistributedServiceChange(bool isAdded);
+    void OnAudioPolicyServiceChange(bool isAdded);
 
 private:
     int32_t reasonId_ = -1;

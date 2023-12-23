@@ -481,6 +481,5 @@ void IntellVoiceServiceManager::UpdateCompleteHandler(UpdateState result, bool i
         }
     }
 }
-
 }  // namespace IntellVoiceEngine
 }  // namespace OHOS

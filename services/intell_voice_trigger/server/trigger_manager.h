@@ -35,10 +35,14 @@ public:
     std::shared_ptr<TriggerDetector> CreateTriggerDetector(
         int32_t uuid, std::shared_ptr<IIntellVoiceTriggerDetectorCallback> callback);
     void ReleaseTriggerDetector(int32_t uuid);
+    int32_t SetParameter(const std::string &key, const std::string &value);
+    std::string GetParameter(const std::string &key);
     void AttachTelephonyObserver();
-    void DettachTelephonyObserver();
+    void DetachTelephonyObserver();
     void AttachAudioCaptureListener();
-    void DettachAudioCaptureListener();
+    void DetachAudioCaptureListener();
+    void AttachAudioRendererEventListener();
+    void DetachAudioRendererEventListener();
 
 private:
     explicit TriggerManager();

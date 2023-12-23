@@ -20,7 +20,9 @@
 #include "state_registry_errors.h"
 #include "telephony_types.h"
 #include "call_manager_inner_type.h"
+#include "audio_policy_manager.h"
 
+#undef LOG_TAG
 #define LOG_TAG "TriggerHelper"
 
 using namespace OHOS::HDI::IntelligentVoice::Trigger::V1_0;
@@ -39,7 +41,8 @@ TriggerModelData::TriggerModelData(int32_t uuid)
 }
 
 TriggerModelData::~TriggerModelData()
-{}
+{
+}
 
 void TriggerModelData::SetCallback(std::shared_ptr<IIntellVoiceTriggerRecognitionCallback> callback)
 {
@@ -145,8 +148,11 @@ int32_t TriggerHelper::StartGenericRecognition(int32_t uuid, std::shared_ptr<Gen
 
     auto modelData = GetTriggerModelData(uuid);
     if (modelData == nullptr) {
-        INTELL_VOICE_LOG_ERROR("failed to get trigger model data");
-        return -1;
+        modelData = CreateTriggerModelData((uuid));
+        if (modelData == nullptr) {
+            INTELL_VOICE_LOG_ERROR("failed to create trigger model data");
+            return -1;
+        }
     }
 
     bool unload = !modelData->SameModel(model);
@@ -208,6 +214,35 @@ void TriggerHelper::UnloadGenericTriggerModel(int32_t uuid)
     StopRecognition(modelData);
     UnloadModel(modelData);
     modelDataMap_.erase(uuid);
+}
+
+int32_t TriggerHelper::SetParameter(const std::string &key, const std::string &value)
+{
+    INTELL_VOICE_LOG_INFO("enter");
+    lock_guard<std::mutex> lock(mutex_);
+    if (!GetModule()) {
+        return -1;
+    }
+
+    return module_->SetParams(key, value);
+}
+
+std::string TriggerHelper::GetParameter(const std::string &key)
+{
+    INTELL_VOICE_LOG_INFO("enter");
+    lock_guard<std::mutex> lock(mutex_);
+    if (!GetModule()) {
+        return "";
+    }
+
+    std::string value;
+    auto ret = module_->GetParams(key, value);
+    if (ret != 0) {
+        INTELL_VOICE_LOG_ERROR("failed to get parameter");
+        return "";
+    }
+
+    return value;
 }
 
 bool TriggerHelper::GetModule()
@@ -354,10 +389,16 @@ shared_ptr<TriggerModelData> TriggerHelper::GetTriggerModelData(int32_t uuid)
 {
     INTELL_VOICE_LOG_INFO("enter, uuid is :%{public}d", uuid);
     auto it = modelDataMap_.find(uuid);
-    if (it != modelDataMap_.end() && it->second != nullptr) {
-        return it->second;
+    if ((it == modelDataMap_.end()) || (it->second == nullptr)) {
+        return nullptr;
     }
 
+    return it->second;
+}
+
+shared_ptr<TriggerModelData> TriggerHelper::CreateTriggerModelData(int32_t uuid)
+{
+    INTELL_VOICE_LOG_INFO("enter, uuid is :%{public}d", uuid);
     auto modelData = std::make_shared<TriggerModelData>(uuid);
     if (modelData == nullptr) {
         INTELL_VOICE_LOG_INFO("modelData is nullptr");
@@ -397,13 +438,6 @@ void TriggerHelper::OnRecognition(int32_t modelHandle, const IntellVoiceRecognit
     }
     genericEvent->modelHandle_ = modelHandle;
     callback->OnGenericTriggerDetected(genericEvent);
-}
-
-void TriggerHelper::OnHdiServiceStart()
-{
-    INTELL_VOICE_LOG_INFO("enter");
-    lock_guard<std::mutex> lock(mutex_);
-    OnUpdateAllRecognitionState();
 }
 
 bool TriggerHelper::IsConflictSceneActive()
@@ -467,7 +501,7 @@ void TriggerHelper::AttachTelephonyObserver()
     }
 }
 
-void TriggerHelper::DettachTelephonyObserver()
+void TriggerHelper::DetachTelephonyObserver()
 {
     INTELL_VOICE_LOG_INFO("enter");
     std::lock_guard<std::mutex> lock(telephonyMutex_);
@@ -534,7 +568,7 @@ void TriggerHelper::AttachAudioCaptureListener()
     }
 }
 
-void TriggerHelper::DettachAudioCaptureListener()
+void TriggerHelper::DetachAudioCaptureListener()
 {
     INTELL_VOICE_LOG_INFO("enter");
 
@@ -567,6 +601,82 @@ void TriggerHelper::AudioCapturerSourceChangeCallback::OnCapturerState(bool isAc
     }
 
     helper_->OnCapturerStateChange(isActive);
+}
+
+void TriggerHelper::AudioRendererStateChangeCallbackImpl::OnRendererStateChange(
+    const std::vector<std::unique_ptr<AudioStandard::AudioRendererChangeInfo>> &audioRendererChangeInfos)
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    INTELL_VOICE_LOG_INFO("enter");
+    if (helper_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("helper is nullptr");
+        return;
+    }
+
+    for (const auto &info : audioRendererChangeInfos) {
+        if (info == nullptr) {
+            INTELL_VOICE_LOG_ERROR("info is nullptr");
+            continue;
+        }
+        INTELL_VOICE_LOG_INFO("rendererState is %{public}d, streamUsage is %{public}d",
+            static_cast<int32_t>(info->rendererState), static_cast<int32_t>(info->rendererInfo.streamUsage));
+        bool isPlaying = false;
+        if (info->rendererState == AudioStandard::RENDERER_RUNNING) {
+            isPlaying = true;
+        }
+        std::string key = isPlaying ? "start_stream" : "stop_stream";
+        if (rendererStateMap_.count(info->rendererInfo.streamUsage) == 0) {
+            rendererStateMap_[info->rendererInfo.streamUsage] = isPlaying;
+            INTELL_VOICE_LOG_INFO("first change, usage:%{public}d, isPlaying:%{public}d",
+                info->rendererInfo.streamUsage, isPlaying);
+            helper_->SetParameter(key, std::to_string(info->rendererInfo.streamUsage));
+        } else {
+            if (rendererStateMap_[info->rendererInfo.streamUsage] != isPlaying) {
+                INTELL_VOICE_LOG_INFO("state change, uage:%{public}d, isPlaying:%{public}d",
+                    info->rendererInfo.streamUsage, isPlaying);
+                rendererStateMap_[info->rendererInfo.streamUsage] = isPlaying;
+                helper_->SetParameter(key, std::to_string(info->rendererInfo.streamUsage));
+            }
+        }
+    }
+}
+
+void TriggerHelper::AttachAudioRendererEventListener()
+{
+    INTELL_VOICE_LOG_INFO("enter");
+    std::lock_guard<std::mutex> lock(rendererMutex_);
+    if (isRendererDetached_) {
+        INTELL_VOICE_LOG_INFO("renderer event listener is already detached");
+        return;
+    }
+    audioRendererStateChangeCallback_ = std::make_shared<AudioRendererStateChangeCallbackImpl>(shared_from_this());
+    if (audioRendererStateChangeCallback_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("Memory Allocation Failed !!");
+        return;
+    }
+
+    int32_t ret = AudioStreamManager::GetInstance()->RegisterAudioRendererEventListener(getpid(),
+        audioRendererStateChangeCallback_);
+    if (ret != 0) {
+        INTELL_VOICE_LOG_ERROR("RegisterAudioRendererEventListener failed");
+        return;
+    }
+    INTELL_VOICE_LOG_INFO("RegisterAudioRendererEventListener success");
+
+    std::vector<std::unique_ptr<AudioRendererChangeInfo>> audioRendererChangeInfos;
+    AudioStreamManager::GetInstance()->GetCurrentRendererChangeInfos(audioRendererChangeInfos);
+    audioRendererStateChangeCallback_->OnRendererStateChange(audioRendererChangeInfos);
+}
+
+void TriggerHelper::DetachAudioRendererEventListener()
+{
+    INTELL_VOICE_LOG_INFO("enter");
+    std::lock_guard<std::mutex> lock(rendererMutex_);
+    isRendererDetached_ = true;
+    int32_t ret = AudioStreamManager::GetInstance()->UnregisterAudioRendererEventListener(getpid());
+    if (ret != 0) {
+        INTELL_VOICE_LOG_ERROR("UnregisterAudioRendererEventListener failed");
+    }
 }
 }  // namespace IntellVoiceTrigger
 }  // namespace OHOS

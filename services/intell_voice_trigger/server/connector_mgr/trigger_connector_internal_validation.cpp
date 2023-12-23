@@ -137,5 +137,17 @@ int32_t TriggerConnectorInternalValidation::TriggerConnectorModuleValidation::St
 {
     return delegate_->Stop(modelHandle);
 }
+
+int32_t TriggerConnectorInternalValidation::TriggerConnectorModuleValidation::SetParams(const std::string &key,
+    const std::string &value)
+{
+    return delegate_->SetParams(key, value);
+}
+
+int32_t TriggerConnectorInternalValidation::TriggerConnectorModuleValidation::GetParams(const std::string &key,
+    std::string &value)
+{
+    return delegate_->GetParams(key, value);
+}
 }
 }

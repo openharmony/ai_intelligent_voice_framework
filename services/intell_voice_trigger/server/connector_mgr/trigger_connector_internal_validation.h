@@ -53,6 +53,8 @@ private:
         int32_t UnloadModel(int32_t modelHandle) override;
         int32_t Start(int32_t modelHandle) override;
         int32_t Stop(int32_t modelHandle) override;
+        int32_t SetParams(const std::string &key, const std::string &value) override;
+        int32_t GetParams(const std::string& key, std::string &value) override;
 
     private:
         class TriggerConnectorCallbackValidation : public IIntellVoiceTriggerConnectorCallback {
@@ -62,10 +64,6 @@ private:
             void OnRecognition(int32_t modelHandle, const IntellVoiceRecognitionEvent &event) override
             {
                 delegate_->OnRecognition(modelHandle, event);
-            }
-            void OnHdiServiceStart() override
-            {
-                delegate_->OnHdiServiceStart();
             }
 
         private:

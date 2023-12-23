@@ -22,11 +22,13 @@ using namespace OHOS::IntellVoiceUtils;
 
 namespace OHOS {
 namespace IntellVoiceEngine {
-constexpr int decimalNotation = 10;
+constexpr int DECIMAL_NOTATION = 10;
 const std::string KEY_ENROLL_ENGINE_UID = "EnrollEngineUid";
 const std::string KEY_WAKEUP_ENGINE_BUNDLE_NAME = "WakeupEngineBundleName";
 const std::string KEY_WAKEUP_ENGINE_ABILITY_NAME = "WakeupEngineAbilityName";
 const std::string KEY_WAKEUP_VESRION = "WakeupVersion";
+const std::string KEY_LANGUAGE = "Language";
+const std::string KEY_AREA = "Area";
 
 HistoryInfoMgr::HistoryInfoMgr()
     : ServiceDbHelper("intell_voice_service_manager", "local_intell_voice_history_mgr_storeId")
@@ -41,7 +43,7 @@ void HistoryInfoMgr::SetEnrollEngineUid(int32_t uid)
 int32_t HistoryInfoMgr::GetEnrollEngineUid()
 {
     std::string value = GetValue(KEY_ENROLL_ENGINE_UID);
-    return static_cast<int32_t>(strtol(value.c_str(), nullptr, decimalNotation));
+    return static_cast<int32_t>(strtol(value.c_str(), nullptr, DECIMAL_NOTATION));
 }
 
 void HistoryInfoMgr::SetWakeupEngineBundleName(const std::string &bundleName)
@@ -72,6 +74,26 @@ void HistoryInfoMgr::SetWakeupVesion(const std::string &wakeupVesion)
 std::string HistoryInfoMgr::GetWakeupVesion()
 {
     return GetValue(KEY_WAKEUP_VESRION);
+}
+
+void HistoryInfoMgr::SetLanguage(const std::string &language)
+{
+    SetValue(KEY_LANGUAGE, language);
+}
+
+std::string HistoryInfoMgr::GetLanguage()
+{
+    return GetValue(KEY_LANGUAGE);
+}
+
+void HistoryInfoMgr::SetArea(const std::string &area)
+{
+    SetValue(KEY_AREA, area);
+}
+
+std::string HistoryInfoMgr::GetArea()
+{
+    return GetValue(KEY_AREA);
 }
 }
 }

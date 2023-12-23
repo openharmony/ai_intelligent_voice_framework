@@ -31,10 +31,14 @@ public:
     int32_t StartRecognition(int32_t uuid, std::shared_ptr<IIntellVoiceTriggerRecognitionCallback> callback);
     int32_t StopRecognition(int32_t uuid, std::shared_ptr<IIntellVoiceTriggerRecognitionCallback> callback);
     void UnloadTriggerModel(int32_t uuid);
+    int32_t SetParameter(const std::string &key, const std::string &value);
+    std::string GetParameter(const std::string &key);
     void AttachTelephonyObserver();
-    void DettachTelephonyObserver();
+    void DetachTelephonyObserver();
     void AttachAudioCaptureListener();
-    void DettachAudioCaptureListener();
+    void DetachAudioCaptureListener();
+    void AttachAudioRendererEventListener();
+    void DetachAudioRendererEventListener();
 
 private:
     std::shared_ptr<TriggerDbHelper> dbHelper_ = nullptr;

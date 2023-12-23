@@ -39,6 +39,10 @@ public:
     std::string GetWakeupEngineAbilityName();
     void SetWakeupVesion(const std::string &wakeupVesion);
     std::string GetWakeupVesion();
+    void SetLanguage(const std::string &language);
+    std::string GetLanguage();
+    void SetArea(const std::string &area);
+    std::string GetArea();
 
 private:
     DISALLOW_COPY_AND_MOVE(HistoryInfoMgr);

@@ -122,6 +122,26 @@ void TriggerService::UnloadTriggerModel(int32_t uuid)
     triggerHelper_->UnloadGenericTriggerModel(uuid);
 }
 
+int32_t TriggerService::SetParameter(const std::string &key, const std::string &value)
+{
+    if (triggerHelper_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("trigger helper is nullptr");
+        return -1;
+    }
+
+    return triggerHelper_->SetParameter(key, value);
+}
+
+std::string TriggerService::GetParameter(const std::string &key)
+{
+    if (triggerHelper_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("trigger helper is nullptr");
+        return "";
+    }
+
+    return triggerHelper_->GetParameter(key);
+}
+
 void TriggerService::AttachTelephonyObserver()
 {
     if (triggerHelper_ == nullptr) {
@@ -131,13 +151,13 @@ void TriggerService::AttachTelephonyObserver()
     triggerHelper_->AttachTelephonyObserver();
 }
 
-void TriggerService::DettachTelephonyObserver()
+void TriggerService::DetachTelephonyObserver()
 {
     if (triggerHelper_ == nullptr) {
         INTELL_VOICE_LOG_ERROR("trigger helper is nullptr");
         return;
     }
-    triggerHelper_->DettachTelephonyObserver();
+    triggerHelper_->DetachTelephonyObserver();
 }
 
 void TriggerService::AttachAudioCaptureListener()
@@ -149,13 +169,31 @@ void TriggerService::AttachAudioCaptureListener()
     triggerHelper_->AttachAudioCaptureListener();
 }
 
-void TriggerService::DettachAudioCaptureListener()
+void TriggerService::DetachAudioCaptureListener()
 {
     if (triggerHelper_ == nullptr) {
         INTELL_VOICE_LOG_ERROR("trigger helper is nullptr");
         return;
     }
-    triggerHelper_->DettachAudioCaptureListener();
+    triggerHelper_->DetachAudioCaptureListener();
+}
+
+void TriggerService::AttachAudioRendererEventListener()
+{
+    if (triggerHelper_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("trigger helper is nullptr");
+        return;
+    }
+    triggerHelper_->AttachAudioRendererEventListener();
+}
+
+void TriggerService::DetachAudioRendererEventListener()
+{
+    if (triggerHelper_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("trigger helper is nullptr");
+        return;
+    }
+    triggerHelper_->DetachAudioRendererEventListener();
 }
 }  // namespace IntellVoiceTrigger
 }  // namespace OHOS

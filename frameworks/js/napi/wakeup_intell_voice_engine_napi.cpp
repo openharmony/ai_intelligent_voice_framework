@@ -306,7 +306,7 @@ napi_value WakeupIntellVoiceEngineNapi::SetSensibility(napi_env env, napi_callba
     class SetSensibilityContext : public AsyncContext {
     public:
         explicit SetSensibilityContext(napi_env napiEnv) : AsyncContext(napiEnv) {};
-        int32_t sensibility;
+        int32_t sensibility = 1;
     };
     auto context = make_shared<SetSensibilityContext>(env);
     if (context == nullptr) {

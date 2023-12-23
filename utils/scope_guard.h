@@ -22,7 +22,7 @@ namespace IntellVoiceUtils {
 template <typename Func>
 class ScopeGuard {
 public:
-    ScopeGuard(Func &&f) : func_(std::forward<Func>(f)), active_(true)
+    explicit ScopeGuard(Func &&f) : func_(std::forward<Func>(f)), active_(true)
     {
     }
 
