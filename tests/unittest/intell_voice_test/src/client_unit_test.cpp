@@ -19,20 +19,18 @@
 #include <condition_variable>
 #include <cstdio>
 
-#include "iservice_registry.h"
-#include "system_ability_definition.h"
 #include "intell_voice_log.h"
 #include "i_intell_voice_engine.h"
 #include "i_intell_voice_service.h"
-#include "intell_voice_service_proxy.h"
-#include "intell_voice_engine_proxy.h"
 #include "engine_callback_inner.h"
 #include "engine_event_callback.h"
 #include "wait_for_result.h"
+#include "intell_voice_manager.h"
 
 #define LOG_TAG "ClientTest"
 
 using namespace OHOS::IntellVoiceTests;
+using namespace OHOS::IntellVoice;
 using namespace OHOS::IntellVoiceEngine;
 using namespace OHOS;
 using namespace testing::ext;
@@ -59,14 +57,6 @@ void ClientTest::TearDownTestCase(void)
 
 void ClientTest::SetUp(void)
 {
-    auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    ASSERT_NE(samgr, nullptr);
-
-    sptr<IRemoteObject> object = samgr->GetSystemAbility(INTELL_VOICE_SERVICE_ID);
-    ASSERT_NE(object, nullptr);
-
-    g_sProxy = iface_cast<IIntellVoiceService>(object);
-    ASSERT_NE(g_sProxy, nullptr);
 }
 
 void ClientTest::TearDown(void)
@@ -78,7 +68,7 @@ HWTEST_F(ClientTest, ClientUtils, TestSize.Level1)
     WaitForResult waitForResult;
 
     sptr<IIntellVoiceEngine> engine;
-    g_sProxy->CreateIntellVoiceEngine(INTELL_VOICE_ENROLL, engine);
+    IntellVoiceManager::GetInstance()->CreateIntellVoiceEngine(INTELL_VOICE_ENROLL, engine);
     ASSERT_NE(engine, nullptr);
 
     sptr<EngineCallbackInner> callback = new (std::nothrow) EngineCallbackInner();

@@ -53,6 +53,7 @@ void EngineEventCallback::OnEvent(
         if (startCnt_ < ENROLL_CNT) {
             ++startCnt_;
             engine_->Start(startCnt_ == ENROLL_CNT ? true : false);
+            usleep(1000);
             EngineEventCallback::ReadFile(TEST_RESOURCE_PATH + "one.pcm");
         } else if (startCnt_ == ENROLL_CNT) {
             engine_->SetParameter("CommitEnrollment=true");

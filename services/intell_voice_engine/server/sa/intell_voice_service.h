@@ -34,7 +34,6 @@ public:
     ~IntellVoiceService();
     int32_t CreateIntellVoiceEngine(IntellVoiceEngineType type, sptr<IIntellVoiceEngine> &inst) override;
     int32_t ReleaseIntellVoiceEngine(IntellVoiceEngineType type) override;
-    int32_t Dump(int fd, const std::vector<std::u16string> &args) override;
 
     bool RegisterDeathRecipient(const sptr<IRemoteObject> &object) override;
     bool DeregisterDeathRecipient() override;

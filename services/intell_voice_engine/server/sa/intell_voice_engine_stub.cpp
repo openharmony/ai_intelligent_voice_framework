@@ -124,7 +124,16 @@ int32_t IntellVoiceEngineStub::StopInner(MessageParcel & /* data */, MessageParc
 int32_t IntellVoiceEngineStub::WriteAudioInner(MessageParcel &data, MessageParcel &reply)
 {
     int32_t size = data.ReadInt32();
+    if (size <= 0) {
+        INTELL_VOICE_LOG_ERROR("size(%{public}d) is invalid", size);
+        return -1;
+    }
     const uint8_t *buffer = data.ReadBuffer(size);
+    if (buffer == nullptr) {
+        INTELL_VOICE_LOG_ERROR("buffer is nullptr");
+        return -1;
+    }
+
     int32_t ret = WriteAudio(buffer, size);
     reply.WriteInt32(ret);
     return ret;

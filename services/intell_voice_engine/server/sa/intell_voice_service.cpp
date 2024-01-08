@@ -43,6 +43,7 @@ namespace OHOS {
 namespace IntellVoiceEngine {
 REGISTER_SYSTEM_ABILITY_BY_ID(IntellVoiceService, INTELL_VOICE_SERVICE_ID, true);
 const std::string OHOS_PERMISSION_INTELL_VOICE = "ohos.permission.MANAGE_INTELLIGENT_VOICE";
+constexpr uid_t UID_ROOT = 0;
 
 IntellVoiceService::IntellVoiceService(int32_t systemAbilityId, bool runOnCreate)
     : SystemAbility(INTELL_VOICE_SERVICE_ID, true)
@@ -201,23 +202,12 @@ void IntellVoiceService::CreateSystemEventObserver()
     INTELL_VOICE_LOG_INFO("create system event observer successfully");
 }
 
-static void print_to_file(void *fp, const char *s)
-{
-    (void)fputs(s, static_cast<FILE *>(fp));
-}
-
-int IntellVoiceService::Dump(int fd, const std::vector<std::u16string> &args)
-{
-    FILE *fp = fdopen(fd, "w+");
-    if (fp != nullptr) {
-        malloc_stats_print(print_to_file, fp, "");
-        fp = nullptr;
-    }
-    return 0;
-}
-
 bool IntellVoiceService::VerifyClientPermission(const std::string &permissionName)
 {
+    if (IPCSkeleton::GetCallingUid() == UID_ROOT) {
+        INTELL_VOICE_LOG_INFO("callingUid is root");
+        return true;
+    }
     Security::AccessToken::AccessTokenID clientTokenId = IPCSkeleton::GetCallingTokenID();
     INTELL_VOICE_LOG_INFO("clientTokenId:%{public}d", clientTokenId);
     int res = Security::AccessToken::AccessTokenKit::VerifyAccessToken(clientTokenId, permissionName);
@@ -230,6 +220,10 @@ bool IntellVoiceService::VerifyClientPermission(const std::string &permissionNam
 
 bool IntellVoiceService::CheckIsSystemApp()
 {
+    if (IPCSkeleton::GetCallingUid() == UID_ROOT) {
+        INTELL_VOICE_LOG_INFO("callingUid is root");
+        return true;
+    }
     uint64_t fullTokenId = IPCSkeleton::GetCallingFullTokenID();
     if (!Security::AccessToken::TokenIdKit::IsSystemAppByFullTokenID(fullTokenId)) {
         INTELL_VOICE_LOG_INFO("Not system app, permission reject tokenid: %{public}" PRIu64 "", fullTokenId);
@@ -381,9 +375,14 @@ void IntellVoiceService::OnAudioPolicyServiceChange(bool isAdded)
 
 bool IntellVoiceService::RegisterDeathRecipient(const sptr<IRemoteObject> &object)
 {
+    if (object == nullptr) {
+        INTELL_VOICE_LOG_ERROR("object is nullptr");
+        return false;
+    }
+
     const auto &manager = IntellVoiceServiceManager::GetInstance();
     if (manager == nullptr) {
-        INTELL_VOICE_LOG_INFO("manager is nullptr");
+        INTELL_VOICE_LOG_ERROR("manager is nullptr");
         return false;
     }
     return manager->RegisterProxyDeathRecipient(object);
