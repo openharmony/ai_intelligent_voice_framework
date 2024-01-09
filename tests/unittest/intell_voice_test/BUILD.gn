@@ -29,6 +29,7 @@ ohos_unittest("client_unit_test") {
     "../../../services/intell_voice_engine",
     "../../../services/intell_voice_engine/server/base",
     "../../../services/intell_voice_engine/proxy",
+    "../../../interfaces/inner_api/native",
     "../../../utils",
   ]
 
@@ -38,7 +39,10 @@ ohos_unittest("client_unit_test") {
     "-DENABLE_DEBUG",
   ]
 
-  deps = [ "../../../services:intell_voice_proxy" ]
+  deps = [
+    "../../../frameworks/native:intellvoice_native",
+    "../../../services:intell_voice_proxy",
+  ]
 
   external_deps = [
     "c_utils:utils",

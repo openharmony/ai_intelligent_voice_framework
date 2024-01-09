@@ -27,6 +27,7 @@ using namespace std;
 namespace {
 constexpr int32_t ENROLL_CNT = 3;
 static constexpr uint32_t BUFFER_SIZE = 1280;
+static constexpr uint32_t WAIT_TIME = 1000;
 }
 
 namespace OHOS {
@@ -53,6 +54,7 @@ void EngineEventCallback::OnEvent(
         if (startCnt_ < ENROLL_CNT) {
             ++startCnt_;
             engine_->Start(startCnt_ == ENROLL_CNT ? true : false);
+            usleep(WAIT_TIME);
             EngineEventCallback::ReadFile(TEST_RESOURCE_PATH + "one.pcm");
         } else if (startCnt_ == ENROLL_CNT) {
             engine_->SetParameter("CommitEnrollment=true");
