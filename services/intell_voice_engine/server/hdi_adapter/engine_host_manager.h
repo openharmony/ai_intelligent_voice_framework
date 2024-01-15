@@ -42,7 +42,7 @@ public:
     void ReleaseEngineAdapter(const IntellVoiceEngineAdapterDescriptor &desc);
 
 private:
-    void OnEngineHDIDiedCallback();
+    static void OnEngineHDIDiedCallback();
 
     sptr<OHOS::HDI::IntelligentVoice::Engine::V1_0::IIntellVoiceEngineManager> engineHostProxy1_0_ = nullptr;
     sptr<OHOS::HDI::IntelligentVoice::Engine::V1_1::IIntellVoiceEngineManager> engineHostProxy1_1_ = nullptr;

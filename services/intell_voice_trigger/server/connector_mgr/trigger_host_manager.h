@@ -33,17 +33,17 @@ protected:
     bool RegisterTriggerHDIDeathRecipient();
     bool LoadTriggerAdapter(const IntellVoiceTriggerAdapterDsecriptor &desc);
     void UnloadTriggerAdapter(const IntellVoiceTriggerAdapterDsecriptor &desc);
-    const sptr<OHOS::HDI::IntelligentVoice::Trigger::V1_0::IIntellVoiceTriggerAdapter> &GetAdapter()
+    const sptr<OHOS::HDI::IntelligentVoice::Trigger::V1_0::IIntellVoiceTriggerAdapter> &GetAdapter() const
     {
         return adapter_;
     }
-    const sptr<OHOS::HDI::IntelligentVoice::Trigger::V1_1::IIntellVoiceTriggerAdapter> &GetAdapterV1_1()
+    const sptr<OHOS::HDI::IntelligentVoice::Trigger::V1_1::IIntellVoiceTriggerAdapter> &GetAdapterV1_1() const
     {
         return adapterV1_1_;
     }
 
 private:
-    void OnTriggerHDIDiedCallback();
+    static void OnTriggerHDIDiedCallback();
 
     sptr<OHOS::HDI::IntelligentVoice::Trigger::V1_0::IIntellVoiceTriggerManager> triggerHostProxy_ = nullptr;
     sptr<OHOS::HDI::IntelligentVoice::Trigger::V1_1::IIntellVoiceTriggerManager> triggerHostProxyV1_1_ = nullptr;

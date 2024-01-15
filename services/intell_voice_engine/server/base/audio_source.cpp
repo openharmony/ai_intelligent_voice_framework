@@ -37,11 +37,6 @@ AudioSource::AudioSource(uint32_t minBufferSize, uint32_t bufferCnt,
     capturerOptions_.streamInfo.channels = capturerOptions.streamInfo.channels;
     capturerOptions_.capturerInfo.sourceType = capturerOptions.capturerInfo.sourceType;
     capturerOptions_.capturerInfo.capturerFlags = capturerOptions.capturerInfo.capturerFlags;
-
-    audioCapturer_ = AudioCapturer::Create(capturerOptions_, CACHE_PATH);
-    if (audioCapturer_ == nullptr) {
-        INTELL_VOICE_LOG_ERROR("create audio capturer failed");
-    }
 }
 
 AudioSource::~AudioSource()
@@ -52,11 +47,6 @@ AudioSource::~AudioSource()
 bool AudioSource::Start()
 {
     INTELL_VOICE_LOG_INFO("enter");
-    if (audioCapturer_ == nullptr) {
-        INTELL_VOICE_LOG_ERROR("audioCapturer_ is nullptr");
-        return false;
-    }
-
     if (listener_ == nullptr) {
         INTELL_VOICE_LOG_ERROR("listener_ is nullptr");
         return false;
@@ -73,15 +63,21 @@ bool AudioSource::Start()
         return false;
     }
 
-    CreateAudioDebugFile();
+    audioCapturer_ = AudioCapturer::Create(capturerOptions_, CACHE_PATH);
+    if (audioCapturer_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("audioCapturer_ is nullptr");
+        return false;
+    }
 
     if (!audioCapturer_->Start()) {
         INTELL_VOICE_LOG_ERROR("start audio capturer failed");
-        DestroyAudioDebugFile();
+        audioCapturer_->Release();
+        audioCapturer_ = nullptr;
         return false;
     }
 
     isReading_.store(true);
+    CreateAudioDebugFile();
     std::thread t1(std::bind(&AudioSource::ReadThread, this));
     readThread_ = std::move(t1);
     return true;
