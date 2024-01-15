@@ -125,7 +125,7 @@ void TriggerHostManager::UnloadTriggerAdapter(const IntellVoiceTriggerAdapterDse
 
 void TriggerHostManager::OnTriggerHDIDiedCallback()
 {
-    INTELL_VOICE_LOG_INFO("receive triggrt hdi death recipient, restart sa");
+    INTELL_VOICE_LOG_INFO("receive trigger hdi death recipient, restart sa");
     _Exit(0);
 }
 }
