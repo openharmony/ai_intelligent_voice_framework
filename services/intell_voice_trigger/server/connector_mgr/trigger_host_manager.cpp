@@ -80,7 +80,7 @@ bool TriggerHostManager::RegisterTriggerHDIDeathRecipient()
     }
 
     sptr<IntellVoiceDeathRecipient> recipient = new (std::nothrow) IntellVoiceDeathRecipient(
-        std::bind(&TriggerHostManager::OnTriggerHDIDiedCallback, this));
+        std::bind(&TriggerHostManager::OnTriggerHDIDiedCallback));
     if (recipient == nullptr) {
         INTELL_VOICE_LOG_ERROR("create death recipient failed");
         return false;
@@ -125,7 +125,7 @@ void TriggerHostManager::UnloadTriggerAdapter(const IntellVoiceTriggerAdapterDse
 
 void TriggerHostManager::OnTriggerHDIDiedCallback()
 {
-    INTELL_VOICE_LOG_INFO("receive hdi death recipient, restart sa");
+    INTELL_VOICE_LOG_INFO("receive trigger hdi death recipient, restart sa");
     _Exit(0);
 }
 }

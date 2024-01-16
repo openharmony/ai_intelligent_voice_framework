@@ -607,7 +607,6 @@ void TriggerHelper::AudioRendererStateChangeCallbackImpl::OnRendererStateChange(
     const std::vector<std::unique_ptr<AudioStandard::AudioRendererChangeInfo>> &audioRendererChangeInfos)
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    INTELL_VOICE_LOG_INFO("enter");
     if (helper_ == nullptr) {
         INTELL_VOICE_LOG_ERROR("helper is nullptr");
         return;
@@ -632,7 +631,7 @@ void TriggerHelper::AudioRendererStateChangeCallbackImpl::OnRendererStateChange(
             helper_->SetParameter(key, std::to_string(info->rendererInfo.streamUsage));
         } else {
             if (rendererStateMap_[info->rendererInfo.streamUsage] != isPlaying) {
-                INTELL_VOICE_LOG_INFO("state change, uage:%{public}d, isPlaying:%{public}d",
+                INTELL_VOICE_LOG_INFO("render state change, usage:%{public}d, isPlaying:%{public}d",
                     info->rendererInfo.streamUsage, isPlaying);
                 rendererStateMap_[info->rendererInfo.streamUsage] = isPlaying;
                 helper_->SetParameter(key, std::to_string(info->rendererInfo.streamUsage));

@@ -73,7 +73,7 @@ bool EngineHostManager::RegisterEngineHDIDeathRecipient()
     }
 
     engineHdiDeathRecipient_ = new (std::nothrow) IntellVoiceDeathRecipient(
-        std::bind(&EngineHostManager::OnEngineHDIDiedCallback, this));
+        std::bind(&EngineHostManager::OnEngineHDIDiedCallback));
     if (engineHdiDeathRecipient_ == nullptr) {
         INTELL_VOICE_LOG_ERROR("create death recipient failed");
         return false;

@@ -84,7 +84,7 @@ private:
     bool IsEngineExist(IntellVoiceEngineType type);
     void ReleaseUpdateEngine() override;
     bool CreateUpdateEngine() override;
-    void UpdateCompleteHandler(UpdateState result, bool islast) override;
+    void UpdateCompleteHandler(UpdateState result, bool isLast) override;
 private:
     static const int32_t g_enrollModelUuid;
     static std::unique_ptr<IntellVoiceServiceManager> g_intellVoiceServiceMgr;
