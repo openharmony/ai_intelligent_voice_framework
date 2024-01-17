@@ -34,6 +34,7 @@ using namespace OHOS::HDI::IntelligentVoice::Engine::V1_0;
 
 namespace OHOS {
 namespace IntellVoiceEngine {
+static constexpr int32_t MAX_ATTEMPT_CNT = 10;
 const int32_t IntellVoiceServiceManager::g_enrollModelUuid = 1;
 
 std::atomic<bool> IntellVoiceServiceManager::enrollResult_[ENGINE_TYPE_BUT] = {false, false, false};
@@ -256,18 +257,38 @@ void IntellVoiceServiceManager::CreateDetector()
 
 void IntellVoiceServiceManager::StartDetection()
 {
-    std::lock_guard<std::mutex> lock(detectorMutex_);
-    if (isServiceUnloaded_.load()) {
-        INTELL_VOICE_LOG_INFO("service is unloading");
-        return;
-    }
+    std::thread([this]() {
+        for (uint32_t cnt = 1; cnt <= MAX_ATTEMPT_CNT; ++cnt) {
+            {
+                std::lock_guard<std::mutex> lock(detectorMutex_);
+                if (detector_ == nullptr) {
+                    INTELL_VOICE_LOG_ERROR("detector_ is nullptr");
+                    return;
+                }
 
-    if (detector_ == nullptr) {
-        INTELL_VOICE_LOG_ERROR("detector_ is nullptr");
-        return;
-    }
+                if (isServiceUnloaded_.load()) {
+                    INTELL_VOICE_LOG_INFO("service is unloading");
+                    return;
+                }
 
-    detector_->StartRecognition();
+                auto triggerMgr = TriggerManager::GetInstance();
+                if (triggerMgr == nullptr) {
+                    INTELL_VOICE_LOG_ERROR("trigger manager is nullptr");
+                    return;
+                }
+
+                if (triggerMgr->GetParameter("audio_hal_status") == "true") {
+                    INTELL_VOICE_LOG_INFO("audio hal is ready");
+                    detector_->StartRecognition();
+                    return;
+                }
+            }
+            INTELL_VOICE_LOG_INFO("begin to wait");
+            std::this_thread::sleep_for(std::chrono::seconds(cnt));
+            INTELL_VOICE_LOG_INFO("end to wait");
+        }
+        INTELL_VOICE_LOG_ERROR("failed to start recognition");
+    }).detach();
 }
 
 void IntellVoiceServiceManager::StopDetection()
@@ -373,12 +394,16 @@ void IntellVoiceServiceManager::UnloadIntellVoiceService()
 
 void IntellVoiceServiceManager::OnSwitchChange()
 {
-    if (!QuerySwitchStatus() && !IsEngineExist(INTELL_VOICE_UPDATE) && !IsEngineExist(INTELL_VOICE_ENROLL)) {
+    if (!QuerySwitchStatus()) {
         INTELL_VOICE_LOG_INFO("switch off");
-        UnloadIntellVoiceService();
+        if (!IsEngineExist(INTELL_VOICE_ENROLL) && !IsEngineExist(INTELL_VOICE_UPDATE)) {
+            UnloadIntellVoiceService();
+        }
     } else {
         INTELL_VOICE_LOG_INFO("switch on");
-        OnServiceStart();
+        if (!IsEngineExist(INTELL_VOICE_ENROLL) && !IsEngineExist(INTELL_VOICE_UPDATE)) {
+            OnServiceStart();
+        }
     }
 }
 
