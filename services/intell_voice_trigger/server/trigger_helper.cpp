@@ -617,8 +617,6 @@ void TriggerHelper::AudioRendererStateChangeCallbackImpl::OnRendererStateChange(
             INTELL_VOICE_LOG_ERROR("info is nullptr");
             continue;
         }
-        INTELL_VOICE_LOG_INFO("rendererState is %{public}d, streamUsage is %{public}d",
-            static_cast<int32_t>(info->rendererState), static_cast<int32_t>(info->rendererInfo.streamUsage));
         bool isPlaying = false;
         if (info->rendererState == AudioStandard::RENDERER_RUNNING) {
             isPlaying = true;
@@ -626,13 +624,13 @@ void TriggerHelper::AudioRendererStateChangeCallbackImpl::OnRendererStateChange(
         std::string key = isPlaying ? "start_stream" : "stop_stream";
         if (rendererStateMap_.count(info->rendererInfo.streamUsage) == 0) {
             rendererStateMap_[info->rendererInfo.streamUsage] = isPlaying;
-            INTELL_VOICE_LOG_INFO("first change, usage:%{public}d, isPlaying:%{public}d",
-                info->rendererInfo.streamUsage, isPlaying);
+            INTELL_VOICE_LOG_INFO("first change, rendererState:%{public}d, usage:%{public}d, isPlaying:%{public}d",
+                static_cast<int32_t>(info->rendererState), info->rendererInfo.streamUsage, isPlaying);
             helper_->SetParameter(key, std::to_string(info->rendererInfo.streamUsage));
         } else {
             if (rendererStateMap_[info->rendererInfo.streamUsage] != isPlaying) {
-                INTELL_VOICE_LOG_INFO("render state change, usage:%{public}d, isPlaying:%{public}d",
-                    info->rendererInfo.streamUsage, isPlaying);
+                INTELL_VOICE_LOG_INFO("state change, rendererState:%{public}d, usage:%{public}d, isPlaying:%{public}d",
+                    static_cast<int32_t>(info->rendererState), info->rendererInfo.streamUsage, isPlaying);
                 rendererStateMap_[info->rendererInfo.streamUsage] = isPlaying;
                 helper_->SetParameter(key, std::to_string(info->rendererInfo.streamUsage));
             }
