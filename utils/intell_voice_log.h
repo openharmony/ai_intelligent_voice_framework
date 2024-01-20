@@ -19,7 +19,7 @@
 #include "hilog/log.h"
 
 #undef LOG_DOMAIN
-#define LOG_DOMAIN 0xD002500
+#define LOG_DOMAIN 0xD002105
 #undef LOG_TAG
 
 #define INTELL_VOICE_LOG_DEBUG(fmt, ...) \

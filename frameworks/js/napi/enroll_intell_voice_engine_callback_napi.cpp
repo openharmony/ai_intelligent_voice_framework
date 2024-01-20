@@ -192,14 +192,14 @@ void EnrollIntellVoiceEngineCallbackNapi::OnJsCallBack(EnrollAsyncContext *conte
                 loop_, work, [](uv_work_t *work) {}, UvWorkCallBack);
             if (ret != 0) {
                 INTELL_VOICE_LOG_INFO("Failed to execute libuv work queue");
-                delete context;
+                context->contextSp_.reset();
                 delete work;
             }
         } else {
-            delete context;
+            context->contextSp_.reset();
         }
     } else {
-        delete context;
+        context->contextSp_.reset();
     }
 }
 }  // namespace IntellVoiceNapi
