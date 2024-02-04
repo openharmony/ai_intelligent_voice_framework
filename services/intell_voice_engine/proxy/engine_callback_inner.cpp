@@ -41,7 +41,8 @@ void EngineCallbackInner::OnIntellVoiceEngineEvent(const IntellVoiceEngineCallBa
         tmpEvent.msgId = msgId;
         tmpEvent.result = result;
         tmpEvent.info = info;
-        cb_->OnEvent(tmpEvent);}).detach();
+        cb_->OnEvent(tmpEvent);
+    }).detach();
 }
 }
 }
