@@ -152,10 +152,8 @@ void WakeupEngine::SetCallback(sptr<IRemoteObject> object)
 
     sptr<IIntelligentVoiceEngineCallback> callback = iface_cast<IIntelligentVoiceEngineCallback>(object);
     if (callback == nullptr) {
-        INTELL_VOICE_LOG_ERROR("callback is nullptr");
-        return;
+        INTELL_VOICE_LOG_WARN("clear callback");
     }
-
     adapterListener_->SetCallback(callback);
 }
 

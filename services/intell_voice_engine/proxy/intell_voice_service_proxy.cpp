@@ -29,10 +29,8 @@ int32_t IntellVoiceServiceProxy::CreateIntellVoiceEngine(IntellVoiceEngineType t
     data.WriteInterfaceToken(IIntellVoiceService::GetDescriptor());
     data.WriteInt32(static_cast<int>(type));
 
-    if (type == INTELL_VOICE_ENROLL) {
-        auto stub = new IntellVoiceDeathRecipientStub();
-        data.WriteRemoteObject(stub);
-    }
+    auto stub = new IntellVoiceDeathRecipientStub();
+    data.WriteRemoteObject(stub);
 
     Remote()->SendRequest(HDI_INTELL_VOICE_SERVICE_CREATE_ENGINE, data, reply, option);
 

@@ -87,12 +87,11 @@ int32_t WakeupIntellVoiceEngine::SetCallback(shared_ptr<IIntellVoiceEngineEventC
         return -1;
     }
 
-    callback_ = sptr<EngineCallbackInner>(new (std::nothrow) EngineCallbackInner());
+    callback_ = sptr<EngineCallbackInner>(new (std::nothrow) EngineCallbackInner(callback));
     if (callback_ == nullptr) {
         INTELL_VOICE_LOG_ERROR("callback_ is nullptr");
         return -1;
     }
-    callback_->SetEngineEventCallback(callback);
     engine_->SetCallback(callback_->AsObject());
     return 0;
 }

@@ -71,12 +71,12 @@ HWTEST_F(ClientTest, ClientUtils, TestSize.Level1)
     IntellVoiceManager::GetInstance()->CreateIntellVoiceEngine(INTELL_VOICE_ENROLL, engine);
     ASSERT_NE(engine, nullptr);
 
-    sptr<EngineCallbackInner> callback = new (std::nothrow) EngineCallbackInner();
-    ASSERT_NE(callback, nullptr);
     cb_ = std::make_shared<EngineEventCallback>(engine, &waitForResult);
     ASSERT_NE(cb_, nullptr);
 
-    callback->SetEngineEventCallback(cb_);
+    sptr<EngineCallbackInner> callback = new (std::nothrow) EngineCallbackInner(cb_);
+    ASSERT_NE(callback, nullptr);
+
     sptr<IRemoteObject> callbackObj = callback->AsObject();
     ASSERT_NE(callbackObj, nullptr);
 

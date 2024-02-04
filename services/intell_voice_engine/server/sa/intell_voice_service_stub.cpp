@@ -35,10 +35,7 @@ int32_t IntellVoiceServiceStub::OnRemoteRequest(
 
     switch (code) {
         case HDI_INTELL_VOICE_SERVICE_CREATE_ENGINE:
-            if (type == INTELL_VOICE_ENROLL) {
-                sptr<IRemoteObject> obj = data.ReadRemoteObject();
-                RegisterDeathRecipient(obj);
-            }
+            RegisterDeathRecipient(type, data.ReadRemoteObject());
             ret = CreateIntellVoiceEngine(type, engine);
             if ((ret != 0) || (engine == nullptr)) {
                 INTELL_VOICE_LOG_ERROR("failed to create engine, type:%{public}d", type);
@@ -49,9 +46,7 @@ int32_t IntellVoiceServiceStub::OnRemoteRequest(
         case HDI_INTELL_VOICE_SERVICE_RELEASE_ENGINE:
             ret = ReleaseIntellVoiceEngine(type);
             reply.WriteInt32(ret);
-            if (type == INTELL_VOICE_ENROLL) {
-                DeregisterDeathRecipient();
-            }
+            DeregisterDeathRecipient(type);
             return ret;
         default:
             return IPCObjectStub::OnRemoteRequest(code, data, reply, option);

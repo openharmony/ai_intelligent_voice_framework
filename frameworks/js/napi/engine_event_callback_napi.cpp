@@ -94,9 +94,7 @@ void EngineEventCallbackNapi::OnEvent(const IntellVoiceEngineCallBackEvent &even
         event.result == 0 ? true : false, event.info};
 
     INTELL_VOICE_LOG_INFO("OnEvent EngineCallBackInfo: eventId: %{public}d, isSuccess: %{public}u, context: %{public}s",
-        cbInfo.eventId,
-        cbInfo.isSuccess,
-        cbInfo.context.c_str());
+        cbInfo.eventId, cbInfo.isSuccess, cbInfo.context.c_str());
 
     for (auto it : callbackRefSet_) {
         OnJsCallbackEngineEvent(cbInfo, it);
@@ -121,9 +119,6 @@ void EngineEventCallbackNapi::OnJsCallbackEngineEvent(const EngineCallBackInfo &
         CHECK_CONDITION_RETURN_VOID((callbackData == nullptr), "uvCallback is nullptr");
         CHECK_CONDITION_RETURN_VOID((callbackData->callback == nullptr), "uvCallback callback is nullptr");
         napi_env env = callbackData->callback->env_;
-        INTELL_VOICE_LOG_INFO("start, event id:%{public}d, is success:%{public}d, context:%{public}s",
-            callbackData->cbInfo.eventId, callbackData->cbInfo.isSuccess, callbackData->cbInfo.context.c_str());
-
         napi_value jsCallback = callbackData->callback->GetRefValue();
         CHECK_CONDITION_RETURN_VOID((jsCallback == nullptr), "get reference value failed");
 

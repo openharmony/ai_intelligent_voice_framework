@@ -64,8 +64,8 @@ public:
     bool QuerySwitchStatus();
     void UnloadIntellVoiceService();
 
-    bool RegisterProxyDeathRecipient(const sptr<IRemoteObject> &object);
-    bool DeregisterProxyDeathRecipient();
+    bool RegisterProxyDeathRecipient(IntellVoiceEngineType type, const sptr<IRemoteObject> &object);
+    bool DeregisterProxyDeathRecipient(IntellVoiceEngineType type);
 
     using UpdateEngineController::SaveWakeupVesion;
     using UpdateEngineController::OnUpdateComplete;
@@ -80,7 +80,6 @@ private:
     sptr<IIntellVoiceEngine> CreateEngineInner(IntellVoiceEngineType type);
     int32_t ReleaseEngineInner(IntellVoiceEngineType type);
     bool CreateOrResetWakeupEngine();
-    void OnProxyDiedCallback();
     bool IsEngineExist(IntellVoiceEngineType type);
     void ReleaseUpdateEngine() override;
     bool CreateUpdateEngine() override;
@@ -98,8 +97,8 @@ private:
     sptr<SwitchObserver> switchObserver_ = nullptr;
     IntellVoiceUtils::UniqueProductType<SwitchProvider> switchProvider_ =
         IntellVoiceUtils::UniqueProductType<SwitchProvider> {nullptr, nullptr};
-    sptr<IntellVoiceUtils::IntellVoiceDeathRecipient> proxyDeathRecipient_ = nullptr;
-    sptr<IRemoteObject> deathRecipientObj_ = nullptr;
+    std::map<IntellVoiceEngineType, sptr<IntellVoiceUtils::IntellVoiceDeathRecipient>> proxyDeathRecipient_;
+    std::map<IntellVoiceEngineType, sptr<IRemoteObject>> deathRecipientObj_;
 };
 }  // namespace IntellVoice
 }  // namespace OHOS
