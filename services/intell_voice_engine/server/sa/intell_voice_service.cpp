@@ -373,10 +373,15 @@ void IntellVoiceService::OnAudioPolicyServiceChange(bool isAdded)
     }
 }
 
-bool IntellVoiceService::RegisterDeathRecipient(const sptr<IRemoteObject> &object)
+bool IntellVoiceService::RegisterDeathRecipient(IntellVoiceEngineType type, const sptr<IRemoteObject> &object)
 {
     if (object == nullptr) {
         INTELL_VOICE_LOG_ERROR("object is nullptr");
+        return false;
+    }
+
+    if ((type < INTELL_VOICE_ENROLL) || (type > INTELL_VOICE_WAKEUP)) {
+        INTELL_VOICE_LOG_ERROR("invalid type:%{public}d", type);
         return false;
     }
 
@@ -385,17 +390,22 @@ bool IntellVoiceService::RegisterDeathRecipient(const sptr<IRemoteObject> &objec
         INTELL_VOICE_LOG_ERROR("manager is nullptr");
         return false;
     }
-    return manager->RegisterProxyDeathRecipient(object);
+    return manager->RegisterProxyDeathRecipient(type, object);
 }
 
-bool IntellVoiceService::DeregisterDeathRecipient()
+bool IntellVoiceService::DeregisterDeathRecipient(IntellVoiceEngineType type)
 {
+    if ((type < INTELL_VOICE_ENROLL) || (type > INTELL_VOICE_WAKEUP)) {
+        INTELL_VOICE_LOG_ERROR("invalid type:%{public}d", type);
+        return false;
+    }
+
     const auto &manager = IntellVoiceServiceManager::GetInstance();
     if (manager == nullptr) {
         INTELL_VOICE_LOG_INFO("manager is nullptr");
         return false;
     }
-    return manager->DeregisterProxyDeathRecipient();
+    return manager->DeregisterProxyDeathRecipient(type);
 }
 }  // namespace IntellVoiceEngine
 }  // namespace OHOS

@@ -25,8 +25,8 @@ public:
     int32_t OnRemoteRequest(uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option) override;
 
 protected:
-    virtual bool RegisterDeathRecipient(const sptr<IRemoteObject> &object) = 0;
-    virtual bool DeregisterDeathRecipient() = 0;
+    virtual bool RegisterDeathRecipient(IntellVoiceEngineType type, const sptr<IRemoteObject> &object) = 0;
+    virtual bool DeregisterDeathRecipient(IntellVoiceEngineType type) = 0;
 };
 }  // namespace IntellVoiceEngine
 }  // namespace OHOS

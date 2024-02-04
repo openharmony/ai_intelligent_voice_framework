@@ -37,7 +37,8 @@ void WakeupAdapterListener::SetCallback(const sptr<IIntelligentVoiceEngineCallba
 {
     std::lock_guard<std::mutex> lock(mutex_);
     if (cb == nullptr) {
-        INTELL_VOICE_LOG_ERROR("cb is nullptr");
+        INTELL_VOICE_LOG_INFO("clear callback");
+        cb_ = nullptr;
         return;
     }
     cb_ = cb;
@@ -61,10 +62,9 @@ void WakeupAdapterListener::OnIntellVoiceHdiEvent(const IntellVoiceEngineCallBac
         }
 
         historyEvent_ = nullptr;
-    }
-
-    if (event.msgId == INTELL_VOICE_ENGINE_MSG_RECOGNIZE_COMPLETE) {
-        cb_->OnIntellVoiceEngineEvent(event);
+        if (event.msgId == INTELL_VOICE_ENGINE_MSG_RECOGNIZE_COMPLETE) {
+            cb_->OnIntellVoiceEngineEvent(event);
+        }
     }
 
     wakeupEventCb_(event.msgId, event.result);

@@ -22,9 +22,10 @@ namespace OHOS {
 namespace IntellVoiceEngine {
 class EngineCallbackInner final : public IntellVoiceEngineCallbackStub {
 public:
+    explicit EngineCallbackInner(std::shared_ptr<IIntellVoiceEngineEventCallback> cb);
     void OnIntellVoiceEngineEvent(
         const OHOS::HDI::IntelligentVoice::Engine::V1_0::IntellVoiceEngineCallBackEvent &event) override;
-    void SetEngineEventCallback(std::shared_ptr<IIntellVoiceEngineEventCallback> cb);
+
 private:
     std::shared_ptr<IIntellVoiceEngineEventCallback> cb_;
 };
