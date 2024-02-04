@@ -12,15 +12,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include "engine_callback_inner.h"
+#include <thread>
 #include "intell_voice_log.h"
 
-using namespace OHOS::HDI::IntelligentVoice::Engine::V1_0;
 #define LOG_TAG "EngineCallbackInner"
+
+using namespace OHOS::HDI::IntelligentVoice::Engine::V1_0;
 
 namespace OHOS {
 namespace IntellVoiceEngine {
+EngineCallbackInner::EngineCallbackInner(std::shared_ptr<IIntellVoiceEngineEventCallback> cb) : cb_(cb)
+{
+}
+
 void EngineCallbackInner::OnIntellVoiceEngineEvent(const IntellVoiceEngineCallBackEvent &event)
 {
     INTELL_VOICE_LOG_INFO("receive event");
@@ -28,12 +33,15 @@ void EngineCallbackInner::OnIntellVoiceEngineEvent(const IntellVoiceEngineCallBa
         INTELL_VOICE_LOG_INFO("cb is null");
         return;
     }
-    cb_->OnEvent(event);
-}
-
-void EngineCallbackInner::SetEngineEventCallback(std::shared_ptr<IIntellVoiceEngineEventCallback> cb)
-{
-    cb_ = cb;
+    auto msgId = event.msgId;
+    auto result = event.result;
+    auto info = event.info;
+    std::thread([this, msgId, result, info]() {
+        IntellVoiceEngineCallBackEvent tmpEvent;
+        tmpEvent.msgId = msgId;
+        tmpEvent.result = result;
+        tmpEvent.info = info;
+        cb_->OnEvent(tmpEvent);}).detach();
 }
 }
 }

@@ -35,8 +35,8 @@ public:
     int32_t CreateIntellVoiceEngine(IntellVoiceEngineType type, sptr<IIntellVoiceEngine> &inst) override;
     int32_t ReleaseIntellVoiceEngine(IntellVoiceEngineType type) override;
 
-    bool RegisterDeathRecipient(const sptr<IRemoteObject> &object) override;
-    bool DeregisterDeathRecipient() override;
+    bool RegisterDeathRecipient(IntellVoiceEngineType type, const sptr<IRemoteObject> &object) override;
+    bool DeregisterDeathRecipient(IntellVoiceEngineType type) override;
 
     class PerStateChangeCbCustomizeCallback : public Security::AccessToken::PermStateChangeCallbackCustomize {
     public:

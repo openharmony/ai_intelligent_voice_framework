@@ -407,32 +407,61 @@ void IntellVoiceServiceManager::OnSwitchChange()
     }
 }
 
-bool IntellVoiceServiceManager::RegisterProxyDeathRecipient(const sptr<IRemoteObject> &object)
+bool IntellVoiceServiceManager::RegisterProxyDeathRecipient(IntellVoiceEngineType type,
+    const sptr<IRemoteObject> &object)
 {
-    deathRecipientObj_ = object;
-    proxyDeathRecipient_ = new (std::nothrow) IntellVoiceDeathRecipient(
-        std::bind(&IntellVoiceServiceManager::OnProxyDiedCallback, this));
-    if (proxyDeathRecipient_ == nullptr) {
-        INTELL_VOICE_LOG_ERROR("create death recipient failed");
+    std::lock_guard<std::mutex> lock(engineMutex_);
+    INTELL_VOICE_LOG_INFO("enter, type:%{public}d", type);
+    deathRecipientObj_[type] = object;
+    if (type == INTELL_VOICE_ENROLL) {
+        proxyDeathRecipient_[type] = new (std::nothrow) IntellVoiceDeathRecipient([&]() {
+            INTELL_VOICE_LOG_INFO("receive enroll proxy death recipient, release enroll engine");
+            ReleaseEngine(INTELL_VOICE_ENROLL);
+        });
+        if (proxyDeathRecipient_[type] == nullptr) {
+            INTELL_VOICE_LOG_ERROR("create death recipient failed");
+            return false;
+        }
+    } else if (type == INTELL_VOICE_WAKEUP) {
+        proxyDeathRecipient_[type] = new (std::nothrow) IntellVoiceDeathRecipient([&]() {
+            INTELL_VOICE_LOG_INFO("receive wakeup proxy death recipient, clear wakeup engine callback");
+            std::lock_guard<std::mutex> lock(engineMutex_);
+            sptr<EngineBase> engine = GetEngine(INTELL_VOICE_WAKEUP, engines_);
+            if (engine != nullptr) {
+                INTELL_VOICE_LOG_INFO("clear wakeup engine callback");
+                engine->SetCallback(nullptr);
+            }
+        });
+        if (proxyDeathRecipient_[type] == nullptr) {
+            INTELL_VOICE_LOG_ERROR("create death recipient failed");
+            return false;
+        }
+    } else {
+        INTELL_VOICE_LOG_ERROR("invalid type:%{public}d", type);
         return false;
     }
 
-    return deathRecipientObj_->AddDeathRecipient(proxyDeathRecipient_);
+    return deathRecipientObj_[type]->AddDeathRecipient(proxyDeathRecipient_[type]);
 }
 
-bool IntellVoiceServiceManager::DeregisterProxyDeathRecipient()
+bool IntellVoiceServiceManager::DeregisterProxyDeathRecipient(IntellVoiceEngineType type)
 {
-    if (proxyDeathRecipient_ == nullptr) {
-        INTELL_VOICE_LOG_ERROR("death recipient is nullptr");
+    std::lock_guard<std::mutex> lock(engineMutex_);
+    INTELL_VOICE_LOG_INFO("enter, type:%{public}d", type);
+    if (deathRecipientObj_.count(type) == 0 || deathRecipientObj_[type] == nullptr) {
+        INTELL_VOICE_LOG_ERROR("death obj is nullptr, type:%{public}d", type);
         return false;
     }
-    return deathRecipientObj_->RemoveDeathRecipient(proxyDeathRecipient_);
-}
+    if (proxyDeathRecipient_.count(type) == 0 || proxyDeathRecipient_[type] == nullptr) {
+        INTELL_VOICE_LOG_ERROR("death recipient is nullptr, type:%{public}d", type);
+        deathRecipientObj_.erase(type);
+        return false;
+    }
 
-void IntellVoiceServiceManager::OnProxyDiedCallback()
-{
-    INTELL_VOICE_LOG_INFO("receive proxy death recipient, release enroll engine");
-    ReleaseEngine(INTELL_VOICE_ENROLL);
+    auto ret = deathRecipientObj_[type]->RemoveDeathRecipient(proxyDeathRecipient_[type]);
+    deathRecipientObj_.erase(type);
+    proxyDeathRecipient_.erase(type);
+    return ret;
 }
 
 bool IntellVoiceServiceManager::IsEngineExist(IntellVoiceEngineType type)
