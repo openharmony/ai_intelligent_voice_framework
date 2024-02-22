@@ -17,6 +17,7 @@
 #include "securec.h"
 #include "intell_voice_log.h"
 #include "memory_guard.h"
+#include "array_buffer_util.h"
 
 #define LOG_TAG "AudioSource"
 
@@ -77,7 +78,7 @@ bool AudioSource::Start()
     }
 
     isReading_.store(true);
-    CreateAudioDebugFile();
+    CreateAudioDebugFile("_audio_source");
     std::thread t1(std::bind(&AudioSource::ReadThread, this));
     readThread_ = std::move(t1);
     return true;
@@ -87,12 +88,14 @@ void AudioSource::ReadThread()
 {
     INTELL_VOICE_LOG_INFO("enter");
     uint32_t readCnt = 0;
-    bool isError = true;
+    isEnd_ = false;
     while (isReading_.load()) {
-        if (readCnt >= bufferCnt_) {
+        if (!isEnd_ && (readCnt == bufferCnt_)) {
             INTELL_VOICE_LOG_INFO("finish reading data");
-            isError = false;
-            break;
+            isEnd_ = true;
+            if (listener_ != nullptr) {
+                listener_->bufferEndCb_();
+            }
         }
 
         if (!Read()) {
@@ -100,10 +103,6 @@ void AudioSource::ReadThread()
             break;
         }
         ++readCnt;
-    }
-
-    if (listener_ != nullptr) {
-        listener_->bufferEndCb_(isError);
     }
 }
 
@@ -131,8 +130,8 @@ bool AudioSource::Read()
 
     WriteData(reinterpret_cast<char *>(buffer_.get()), minBufferSize_);
 
-    if (listener_ != nullptr) {
-        listener_->readBufferCb_(buffer_.get(), minBufferSize_);
+    if ((listener_ != nullptr)) {
+        listener_->readBufferCb_(buffer_.get(), minBufferSize_, isEnd_);
     }
     return true;
 }

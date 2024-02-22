@@ -39,6 +39,12 @@ IntellVoiceEngineStub::IntellVoiceEngineStub()
         MessageParcel &reply) -> int32_t { return this->StopInner(data, reply); };
     processFuncMap_[INTELL_VOICE_ENGINE_WRITE_AUDIO] = [this](MessageParcel &data,
         MessageParcel &reply) -> int32_t { return this->WriteAudioInner(data, reply); };
+    processFuncMap_[INTELL_VOICE_ENGINE_READ] = [this](MessageParcel &data,
+        MessageParcel &reply) -> int32_t { return this->ReadInner(data, reply); };
+    processFuncMap_[INTELL_VOICE_ENGINE_STAET_CAPTURER] = [this](MessageParcel &data,
+        MessageParcel &reply) -> int32_t { return this->StartCapturerInner(data, reply); };
+    processFuncMap_[INTELL_VOICE_ENGINE_STOP_CAPTURER] = [this](MessageParcel &data,
+        MessageParcel &reply) -> int32_t { return this->StopCapturerInner(data, reply); };
 }
 
 IntellVoiceEngineStub::~IntellVoiceEngineStub()
@@ -135,6 +141,35 @@ int32_t IntellVoiceEngineStub::WriteAudioInner(MessageParcel &data, MessageParce
     }
 
     int32_t ret = WriteAudio(buffer, size);
+    reply.WriteInt32(ret);
+    return ret;
+}
+
+int32_t IntellVoiceEngineStub::ReadInner(MessageParcel &data, MessageParcel &reply)
+{
+    std::vector<uint8_t> pcmData;
+    int32_t ret = Read(pcmData);
+    reply.WriteInt32(ret);
+    if (ret != 0) {
+        INTELL_VOICE_LOG_ERROR("failed to read wakeup pcm, ret:%{public}d", ret);
+        return ret;
+    }
+
+    reply.WriteUint32(pcmData.size());
+    reply.WriteBuffer(pcmData.data(), pcmData.size());
+    return ret;
+}
+
+int32_t IntellVoiceEngineStub::StartCapturerInner(MessageParcel &data, MessageParcel &reply)
+{
+    int32_t ret = StartCapturer(data.ReadInt32());
+    reply.WriteInt32(ret);
+    return ret;
+}
+
+int32_t IntellVoiceEngineStub::StopCapturerInner(MessageParcel &data, MessageParcel &reply)
+{
+    int32_t ret = StopCapturer();
     reply.WriteInt32(ret);
     return ret;
 }

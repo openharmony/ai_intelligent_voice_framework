@@ -14,13 +14,8 @@
  */
 #ifndef ENGINE_BASE_H
 #define ENGINE_BASE_H
-#include <memory>
-#include <mutex>
-#include <string>
-#include <map>
-#include <ashmem.h>
+#include <vector>
 #include "intell_voice_engine_stub.h"
-#include "v1_0/iintell_voice_engine_adapter.h"
 
 namespace OHOS {
 namespace IntellVoiceEngine {
@@ -28,10 +23,10 @@ class EngineBase : public IntellVoiceEngineStub {
 public:
     ~EngineBase() = default;
     virtual bool Init() = 0;
-    int32_t SetParameter(const std::string &keyValueList) override;
-    std::string GetParameter(const std::string &key) override;
-    int32_t WriteAudio(const uint8_t *buffer, uint32_t size) override;
-    int32_t Stop() override;
+    int32_t WriteAudio(const uint8_t *buffer, uint32_t size) override
+    {
+        return 0;
+    }
     virtual void OnDetected() {};
     virtual bool ResetAdapter()
     {
@@ -40,18 +35,11 @@ public:
     virtual void ReleaseAdapter()
     {
     }
+    int32_t Read(std::vector<uint8_t> &data) override;
+    int32_t StartCapturer(int32_t channels) override;
+    int32_t StopCapturer() override;
 protected:
-    EngineBase();
-    bool SetDspFeatures();
-    void SplitStringToKVPair(const std::string &inputStr, std::map<std::string, std::string> &kvpairs);
-    void ProcDspModel();
-    void ReleaseAdapterInner();
-    std::mutex mutex_;
-    sptr<OHOS::HDI::IntelligentVoice::Engine::V1_0::IIntellVoiceEngineAdapter> adapter_ = nullptr;
-    OHOS::HDI::IntelligentVoice::Engine::V1_0::IntellVoiceEngineAdapterDescriptor desc_;
-
-private:
-    void WriteBufferFromAshmem(uint8_t *&buffer, uint32_t size, sptr<OHOS::Ashmem> ashmem);
+    EngineBase() = default;
 };
 }
 }

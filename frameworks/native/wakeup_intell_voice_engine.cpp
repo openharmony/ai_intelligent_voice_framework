@@ -95,5 +95,33 @@ int32_t WakeupIntellVoiceEngine::SetCallback(shared_ptr<IIntellVoiceEngineEventC
     engine_->SetCallback(callback_->AsObject());
     return 0;
 }
+
+int32_t WakeupIntellVoiceEngine::Read(std::vector<uint8_t> &data)
+{
+    INTELL_VOICE_LOG_INFO("enter");
+    CHECK_CONDITION_RETURN_RET(engine_ == nullptr, -1, "engine is null");
+
+    return engine_->Read(data);
+}
+
+int32_t WakeupIntellVoiceEngine::StartCapturer(int32_t channels)
+{
+    INTELL_VOICE_LOG_INFO("enter");
+    if (engine_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("engine is null");
+        return -1;
+    }
+    return engine_->StartCapturer(channels);
+}
+
+int32_t WakeupIntellVoiceEngine::StopCapturer()
+{
+    INTELL_VOICE_LOG_INFO("enter");
+    if (engine_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("engine is null");
+        return -1;
+    }
+    return engine_->StopCapturer();
+}
 }
 }

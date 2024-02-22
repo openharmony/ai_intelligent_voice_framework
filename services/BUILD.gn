@@ -60,6 +60,7 @@ ohos_shared_library("intell_voice_server") {
     "intell_voice_engine/server/base/data_operation_callback.cpp",
     "intell_voice_engine/server/base/engine_base.cpp",
     "intell_voice_engine/server/base/engine_factory.cpp",
+    "intell_voice_engine/server/base/engine_util.cpp",
     "intell_voice_engine/server/base/file_source.cpp",
     "intell_voice_engine/server/enroll/enroll_adapter_listener.cpp",
     "intell_voice_engine/server/enroll/enroll_engine.cpp",
@@ -80,6 +81,8 @@ ohos_shared_library("intell_voice_server") {
     "intell_voice_engine/server/utils/system_event_observer.cpp",
     "intell_voice_engine/server/wakeup/wakeup_adapter_listener.cpp",
     "intell_voice_engine/server/wakeup/wakeup_engine.cpp",
+    "intell_voice_engine/server/wakeup/wakeup_engine_impl.cpp",
+    "intell_voice_engine/server/wakeup/wakeup_source_process.cpp",
     "intell_voice_engine/server/wakeup/wakeup_source_stop_callback.cpp",
     "intell_voice_trigger/server/connector_mgr/trigger_callback_impl.cpp",
     "intell_voice_trigger/server/connector_mgr/trigger_connector.cpp",
@@ -115,6 +118,7 @@ ohos_shared_library("intell_voice_server") {
     "-Wno-error=unused-parameter",
     "-DHILOG_ENABLE",
     "-DENABLE_DEBUG",
+    "-DAUDIO_DATA_DEBUG",
   ]
 
   deps = [ "../utils:intell_voice_utils" ]

@@ -29,7 +29,7 @@ ServiceDbHelper::ServiceDbHelper(const std::string &inAppId, const std::string &
     Options options = {
         .createIfMissing = true,
         .encrypt = false,
-        .autoSync = true,
+        .autoSync = false,
         .securityLevel = SecurityLevel::S1,
         .area = Area::EL1,
         .kvStoreType = KvStoreType::SINGLE_VERSION,

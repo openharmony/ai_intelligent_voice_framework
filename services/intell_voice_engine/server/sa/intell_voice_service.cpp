@@ -18,8 +18,6 @@
 #include <fcntl.h>
 #include <cstdio>
 #include <unistd.h>
-#include "accesstoken_kit.h"
-#include "ipc_skeleton.h"
 #include "tokenid_kit.h"
 #include "idevmgr_hdi.h"
 #include "audio_system_manager.h"

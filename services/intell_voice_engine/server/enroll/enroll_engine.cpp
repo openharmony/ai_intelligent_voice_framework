@@ -66,19 +66,13 @@ void EnrollEngine::OnEnrollEvent(int32_t msgId, int32_t result)
 
 void EnrollEngine::OnEnrollComplete()
 {
+    std::lock_guard<std::mutex> lock(mutex_);
     StopAudioSource();
 }
 
 bool EnrollEngine::Init()
 {
-    desc_.adapterType = ENROLL_ADAPTER_TYPE;
-    adapter_ = EngineHostManager::GetInstance().CreateEngineAdapter(desc_);
-    if (adapter_ == nullptr) {
-        INTELL_VOICE_LOG_ERROR("adapter is nullptr");
-        return false;
-    }
-
-    return true;
+    return EngineUtil::CreateAdapterInner(ENROLL_ADAPTER_TYPE);
 }
 
 void EnrollEngine::SetCallback(sptr<IRemoteObject> object)
@@ -136,9 +130,8 @@ int32_t EnrollEngine::Attach(const IntellVoiceEngineInfo &info)
 int32_t EnrollEngine::Detach(void)
 {
     INTELL_VOICE_LOG_INFO("enter");
-    StopAudioSource();
-
     std::lock_guard<std::mutex> lock(mutex_);
+    StopAudioSource();
     if (adapter_ == nullptr) {
         INTELL_VOICE_LOG_WARN("already detach");
         return 0;
@@ -198,13 +191,15 @@ int32_t EnrollEngine::Start(bool isLast)
 
 int32_t EnrollEngine::Stop()
 {
+    std::lock_guard<std::mutex> lock(mutex_);
     StopAudioSource();
 
-    return EngineBase::Stop();
+    return EngineUtil::Stop();
 }
 
 int32_t EnrollEngine::SetParameter(const std::string &keyValueList)
 {
+    std::lock_guard<std::mutex> lock(mutex_);
     if (SetParameterInner(keyValueList)) {
         INTELL_VOICE_LOG_INFO("inner parameter");
         return 0;
@@ -212,13 +207,11 @@ int32_t EnrollEngine::SetParameter(const std::string &keyValueList)
 
     INTELL_VOICE_LOG_INFO("EnrollEngine SetParameter:%{public}s", keyValueList.c_str());
 
-    return EngineBase::SetParameter(keyValueList);
+    return EngineUtil::SetParameter(keyValueList);
 }
 
 bool EnrollEngine::SetParameterInner(const std::string &keyValueList)
 {
-    std::lock_guard<std::mutex> lock(mutex_);
-
     HistoryInfoMgr &historyInfoMgr = HistoryInfoMgr::GetInstance();
 
     std::map<std::string, std::string> kvpairs;
@@ -249,15 +242,27 @@ bool EnrollEngine::SetParameterInner(const std::string &keyValueList)
     return false;
 }
 
+std::string EnrollEngine::GetParameter(const std::string &key)
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    return EngineUtil::GetParameter(key);
+}
+
+int32_t EnrollEngine::WriteAudio(const uint8_t *buffer, uint32_t size)
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    return EngineUtil::WriteAudio(buffer, size);
+}
+
 bool EnrollEngine::StartAudioSource()
 {
-    auto listener = std::make_unique<AudioSourceListener>([&] (uint8_t *buffer, uint32_t size) {
-        if (adapter_ != nullptr) {
+    auto listener = std::make_unique<AudioSourceListener>([&] (uint8_t *buffer, uint32_t size, bool isEnd) {
+        if ((adapter_ != nullptr) && (!isEnd)) {
             std::vector<uint8_t> audioBuff(&buffer[0], &buffer[size]);
             adapter_->WriteAudio(audioBuff);
-        }}, [&] (bool isError) {
-            INTELL_VOICE_LOG_INFO("end of pcm, isError:%{public}d", isError);
-            if ((adapter_ != nullptr) && (!isError)) {
+        }}, [&] () {
+            INTELL_VOICE_LOG_INFO("end of pcm");
+            if (adapter_ != nullptr) {
                 adapter_->SetParameter("end_of_pcm=true");
             }
         });
@@ -284,7 +289,6 @@ bool EnrollEngine::StartAudioSource()
 
 void EnrollEngine::StopAudioSource()
 {
-    std::lock_guard<std::mutex> lock(mutex_);
     INTELL_VOICE_LOG_INFO("enter");
     if (audioSource_ != nullptr) {
         INTELL_VOICE_LOG_INFO("stop audio sopurce");

@@ -25,8 +25,8 @@
 
 namespace OHOS {
 namespace IntellVoiceEngine {
-using OnReadBufferCb = std::function<void(uint8_t *buffer, uint32_t size)>;
-using OnBufferEndCb = std::function<void(bool isError)>;
+using OnReadBufferCb = std::function<void(uint8_t *buffer, uint32_t size, bool isEnd)>;
+using OnBufferEndCb = std::function<void()>;
 
 struct AudioSourceListener {
     AudioSourceListener(OnReadBufferCb readBufferCb, OnBufferEndCb bufferEndCb)
@@ -50,6 +50,7 @@ private:
 private:
     uint32_t minBufferSize_ = 0;
     uint32_t bufferCnt_ = 0;
+    bool isEnd_ = false;
     std::unique_ptr<AudioSourceListener> listener_ = nullptr;
     std::atomic<bool> isReading_ = false;
     std::thread readThread_;

@@ -50,6 +50,19 @@ napi_value IntellVoiceRef::GetRefValue()
     return value;
 }
 
+napi_value SetValue(napi_env env, const std::vector<uint8_t> &value)
+{
+    napi_value result = nullptr;
+    void *buf = nullptr;
+    napi_status status = napi_create_arraybuffer(env, value.size(), &buf, &result);
+    if (status != napi_ok || result == nullptr) {
+        INTELL_VOICE_LOG_ERROR("get js array value fail");
+        return nullptr;
+    }
+    std::copy(value.begin(), value.end(), static_cast<uint8_t *>(buf));
+    return result;
+}
+
 napi_value SetValue(napi_env env, const int32_t &value)
 {
     napi_value result = nullptr;

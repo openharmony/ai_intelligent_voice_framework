@@ -86,15 +86,11 @@ void UpdateEngine::OnUpdateEvent(int32_t msgId, int32_t result)
 
 bool UpdateEngine::Init()
 {
-    desc_.adapterType = UPDATE_ADAPTER_TYPE;
-    sptr<IRemoteObject> object = nullptr;
-    adapter_ = EngineHostManager::GetInstance().CreateEngineAdapter(desc_);
-    if (adapter_ == nullptr) {
-        INTELL_VOICE_LOG_ERROR("adapter is nullptr");
+    if (!EngineUtil::CreateAdapterInner(UPDATE_ADAPTER_TYPE)) {
         return false;
     }
 
-    SetCallback(object);
+    SetCallback(nullptr);
     adapter_->SetParameter(LANGUAGE_TEXT + HistoryInfoMgr::GetInstance().GetLanguage());
     adapter_->SetParameter(AREA_TEXT + HistoryInfoMgr::GetInstance().GetArea());
     SetDspFeatures();
@@ -174,20 +170,30 @@ int32_t UpdateEngine::Detach(void)
 
 int32_t UpdateEngine::Start(bool isLast)
 {
-    std::lock_guard<std::mutex> lock(mutex_);
     INTELL_VOICE_LOG_INFO("enter");
+    std::lock_guard<std::mutex> lock(mutex_);
     return 0;
 }
 
 int32_t UpdateEngine::Stop()
 {
     INTELL_VOICE_LOG_INFO("enter");
-    return EngineBase::Stop();
+    std::lock_guard<std::mutex> lock(mutex_);
+    return EngineUtil::Stop();
 }
 
 int32_t UpdateEngine::SetParameter(const std::string &keyValueList)
 {
-    return EngineBase::SetParameter(keyValueList);
+    INTELL_VOICE_LOG_INFO("enter");
+    std::lock_guard<std::mutex> lock(mutex_);
+    return EngineUtil::SetParameter(keyValueList);
+}
+
+std::string UpdateEngine::GetParameter(const std::string &key)
+{
+    INTELL_VOICE_LOG_INFO("enter");
+    std::lock_guard<std::mutex> lock(mutex_);
+    return EngineUtil::GetParameter(key);
 }
 }
 }

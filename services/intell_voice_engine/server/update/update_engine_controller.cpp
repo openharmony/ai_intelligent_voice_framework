@@ -138,7 +138,7 @@ bool UpdateEngineController::IsVersionUpdate()
 
 void UpdateEngineController::OnTimerEvent(TimerEvent &info)
 {
-    INTELL_VOICE_LOG_INFO("TimerEvent %d", timerId_);
+    INTELL_VOICE_LOG_INFO("TimerEvent %{public}d", timerId_);
     OnUpdateRetry();
 }
 
@@ -161,7 +161,7 @@ void UpdateEngineController::OnUpdateRetry()
     ReleaseUpdateEngine();
     UpdateCompleteHandler(updateResult_, true);
     ClearRetryState();
-    TimerMgr::Stop();
+    std::thread([this]() { TimerMgr::Stop(); }).detach();
 }
 
 bool UpdateEngineController::CreateUpdateEngineUntilTime(int delaySecond)

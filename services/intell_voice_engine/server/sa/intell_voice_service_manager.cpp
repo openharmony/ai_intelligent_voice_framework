@@ -258,6 +258,11 @@ void IntellVoiceServiceManager::CreateDetector()
 void IntellVoiceServiceManager::StartDetection()
 {
     std::thread([this]() {
+        if (IsEngineExist(INTELL_VOICE_ENROLL) || IsEngineExist(INTELL_VOICE_UPDATE)) {
+            INTELL_VOICE_LOG_INFO("enroll engine or update engine exist, no need to start to recognize");
+            return;
+        }
+
         for (uint32_t cnt = 1; cnt <= MAX_ATTEMPT_CNT; ++cnt) {
             {
                 std::lock_guard<std::mutex> lock(detectorMutex_);
@@ -303,15 +308,11 @@ void IntellVoiceServiceManager::StopDetection()
 
 void IntellVoiceServiceManager::OnDetected()
 {
-    sptr<EngineBase> engine = nullptr;
-
-    {
-        std::lock_guard<std::mutex> lock(engineMutex_);
-        engine = GetEngine(INTELL_VOICE_WAKEUP, engines_);
-        if (engine == nullptr) {
-            INTELL_VOICE_LOG_ERROR("wakeup engine is not existed");
-            return;
-        }
+    std::lock_guard<std::mutex> lock(engineMutex_);
+    sptr<EngineBase> engine = GetEngine(INTELL_VOICE_WAKEUP, engines_);
+    if (engine == nullptr) {
+        INTELL_VOICE_LOG_ERROR("wakeup engine is not existed");
+        return;
     }
 
     engine->OnDetected();

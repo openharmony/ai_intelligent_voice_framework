@@ -26,11 +26,11 @@ namespace IntellVoiceEngine {
 
 static const std::string PCM_DIR = "/data/data/intell_voice/pcm_data/";
 
-void AudioDebug::CreateAudioDebugFile()
+void AudioDebug::CreateAudioDebugFile(const std::string &suffix)
 {
     DestroyAudioDebugFile();
 
-    auto path = PCM_DIR + OHOS::IntellVoiceUtils::TimeUtil::GetCurrTime() + ".pcm";
+    auto path = PCM_DIR + OHOS::IntellVoiceUtils::TimeUtil::GetCurrTime() + suffix+ ".pcm";
     fileStream_ = std::make_unique<std::ofstream>(path);
     if (fileStream_ == nullptr) {
         INTELL_VOICE_LOG_ERROR("open debug record file failed");
@@ -38,7 +38,7 @@ void AudioDebug::CreateAudioDebugFile()
     }
 }
 
-void AudioDebug::WriteData(char *data, uint32_t length)
+void AudioDebug::WriteData(const char *data, uint32_t length)
 {
     if (fileStream_ != nullptr) {
         fileStream_->write(data, length);
@@ -55,11 +55,11 @@ void AudioDebug::DestroyAudioDebugFile()
 
 #else
 
-void AudioDebug::CreateAudioDebugFile()
+void AudioDebug::CreateAudioDebugFile(const std::string & /* suffix */)
 {
 }
 
-void AudioDebug::WriteData(char * /* data */, uint32_t /* length */)
+void AudioDebug::WriteData(const char * /* data */, uint32_t /* length */)
 {
 }
 
