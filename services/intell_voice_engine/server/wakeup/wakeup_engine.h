@@ -39,8 +39,8 @@ public:
     bool ResetAdapter() override;
     void ReleaseAdapter() override;
 
-    int32_t Read(std::vector<uint8_t> &data) override;
     int32_t StartCapturer(int32_t channels) override;
+    int32_t Read(std::vector<uint8_t> &data) override;
     int32_t StopCapturer() override;
 
 private:

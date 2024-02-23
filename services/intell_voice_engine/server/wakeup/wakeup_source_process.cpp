@@ -34,7 +34,7 @@ static const std::string READ_SOURCE = "_read_source";
 
 WakeupSourceProcess::~WakeupSourceProcess()
 {
-   Release();
+    Release();
 }
 
 void WakeupSourceProcess::Init(uint32_t channelCnt)
@@ -111,7 +111,7 @@ void WakeupSourceProcess::WriteChannelData(const std::vector<uint8_t> &channelDa
         INTELL_VOICE_LOG_ERROR("failed to create array buffer");
         return;
     }
-    if(!bufferQueue_[channelId]->Push(std::move(arrayBuffer), false)) {
+    if (!bufferQueue_[channelId]->Push(std::move(arrayBuffer), false)) {
         INTELL_VOICE_LOG_ERROR("failed to push array buffer");
         return;
     }

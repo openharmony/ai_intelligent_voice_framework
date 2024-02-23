@@ -39,10 +39,10 @@ IntellVoiceEngineStub::IntellVoiceEngineStub()
         MessageParcel &reply) -> int32_t { return this->StopInner(data, reply); };
     processFuncMap_[INTELL_VOICE_ENGINE_WRITE_AUDIO] = [this](MessageParcel &data,
         MessageParcel &reply) -> int32_t { return this->WriteAudioInner(data, reply); };
-    processFuncMap_[INTELL_VOICE_ENGINE_READ] = [this](MessageParcel &data,
-        MessageParcel &reply) -> int32_t { return this->ReadInner(data, reply); };
     processFuncMap_[INTELL_VOICE_ENGINE_STAET_CAPTURER] = [this](MessageParcel &data,
         MessageParcel &reply) -> int32_t { return this->StartCapturerInner(data, reply); };
+    processFuncMap_[INTELL_VOICE_ENGINE_READ] = [this](MessageParcel &data,
+        MessageParcel &reply) -> int32_t { return this->ReadInner(data, reply); };
     processFuncMap_[INTELL_VOICE_ENGINE_STOP_CAPTURER] = [this](MessageParcel &data,
         MessageParcel &reply) -> int32_t { return this->StopCapturerInner(data, reply); };
 }
@@ -145,6 +145,13 @@ int32_t IntellVoiceEngineStub::WriteAudioInner(MessageParcel &data, MessageParce
     return ret;
 }
 
+int32_t IntellVoiceEngineStub::StartCapturerInner(MessageParcel &data, MessageParcel &reply)
+{
+    int32_t ret = StartCapturer(data.ReadInt32());
+    reply.WriteInt32(ret);
+    return ret;
+}
+
 int32_t IntellVoiceEngineStub::ReadInner(MessageParcel &data, MessageParcel &reply)
 {
     std::vector<uint8_t> pcmData;
@@ -157,13 +164,6 @@ int32_t IntellVoiceEngineStub::ReadInner(MessageParcel &data, MessageParcel &rep
 
     reply.WriteUint32(pcmData.size());
     reply.WriteBuffer(pcmData.data(), pcmData.size());
-    return ret;
-}
-
-int32_t IntellVoiceEngineStub::StartCapturerInner(MessageParcel &data, MessageParcel &reply)
-{
-    int32_t ret = StartCapturer(data.ReadInt32());
-    reply.WriteInt32(ret);
     return ret;
 }
 

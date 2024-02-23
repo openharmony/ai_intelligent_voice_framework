@@ -49,8 +49,8 @@ public:
         INTELL_VOICE_ENGINE_START,
         INTELL_VOICE_ENGINE_STOP,
         INTELL_VOICE_ENGINE_WRITE_AUDIO,
-        INTELL_VOICE_ENGINE_READ,
         INTELL_VOICE_ENGINE_STAET_CAPTURER,
+        INTELL_VOICE_ENGINE_READ,
         INTELL_VOICE_ENGINE_STOP_CAPTURER
     };
 
@@ -62,8 +62,8 @@ public:
     virtual int32_t Start(bool isLast) = 0;
     virtual int32_t Stop(void) = 0;
     virtual int32_t WriteAudio(const uint8_t *buffer, uint32_t size) = 0;
-    virtual int32_t Read(std::vector<uint8_t> &data) = 0;
     virtual int32_t StartCapturer(int32_t channels) = 0;
+    virtual int32_t Read(std::vector<uint8_t> &data) = 0;
     virtual int32_t StopCapturer() = 0;
 };
 }

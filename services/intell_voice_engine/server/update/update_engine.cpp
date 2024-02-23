@@ -23,7 +23,6 @@
 #include "trigger_manager.h"
 #include "adapter_callback_service.h"
 #include "intell_voice_service_manager.h"
-#include "engine_host_manager.h"
 
 #define LOG_TAG "UpdateEngine"
 

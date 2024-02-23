@@ -35,8 +35,8 @@ public:
     virtual void ReleaseAdapter()
     {
     }
-    int32_t Read(std::vector<uint8_t> &data) override;
     int32_t StartCapturer(int32_t channels) override;
+    int32_t Read(std::vector<uint8_t> &data) override;
     int32_t StopCapturer() override;
 protected:
     EngineBase() = default;

@@ -16,12 +16,12 @@
 
 namespace OHOS {
 namespace IntellVoiceEngine {
-int32_t EngineBase::Read(std::vector<uint8_t> & /* data */)
+int32_t EngineBase::StartCapturer(int32_t /* channels */)
 {
     return 0;
 }
 
-int32_t EngineBase::StartCapturer(int32_t /* channels */)
+int32_t EngineBase::Read(std::vector<uint8_t> & /* data */)
 {
     return 0;
 }

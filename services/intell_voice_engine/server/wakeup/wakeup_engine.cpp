@@ -81,12 +81,6 @@ int32_t WakeupEngine::StartCapturer(int32_t channels)
     return ROLE(WakeupEngineImpl).Handle(msg);
 }
 
-int32_t WakeupEngine::StopCapturer()
-{
-    StateMsg msg(STOP_CAPTURER);
-    return ROLE(WakeupEngineImpl).Handle(msg);
-}
-
 int32_t WakeupEngine::Read(std::vector<uint8_t> &data)
 {
     CapturerData capturerData;
@@ -99,6 +93,12 @@ int32_t WakeupEngine::Read(std::vector<uint8_t> &data)
 
     data.swap(capturerData.data);
     return 0;
+}
+
+int32_t WakeupEngine::StopCapturer()
+{
+    StateMsg msg(STOP_CAPTURER);
+    return ROLE(WakeupEngineImpl).Handle(msg);
 }
 
 int32_t WakeupEngine::Detach(void)

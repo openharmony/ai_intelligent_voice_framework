@@ -242,7 +242,7 @@ int32_t TriggerConnector::TriggerSession::GetParams(const std::string& key, std:
 void TriggerConnector::TriggerSession::HandleRecognitionHdiEvent(
     std::shared_ptr<IntellVoiceRecognitionEvent> event, int32_t modelHandle)
 {
-    std::function<void(void)> func = std::bind(
+    std::function<void()> func = std::bind(
         &TriggerConnector::TriggerSession::ProcessRecognitionHdiEvent, this, event, modelHandle);
     TaskExecutor::AddAsyncTask(func);
 }

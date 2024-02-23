@@ -36,13 +36,13 @@ public:
     void *outMsg = nullptr;
 
 public:
-    StateMsg(int32_t id, void *in = nullptr, int32_t inLen = 0, void *out = nullptr)
+    explicit StateMsg(int32_t id, void *in = nullptr, int32_t inLen = 0, void *out = nullptr)
         : msgId(id), inMsg(in), inMsgLen(inLen), outMsg(out) {};
 };
 
 struct State {
     State() = default;
-    State(int s) : state(s) {};
+    explicit State(int s) : state(s) {};
 
     bool operator==(const State &right) const
     {
@@ -150,7 +150,7 @@ private:
 };
 
 struct ModuleStates : public ITimerObserver, private TimerMgr, private StateGroup {
-    ModuleStates(const State &defaultState = State(0), const std::string &name = "");
+    explicit ModuleStates(const State &defaultState = State(0), const std::string &name = "");
     ~ModuleStates() override;
 
     StateActions& ForState(const State &s);

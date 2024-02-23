@@ -30,6 +30,10 @@ uint32_t GetHdiVersionId(uint32_t majorVer, uint32_t minorVer)
 bool DeinterleaveAudioData(int16_t *buffer, uint32_t size, int32_t channelCnt,
     std::vector<std::vector<uint8_t>> &audioData)
 {
+    if (channelCnt == 0) {
+        INTELL_VOICE_LOG_ERROR("channel cnt is zero");
+        return false;
+    }
     uint32_t channelLen = size / channelCnt;
     std::unique_ptr<int16_t[]> channelData = std::make_unique<int16_t[]>(channelLen);
     if (channelData == nullptr) {

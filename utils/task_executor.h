@@ -32,10 +32,10 @@ public:
     void StartThread();
     void StopThread();
     template <typename F>
-    void AddAsyncTask(F func)
+    void AddAsyncTask(F &&func)
     {
-        auto task = std::make_shared<std::packaged_task<void(void)>>(func);
-        Push([task](){ (*task)(); });
+        auto task = std::make_shared<std::packaged_task<void()>>(std::forward<F>(func));
+        Push([task]() { (*task)(); });
     }
     template <typename F, typename... Args>
     auto AddSyncTask(F &&func, Args &&...args) -> decltype(func(args...))
@@ -43,7 +43,7 @@ public:
         auto task = std::make_shared<std::packaged_task<decltype(func(args...))()>>(std::bind(
             std::forward<F>(func), std::forward<Args>(args)...));
         auto ret = task->get_future();
-        Push([task](){ (*task)(); });
+        Push([task]() { (*task)(); });
         return ret.get();
     }
 

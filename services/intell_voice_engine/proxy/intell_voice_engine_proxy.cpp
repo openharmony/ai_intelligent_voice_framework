@@ -130,6 +130,18 @@ int32_t IntellVoiceEngineProxy::WriteAudio(const uint8_t *buffer, uint32_t size)
     return reply.ReadInt32();
 }
 
+int32_t IntellVoiceEngineProxy::StartCapturer(int32_t channels)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    data.WriteInterfaceToken(IIntellVoiceEngine::GetDescriptor());
+    data.WriteInt32(channels);
+    Remote()->SendRequest(INTELL_VOICE_ENGINE_STAET_CAPTURER, data, reply, option);
+    return reply.ReadInt32();
+}
+
 int32_t IntellVoiceEngineProxy::Read(std::vector<uint8_t> &data)
 {
     MessageParcel parcelData;
@@ -157,18 +169,6 @@ int32_t IntellVoiceEngineProxy::Read(std::vector<uint8_t> &data)
     data.resize(size);
     std::copy(buff, buff + size, data.begin());
     return ret;
-}
-
-int32_t IntellVoiceEngineProxy::StartCapturer(int32_t channels)
-{
-    MessageParcel data;
-    MessageParcel reply;
-    MessageOption option;
-
-    data.WriteInterfaceToken(IIntellVoiceEngine::GetDescriptor());
-    data.WriteInt32(channels);
-    Remote()->SendRequest(INTELL_VOICE_ENGINE_STAET_CAPTURER, data, reply, option);
-    return reply.ReadInt32();
 }
 
 int32_t IntellVoiceEngineProxy::StopCapturer()

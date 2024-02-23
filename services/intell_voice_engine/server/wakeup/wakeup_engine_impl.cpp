@@ -225,7 +225,8 @@ bool WakeupEngineImpl::StartAudioSource()
         return false;
     }
 
-    audioSource_ = std::make_unique<AudioSource>(MIN_BUFFER_SIZE * static_cast<uint32_t>(capturerOptions_.streamInfo.channels), INTERVAL, std::move(listener), capturerOptions_);
+    audioSource_ = std::make_unique<AudioSource>(MIN_BUFFER_SIZE * static_cast<uint32_t>(
+        capturerOptions_.streamInfo.channels), INTERVAL, std::move(listener), capturerOptions_);
     if (audioSource_ == nullptr) {
         INTELL_VOICE_LOG_ERROR("create audio source failed");
         return false;

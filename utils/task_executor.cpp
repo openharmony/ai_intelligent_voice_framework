@@ -32,7 +32,6 @@ TaskExecutor::~TaskExecutor()
 
 void TaskExecutor::StartThread()
 {
-
     std::lock_guard<std::mutex> lock(mutex_);
     int ret = pthread_create(&tid_, nullptr, TaskExecutor::ExecuteInThread, this);
     if (ret != 0) {
@@ -70,7 +69,7 @@ void *TaskExecutor::ExecuteInThread(void *arg)
             break;
         }
         task();
-    } while(1);
+    } while (1);
     return nullptr;
 }
 }

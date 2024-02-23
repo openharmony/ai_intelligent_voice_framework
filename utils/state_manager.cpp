@@ -20,7 +20,7 @@
 
 namespace OHOS {
 namespace IntellVoiceUtils {
-StateActions NullAction;
+StateActions g_nullAction;
 const State NULLSTATE(-1);
 
 int StateActions::Handle(const StateMsg &msg, State &nextState)
@@ -57,7 +57,7 @@ StateActions& ModuleStates::ForState(const State &s)
         if (action == nullptr) {
             currState_ = states_.end();
             isInitSucc_ = false;
-            return NullAction;
+            return g_nullAction;
         }
         states_[s] = action;
     }
