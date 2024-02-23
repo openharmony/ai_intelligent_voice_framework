@@ -25,7 +25,9 @@ ohos_shared_library("intell_voice_utils") {
     "memory_guard.cpp",
     "message_queue.cpp",
     "msg_handle_thread.cpp",
+    "state_manager.cpp",
     "string_util.cpp",
+    "task_executor.cpp",
     "time_util.cpp",
     "timer_mgr.cpp",
   ]

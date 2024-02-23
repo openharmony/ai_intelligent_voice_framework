@@ -33,6 +33,7 @@ public:
 
 napi_value SetValue(napi_env env, const int32_t &value);
 napi_value SetValue(napi_env env, const std::string &value);
+napi_value SetValue(napi_env env, const std::vector<uint8_t> &value);
 
 napi_status GetValue(napi_env env, napi_value jsValue, int32_t &value);
 napi_status GetValue(napi_env env, napi_value jsValue, bool &value);

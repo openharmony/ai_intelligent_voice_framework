@@ -16,6 +16,7 @@
 #define AUDIO_DEBUG_H
 
 #include <cstdint>
+#include <string>
 #ifdef AUDIO_DATA_DEBUG
 #include <memory>
 #include <fstream>
@@ -28,8 +29,8 @@ public:
     AudioDebug() = default;
     ~AudioDebug() = default;
 
-    void CreateAudioDebugFile();
-    void WriteData(char *data, uint32_t length);
+    void CreateAudioDebugFile(const std::string &suffix);
+    void WriteData(const char *data, uint32_t length);
     void DestroyAudioDebugFile();
 
 private:

@@ -48,7 +48,7 @@ public:
     }
 
 private:
-    void OnTimerEvent(OHOS::IntellVoiceUtils::TimerEvent& info) override;
+    void OnTimerEvent(OHOS::IntellVoiceUtils::TimerEvent &info) override;
     void OnUpdateRetry();
     void StartUpdateTimer();
     void StopUpdateTimer();

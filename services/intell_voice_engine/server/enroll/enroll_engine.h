@@ -16,15 +16,16 @@
 #define ENROLL_ENGINE_H
 #include <memory>
 #include <string>
-#include "engine_base.h"
 #include "v1_0/iintell_voice_engine_callback.h"
 #include "audio_info.h"
 #include "audio_source.h"
 #include "intell_voice_generic_factory.h"
+#include "engine_base.h"
+#include "engine_util.h"
 
 namespace OHOS {
 namespace IntellVoiceEngine {
-class EnrollEngine : public EngineBase {
+class EnrollEngine : public EngineBase, private EngineUtil {
 public:
     ~EnrollEngine();
     bool Init() override;
@@ -34,6 +35,8 @@ public:
     int32_t Start(bool isLast) override;
     int32_t Stop() override;
     int32_t SetParameter(const std::string &keyValueList) override;
+    std::string GetParameter(const std::string &key) override;
+    int32_t WriteAudio(const uint8_t *buffer, uint32_t size) override;
 
 private:
     EnrollEngine();
@@ -44,13 +47,15 @@ private:
     void OnEnrollComplete();
 
 private:
+    using EngineUtil::adapter_;
     std::string name_ = "lp enroll engine instance";
     bool isPcmFromExternal_ = false;
     int32_t enrollResult_ = -1;
     sptr<OHOS::HDI::IntelligentVoice::Engine::V1_0::IIntellVoiceEngineCallback> callback_ = nullptr;
-    OHOS::AudioStandard::AudioCapturerOptions capturerOptions_;
     std::unique_ptr<AudioSource> audioSource_ = nullptr;
-    friend class IntellVoiceUtils::SptrFactory<EnrollEngine>;
+    std::mutex mutex_;
+    OHOS::AudioStandard::AudioCapturerOptions capturerOptions_;
+    friend class IntellVoiceUtils::SptrFactory<EngineBase, EnrollEngine>;
 };
 }
 }

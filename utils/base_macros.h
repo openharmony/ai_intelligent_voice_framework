@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -12,16 +12,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef INTELL_VOICE_UTIL_H
-#define INTELL_VOICE_UTIL_H
-#include <cstdint>
-#include <vector>
+#ifndef BASE_MACROS_H
+#define BASE_MACROS_H
 
-namespace OHOS {
-namespace IntellVoiceUtils {
-uint32_t GetHdiVersionId(uint32_t majorVer, uint32_t minorVer);
-bool DeinterleaveAudioData(int16_t *buffer, uint32_t size, int32_t channelCnt,
-    std::vector<std::vector<uint8_t>> &audioData);
+#define ROLE(role) Get##role()
+#define ROLE_PROTO_TYPE(role) role& ROLE(role) const
+#define USE_ROLE(role) virtual ROLE_PROTO_TYPE(role) = 0
+#define HAS_ROLE(role) USE_ROLE(role)
+
+#define IMPL_ROLE(role)                                        \
+ROLE_PROTO_TYPE(role) override                                 \
+{                                                              \
+    return const_cast<role&>(static_cast<const role&>(*this)); \
 }
-}
+
 #endif

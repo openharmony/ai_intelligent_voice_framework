@@ -48,15 +48,15 @@ private:
 template<typename T>
 using UniqueProductType = typename UniquePtrFactory<T>::UniqueProductPtr;
 
-template <typename T>
+template <typename B, typename D>
 class SptrFactory {
 public:
-    using SptrProductPtr = OHOS::sptr<T>;
+    using SptrProductPtr = OHOS::sptr<B>;
 
     template<typename ...Args>
     static SptrProductPtr CreateInstance(Args && ...args)
     {
-        T *instance = new(std::nothrow) T {};
+        B *instance = new(std::nothrow) D {};
         if (instance == nullptr) {
             return SptrProductPtr { nullptr };
         }
@@ -68,8 +68,8 @@ public:
     }
 };
 
-template<typename T>
-using SptrProductType = typename SptrFactory<T>::ProductPtr;
+template<typename B, typename D>
+using SptrProductType = typename SptrFactory<B, D>::SptrProductPtr;
 }
 }
 #endif

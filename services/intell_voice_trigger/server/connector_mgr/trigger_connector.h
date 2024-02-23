@@ -26,6 +26,7 @@
 #include "i_intell_voice_trigger_connector_module.h"
 #include "i_intell_voice_trigger_connector_callback.h"
 #include "msg_handle_thread.h"
+#include "task_executor.h"
 #include "trigger_host_manager.h"
 
 namespace OHOS {
@@ -54,9 +55,10 @@ private:
     bool LoadHdiAdapter();
 
 private:
-    class TriggerSession : public IIntellVoiceTriggerConnectorModule, public OHOS::IntellVoiceUtils::MsgHandleThread {
+    class TriggerSession : public IIntellVoiceTriggerConnectorModule, private OHOS::IntellVoiceUtils::TaskExecutor {
     public:
-        TriggerSession(TriggerConnector *connector, std::shared_ptr<IIntellVoiceTriggerConnectorCallback> callback);
+        TriggerSession(TriggerConnector *connector, std::shared_ptr<IIntellVoiceTriggerConnectorCallback> callback,
+            uint32_t threadId);
         ~TriggerSession() override;
         TriggerConnector* GetTriggerConnector()
         {
@@ -122,8 +124,7 @@ private:
         };  // Model
 
     private:
-        bool HandleMsg(OHOS::IntellVoiceUtils::Message &message) override;
-        void ProcessRecognitionHdiEvent(const OHOS::IntellVoiceUtils::Message &message);
+        void ProcessRecognitionHdiEvent(std::shared_ptr<IntellVoiceRecognitionEvent> event, int32_t modelHandle);
 
     private:
         TriggerConnector *connector_ = nullptr;

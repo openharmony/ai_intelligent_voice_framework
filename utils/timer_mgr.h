@@ -49,7 +49,7 @@ struct TimerEvent {
 
 struct ITimerObserver {
     virtual ~ITimerObserver() {};
-    virtual void OnTimerEvent(TimerEvent& info) = 0;
+    virtual void OnTimerEvent(TimerEvent &info) = 0;
 };
 
 enum class TimerStatus {
@@ -60,7 +60,7 @@ enum class TimerStatus {
 
 struct TimerItem {
     explicit TimerItem(int id = 0, int type = 0, int cookie = 0,
-        int64_t delayUs = static_cast<long long>(0), ITimerObserver* observer = nullptr);
+        int64_t delayUs = static_cast<long long>(0), ITimerObserver *observer = nullptr);
     bool operator==(const TimerItem& right) const
     {
         return tgtUs == right.tgtUs;
@@ -74,7 +74,7 @@ struct TimerItem {
     int type;
     int cookie;
     int64_t tgtUs;
-    ITimerObserver* observer;
+    ITimerObserver *observer;
 };
 
 class TimerMgr : private IdAllocator {
@@ -82,11 +82,11 @@ public:
     explicit TimerMgr(int maxTimerNum = 10);
     ~TimerMgr() override;
 
-    void Start(ITimerObserver* observer = nullptr);
+    void Start(ITimerObserver *observer = nullptr);
     void Stop();
-    int SetTimer(int type, int64_t delayUs, int cookie = 0, ITimerObserver* currObserver = nullptr);
-    int ResetTimer(int timerId, int type, int64_t delayUs, int cookie, ITimerObserver* currObserver);
-    void KillTimer(int& timerId);
+    int SetTimer(int type, int64_t delayUs, int cookie = 0, ITimerObserver *currObserver = nullptr);
+    int ResetTimer(int timerId, int type, int64_t delayUs, int cookie, ITimerObserver *currObserver);
+    void KillTimer(int &timerId);
 
 private:
     void Clear();
@@ -94,7 +94,7 @@ private:
 
 private:
     TimerStatus status_;
-    ITimerObserver* timerObserver_;
+    ITimerObserver *timerObserver_;
     std::list<std::shared_ptr<TimerItem>> itemQueue_;
 
     std::mutex timeMutex_;

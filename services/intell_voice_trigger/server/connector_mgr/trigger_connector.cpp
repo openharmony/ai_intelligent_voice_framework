@@ -34,6 +34,8 @@ using namespace OHOS::HDI::IntelligentVoice::Trigger::V1_1;
 namespace OHOS {
 namespace IntellVoiceTrigger {
 static constexpr int32_t MAX_GET_HDI_SERVICE_TIMEOUT = 3;
+static constexpr uint32_t MAX_RECOGNITION_EVENT_NUM = 100;
+static const std::string THREAD_NAME = "TriggerThread_";
 
 TriggerConnector::TriggerConnector(const IntellVoiceTriggerAdapterDsecriptor &desc)
 {
@@ -93,7 +95,7 @@ std::shared_ptr<IIntellVoiceTriggerConnectorModule> TriggerConnector::GetModule(
         }
     } while (0);
 
-    std::shared_ptr<TriggerSession> session = std::make_shared<TriggerSession>(this, callback);
+    std::shared_ptr<TriggerSession> session = std::make_shared<TriggerSession>(this, callback, activeSessions_.size());
     if (session == nullptr) {
         INTELL_VOICE_LOG_ERROR("failed to malloc session");
         return nullptr;
@@ -126,19 +128,18 @@ void TriggerConnector::OnReceive(const ServiceStatus &serviceStatus)
     cv_.notify_all();
 }
 
-TriggerConnector::TriggerSession::TriggerSession(
-    TriggerConnector *connector, std::shared_ptr<IIntellVoiceTriggerConnectorCallback> callback)
-    : connector_(connector), callback_(callback)
+TriggerConnector::TriggerSession::TriggerSession(TriggerConnector *connector,
+    std::shared_ptr<IIntellVoiceTriggerConnectorCallback> callback, uint32_t threadId)
+    : TaskExecutor(THREAD_NAME + std::to_string(threadId), MAX_RECOGNITION_EVENT_NUM),
+    connector_(connector), callback_(callback)
 {
-    BaseThread::Start();
+    TaskExecutor::StartThread();
 }
 
 TriggerConnector::TriggerSession::~TriggerSession()
 {
     loadedModels_.clear();
-    Message msg(MSG_TYPE_QUIT);
-    SendMsg(msg);
-    Join();
+    TaskExecutor::StopThread();
 }
 
 int32_t TriggerConnector::TriggerSession::LoadModel(std::shared_ptr<GenericTriggerModel> model, int32_t &modelHandle)
@@ -241,55 +242,39 @@ int32_t TriggerConnector::TriggerSession::GetParams(const std::string& key, std:
 void TriggerConnector::TriggerSession::HandleRecognitionHdiEvent(
     std::shared_ptr<IntellVoiceRecognitionEvent> event, int32_t modelHandle)
 {
-    Message msg(MSG_TYPE_RECOGNITION_HDI_EVENT);
-
-    msg.obj2_ = static_pointer_cast<void>(event);
-    msg.arg1_ = modelHandle;
-    SendMsg(msg);
+    std::function<void()> func = std::bind(
+        &TriggerConnector::TriggerSession::ProcessRecognitionHdiEvent, this, event, modelHandle);
+    TaskExecutor::AddAsyncTask(func);
 }
 
-void TriggerConnector::TriggerSession::ProcessRecognitionHdiEvent(const Message &message)
+void TriggerConnector::TriggerSession::ProcessRecognitionHdiEvent(
+    std::shared_ptr<IntellVoiceRecognitionEvent> event, int32_t modelHandle)
 {
-    int32_t modelHandle = message.arg1_;
-    std::shared_ptr<IntellVoiceRecognitionEvent> event =
-        static_pointer_cast<IntellVoiceRecognitionEvent>(message.obj2_);
     if (event == nullptr) {
         INTELL_VOICE_LOG_ERROR("event is nullptr");
         return;
     }
     if (connector_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("connector is nullptr");
         return;
     }
 
     {
         std::lock_guard<std::mutex> lock(connector_->mutex_);
         auto it = loadedModels_.find(modelHandle);
-        if ((it != loadedModels_.end()) && (it->second != nullptr)) {
-            INTELL_VOICE_LOG_INFO("receive recognition event");
-            it->second->SetState(Model::ModelState::LOADED);
+        if ((it == loadedModels_.end()) || (it->second == nullptr)) {
+            INTELL_VOICE_LOG_ERROR("can not find model, handle:%{public}d",  modelHandle);
+            return;
         }
+
+        if (it->second->GetState() != Model::ModelState::ACTIVE) {
+            INTELL_VOICE_LOG_ERROR("unexpected recognition event, handle:%{public}d",  modelHandle);
+            return;
+        }
+
+        it->second->SetState(Model::ModelState::LOADED);
     }
     callback_->OnRecognition(modelHandle, *(event.get()));
-}
-
-bool TriggerConnector::TriggerSession::HandleMsg(Message &message)
-{
-    bool quit = false;
-
-    switch (message.what_) {
-        case MSG_TYPE_RECOGNITION_HDI_EVENT:
-            ProcessRecognitionHdiEvent(message);
-            break;
-        default:
-            INTELL_VOICE_LOG_WARN("invalid msg id: %{public}d", message.what_);
-            break;
-    }
-
-    if (message.what_ == MSG_TYPE_QUIT) {
-        quit = true;
-    }
-
-    return quit;
 }
 
 std::shared_ptr<TriggerConnector::TriggerSession::Model> TriggerConnector::TriggerSession::Model::Create(

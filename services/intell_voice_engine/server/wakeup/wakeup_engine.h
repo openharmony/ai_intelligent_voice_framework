@@ -14,53 +14,38 @@
  */
 #ifndef WAKEUP_ENGINE_H
 #define WAKEUP_ENGINE_H
-#include <memory>
-#include <string>
-#include "engine_base.h"
-#include "intell_voice_engine_stub.h"
-#include "wakeup_adapter_listener.h"
-#include "wakeup_source_stop_callback.h"
-#include "v1_0/iintell_voice_engine_callback.h"
 
-#include "audio_info.h"
-#include "audio_source.h"
-#include "intell_voice_generic_factory.h"
+#include <string>
+#include "base_macros.h"
+#include "engine_base.h"
+#include "wakeup_engine_impl.h"
 
 namespace OHOS {
 namespace IntellVoiceEngine {
 class WakeupEngine : public EngineBase {
 public:
+    WakeupEngine();
     ~WakeupEngine();
     bool Init() override;
     void SetCallback(sptr<IRemoteObject> object) override;
     int32_t Attach(const IntellVoiceEngineInfo &info) override;
     int32_t Detach(void) override;
     int32_t Start(bool isLast) override;
+    int32_t SetParameter(const std::string &keyValueList) override;
+    std::string GetParameter(const std::string &key) override;
     int32_t Stop() override;
 
     void OnDetected() override;
     bool ResetAdapter() override;
     void ReleaseAdapter() override;
 
-private:
-    WakeupEngine();
-    void OnWakeupEvent(int32_t msgId, int32_t result);
+    int32_t StartCapturer(int32_t channels) override;
+    int32_t Read(std::vector<uint8_t> &data) override;
+    int32_t StopCapturer() override;
 
-    void OnWakeupRecognition();
-    bool SetCallback();
-    bool StartAudioSource();
+private:
     void StartAbility();
-    void StopAudioSource();
-    bool CreateWakeupSourceStopCallback();
-
-private:
-    bool isPcmFromExternal_ = false;
-    std::shared_ptr<WakeupAdapterListener> adapterListener_ = nullptr;
-    sptr<OHOS::HDI::IntelligentVoice::Engine::V1_0::IIntellVoiceEngineCallback> callback_ = nullptr;
-    std::shared_ptr<WakeupSourceStopCallback> wakeupSourceStopCallback_ = nullptr;
-    OHOS::AudioStandard::AudioCapturerOptions capturerOptions_;
-    std::unique_ptr<AudioSource> audioSource_ = nullptr;
-    friend class IntellVoiceUtils::SptrFactory<WakeupEngine>;
+    USE_ROLE(WakeupEngineImpl);
 };
 }
 }

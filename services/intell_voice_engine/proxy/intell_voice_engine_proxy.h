@@ -33,6 +33,9 @@ public:
     int32_t Start(bool isLast) override;
     int32_t Stop(void) override;
     int32_t WriteAudio(const uint8_t *buffer, uint32_t size) override;
+    int32_t StartCapturer(int32_t channels) override;
+    int32_t Read(std::vector<uint8_t> &data) override;
+    int32_t StopCapturer() override;
 
 private:
     static inline BrokerDelegator<IntellVoiceEngineProxy> delegator_;

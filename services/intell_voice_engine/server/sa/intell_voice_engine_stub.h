@@ -37,6 +37,9 @@ private:
     int32_t StartInner(MessageParcel &data, MessageParcel &reply);
     int32_t StopInner(MessageParcel &data, MessageParcel &reply);
     int32_t WriteAudioInner(MessageParcel &data, MessageParcel &reply);
+    int32_t ReadInner(MessageParcel &data, MessageParcel &reply);
+    int32_t StartCapturerInner(MessageParcel &data, MessageParcel &reply);
+    int32_t StopCapturerInner(MessageParcel &data, MessageParcel &reply);
 
     std::map<uint32_t, std::function<int32_t(MessageParcel &data, MessageParcel &reply)>> processFuncMap_;
 };

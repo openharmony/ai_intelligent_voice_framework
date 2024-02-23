@@ -145,11 +145,11 @@ void EnrollIntellVoiceEngineCallbackNapi::OnEvent(const IntellVoiceEngineCallBac
     }
 
     EnrollAsyncContext *context = contextMap_.at(asyncType).front();
+    contextMap_.at(asyncType).pop();
     if (context == nullptr) {
         INTELL_VOICE_LOG_ERROR("context is nullptr");
         return;
     }
-    contextMap_.at(asyncType).pop();
 
     context->callbackInfo = {event.msgId, event.result, event.info};
     if (event.result != 0) {

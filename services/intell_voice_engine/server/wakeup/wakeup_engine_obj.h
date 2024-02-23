@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -12,16 +12,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef INTELL_VOICE_UTIL_H
-#define INTELL_VOICE_UTIL_H
-#include <cstdint>
-#include <vector>
+#ifndef WAKEUP_ENGINE_OBJ_H
+#define WAKEUP_ENGINE_OBJ_H
+
+#include "base_macros.h"
+#include "intell_voice_generic_factory.h"
+#include "wakeup_engine.h"
+#include "wakeup_engine_impl.h"
 
 namespace OHOS {
-namespace IntellVoiceUtils {
-uint32_t GetHdiVersionId(uint32_t majorVer, uint32_t minorVer);
-bool DeinterleaveAudioData(int16_t *buffer, uint32_t size, int32_t channelCnt,
-    std::vector<std::vector<uint8_t>> &audioData);
+namespace IntellVoiceEngine {
+class WakeupEngineObj : public WakeupEngine, public WakeupEngineImpl {
+public:
+    ~WakeupEngineObj() {}
+
+private:
+    WakeupEngineObj() {}
+    IMPL_ROLE(WakeupEngineImpl);
+    friend class IntellVoiceUtils::SptrFactory<EngineBase, WakeupEngineObj>;
+};
 }
 }
 #endif

@@ -25,7 +25,7 @@ using namespace std;
 
 namespace OHOS {
 namespace IntellVoiceUtils {
-static void LogTime(const string& prefix)
+static void LogTime(const string &prefix)
 {
     struct timeval now;
     if (gettimeofday(&now, nullptr) < 0) {
@@ -41,7 +41,8 @@ static void LogTime(const string& prefix)
 
     char tmbuf[64] = {0};
     if (strftime(tmbuf, sizeof(tmbuf), "%Y-%m-%d %H:%M:%S", nowtm)) {
-        INTELL_VOICE_LOG_INFO("%s %s.%lld", prefix.c_str(), tmbuf, static_cast<long long>(now.tv_usec));
+        INTELL_VOICE_LOG_INFO("%{public}s %{public}s.%{public}lld",
+            prefix.c_str(), tmbuf, static_cast<long long>(now.tv_usec));
     }
 }
 
@@ -55,7 +56,7 @@ static int64_t NowTimeUs()
     return t.tv_sec * 1000000LL + t.tv_nsec / 1000LL;
 }
 
-TimerItem::TimerItem(int id, int type, int cookie, int64_t delayUs, ITimerObserver* observer)
+TimerItem::TimerItem(int id, int type, int cookie, int64_t delayUs, ITimerObserver *observer)
     : timerId(id), type(type), cookie(cookie), observer(observer)
 {
     tgtUs = NowTimeUs() + delayUs;
@@ -71,7 +72,7 @@ TimerMgr::~TimerMgr()
     Stop();
 }
 
-void TimerMgr::Start(ITimerObserver* observer)
+void TimerMgr::Start(ITimerObserver *observer)
 {
     unique_lock<mutex> lock(timeMutex_);
 
@@ -96,7 +97,7 @@ void TimerMgr::Stop()
     {
         lock_guard<mutex> lock(timeMutex_);
         if (status_ != TimerStatus::TIMER_STATUS_STARTED) {
-            INTELL_VOICE_LOG_ERROR("status is not started");
+            INTELL_VOICE_LOG_WARN("status is not started");
             return;
         }
         status_ = TimerStatus::TIMER_STATUS_TO_QUIT;
@@ -111,7 +112,7 @@ void TimerMgr::Stop()
     Clear();
 }
 
-int TimerMgr::SetTimer(int type, int64_t delayUs, int cookie, ITimerObserver* currObserver)
+int TimerMgr::SetTimer(int type, int64_t delayUs, int cookie, ITimerObserver *currObserver)
 {
     unique_lock<mutex> lock(timeMutex_);
 
@@ -158,14 +159,15 @@ int TimerMgr::SetTimer(int type, int64_t delayUs, int cookie, ITimerObserver* cu
     return id;
 }
 
-int TimerMgr::ResetTimer(int timerId, int type, int64_t delayUs, int cookie, ITimerObserver* currObserver)
+int TimerMgr::ResetTimer(int timerId, int type, int64_t delayUs, int cookie, ITimerObserver *currObserver)
 {
     {
         unique_lock<mutex> lock(timeMutex_);
         if (itemQueue_.size() == 1) {
             auto it = itemQueue_.begin();
             if ((*it)->timerId != timerId) {
-                INTELL_VOICE_LOG_ERROR("id %d can not correspond with timerId %d", (*it)->timerId, timerId);
+                INTELL_VOICE_LOG_ERROR("id %{public}d can not correspond with timerId %{public}d",
+                    (*it)->timerId, timerId);
                 return INVALID_ID;
             }
             (*it)->tgtUs = NowTimeUs() + delayUs;
@@ -177,20 +179,25 @@ int TimerMgr::ResetTimer(int timerId, int type, int64_t delayUs, int cookie, ITi
     return SetTimer(type, delayUs, cookie, currObserver);
 }
 
-void TimerMgr::KillTimer(int& timerId)
+void TimerMgr::KillTimer(int &timerId)
 {
     unique_lock<mutex> lock(timeMutex_);
     INTELL_VOICE_LOG_INFO("kill timer %d", timerId);
     for (auto it = itemQueue_.begin(); it != itemQueue_.end(); it++) {
         shared_ptr<TimerItem> curItem = *it;
         if (curItem->timerId == timerId) {
-            INTELL_VOICE_LOG_INFO("kill timer id %d type %d path %d", timerId, curItem->type, curItem->cookie);
-
+            INTELL_VOICE_LOG_INFO("kill timer id:%{public}d, type: %{public}d, cookie:%{public}d",
+                timerId, curItem->type, curItem->cookie);
             ReleaseId(curItem->timerId);
             itemQueue_.erase(it);
             timerId = INVALID_ID;
             break;
         }
+    }
+
+    if (timerId != INVALID_ID) {
+        INTELL_VOICE_LOG_WARN("can not find timer id:%{public}d", timerId);
+        timerId = INVALID_ID;
     }
 }
 

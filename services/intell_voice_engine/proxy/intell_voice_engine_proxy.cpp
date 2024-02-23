@@ -129,5 +129,57 @@ int32_t IntellVoiceEngineProxy::WriteAudio(const uint8_t *buffer, uint32_t size)
     Remote()->SendRequest(INTELL_VOICE_ENGINE_WRITE_AUDIO, data, reply, option);
     return reply.ReadInt32();
 }
+
+int32_t IntellVoiceEngineProxy::StartCapturer(int32_t channels)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    data.WriteInterfaceToken(IIntellVoiceEngine::GetDescriptor());
+    data.WriteInt32(channels);
+    Remote()->SendRequest(INTELL_VOICE_ENGINE_STAET_CAPTURER, data, reply, option);
+    return reply.ReadInt32();
+}
+
+int32_t IntellVoiceEngineProxy::Read(std::vector<uint8_t> &data)
+{
+    MessageParcel parcelData;
+    MessageParcel reply;
+    MessageOption option;
+
+    parcelData.WriteInterfaceToken(IIntellVoiceEngine::GetDescriptor());
+    Remote()->SendRequest(INTELL_VOICE_ENGINE_READ, parcelData, reply, option);
+
+    int ret = reply.ReadInt32();
+    if (ret != 0) {
+        INTELL_VOICE_LOG_ERROR("failed to read wakeup pcm, ret:%{public}d", ret);
+        return ret;
+    }
+    uint32_t size = reply.ReadUint32();
+    if (size == 0) {
+        INTELL_VOICE_LOG_ERROR("buffer size is zero");
+        return -1;
+    }
+    const uint8_t *buff = reply.ReadBuffer(size);
+    if (buff == nullptr) {
+        INTELL_VOICE_LOG_ERROR("buffer is nullptr");
+        return -1;
+    }
+    data.resize(size);
+    std::copy(buff, buff + size, data.begin());
+    return ret;
+}
+
+int32_t IntellVoiceEngineProxy::StopCapturer()
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    data.WriteInterfaceToken(IIntellVoiceEngine::GetDescriptor());
+    Remote()->SendRequest(INTELL_VOICE_ENGINE_STOP_CAPTURER, data, reply, option);
+    return reply.ReadInt32();
+}
 }
 }

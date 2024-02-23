@@ -16,16 +16,15 @@
 #define UPDATE_ENGINE_H
 #include <memory>
 #include <string>
-#include "engine_base.h"
 #include "v1_0/iintell_voice_engine_callback.h"
-#include "audio_info.h"
-#include "audio_source.h"
+#include "engine_base.h"
+#include "engine_util.h"
 #include "intell_voice_generic_factory.h"
 #include "update_state.h"
 
 namespace OHOS {
 namespace IntellVoiceEngine {
-class UpdateEngine : public EngineBase {
+class UpdateEngine : public EngineBase, private EngineUtil {
 public:
     ~UpdateEngine();
     bool Init() override;
@@ -35,6 +34,7 @@ public:
     int32_t Start(bool isLast) override;
     int32_t Stop() override;
     int32_t SetParameter(const std::string &keyValueList) override;
+    std::string GetParameter(const std::string &key) override;
 
 private:
     UpdateEngine();
@@ -45,7 +45,8 @@ private:
     std::string name_ = "update engine instance";
     UpdateState updateResult_ = UpdateState::UPDATE_STATE_DEFAULT;
     sptr<OHOS::HDI::IntelligentVoice::Engine::V1_0::IIntellVoiceEngineCallback> callback_ = nullptr;
-    friend class IntellVoiceUtils::SptrFactory<UpdateEngine>;
+    std::mutex mutex_;
+    friend class IntellVoiceUtils::SptrFactory<EngineBase, UpdateEngine>;
 };
 }
 }
