@@ -118,7 +118,6 @@ ohos_shared_library("intell_voice_server") {
     "-Wno-error=unused-parameter",
     "-DHILOG_ENABLE",
     "-DENABLE_DEBUG",
-    "-DAUDIO_DATA_DEBUG",
   ]
 
   deps = [ "../utils:intell_voice_utils" ]
