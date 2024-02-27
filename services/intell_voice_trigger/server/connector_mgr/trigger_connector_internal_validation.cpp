@@ -37,20 +37,22 @@ std::vector<TriggerConnectorModuleDesc> TriggerConnectorInternalValidation::List
         for (auto it : ret) {
             moduleDescs_.insert(it.adapterName);
         }
-    } else {
-        if (ret.size() != moduleDescs_.size()) {
-            INTELL_VOICE_LOG_ERROR("size different, ret size:%zu, module descs size:%zu", ret.size(),
-                moduleDescs_.size());
+        return ret;
+    }
+
+    if (ret.size() != moduleDescs_.size()) {
+        INTELL_VOICE_LOG_ERROR("size different, ret size:%zu, module descs size:%zu", ret.size(),
+            moduleDescs_.size());
+        return {};
+    }
+
+    for (auto it : ret) {
+        if (moduleDescs_.count(it.adapterName) == 0) {
+            INTELL_VOICE_LOG_ERROR("adapter name:%{public}s does not exist", it.adapterName.c_str());
             return {};
         }
-
-        for (auto it : ret) {
-            if (moduleDescs_.count(it.adapterName) == 0) {
-                INTELL_VOICE_LOG_ERROR("adapter name:%{public}s does not exist", it.adapterName.c_str());
-                return {};
-            }
-        }
     }
+
     return ret;
 }
 
