@@ -61,9 +61,7 @@ HWTEST_F(TriggerTest, trigger_db_helper_001, TestSize.Level1)
     auto model = std::make_shared<GenericTriggerModel>(uuid, 100);
     uint8_t data[4] = {0, 1, 2, 3};
     model->SetData(data, sizeof(data));
-
-    std::vector<uint8_t> expect(sizeof(data));
-    memcpy(&expect[0], data, sizeof(data));
+    std::vector<uint8_t> expect(data, data + (sizeof(data) / sizeof(uint8_t)));
 
     triggerManager->UpdateModel(model);
     auto result = triggerManager->GetModel(uuid);
@@ -73,9 +71,8 @@ HWTEST_F(TriggerTest, trigger_db_helper_001, TestSize.Level1)
     uint8_t newdata[4] = {0, 1, 2, 5};
     model->SetData(newdata, sizeof(newdata));
 
-    expect.clear();
-    expect.resize(sizeof(newdata));
-    memcpy(&expect[0], newdata, sizeof(newdata));
+    std::vector<uint8_t>().swap(expect);
+    expect.insert(expect.begin(), newdata, newdata + (sizeof(newdata) / sizeof(uint8_t)));
 
     triggerManager->UpdateModel(model);
     result = triggerManager->GetModel(uuid);
@@ -86,4 +83,3 @@ HWTEST_F(TriggerTest, trigger_db_helper_001, TestSize.Level1)
     result = triggerManager->GetModel(uuid);
     EXPECT_EQ(nullptr, result);
 }
-
