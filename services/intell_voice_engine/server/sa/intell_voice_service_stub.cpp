@@ -35,10 +35,10 @@ int32_t IntellVoiceServiceStub::OnRemoteRequest(uint32_t code,
     switch (code) {
         case HDI_INTELL_VOICE_SERVICE_CREATE_ENGINE:
             ret = CreateIntellVoiceEngine(type, engine);
-	    if ((ret != 0) || (engine == nullptr)) {
+            if ((ret != 0) || (engine == nullptr)) {
                 INTELL_VOICE_LOG_ERROR("failed to create engine, type:%{public}d", type);
                 return ret;
-	    }
+            }
             reply.WriteRemoteObject(engine->AsObject());
             return ret;
 
