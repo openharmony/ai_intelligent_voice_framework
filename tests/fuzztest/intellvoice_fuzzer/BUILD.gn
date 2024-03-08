@@ -14,22 +14,39 @@
 import("//build/config/features.gni")
 import("//build/test.gni")
 
-module_output_path = "ai_intell_voice_framework/audio_intell_voice"
+module_output_path = "intelligent_voice_framework/intelligent_voice_framework"
 
-ohos_fuzztest("CalculatorFuzzTest") {
+ohos_fuzztest("IntellvoiceFuzzTest") {
   module_out_path = module_output_path
-  fuzz_config_file = "//foundation/ai/intelligent_voice_framework/tests/fuzztest/Calculator_fuzzer"
-  include_dirs = []
+  fuzz_config_file = "../intellvoice_fuzzer"
+
+  include_dirs = [
+    "../../../services/intell_voice_engine",
+    "../../../interfaces/inner_api/native",
+    "../../../services/intell_voice_engine/server/base",
+    "../../../services/intell_voice_engine/proxy",
+    "../../../utils",
+  ]
+
   cflags = [
     "-g",
     "-O0",
     "-Wno-unused-variable",
     "-fno-omit-frame-pointer",
   ]
-  sources = [ "Calculator_fuzzer.cpp" ]
+  sources = [ "intellvoice_fuzzer.cpp" ]
+
+  deps = [ "../../../frameworks/native:intellvoice_native" ]
+
+  external_deps = [
+    "c_utils:utils",
+    "drivers_interface_intelligent_voice:intell_voice_engine_idl_headers",
+    "hilog:libhilog",
+    "ipc:ipc_core",
+  ]
 }
 
 group("fuzztest") {
   testonly = true
-  deps = [ ":CalculatorFuzzTest" ]
+  deps = [ ":IntellvoiceFuzzTest" ]
 }
