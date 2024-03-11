@@ -39,10 +39,16 @@ ohos_shared_library("intell_voice_utils") {
     }
   }
 
+  deps = []
+
   external_deps = [
     "c_utils:utils",
     "hilog:libhilog",
     "huks:libhukssdk",
+    "access_token:libaccesstoken_sdk",
+    "access_token:libtokenid_sdk",
+    "ipc:ipc_core",
+    "safwk:system_ability_fwk",
   ]
 
   subsystem_name = "ai"

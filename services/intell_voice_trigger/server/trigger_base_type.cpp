@@ -20,8 +20,8 @@
 
 namespace OHOS {
 namespace IntellVoiceTrigger {
-TriggerModel::TriggerModel(TriggerModelType type, int32_t uuid, int32_t version)
-    : type_(type), uuid_(uuid), version_(version)
+TriggerModel::TriggerModel(int32_t uuid, int32_t version, TriggerModelType type)
+    : uuid_(uuid), version_(version), type_(type)
 {}
 
 TriggerModel::~TriggerModel()

@@ -25,18 +25,18 @@ using namespace OHOS::IntellVoiceUtils;
 
 namespace OHOS {
 namespace IntellVoiceEngine {
-sptr<EngineBase> EngineFactory::CreateEngineInst(IntellVoiceEngineType type)
+sptr<EngineBase> EngineFactory::CreateEngineInst(IntellVoiceEngineType type, const std::string &param)
 {
     sptr<EngineBase> engine = nullptr;
     switch (type) {
         case INTELL_VOICE_ENROLL:
-            engine = SptrFactory<EngineBase, EnrollEngine>::CreateInstance();
+            engine = SptrFactory<EngineBase, EnrollEngine>::CreateInstance(param);
             break;
         case INTELL_VOICE_WAKEUP:
-            engine = SptrFactory<EngineBase, WakeupEngineObj>::CreateInstance();
+            engine = SptrFactory<EngineBase, WakeupEngineObj>::CreateInstance(param);
             break;
         case INTELL_VOICE_UPDATE:
-            engine = SptrFactory<EngineBase, UpdateEngine>::CreateInstance();
+            engine = SptrFactory<EngineBase, UpdateEngine>::CreateInstance(param);
             break;
         default:
             INTELL_VOICE_LOG_INFO("create engine enter, type:%{public}d", type);

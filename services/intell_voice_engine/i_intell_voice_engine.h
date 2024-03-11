@@ -17,14 +17,25 @@
 #define IINTELL_VOICE_ENGINE_H
 #include "iremote_broker.h"
 #include "i_intell_voice_engine_callback.h"
+#include "v1_2/intell_voice_engine_types.h"
 
 namespace OHOS {
 namespace IntellVoiceEngine {
+using OHOS::HDI::IntelligentVoice::Engine::V1_2::EvaluationResultInfo;
+
 enum IntellVoiceEngineType {
     INTELL_VOICE_ENROLL = 0,
     INTELL_VOICE_WAKEUP,
     INTELL_VOICE_UPDATE,
     ENGINE_TYPE_BUT
+};
+
+enum IntellVoiceUpdateSceneType {
+    INTELL_VOICE_DEFAULT = -1,
+    INTELL_VOICE_SILENCE_UPDATE = 0,
+    INTELL_VOICE_CLONE_UPDATE,
+    INTELL_VOICE_CLOUD_UPDATE,
+    INTELL_VOICE_SCENE_TYPE_BUT
 };
 
 struct IntellVoiceEngineInfo {
@@ -51,7 +62,9 @@ public:
         INTELL_VOICE_ENGINE_WRITE_AUDIO,
         INTELL_VOICE_ENGINE_STAET_CAPTURER,
         INTELL_VOICE_ENGINE_READ,
-        INTELL_VOICE_ENGINE_STOP_CAPTURER
+        INTELL_VOICE_ENGINE_STOP_CAPTURER,
+        INTELL_VOICE_ENGINE_GET_WAKEUP_PCM,
+        INTELL_VOICE_ENGINE_EVALUATE
     };
 
     virtual void SetCallback(sptr<IRemoteObject> object) = 0;
@@ -65,6 +78,8 @@ public:
     virtual int32_t StartCapturer(int32_t channels) = 0;
     virtual int32_t Read(std::vector<uint8_t> &data) = 0;
     virtual int32_t StopCapturer() = 0;
+    virtual int32_t GetWakeupPcm(std::vector<uint8_t> &data) = 0;
+    virtual int32_t Evaluate(const std::string &word, EvaluationResultInfo &info) = 0;
 };
 }
 }

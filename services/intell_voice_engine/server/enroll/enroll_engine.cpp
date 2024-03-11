@@ -22,6 +22,7 @@
 #include "scope_guard.h"
 #include "adapter_callback_service.h"
 #include "intell_voice_service_manager.h"
+#include "update_engine_utils.h"
 
 #define LOG_TAG "EnrollEngine"
 
@@ -42,7 +43,7 @@ EnrollEngine::EnrollEngine()
     capturerOptions_.streamInfo.encoding = AudioEncodingType::ENCODING_PCM;
     capturerOptions_.streamInfo.format = AudioSampleFormat::SAMPLE_S16LE;
     capturerOptions_.streamInfo.channels = AudioChannel::MONO;
-    capturerOptions_.capturerInfo.sourceType = SourceType::SOURCE_TYPE_MIC;
+    capturerOptions_.capturerInfo.sourceType = SourceType::SOURCE_TYPE_VOICE_RECOGNITION;
     capturerOptions_.capturerInfo.capturerFlags = 0;
 }
 
@@ -69,7 +70,7 @@ void EnrollEngine::OnEnrollComplete()
     StopAudioSource();
 }
 
-bool EnrollEngine::Init()
+bool EnrollEngine::Init(const std::string &param)
 {
     return EngineUtil::CreateAdapterInner(ENROLL_ADAPTER_TYPE);
 }
@@ -77,6 +78,7 @@ bool EnrollEngine::Init()
 void EnrollEngine::SetCallback(sptr<IRemoteObject> object)
 {
     std::lock_guard<std::mutex> lock(mutex_);
+    INTELL_VOICE_LOG_INFO("enter");
     if (adapter_ == nullptr) {
         INTELL_VOICE_LOG_ERROR("adapter is nullptr");
         return;
@@ -115,6 +117,7 @@ int32_t EnrollEngine::Attach(const IntellVoiceEngineInfo &info)
 
     SetDspFeatures();
     isPcmFromExternal_ = info.isPcmFromExternal;
+    HistoryInfoMgr::GetInstance().SetWakeupPhrase(info.wakeupPhrase);
 
     IntellVoiceEngineAdapterInfo adapterInfo = {
         .wakeupPhrase = info.wakeupPhrase,
@@ -139,11 +142,8 @@ int32_t EnrollEngine::Detach(void)
     if (enrollResult_ == 0) {
         ProcDspModel();
         /* save new version number */
-        const auto &mgr = IntellVoiceServiceManager::GetInstance();
-        if (mgr != nullptr) {
-            mgr->SaveWakeupVesion();
-            INTELL_VOICE_LOG_INFO("enroll save version");
-        }
+        UpdateEngineUtils::SaveWakeupVesion();
+        INTELL_VOICE_LOG_INFO("enroll save version");
     }
 
     int32_t ret = adapter_->Detach();
@@ -251,6 +251,12 @@ int32_t EnrollEngine::WriteAudio(const uint8_t *buffer, uint32_t size)
 {
     std::lock_guard<std::mutex> lock(mutex_);
     return EngineUtil::WriteAudio(buffer, size);
+}
+
+int32_t EnrollEngine::Evaluate(const std::string &word, EvaluationResultInfo &info)
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    return EngineUtil::Evaluate(word, info);
 }
 
 bool EnrollEngine::StartAudioSource()

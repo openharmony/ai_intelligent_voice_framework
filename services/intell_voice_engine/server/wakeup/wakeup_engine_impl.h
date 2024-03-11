@@ -49,6 +49,7 @@ enum EngineEvent {
     SET_LISTENER,
     SET_PARAM,
     GET_PARAM,
+    GET_WAKEUP_PCM,
     RELEASE_ADAPTER,
     RESET_ADAPTER,
     RELEASE,
@@ -95,6 +96,8 @@ private:
     void OnWakeupEvent(int32_t msgId, int32_t result);
     void OnInitDone(int32_t result);
     void OnWakeupRecognition(int32_t result);
+    OHOS::AudioStandard::AudioChannel GetWakeupSourceChannel();
+
 private:
     bool InitStates();
     int32_t HandleGetParam(const StateMsg &msg, State &nextState);
@@ -108,6 +111,7 @@ private:
     int32_t HandleStartCapturer(const StateMsg &msg, State &nextState);
     int32_t HandleRead(const StateMsg &msg, State &nextState);
     int32_t HandleStopCapturer(const StateMsg &msg, State &nextState);
+    int32_t HandleGetWakeupPcm(const StateMsg &msg, State &nextState);
     int32_t HandleRecognizingTimeout(const StateMsg &msg, State &nextState);
     int32_t HandleResetAdapter(const StateMsg &msg, State &nextState);
     int32_t HandleRelease(const StateMsg &msg, State &nextState);

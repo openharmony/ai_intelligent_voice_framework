@@ -15,14 +15,16 @@
 #ifndef ENGINE_MANAGER_HOST_H
 #define ENGINE_MANAGER_HOST_H
 #include "v1_0/iintell_voice_engine_manager.h"
-#include "v1_1/iintell_voice_engine_manager.h"
+#include "v1_2/iintell_voice_engine_manager.h"
 #include "intell_voice_death_recipient.h"
+#include "adapter_host_manager.h"
 
 namespace OHOS {
 namespace IntellVoiceEngine {
 using OHOS::HDI::IntelligentVoice::Engine::V1_0::IIntellVoiceEngineAdapter;
 using OHOS::HDI::IntelligentVoice::Engine::V1_0::IntellVoiceEngineAdapterDescriptor;
 using OHOS::HDI::IntelligentVoice::Engine::V1_1::IIntellVoiceDataOprCallback;
+using OHOS::HDI::IntelligentVoice::Engine::V1_2::UploadHdiFile;
 
 class EngineHostManager {
 public:
@@ -38,14 +40,19 @@ public:
     bool RegisterEngineHDIDeathRecipient();
     void DeregisterEngineHDIDeathRecipient();
     void SetDataOprCallback();
-    sptr<IIntellVoiceEngineAdapter> CreateEngineAdapter(const IntellVoiceEngineAdapterDescriptor &desc);
+    std::shared_ptr<AdapterHostManager> CreateEngineAdapter(const IntellVoiceEngineAdapterDescriptor &desc);
     void ReleaseEngineAdapter(const IntellVoiceEngineAdapterDescriptor &desc);
+    int GetUploadFiles(int numMax, std::vector<UploadHdiFile> &files);
+    int32_t GetCloneFilesList(std::vector<std::string>& cloneFiles);
+    int32_t GetCloneFile(const std::string &filePath, std::vector<uint8_t> &buffer);
+    int32_t SendCloneFile(const std::string &filePath, const std::vector<uint8_t> &buffer);
 
 private:
     static void OnEngineHDIDiedCallback();
 
     sptr<OHOS::HDI::IntelligentVoice::Engine::V1_0::IIntellVoiceEngineManager> engineHostProxy1_0_ = nullptr;
     sptr<OHOS::HDI::IntelligentVoice::Engine::V1_1::IIntellVoiceEngineManager> engineHostProxy1_1_ = nullptr;
+    sptr<OHOS::HDI::IntelligentVoice::Engine::V1_2::IIntellVoiceEngineManager> engineHostProxy1_2_ = nullptr;
     sptr<OHOS::IntellVoiceUtils::IntellVoiceDeathRecipient> engineHdiDeathRecipient_ = nullptr;
     sptr<IIntellVoiceDataOprCallback> dataOprCb_ = nullptr;
 };

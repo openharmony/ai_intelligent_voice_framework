@@ -39,7 +39,8 @@ int TriggerModelOpenCallback::OnCreate(RdbStore &rdbStore)
     INTELL_VOICE_LOG_DEBUG("OnCreate");
     std::string CREATE_TABLE_Trigger =
         std::string("CREATE TABLE IF NOT EXISTS trigger ") +
-        std::string("(model_uuid INTEGER PRIMARY KEY, vendor_uuid INTEGER, data BLOB, model_version INTEGER)");
+        std::string("(model_uuid INTEGER PRIMARY KEY, vendor_uuid INTEGER, data BLOB,"\
+            " model_version INTEGER, model_type INTEGER)");
 
     return rdbStore.ExecuteSql(CREATE_TABLE_Trigger);
 }
@@ -68,7 +69,7 @@ TriggerDbHelper::~TriggerDbHelper()
 bool TriggerDbHelper::UpdateGenericTriggerModel(std::shared_ptr<GenericTriggerModel> model)
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    INTELL_VOICE_LOG_INFO("db Update");
+    INTELL_VOICE_LOG_INFO("enter");
 
     if (store_ == nullptr) {
         INTELL_VOICE_LOG_ERROR("store is nullptr");
@@ -86,6 +87,7 @@ bool TriggerDbHelper::UpdateGenericTriggerModel(std::shared_ptr<GenericTriggerMo
     values.PutInt("vendor_uuid", model->GetVendorUuid());
     values.PutBlob("data", model->GetData());
     values.PutInt("model_version", model->GetVersion());
+    values.PutInt("model_type", model->GetType());
     int ret = store_->InsertWithConflictResolution(rowId, "trigger", values, ConflictResolution::ON_CONFLICT_REPLACE);
     if (ret != E_OK) {
         INTELL_VOICE_LOG_ERROR("update generic model failed");
@@ -133,13 +135,30 @@ bool TriggerDbHelper::GetModelVersion(std::shared_ptr<AbsSharedResultSet> &set, 
     int columnIndex;
     int ret = set->GetColumnIndex("model_version", columnIndex);
     if (ret != E_OK) {
-        INTELL_VOICE_LOG_ERROR("failed to get model uuid column index");
+        INTELL_VOICE_LOG_ERROR("failed to get model version column index");
         return false;
     }
 
     ret = set->GetInt(columnIndex, version);
     if (ret != E_OK) {
-        INTELL_VOICE_LOG_ERROR("failed to get model uuid");
+        INTELL_VOICE_LOG_ERROR("failed to get model version");
+        return false;
+    }
+    return true;
+}
+
+bool TriggerDbHelper::GetModelType(std::shared_ptr<AbsSharedResultSet> &set, int32_t &type) const
+{
+    int columnIndex;
+    int ret = set->GetColumnIndex("model_type", columnIndex);
+    if (ret != E_OK) {
+        INTELL_VOICE_LOG_ERROR("failed to get model type column index");
+        return false;
+    }
+
+    ret = set->GetInt(columnIndex, type);
+    if (ret != E_OK) {
+        INTELL_VOICE_LOG_ERROR("failed to get model type");
         return false;
     }
     return true;
@@ -148,7 +167,7 @@ bool TriggerDbHelper::GetModelVersion(std::shared_ptr<AbsSharedResultSet> &set, 
 std::shared_ptr<GenericTriggerModel> TriggerDbHelper::GetGenericTriggerModel(const int32_t modelUuid)
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    INTELL_VOICE_LOG_INFO("db get generic model");
+    INTELL_VOICE_LOG_INFO("enter");
     if (store_ == nullptr) {
         INTELL_VOICE_LOG_ERROR("store is nullptr");
         return nullptr;
@@ -181,7 +200,14 @@ std::shared_ptr<GenericTriggerModel> TriggerDbHelper::GetGenericTriggerModel(con
         return nullptr;
     }
 
-    std::shared_ptr<GenericTriggerModel> model = std::make_shared<GenericTriggerModel>(modelUuid, modelVersion);
+    int32_t type;
+    if (!GetModelType(set, type)) {
+        INTELL_VOICE_LOG_ERROR("failed to get model type");
+        return nullptr;
+    }
+
+    std::shared_ptr<GenericTriggerModel> model = std::make_shared<GenericTriggerModel>(modelUuid, modelVersion,
+        static_cast<TriggerModel::TriggerModelType>(type));
     if (model == nullptr) {
         INTELL_VOICE_LOG_ERROR("failed to alloc model");
         return nullptr;
@@ -193,7 +219,7 @@ std::shared_ptr<GenericTriggerModel> TriggerDbHelper::GetGenericTriggerModel(con
 void TriggerDbHelper::DeleteGenericTriggerModel(const int32_t modelUuid)
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    INTELL_VOICE_LOG_INFO("db Delete");
+    INTELL_VOICE_LOG_INFO("enter");
     if (store_ == nullptr) {
         INTELL_VOICE_LOG_ERROR("store is nullptr");
         return;

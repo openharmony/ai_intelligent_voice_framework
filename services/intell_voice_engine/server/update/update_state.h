@@ -19,12 +19,21 @@ namespace OHOS {
 namespace IntellVoiceEngine {
 #define UPDATE_DELAY_TIME_SECONDS  30
 
-enum class UpdateState {
+enum UpdateState {
     UPDATE_STATE_DEFAULT = -1,
     UPDATE_STATE_COMPLETE_SUCCESS,
     UPDATE_STATE_COMPLETE_FAIL,
     UPDATE_STATE_BUTT,
 };
+
+enum UpdatePriority {
+    UPDATE_PRIORITY_DEFAULT = 0,
+    CLOUD_UPDATE_PRIORITY = 1,
+    CLONE_UPDATE_PRIORITY,
+    SILENCE_UPDATE_PRIORITY,
+    UPDATE_PRIORITY_BUTT,
+};
+
 }
 }
 #endif

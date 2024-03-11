@@ -19,7 +19,7 @@
 #include <string>
 #include <map>
 #include <ashmem.h>
-#include "v1_0/iintell_voice_engine_adapter.h"
+#include "adapter_host_manager.h"
 
 namespace OHOS {
 namespace IntellVoiceEngine {
@@ -32,13 +32,15 @@ public:
     std::string GetParameter(const std::string &key);
     int32_t WriteAudio(const uint8_t *buffer, uint32_t size);
     int32_t Stop();
+    int32_t GetWakeupPcm(std::vector<uint8_t> &data);
+    int32_t Evaluate(const std::string &word, EvaluationResultInfo &info);
     bool SetDspFeatures();
     void SplitStringToKVPair(const std::string &inputStr, std::map<std::string, std::string> &kvpairs);
     void ProcDspModel();
     void ReleaseAdapterInner();
 
 protected:
-    sptr<OHOS::HDI::IntelligentVoice::Engine::V1_0::IIntellVoiceEngineAdapter> adapter_ = nullptr;
+    std::shared_ptr<AdapterHostManager> adapter_ = nullptr;
     OHOS::HDI::IntelligentVoice::Engine::V1_0::IntellVoiceEngineAdapterDescriptor desc_;
 
 private:

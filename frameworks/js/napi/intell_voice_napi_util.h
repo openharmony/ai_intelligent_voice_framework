@@ -38,6 +38,7 @@ napi_value SetValue(napi_env env, const std::vector<uint8_t> &value);
 napi_status GetValue(napi_env env, napi_value jsValue, int32_t &value);
 napi_status GetValue(napi_env env, napi_value jsValue, bool &value);
 napi_status GetValue(napi_env env, napi_value jsValue, std::string &value);
+napi_status GetValue(napi_env env, napi_value jsValue, std::vector<uint8_t> &value);
 }  // namespace IntellVoiceNapi
 }  // namespace OHOS
 #endif

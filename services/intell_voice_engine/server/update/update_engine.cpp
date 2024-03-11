@@ -23,6 +23,7 @@
 #include "trigger_manager.h"
 #include "adapter_callback_service.h"
 #include "intell_voice_service_manager.h"
+#include "update_engine_utils.h"
 
 #define LOG_TAG "UpdateEngine"
 
@@ -61,11 +62,8 @@ void UpdateEngine::OnCommitEnrollComplete(int32_t result)
     if (updateResult_ == UpdateState::UPDATE_STATE_COMPLETE_SUCCESS) {
         ProcDspModel();
         /* save new version number */
-        const auto &manager = IntellVoiceServiceManager::GetInstance();
-        if (manager != NULL) {
-            manager->SaveWakeupVesion();
-            INTELL_VOICE_LOG_INFO("update save version");
-        }
+        UpdateEngineUtils::SaveWakeupVesion();
+        INTELL_VOICE_LOG_INFO("update save version");
     }
 
     std::thread([=]() {
@@ -83,7 +81,7 @@ void UpdateEngine::OnUpdateEvent(int32_t msgId, int32_t result)
     }
 }
 
-bool UpdateEngine::Init()
+bool UpdateEngine::Init(const std::string &param)
 {
     if (!EngineUtil::CreateAdapterInner(UPDATE_ADAPTER_TYPE)) {
         return false;
@@ -93,6 +91,10 @@ bool UpdateEngine::Init()
     adapter_->SetParameter(LANGUAGE_TEXT + HistoryInfoMgr::GetInstance().GetLanguage());
     adapter_->SetParameter(AREA_TEXT + HistoryInfoMgr::GetInstance().GetArea());
     SetDspFeatures();
+
+    if (!param.empty()) {
+        SetParameter(param);
+    }
 
     IntellVoiceEngineInfo info = {
         .wakeupPhrase = "\xE5\xB0\x8F\xE8\x89\xBA\xE5\xB0\x8F\xE8\x89\xBA",
@@ -104,6 +106,7 @@ bool UpdateEngine::Init()
     int ret = Attach(info);
     if (ret != 0) {
         INTELL_VOICE_LOG_ERROR("attach err");
+        ReleaseAdapterInner();
         return false;
     }
 

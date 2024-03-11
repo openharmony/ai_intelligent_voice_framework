@@ -181,5 +181,53 @@ int32_t IntellVoiceEngineProxy::StopCapturer()
     Remote()->SendRequest(INTELL_VOICE_ENGINE_STOP_CAPTURER, data, reply, option);
     return reply.ReadInt32();
 }
+
+int32_t IntellVoiceEngineProxy::GetWakeupPcm(std::vector<uint8_t> &data)
+{
+    MessageParcel parcelData;
+    MessageParcel reply;
+    MessageOption option;
+
+    parcelData.WriteInterfaceToken(IIntellVoiceEngine::GetDescriptor());
+    Remote()->SendRequest(INTELL_VOICE_ENGINE_GET_WAKEUP_PCM, parcelData, reply, option);
+    int ret = reply.ReadInt32();
+    if (ret != 0) {
+        INTELL_VOICE_LOG_ERROR("failed to get wakeup pcm, ret:%{public}d", ret);
+        return ret;
+    }
+    uint32_t size = reply.ReadUint32();
+    if (size == 0) {
+        INTELL_VOICE_LOG_ERROR("buffer size is zero");
+        return -1;
+    }
+    const uint8_t *buff = reply.ReadBuffer(size);
+    if (buff == nullptr) {
+        INTELL_VOICE_LOG_ERROR("buffer is nullptr");
+        return -1;
+    }
+    data.resize(size);
+    std::copy(buff, buff + size, data.begin());
+    return ret;
+}
+
+int32_t IntellVoiceEngineProxy::Evaluate(const std::string &word, EvaluationResultInfo &info)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    data.WriteInterfaceToken(IIntellVoiceEngine::GetDescriptor());
+    data.WriteString(word);
+    Remote()->SendRequest(INTELL_VOICE_ENGINE_EVALUATE, data, reply, option);
+    int32_t ret = reply.ReadInt32();
+    if (ret != 0) {
+        INTELL_VOICE_LOG_ERROR("failed to evaluate");
+        return ret;
+    }
+
+    info.score = reply.ReadInt32();
+    info.resultCode = static_cast<OHOS::HDI::IntelligentVoice::Engine::V1_2::EvaluationResultCode>(reply.ReadInt32());
+    return ret;
+}
 }
 }

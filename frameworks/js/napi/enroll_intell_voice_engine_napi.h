@@ -50,6 +50,7 @@ private:
     static napi_value SetWakeupHapInfo(napi_env env, napi_callback_info info);
     static napi_value SetParameter(napi_env env, napi_callback_info info);
     static napi_value GetParameter(napi_env env, napi_callback_info info);
+    static napi_value EvaluateForResult(napi_env env, napi_callback_info info);
     static napi_value Release(napi_env env, napi_callback_info info);
 
     static void CompleteCallback(napi_env env, napi_status status, void *data);

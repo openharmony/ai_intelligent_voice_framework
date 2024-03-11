@@ -75,6 +75,105 @@ declare namespace intelligentVoice {
      * @since 10
      */
     off(type: 'serviceChange', callback?: Callback<ServiceChangeType>): void;
+    /**
+     * Obtains clone files.
+     * @permission ohos.permission.MANAGE_INTELLIGENT_VOICE
+     * @param { AsyncCallback<Array<CloneFileInfo>> } callback - the callback used to return the clone files.
+     * @throws { BusinessError } 201 - Permission denied.
+     * @syscap SystemCapability.AI.IntelligentVoice.Core
+     * @systemapi
+     * @since 11
+     */
+    setParameter(key: string, value: string, callback: AsyncCallback<void>): void;
+    /**
+      * Sets an intelligent voice parameter. This method uses a promise to return the result.
+      * @permission ohos.permission.MANAGE_INTELLIGENT_VOICE
+      * @param { string } key - the key of the intelligent voice parameter to set.
+      * @param { string } value - the value of the intelligent voice parameter to set.
+      * @returns { Promise<void> } the promise used to return the result.
+      * @throws { BusinessError } 201 - Permission denied.
+      * @throws { BusinessError } 401 - if input parameter type or number mismatch.
+      * @throws { BusinessError } 22700102 - Input parameter value error.
+      * @syscap SystemCapability.AI.IntelligentVoice.Core
+      * @systemapi
+      * @since 11
+      */
+    setParameter(key: string, value: string): Promise<void>;
+    /**
+      * Obtains the value of an intelligent voice parameter. This method uses an asynchronous callback to return the query result.
+      * @permission ohos.permission.MANAGE_INTELLIGENT_VOICE
+      * @param { string } key - the key of the intelligent voice parameter whose value is to be obtained.
+      * @param { AsyncCallback<string> } callback - the callback used to return the value of the intelligent voice parameter.
+      * @throws { BusinessError } 201 - Permission denied.
+      * @throws { BusinessError } 401 - if input parameter type or number mismatch.
+      * @throws { BusinessError } 22700102 - Input parameter value error.
+      * @syscap SystemCapability.AI.IntelligentVoice.Core
+      * @systemapi
+      * @since 11
+      */
+    getParameter(key: string, callback: AsyncCallback<string>): void;
+      /**
+      * Obtains the value of an intelligent voice parameter. This method uses an asynchronous callback to return the query result.
+      * @permission ohos.permission.MANAGE_INTELLIGENT_VOICE
+      * @param { string } key - the key of the intelligent voice parameter whose value is to be obtained.
+      * @returns { Promise<string> } the promise used to return the value of the intelligent voice parameter.
+      * @throws { BusinessError } 201 - Permission denied.
+      * @throws { BusinessError } 401 - if input parameter type or number mismatch.
+      * @throws { BusinessError } 22700102 - Input parameter value error.
+      * @syscap SystemCapability.AI.IntelligentVoice.Core
+      * @systemapi
+      * @since 11
+      */
+    getParameter(key: string): Promise<string>;
+      /**
+      * Obtains reported files.
+      * @permission ohos.permission.MANAGE_INTELLIGENT_VOICE
+      * @param { number } maxCount - the maximum count of reported files.
+      * @param { AsyncCallback<Array<ReportedFilesInfo>> } callback - the callback used to return the reported files.
+      * @throws { BusinessError } 201 - Permission denied.
+      * @syscap SystemCapability.AI.IntelligentVoice.Core
+      * @systemapi
+      * @since 11
+      */
+    getCloneFiles(callback: AsyncCallback<Array<CloneFileInfo>>): void;
+      /**
+      * Obtains clone files.
+      * @permission ohos.permission.MANAGE_INTELLIGENT_VOICE
+      * @returns { Promise<Array<CloneFileInfo>> } the promise used to return the clone files.
+      * @throws { BusinessError } 201 - Permission denied.
+      * @syscap SystemCapability.AI.IntelligentVoice.Core
+      * @systemapi
+      * @since 11
+      */
+    getCloneFiles(): promise<Array<CloneFileInfo>>;
+      /**
+     * Starts clone.
+     * @permission ohos.permission.MANAGE_INTELLIGENT_VOICE
+     * @param { Array<CloneFileInfo> } cloneFiles - the clone files to send.
+     * @param { string } cloneInfo - clone information.
+     * @param { AsyncCallback<CloneResult> } callback - the callback used to return the clone result.
+     * @throws { BusinessError } 201 - Permission denied.
+     * @throws { BusinessError } 401 - if input parameter type or number mismatch.
+     * @throws { BusinessError } 22700102 - Input parameter value error.
+     * @syscap SystemCapability.AI.IntelligentVoice.Core
+     * @systemapi
+     * @since 11
+     */
+    cloneForResult(cloneFiles: Array<CloneFileInfo>, cloneInfo: string, callback: AsyncCallback<CloneResult>): void;
+      /**
+      * Sends clone files.
+      * @permission ohos.permission.MANAGE_INTELLIGENT_VOICE
+      * @param { Array<CloneFileInfo> } cloneFiles - the clone files to send.
+      * @param { string } cloneInfo - clone information.
+      * @returns { promise<CloneResult> } the promise used to return the clone result.
+      * @throws { BusinessError } 201 - Permission denied.
+      * @throws { BusinessError } 401 - if input parameter type or number mismatch.
+      * @throws { BusinessError } 22700102 - Input parameter value error.
+      * @syscap SystemCapability.AI.IntelligentVoice.Core
+      * @systemapi
+      * @since 11
+      */
+    cloneForResult(cloneFiles: Array<CloneFileInfo>, cloneInfo: string): promise<CloneResult>;
   }
 
   /**
@@ -125,6 +224,23 @@ declare namespace intelligentVoice {
     UPDATE_ENGINE_TYPE = 2,
   }
 
+  enum CloneResult {
+    /**
+     * Clone success.
+     * @syscap SystemCapability.AI.IntelligentVoice.Core
+     * @systemapi
+     * @since 11
+     */
+    CLONE_SUCCESS = 0,
+    /**
+     * Clone failed.
+     * @syscap SystemCapability.AI.IntelligentVoice.Core
+     * @systemapi
+     * @since 11
+     */
+    CLONE_FAILED = -1,
+  }
+
   /**
    * Describes enroll intelligent voice engine.
    * @typedef EnrollIntelligentVoiceEngineDescriptor
@@ -167,6 +283,25 @@ declare namespace intelligentVoice {
      * @since 10
      */
     wakeupPhrase: string;
+  }
+
+  interface CloneFileInfo {
+    /**
+     * File path.
+     * @type { string }
+     * @syscap SystemCapability.AI.IntelligentVoice.Core
+     * @systemapi
+     * @since 11
+     */
+    filePath: string;
+    /**
+     * File content.
+     * @type { ArrayBuffer }
+     * @syscap SystemCapability.AI.IntelligentVoice.Core
+     * @systemapi
+     * @since 11
+     */
+    fileContent: ArrayBuffer;
   }
 
   /**

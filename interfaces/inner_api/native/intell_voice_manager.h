@@ -21,11 +21,20 @@
 #include "iremote_broker.h"
 #include "i_intell_voice_engine.h"
 #include "i_intell_voice_service.h"
+#include "update_callback_inner.h"
+#include "intell_voice_info.h"
 
 namespace OHOS {
 namespace IntellVoice {
-using namespace std;
-using namespace OHOS::IntellVoiceEngine;
+using OHOS::IntellVoiceEngine::IntellVoiceEngineType;
+using OHOS::IntellVoiceEngine::IIntellVoiceEngine;
+using OHOS::HDI::IntelligentVoice::Engine::V1_2::UploadHdiFileType;
+
+struct UploadFilesInfo {
+    UploadHdiFileType type;
+    std::string filesDescription;
+    std::vector<std::vector<uint8_t>> filesContent;
+};
 
 class IntellVoiceManager {
 public:
@@ -39,14 +48,22 @@ public:
 
     int32_t RegisterServiceDeathRecipient(sptr<OHOS::IRemoteObject::DeathRecipient> callback);
     int32_t DeregisterServiceDeathRecipient(sptr<OHOS::IRemoteObject::DeathRecipient> callback);
+    int32_t GetUploadFiles(int numMax, std::vector<UploadFilesInfo> &reportedFilesInfo);
 
+    int32_t SetParameter(const std::string &key, const std::string &value);
+    std::string GetParameter(const std::string &key);
+    int32_t GetCloneFiles(std::vector<CloneFileInfo> &cloneFileInfo);
+    int32_t CloneForResult(const std::vector<CloneFileInfo> &cloneFileInfo,
+        const std::string &cloneInfo, const std::shared_ptr<IIntellVoiceUpdateCallback> callback);
 private:
     IntellVoiceManager();
     ~IntellVoiceManager();
+    int32_t GetFileDataFromAshmem(sptr<Ashmem> ashmem, std::vector<uint8_t> &fileData);
 
     std::mutex mutex_;
     std::condition_variable proxyConVar_;
-    sptr<IIntellVoiceService> g_sProxy;
+    sptr<OHOS::IntellVoiceEngine::IIntellVoiceService> g_sProxy;
+    sptr<UpdateCallbackInner> callback_ = nullptr;
 };
 }  // namespace IntellVoice
 }  // namespace OHOS

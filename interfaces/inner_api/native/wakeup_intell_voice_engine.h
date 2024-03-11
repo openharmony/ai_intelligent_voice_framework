@@ -45,6 +45,7 @@ public:
     int32_t StartCapturer(int32_t channels);
     int32_t Read(std::vector<uint8_t> &data);
     int32_t StopCapturer();
+    int32_t GetWakeupPcm(std::vector<uint8_t> &data);
     sptr<IIntellVoiceEngine> GetEngine()
     {
         return engine_;

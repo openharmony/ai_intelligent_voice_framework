@@ -14,6 +14,16 @@
  */
 #include "intell_voice_util.h"
 #include <memory>
+#include <malloc.h>
+#include <fcntl.h>
+#include <cstdio>
+#include <unistd.h>
+#include <cinttypes>
+#include <fstream>
+
+#include "accesstoken_kit.h"
+#include "tokenid_kit.h"
+#include "ipc_skeleton.h"
 #include "intell_voice_log.h"
 
 #define LOG_TAG "IntellVoiceUtil"
@@ -21,13 +31,14 @@
 namespace OHOS {
 namespace IntellVoiceUtils {
 static constexpr uint32_t VERSION_OFFSET = 8;
+static constexpr uid_t UID_ROOT = 0;
 
-uint32_t GetHdiVersionId(uint32_t majorVer, uint32_t minorVer)
+uint32_t IntellVoiceUtil::GetHdiVersionId(uint32_t majorVer, uint32_t minorVer)
 {
     return ((majorVer << VERSION_OFFSET) | minorVer);
 }
 
-bool DeinterleaveAudioData(int16_t *buffer, uint32_t size, int32_t channelCnt,
+bool IntellVoiceUtil::DeinterleaveAudioData(int16_t *buffer, uint32_t size, int32_t channelCnt,
     std::vector<std::vector<uint8_t>> &audioData)
 {
     if (channelCnt == 0) {
@@ -48,6 +59,75 @@ bool DeinterleaveAudioData(int16_t *buffer, uint32_t size, int32_t channelCnt,
             reinterpret_cast<uint8_t *>(channelData.get()) + channelLen * sizeof(int16_t));
         audioData.emplace_back(item);
     }
+    return true;
+}
+
+bool IntellVoiceUtil::ReadFile(const std::string &filePath, std::shared_ptr<uint8_t> &buffer, uint32_t &size)
+{
+    std::ifstream file(filePath, std::ios::binary);
+    if (!file.good()) {
+        INTELL_VOICE_LOG_ERROR("open file failed");
+        return false;
+    }
+
+    file.seekg(0, file.end);
+    size = static_cast<uint32_t>(file.tellg());
+    if (size == 0) {
+        INTELL_VOICE_LOG_ERROR("file is empty");
+        return false;
+    }
+
+    buffer = std::shared_ptr<uint8_t>(new uint8_t[size], [](uint8_t *p) { delete[] p; });
+    if (buffer == nullptr) {
+        INTELL_VOICE_LOG_ERROR("failed to allocate buffer");
+        return false;
+    }
+
+    file.seekg(0, file.beg);
+    file.read(reinterpret_cast<char *>(buffer.get()), size);
+    file.close();
+    return true;
+}
+
+bool IntellVoiceUtil::VerifyClientPermission(const std::string &permissionName)
+{
+    Security::AccessToken::AccessTokenID clientTokenId = IPCSkeleton::GetCallingTokenID();
+    INTELL_VOICE_LOG_INFO("clientTokenId:%{public}d", clientTokenId);
+    int res = Security::AccessToken::AccessTokenKit::VerifyAccessToken(clientTokenId, permissionName);
+    if (res != Security::AccessToken::PermissionState::PERMISSION_GRANTED) {
+        INTELL_VOICE_LOG_ERROR("Permission denied!");
+        return false;
+    }
+    return true;
+}
+
+bool IntellVoiceUtil::CheckIsSystemApp()
+{
+    uint64_t fullTokenId = IPCSkeleton::GetCallingFullTokenID();
+    if (!Security::AccessToken::TokenIdKit::IsSystemAppByFullTokenID(fullTokenId)) {
+        INTELL_VOICE_LOG_INFO("Not system app, permission reject tokenid: %{public}" PRIu64 "", fullTokenId);
+        return false;
+    }
+
+    INTELL_VOICE_LOG_INFO("System app, fullTokenId:%{public}" PRIu64 "", fullTokenId);
+    return true;
+}
+
+bool IntellVoiceUtil::VerifySystemPermission(const std::string &permissionName)
+{
+    if (IPCSkeleton::GetCallingUid() == UID_ROOT) {
+        INTELL_VOICE_LOG_INFO("callingUid is root");
+        return false;
+    }
+
+    if (!VerifyClientPermission(permissionName)) {
+        return false;
+    }
+
+    if (!CheckIsSystemApp()) {
+        return false;
+    }
+
     return true;
 }
 }

@@ -32,7 +32,7 @@ void MultipleAudioCapturerUnitTest::TearDown(void) {}
 void MultipleAudioCapturerUnitTest::InitIntellVoice(sptr<IntellVoiceEngine::EngineBase> &engine)
 {
     std::lock_guard<std::mutex> lock(engineMutex_);
-    engine = IntellVoiceEngine::EngineFactory::CreateEngineInst(IntellVoiceEngine::INTELL_VOICE_WAKEUP);
+    engine = IntellVoiceEngine::EngineFactory::CreateEngineInst(IntellVoiceEngine::INTELL_VOICE_WAKEUP, "");
     ASSERT_NE(nullptr, engine);
 
     return;

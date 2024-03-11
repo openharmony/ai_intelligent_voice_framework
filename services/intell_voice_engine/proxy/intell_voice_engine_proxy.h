@@ -21,6 +21,8 @@
 
 namespace OHOS {
 namespace IntellVoiceEngine {
+using OHOS::HDI::IntelligentVoice::Engine::V1_2::EvaluationResultInfo;
+
 class IntellVoiceEngineProxy : public IRemoteProxy<IIntellVoiceEngine> {
 public:
     explicit IntellVoiceEngineProxy(const sptr<IRemoteObject> &impl) : IRemoteProxy<IIntellVoiceEngine>(impl) {};
@@ -36,6 +38,8 @@ public:
     int32_t StartCapturer(int32_t channels) override;
     int32_t Read(std::vector<uint8_t> &data) override;
     int32_t StopCapturer() override;
+    int32_t GetWakeupPcm(std::vector<uint8_t> &data) override;
+    int32_t Evaluate(const std::string &word, EvaluationResultInfo &info) override;
 
 private:
     static inline BrokerDelegator<IntellVoiceEngineProxy> delegator_;

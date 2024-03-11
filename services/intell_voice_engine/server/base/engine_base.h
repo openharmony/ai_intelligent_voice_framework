@@ -22,12 +22,12 @@ namespace IntellVoiceEngine {
 class EngineBase : public IntellVoiceEngineStub {
 public:
     ~EngineBase() = default;
-    virtual bool Init() = 0;
+    virtual bool Init(const std::string &param = "") = 0;
     int32_t WriteAudio(const uint8_t *buffer, uint32_t size) override
     {
         return 0;
     }
-    virtual void OnDetected() {};
+    virtual void OnDetected(int32_t uuid) {};
     virtual bool ResetAdapter()
     {
         return true;
@@ -38,6 +38,9 @@ public:
     int32_t StartCapturer(int32_t channels) override;
     int32_t Read(std::vector<uint8_t> &data) override;
     int32_t StopCapturer() override;
+    int32_t GetWakeupPcm(std::vector<uint8_t> &data) override;
+    int32_t Evaluate(const std::string &word, EvaluationResultInfo &info) override;
+
 protected:
     EngineBase() = default;
 };

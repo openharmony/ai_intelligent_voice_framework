@@ -36,7 +36,7 @@ public:
     bool GetCbInfo(napi_env env, napi_callback_info info, size_t callBackIndex, CbInfoParser parser);
 
     napi_env env_ = nullptr;
-    void *engineNapi_ = nullptr;
+    void *instanceNapi_ = nullptr;
 
     int32_t result_ = -1;
     AsyncComplete complete_ = nullptr;

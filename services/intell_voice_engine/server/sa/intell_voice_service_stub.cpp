@@ -20,6 +20,150 @@
 
 namespace OHOS {
 namespace IntellVoiceEngine {
+IntellVoiceServiceStub::IntellVoiceServiceStub()
+{
+    processServiceFuncMap_[HDI_INTELL_VOICE_SERVICE_CREATE_ENGINE] = [this](MessageParcel &data,
+        MessageParcel &reply) -> int32_t { return this->CreateEngineInner(data, reply); };
+    processServiceFuncMap_[HDI_INTELL_VOICE_SERVICE_RELEASE_ENGINE] = [this](MessageParcel &data,
+        MessageParcel &reply) -> int32_t { return this->ReleaseEngineInner(data, reply); };
+    processServiceFuncMap_[HDI_INTELL_VOICE_SERVICE_GET_PARAMETER] = [this](MessageParcel &data,
+        MessageParcel &reply) -> int32_t { return this->GetParameterInner(data, reply); };
+    processServiceFuncMap_[HDI_INTELL_VOICE_SERVICE_GET_REPORTED_FILES] = [this](MessageParcel &data,
+        MessageParcel &reply) -> int32_t { return this->GetReportedFilesInner(data, reply); };
+    processServiceFuncMap_[HDI_INTELL_VOICE_SERVICE_GET_CLONE_FILES_LIST] = [this](MessageParcel &data,
+        MessageParcel &reply) -> int32_t { return this->GetCloneFileListInner(data, reply); };
+    processServiceFuncMap_[HDI_INTELL_VOICE_SERVICE_GET_CLONE_FILE] = [this](MessageParcel &data,
+        MessageParcel &reply) -> int32_t { return this->GetCloneFileInner(data, reply); };
+    processServiceFuncMap_[HDI_INTELL_VOICE_SERVICE_SEND_CLONE_FILE] = [this](MessageParcel &data,
+        MessageParcel &reply) -> int32_t { return this->SendCloneFileInner(data, reply); };
+    processServiceFuncMap_[HDI_INTELL_VOICE_SERVICE_CLONE_FOR_RESULT] = [this](MessageParcel &data,
+        MessageParcel &reply) -> int32_t { return this->CloneForResultInner(data, reply); };
+}
+
+IntellVoiceServiceStub::~IntellVoiceServiceStub()
+{
+    processServiceFuncMap_.clear();
+}
+
+int32_t IntellVoiceServiceStub::CreateEngineInner(MessageParcel &data, MessageParcel &reply)
+{
+    int32_t ret = 0;
+    sptr<IIntellVoiceEngine> engine = nullptr;
+
+    IntellVoiceEngineType type = static_cast<IntellVoiceEngineType>(data.ReadInt32());
+    RegisterDeathRecipient(type, data.ReadRemoteObject());
+    ret = CreateIntellVoiceEngine(type, engine);
+    reply.WriteInt32(ret);
+    if (ret != 0) {
+        INTELL_VOICE_LOG_ERROR("failed to create engine, type:%{public}d", type);
+        return ret;
+    }
+    if (engine != nullptr) {
+        reply.WriteRemoteObject(engine->AsObject());
+    }
+
+    return ret;
+}
+
+int32_t IntellVoiceServiceStub::ReleaseEngineInner(MessageParcel &data, MessageParcel &reply)
+{
+    int32_t ret = 0;
+
+    IntellVoiceEngineType type = static_cast<IntellVoiceEngineType>(data.ReadInt32());
+    ret = ReleaseIntellVoiceEngine(type);
+    reply.WriteInt32(ret);
+    DeregisterDeathRecipient(type);
+    return ret;
+}
+
+int32_t IntellVoiceServiceStub::GetReportedFilesInner(MessageParcel &data, MessageParcel &reply)
+{
+    int32_t ret = 0;
+    int numMax =  data.ReadInt32();
+    std::vector<UploadHdiFile> Files;
+    ret = GetUploadFiles(numMax, Files);
+    reply.WriteInt32(ret);
+    if (ret != 0) {
+        INTELL_VOICE_LOG_ERROR("get upload files failed, ret:%{public}d", ret);
+        return ret;
+    }
+    int size = static_cast<int>(Files.size());
+    reply.WriteInt32(size);
+    INTELL_VOICE_LOG_INFO("reported hdi files size:%{public}d", size);
+    if (size <= 0) {
+        return -1;
+    }
+    for (auto file : Files) {
+        reply.WriteInt32(file.type);
+        reply.WriteString(file.filesDescription);
+        reply.WriteInt32(file.filesContent.size());
+        for (auto ashmem : file.filesContent) {
+            reply.WriteAshmem(ashmem);
+        }
+    }
+    return ret;
+}
+
+int32_t IntellVoiceServiceStub::GetParameterInner(MessageParcel &data, MessageParcel &reply)
+{
+    std::string val = GetParameter(data.ReadString());
+    reply.WriteString(val);
+
+    return 0;
+}
+
+int32_t IntellVoiceServiceStub::GetCloneFileListInner(MessageParcel &data, MessageParcel &reply)
+{
+    int32_t ret = 0;
+    std::vector<std::string> cloneFiles;
+
+    ret = GetCloneFilesList(cloneFiles);
+    reply.WriteUint32(cloneFiles.size());
+    for (auto i : cloneFiles) {
+        reply.WriteString(i);
+    }
+    reply.WriteInt32(ret);
+    return ret;
+}
+
+int32_t IntellVoiceServiceStub::GetCloneFileInner(MessageParcel &data, MessageParcel &reply)
+{
+    std::string filePath = data.ReadString();
+    std::vector<uint8_t> buffer;
+    int32_t ret = GetCloneFile(filePath, buffer);
+
+    reply.WriteUint32(buffer.size());
+    reply.WriteBuffer(buffer.data(), buffer.size());
+    reply.WriteInt32(ret);
+    return ret;
+}
+
+int32_t IntellVoiceServiceStub::SendCloneFileInner(MessageParcel &data, MessageParcel &reply)
+{
+    std::string filePath = data.ReadString();
+    std::vector<uint8_t> buffer;
+    uint32_t size = data.ReadUint32();
+    int32_t ret = 0;
+
+    buffer.resize(size);
+    const uint8_t *readBuf = data.ReadBuffer(size);
+    std::copy(readBuf, readBuf + size, buffer.data());
+    ret = SendCloneFile(filePath, buffer);
+    reply.WriteInt32(ret);
+    return ret;
+}
+
+int32_t IntellVoiceServiceStub::CloneForResultInner(MessageParcel &data, MessageParcel &reply)
+{
+    int32_t ret = 0;
+    std::string cloneInfo = data.ReadString();
+    sptr<IRemoteObject> object = data.ReadRemoteObject();
+
+    ret = CloneForResult(cloneInfo, object);
+    reply.WriteInt32(ret);
+    return ret;
+}
+
 int32_t IntellVoiceServiceStub::OnRemoteRequest(
     uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option)
 {
@@ -28,29 +172,13 @@ int32_t IntellVoiceServiceStub::OnRemoteRequest(
         return -1;
     }
 
-    IntellVoiceEngineType type = static_cast<IntellVoiceEngineType>(data.ReadInt32());
-
-    int32_t ret = 0;
-    sptr<IIntellVoiceEngine> engine = nullptr;
-
-    switch (code) {
-        case HDI_INTELL_VOICE_SERVICE_CREATE_ENGINE:
-            RegisterDeathRecipient(type, data.ReadRemoteObject());
-            ret = CreateIntellVoiceEngine(type, engine);
-            if ((ret != 0) || (engine == nullptr)) {
-                INTELL_VOICE_LOG_ERROR("failed to create engine, type:%{public}d", type);
-                return ret;
-            }
-            reply.WriteRemoteObject(engine->AsObject());
-            return ret;
-        case HDI_INTELL_VOICE_SERVICE_RELEASE_ENGINE:
-            ret = ReleaseIntellVoiceEngine(type);
-            reply.WriteInt32(ret);
-            DeregisterDeathRecipient(type);
-            return ret;
-        default:
-            return IPCObjectStub::OnRemoteRequest(code, data, reply, option);
+    auto it = processServiceFuncMap_.find(code);
+    if ((it != processServiceFuncMap_.end()) && (it->second != nullptr)) {
+        return it->second(data, reply);
     }
+
+    INTELL_VOICE_LOG_WARN("sevice stub invalid code:%{public}u", code);
+    return IPCObjectStub::OnRemoteRequest(code, data, reply, option);
 }
 }  // namespace IntellVoiceEngine
 }  // namespace OHOS

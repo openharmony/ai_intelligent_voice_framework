@@ -28,7 +28,7 @@ namespace IntellVoiceEngine {
 class EnrollEngine : public EngineBase, private EngineUtil {
 public:
     ~EnrollEngine();
-    bool Init() override;
+    bool Init(const std::string &param) override;
     void SetCallback(sptr<IRemoteObject> object) override;
     int32_t Attach(const IntellVoiceEngineInfo &info) override;
     int32_t Detach(void) override;
@@ -37,6 +37,7 @@ public:
     int32_t SetParameter(const std::string &keyValueList) override;
     std::string GetParameter(const std::string &key) override;
     int32_t WriteAudio(const uint8_t *buffer, uint32_t size) override;
+    int32_t Evaluate(const std::string &word, EvaluationResultInfo &info) override;
 
 private:
     EnrollEngine();

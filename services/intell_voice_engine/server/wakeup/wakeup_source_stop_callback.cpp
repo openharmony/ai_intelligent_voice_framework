@@ -25,7 +25,7 @@ void WakeupSourceStopCallback::OnWakeupClose()
     INTELL_VOICE_LOG_INFO("enter");
     const auto &manager = IntellVoiceServiceManager::GetInstance();
     if (manager != nullptr) {
-        manager->StartDetection();
+        manager->StartDetection(VOICE_WAKEUP_MODEL_UUID);
     }
 }
 }

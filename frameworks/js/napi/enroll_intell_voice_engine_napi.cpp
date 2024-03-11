@@ -31,6 +31,13 @@ using namespace std;
 
 namespace OHOS {
 namespace IntellVoiceNapi {
+class EvaluateContext : public AsyncContext {
+public:
+    explicit EvaluateContext(napi_env env) : AsyncContext(env) {};
+    string word;
+    EvaluationResultInfo info;
+};
+
 static __thread napi_ref g_enrollEngineConstructor = nullptr;
 EnrollIntelligentVoiceEngineDescriptor EnrollIntellVoiceEngineNapi::g_enrollEngineDesc_;
 int32_t EnrollIntellVoiceEngineNapi::constructResult_ = NAPI_INTELLIGENT_VOICE_SUCCESS;
@@ -67,6 +74,7 @@ napi_value EnrollIntellVoiceEngineNapi::Export(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("setWakeupHapInfo", SetWakeupHapInfo),
         DECLARE_NAPI_FUNCTION("setParameter", SetParameter),
         DECLARE_NAPI_FUNCTION("getParameter", GetParameter),
+        DECLARE_NAPI_FUNCTION("evaluateForResult", EvaluateForResult),
         DECLARE_NAPI_FUNCTION("release", Release),
         DECLARE_NAPI_FUNCTION("commit", Commit),
     };
@@ -252,12 +260,12 @@ napi_value EnrollIntellVoiceEngineNapi::Init(napi_env env, napi_callback_info in
         napi_status status = napi_get_named_property(env, argv[0], "language", &temp);
         CHECK_CONDITION_RETURN_FALSE((status != napi_ok), "get property failed");
         status = GetValue(env, temp,
-            reinterpret_cast<EnrollIntellVoiceEngineNapi *>(context->engineNapi_)->config_.language);
+            reinterpret_cast<EnrollIntellVoiceEngineNapi *>(context->instanceNapi_)->config_.language);
         CHECK_CONDITION_RETURN_FALSE((status != napi_ok), "get language failed");
         status = napi_get_named_property(env, argv[0], "region", &temp);
         CHECK_CONDITION_RETURN_FALSE((status != napi_ok), "get property failed");
         status = GetValue(env, temp,
-            reinterpret_cast<EnrollIntellVoiceEngineNapi *>(context->engineNapi_)->config_.region);
+            reinterpret_cast<EnrollIntellVoiceEngineNapi *>(context->instanceNapi_)->config_.region);
         CHECK_CONDITION_RETURN_FALSE((status != napi_ok), "get region failed");
         return true;
     };
@@ -268,7 +276,7 @@ napi_value EnrollIntellVoiceEngineNapi::Init(napi_env env, napi_callback_info in
     context->type = ASYNC_WORK_INIT;
     context->callbackInfo.result = UNKNOWN_ERROR;
     context->processWork = [&](AsyncContext *asyncContext) -> int32_t {
-        auto engineNapi = reinterpret_cast<EnrollIntellVoiceEngineNapi *>(asyncContext->engineNapi_);
+        auto engineNapi = reinterpret_cast<EnrollIntellVoiceEngineNapi *>(asyncContext->instanceNapi_);
         auto engine = engineNapi->engine_;
         if (engine == nullptr) {
             INTELL_VOICE_LOG_ERROR("get engine instance failed");
@@ -301,7 +309,7 @@ napi_value EnrollIntellVoiceEngineNapi::EnrollForResult(napi_env env, napi_callb
     CbInfoParser parser = [env, context](size_t argc, napi_value *argv) -> bool {
         CHECK_CONDITION_RETURN_FALSE((argc < ARGC_ONE), "argc less than 1");
         napi_status status = GetValue(env, argv[0],
-            reinterpret_cast<EnrollIntellVoiceEngineNapi *>(context->engineNapi_)->isLast_);
+            reinterpret_cast<EnrollIntellVoiceEngineNapi *>(context->instanceNapi_)->isLast_);
         CHECK_CONDITION_RETURN_FALSE((status != napi_ok), "Failed to get isLast");
         return true;
     };
@@ -313,7 +321,7 @@ napi_value EnrollIntellVoiceEngineNapi::EnrollForResult(napi_env env, napi_callb
     context->callbackInfo.result = UNKNOWN_ERROR;
     context->processWork = [&](AsyncContext *asyncContext) {
         EnrollIntellVoiceEngineNapi *engineNapi = reinterpret_cast<EnrollIntellVoiceEngineNapi *>(
-            asyncContext->engineNapi_);
+            asyncContext->instanceNapi_);
         auto engine = engineNapi->engine_;
         if (engine == nullptr) {
             INTELL_VOICE_LOG_ERROR("get engine instance failed");
@@ -346,7 +354,7 @@ napi_value EnrollIntellVoiceEngineNapi::Stop(napi_env env, napi_callback_info in
     context->result_ = (context->GetCbInfo(env, info, cbIndex, nullptr) ? NAPI_INTELLIGENT_VOICE_SUCCESS :
         NAPI_INTELLIGENT_VOICE_INVALID_PARAM);
 
-    auto cb = reinterpret_cast<EnrollIntellVoiceEngineNapi *>(context->engineNapi_)->callbackNapi_;
+    auto cb = reinterpret_cast<EnrollIntellVoiceEngineNapi *>(context->instanceNapi_)->callbackNapi_;
     if (cb != nullptr) {
         cb->ClearAsyncWork(false, "the requests was aborted because user called stop");
     }
@@ -356,7 +364,7 @@ napi_value EnrollIntellVoiceEngineNapi::Stop(napi_env env, napi_callback_info in
         execute = [](napi_env env, void *data) {
             CHECK_CONDITION_RETURN_VOID((data == nullptr), "data is nullptr");
             auto asyncContext = static_cast<AsyncContext *>(data);
-            auto engine = reinterpret_cast<EnrollIntellVoiceEngineNapi *>(asyncContext->engineNapi_)->engine_;
+            auto engine = reinterpret_cast<EnrollIntellVoiceEngineNapi *>(asyncContext->instanceNapi_)->engine_;
             CHECK_CONDITION_RETURN_VOID((engine == nullptr), "get engine instance failed");
             engine->Stop();
         };
@@ -400,7 +408,7 @@ napi_value EnrollIntellVoiceEngineNapi::SetParameter(napi_env env, napi_callback
         execute = [](napi_env env, void *data) {
             CHECK_CONDITION_RETURN_VOID((data == nullptr), "data is nullptr");
             auto asyncContext = static_cast<SetParameterContext *>(data);
-            auto engine = reinterpret_cast<EnrollIntellVoiceEngineNapi *>(asyncContext->engineNapi_)->engine_;
+            auto engine = reinterpret_cast<EnrollIntellVoiceEngineNapi *>(asyncContext->instanceNapi_)->engine_;
             CHECK_CONDITION_RETURN_VOID((engine == nullptr), "get engine instance failed");
             engine->SetParameter(asyncContext->key, asyncContext->value);
         };
@@ -463,7 +471,7 @@ napi_value EnrollIntellVoiceEngineNapi::SetSensibility(napi_env env, napi_callba
         CHECK_CONDITION_RETURN_VOID((data == nullptr), "data is nullptr");
         auto asyncContext = static_cast<SetSensibilityContext *>(data);
         CHECK_CONDITION_RETURN_VOID((asyncContext->result_ != NAPI_INTELLIGENT_VOICE_SUCCESS), "no need to execute");
-        auto engine = reinterpret_cast<EnrollIntellVoiceEngineNapi *>(asyncContext->engineNapi_)->engine_;
+        auto engine = reinterpret_cast<EnrollIntellVoiceEngineNapi *>(asyncContext->instanceNapi_)->engine_;
         CHECK_CONDITION_RETURN_VOID((engine == nullptr), "get engine instance failed");
         engine->SetSensibility(asyncContext->sensibility);
     };
@@ -507,7 +515,7 @@ napi_value EnrollIntellVoiceEngineNapi::SetWakeupHapInfo(napi_env env, napi_call
         CHECK_CONDITION_RETURN_VOID((data == nullptr), "data is nullptr");
         auto asyncContext = static_cast<SetWakeupHapContext *>(data);
         CHECK_CONDITION_RETURN_VOID((asyncContext->result_ != NAPI_INTELLIGENT_VOICE_SUCCESS), "no need to execute");
-        auto engine = reinterpret_cast<EnrollIntellVoiceEngineNapi *>(asyncContext->engineNapi_)->engine_;
+        auto engine = reinterpret_cast<EnrollIntellVoiceEngineNapi *>(asyncContext->instanceNapi_)->engine_;
         CHECK_CONDITION_RETURN_VOID((engine == nullptr), "get engine instance failed");
         engine->SetWakeupHapInfo(asyncContext->hapInfo);
     };
@@ -531,7 +539,7 @@ napi_value EnrollIntellVoiceEngineNapi::Commit(napi_env env, napi_callback_info 
     context->type = ASYNC_WORK_COMMIT;
     context->callbackInfo.result = UNKNOWN_ERROR;
     context->processWork = [&](AsyncContext *asyncContext) {
-        auto engineNapi = reinterpret_cast<EnrollIntellVoiceEngineNapi *>(asyncContext->engineNapi_);
+        auto engineNapi = reinterpret_cast<EnrollIntellVoiceEngineNapi *>(asyncContext->instanceNapi_);
         auto engine = engineNapi->engine_;
         if (engine == nullptr) {
             INTELL_VOICE_LOG_ERROR("get engine instance failed");
@@ -549,6 +557,63 @@ napi_value EnrollIntellVoiceEngineNapi::Commit(napi_env env, napi_callback_info 
     AsyncExecute execute = [](napi_env env, void *data) {};
 
     return NapiAsync::AsyncWork(env, context, "Commit", execute, CompleteCallback);
+}
+
+napi_value EnrollIntellVoiceEngineNapi::EvaluateForResult(napi_env env, napi_callback_info info)
+{
+    INTELL_VOICE_LOG_INFO("enter");
+    size_t cbIndex = ARG_INDEX_1;
+    auto context = make_shared<EvaluateContext>(env);
+    if (context == nullptr) {
+        INTELL_VOICE_LOG_ERROR("create EvaluateContext failed, No memory");
+        return nullptr;
+    }
+
+    CbInfoParser parser = [env, context](size_t argc, napi_value *argv) -> bool {
+        CHECK_CONDITION_RETURN_FALSE((argc < ARGC_ONE), "argc less than 1");
+        CHECK_CONDITION_RETURN_FALSE((GetValue(env, argv[ARG_INDEX_0], context->word) != napi_ok),
+            "failed to get word");
+        return true;
+    };
+
+    context->result_ = (context->GetCbInfo(env, info, cbIndex, parser) ? NAPI_INTELLIGENT_VOICE_SUCCESS :
+        NAPI_INTELLIGENT_VOICE_INVALID_PARAM);
+
+    AsyncExecute execute;
+    if (context->result_ == NAPI_INTELLIGENT_VOICE_SUCCESS) {
+        execute = [](napi_env env, void *data) {
+            CHECK_CONDITION_RETURN_VOID((data == nullptr), "data is nullptr");
+            auto context = static_cast<EvaluateContext *>(data);
+            auto engine = reinterpret_cast<EnrollIntellVoiceEngineNapi *>(context->instanceNapi_)->engine_;
+            if (engine == nullptr) {
+                INTELL_VOICE_LOG_ERROR("engine is nullptr");
+                context->result_ = NAPI_INTELLIGENT_VOICE_NO_MEMORY;
+                return;
+            }
+            auto ret = engine->Evaluate(context->word, context->info);
+            if (ret != 0) {
+                INTELL_VOICE_LOG_ERROR("failed to evaluate");
+                context->result_ = NAPI_INTELLIGENT_VOICE_SYSTEM_ERROR;
+            }
+        };
+    } else {
+        execute = [](napi_env env, void *data) {};
+    }
+
+    context->complete_ = [](napi_env env, AsyncContext *asyncContext, napi_value &result) {
+        INTELL_VOICE_LOG_INFO("enter to evaluate");
+        auto context = static_cast<EvaluateContext *>(asyncContext);
+        napi_status status = napi_create_object(env, &result);
+        if (status != napi_ok || result == nullptr) {
+            INTELL_VOICE_LOG_ERROR("failed to create js callbackInfo, error: %{public}d", status);
+            context->result_ = NAPI_INTELLIGENT_VOICE_NO_MEMORY;
+            return;
+        }
+
+        napi_set_named_property(env, result, "score", SetValue(env, context->info.score));
+        napi_set_named_property(env, result, "resultCode", SetValue(env, context->info.resultCode));
+    };
+    return NapiAsync::AsyncWork(env, context, "Evaluate", execute);
 }
 
 napi_value EnrollIntellVoiceEngineNapi::Release(napi_env env, napi_callback_info info)
@@ -569,15 +634,15 @@ napi_value EnrollIntellVoiceEngineNapi::Release(napi_env env, napi_callback_info
         execute = [](napi_env env, void *data) {
             CHECK_CONDITION_RETURN_VOID((data == nullptr), "data is nullptr");
             auto asyncContext = static_cast<AsyncContext *>(data);
-            auto cb = reinterpret_cast<EnrollIntellVoiceEngineNapi *>(asyncContext->engineNapi_)->callbackNapi_;
+            auto cb = reinterpret_cast<EnrollIntellVoiceEngineNapi *>(asyncContext->instanceNapi_)->callbackNapi_;
             if (cb != nullptr) {
                 cb->ClearAsyncWork(false, "the requests was aborted because user called release");
             }
-            auto engine = reinterpret_cast<EnrollIntellVoiceEngineNapi *>(asyncContext->engineNapi_)->engine_;
+            auto engine = reinterpret_cast<EnrollIntellVoiceEngineNapi *>(asyncContext->instanceNapi_)->engine_;
             CHECK_CONDITION_RETURN_VOID((engine == nullptr), "get engine instance failed");
             engine->Release();
-            reinterpret_cast<EnrollIntellVoiceEngineNapi *>(asyncContext->engineNapi_)->engine_ = nullptr;
-            reinterpret_cast<EnrollIntellVoiceEngineNapi *>(asyncContext->engineNapi_)->callbackNapi_ = nullptr;
+            reinterpret_cast<EnrollIntellVoiceEngineNapi *>(asyncContext->instanceNapi_)->engine_ = nullptr;
+            reinterpret_cast<EnrollIntellVoiceEngineNapi *>(asyncContext->instanceNapi_)->callbackNapi_ = nullptr;
         };
     } else {
         execute = [](napi_env env, void *data) {};
@@ -607,7 +672,7 @@ void EnrollIntellVoiceEngineNapi::CompleteCallback(napi_env env, napi_status sta
         return;
     }
 
-    auto cb = reinterpret_cast<EnrollIntellVoiceEngineNapi *>(asyncContext->engineNapi_)->callbackNapi_;
+    auto cb = reinterpret_cast<EnrollIntellVoiceEngineNapi *>(asyncContext->instanceNapi_)->callbackNapi_;
     if (cb == nullptr) {
         INTELL_VOICE_LOG_ERROR("get callback napi failed");
         napi_get_undefined(env, &result);

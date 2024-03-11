@@ -25,6 +25,7 @@ namespace IntellVoice {
 using OHOS::IntellVoiceEngine::IIntellVoiceEngineEventCallback;
 using OHOS::IntellVoiceEngine::IIntellVoiceEngine;
 using OHOS::IntellVoiceEngine::EngineCallbackInner;
+using OHOS::HDI::IntelligentVoice::Engine::V1_2::EvaluationResultInfo;
 
 struct EnrollIntelligentVoiceEngineDescriptor {
     std::string wakeupPhrase;
@@ -50,6 +51,7 @@ public:
     int32_t GetParameter(const std::string &key);
     int32_t Release();
     int32_t SetCallback(std::shared_ptr<IIntellVoiceEngineEventCallback> callback);
+    int32_t Evaluate(const std::string &word, EvaluationResultInfo &info);
 
 private:
     sptr<IIntellVoiceEngine> engine_ = nullptr;

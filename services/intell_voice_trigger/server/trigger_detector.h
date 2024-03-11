@@ -32,7 +32,6 @@ public:
     void UnloadTriggerModel();
 
 private:
-
     int32_t uuid_ = -1;
     std::shared_ptr<TriggerService> service_ = nullptr;
     std::shared_ptr<IIntellVoiceTriggerRecognitionCallback> callback_ = nullptr;

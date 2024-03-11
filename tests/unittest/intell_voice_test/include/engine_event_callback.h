@@ -32,7 +32,7 @@ public:
     void OnEvent(const OHOS::HDI::IntelligentVoice::Engine::V1_0::IntellVoiceEngineCallBackEvent &param) override;
 
 private:
-    void ReadFile(const std::string path);
+    void ReadFile(const std::string &path);
 
 private:
     int32_t startCnt_ = 0;

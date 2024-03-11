@@ -40,6 +40,8 @@ private:
     int32_t ReadInner(MessageParcel &data, MessageParcel &reply);
     int32_t StartCapturerInner(MessageParcel &data, MessageParcel &reply);
     int32_t StopCapturerInner(MessageParcel &data, MessageParcel &reply);
+    int32_t GetWakeupPcmInner(MessageParcel &data, MessageParcel &reply);
+    int32_t EvaluateInner(MessageParcel &data, MessageParcel &reply);
 
     std::map<uint32_t, std::function<int32_t(MessageParcel &data, MessageParcel &reply)>> processFuncMap_;
 };

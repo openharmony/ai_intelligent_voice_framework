@@ -25,10 +25,13 @@ using namespace OHOS::IntellVoiceUtils;
 
 namespace OHOS {
 namespace IntellVoiceEngine {
+static constexpr uint32_t MINOR_VERSION_2 = 2;
+
 EngineHostManager::~EngineHostManager()
 {
     engineHostProxy1_0_ = nullptr;
     engineHostProxy1_1_ = nullptr;
+    engineHostProxy1_2_ = nullptr;
     engineHdiDeathRecipient_ = nullptr;
     dataOprCb_ = nullptr;
 }
@@ -46,12 +49,22 @@ bool EngineHostManager::Init()
     uint32_t minorVer = 0;
     engineHostProxy1_0_->GetVersion(majorVer, minorVer);
     INTELL_VOICE_LOG_INFO("major ver is %{public}u, minor ver is %{public}u", majorVer, minorVer);
-    if (GetHdiVersionId(majorVer, minorVer) == GetHdiVersionId(1, 1)) {
+    if (IntellVoiceUtil::GetHdiVersionId(majorVer, minorVer) == IntellVoiceUtil::GetHdiVersionId(1, 1)) {
         INTELL_VOICE_LOG_INFO("version is 1.1");
         auto castResult_V1_1 =
             OHOS::HDI::IntelligentVoice::Engine::V1_1::IIntellVoiceEngineManager::CastFrom(engineHostProxy1_0_);
         if (castResult_V1_1 != nullptr) {
             engineHostProxy1_1_ = castResult_V1_1;
+        }
+    }
+
+    if (IntellVoiceUtil::GetHdiVersionId(majorVer, minorVer) == IntellVoiceUtil::GetHdiVersionId(1, MINOR_VERSION_2)) {
+        INTELL_VOICE_LOG_INFO("version is 1.2");
+        auto castResult_V1_2 =
+            OHOS::HDI::IntelligentVoice::Engine::V1_2::IIntellVoiceEngineManager::CastFrom(engineHostProxy1_0_);
+        if (castResult_V1_2 != nullptr) {
+            engineHostProxy1_2_ = castResult_V1_2;
+            engineHostProxy1_1_ = engineHostProxy1_2_;
         }
     }
 
@@ -128,15 +141,25 @@ void EngineHostManager::SetDataOprCallback()
     engineHostProxy1_1_->SetDataOprCallback(dataOprCb_);
 }
 
-sptr<IIntellVoiceEngineAdapter> EngineHostManager::CreateEngineAdapter(const IntellVoiceEngineAdapterDescriptor &desc)
+std::shared_ptr<AdapterHostManager> EngineHostManager::CreateEngineAdapter(
+    const IntellVoiceEngineAdapterDescriptor &desc)
 {
+    INTELL_VOICE_LOG_INFO("enter");
     if (engineHostProxy1_0_ == nullptr) {
         INTELL_VOICE_LOG_ERROR("engineHostProxy1_0_ is nullptr");
         return nullptr;
     }
 
-    sptr<IIntellVoiceEngineAdapter> adapter = nullptr;
-    engineHostProxy1_0_->CreateAdapter(desc, adapter);
+    auto adapter = std::make_shared<AdapterHostManager>();
+    if (adapter == nullptr) {
+        INTELL_VOICE_LOG_ERROR("failed to create engine adapter");
+        return nullptr;
+    }
+
+    if (!adapter->Init(desc, engineHostProxy1_0_, engineHostProxy1_2_)) {
+        return nullptr;
+    }
+
     return adapter;
 }
 
@@ -149,10 +172,55 @@ void EngineHostManager::ReleaseEngineAdapter(const IntellVoiceEngineAdapterDescr
     engineHostProxy1_0_->ReleaseAdapter(desc);
 }
 
+
+int EngineHostManager::GetUploadFiles(int numMax, std::vector<UploadHdiFile> &files)
+{
+    INTELL_VOICE_LOG_INFO("enter");
+    if (engineHostProxy1_2_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("engineHostProxy1_2_ is nullptr");
+        return -1;
+    }
+
+    return engineHostProxy1_2_->GetUploadFiles(numMax, files);
+}
+
 void EngineHostManager::OnEngineHDIDiedCallback()
 {
     INTELL_VOICE_LOG_INFO("receive engine hdi death recipient");
     _Exit(0);
+}
+
+int32_t EngineHostManager::GetCloneFilesList(std::vector<std::string>& cloneFiles)
+{
+    INTELL_VOICE_LOG_INFO("enter");
+    if (engineHostProxy1_2_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("engineHostProxy1_2_ is nullptr");
+        return -1;
+    }
+
+    return engineHostProxy1_2_->GetCloneFilesList(cloneFiles);
+}
+
+int32_t EngineHostManager::GetCloneFile(const std::string &filePath, std::vector<uint8_t> &buffer)
+{
+    INTELL_VOICE_LOG_INFO("enter");
+    if (engineHostProxy1_2_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("engineHostProxy1_2_ is nullptr");
+        return -1;
+    }
+
+    return engineHostProxy1_2_->GetCloneFile(filePath, buffer);
+}
+
+int32_t EngineHostManager::SendCloneFile(const std::string &filePath, const std::vector<uint8_t> &buffer)
+{
+    INTELL_VOICE_LOG_INFO("enter");
+    if (engineHostProxy1_2_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("engineHostProxy1_2_ is nullptr");
+        return -1;
+    }
+
+    return engineHostProxy1_2_->SendCloneFile(filePath, buffer);
 }
 }
 }
