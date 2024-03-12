@@ -46,6 +46,7 @@ ohos_shared_library("intell_voice_proxy") {
     "samgr:samgr_proxy",
   ]
 
+  innerapi_tags = [ "platformsdk" ]
   subsystem_name = "ai"
   part_name = "intelligent_voice_framework"
 }
