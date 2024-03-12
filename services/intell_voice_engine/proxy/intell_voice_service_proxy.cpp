@@ -22,7 +22,6 @@
 #define LOG_TAG "IntellVoiceServiceProxy"
 namespace OHOS {
 namespace IntellVoiceEngine {
-
 #define CROSS_PROCESS_BUF_SIZE_LIMIT (256 *1024)
 
 int32_t IntellVoiceServiceProxy::CreateIntellVoiceEngine(IntellVoiceEngineType type, sptr<IIntellVoiceEngine> &inst)
@@ -172,7 +171,7 @@ int32_t IntellVoiceServiceProxy::SendCloneFile(const std::string &filePath, cons
     }
 
     if (buffer.size() == 0 || buffer.size() > CROSS_PROCESS_BUF_SIZE_LIMIT) {
-        INTELL_VOICE_LOG_ERROR("buf size is invalid %{public}" PRIu64 "", buffer.size());
+        INTELL_VOICE_LOG_ERROR("buffer size is invalid %{public}u", static_cast<uint32_t>(buffer.size()));
         return -1;
     }
 

@@ -52,8 +52,7 @@ void UpdateEngineController::OnTimerEvent(TimerEvent &info)
 void UpdateEngineController::OnUpdateRetry()
 {
     std::lock_guard<std::mutex> lock(updateEngineMutex_);
-
-    if (updateStrategy_ != nullptr && updateStrategy_->UpdateRestrain()) {
+    if (updateStrategy_ != nullptr && !updateStrategy_->UpdateRestrain()) {
         if (CreateUpdateEngine(updateStrategy_->param_)) {
             INTELL_VOICE_LOG_INFO("retry update, times %{public}d", retryTimes_);
             timerId_ = INVALID_ID;
@@ -112,7 +111,7 @@ int UpdateEngineController::CreateUpdateEngineUntilTime(std::shared_ptr<IUpdateS
     }
 
     if (updateStrategy->UpdateRestrain()) {
-        INTELL_VOICE_LOG_INFO("update restrain err");
+        INTELL_VOICE_LOG_INFO("update restrain, no need to update");
         return -1;
     }
 
@@ -170,11 +169,12 @@ bool UpdateEngineController::IsNeedRetryUpdate()
     }
 
     if (retryTimes_ >= retryTimesLimit_) {
-        INTELL_VOICE_LOG_INFO("retry limit");
+        INTELL_VOICE_LOG_INFO("retry times limit");
         return false;
     }
 
-    if (updateStrategy_ != nullptr && !updateStrategy_->UpdateRestrain()) {
+    if ((updateStrategy_ == nullptr) || (updateStrategy_->UpdateRestrain())) {
+        INTELL_VOICE_LOG_INFO("no need to retry");
         return false;
     }
 
