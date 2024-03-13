@@ -75,10 +75,10 @@ public:
     using UpdateEngineController::OnUpdateComplete;
 
     std::string GetParameter(const std::string &key);
-    int32_t GetCloneFilesList(std::vector<std::string>& cloneFiles);
-    int32_t GetCloneFile(const std::string &filePath, std::vector<uint8_t> &buffer);
-    int32_t SendCloneFile(const std::string &filePath, const std::vector<uint8_t> &buffer);
-    int32_t CloneUpdate(const std::string &cloneInfo, const sptr<IRemoteObject> &object);
+    int32_t GetWakeupSourceFilesList(std::vector<std::string>& cloneFiles);
+    int32_t GetWakeupSourceFile(const std::string &filePath, std::vector<uint8_t> &buffer);
+    int32_t SendWakeupFile(const std::string &filePath, const std::vector<uint8_t> &buffer);
+    int32_t CloneUpdate(const std::string &wakeupInfo, const sptr<IRemoteObject> &object);
     int32_t SilenceUpdate();
 private:
     IntellVoiceServiceManager();

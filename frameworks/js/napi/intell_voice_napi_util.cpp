@@ -50,7 +50,7 @@ napi_value IntellVoiceRef::GetRefValue()
     return value;
 }
 
-napi_value SetValue(napi_env env, const int32_t &value)
+napi_value SetValue(napi_env env, const int32_t value)
 {
     napi_value result = nullptr;
     napi_status status = napi_create_int32(env, value, &result);
@@ -61,7 +61,7 @@ napi_value SetValue(napi_env env, const int32_t &value)
     return result;
 }
 
-napi_value SetValue(napi_env env, const uint32_t &value)
+napi_value SetValue(napi_env env, const uint32_t value)
 {
     napi_value result = nullptr;
     napi_status status = napi_create_uint32(env, value, &result);

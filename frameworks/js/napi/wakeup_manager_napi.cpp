@@ -29,10 +29,10 @@ using namespace OHOS::IntellVoice;
 
 namespace OHOS {
 namespace IntellVoiceNapi {
-class CloneFilesContext : public AsyncContext {
+class WakeupSourceFilesContext : public AsyncContext {
 public:
-    explicit CloneFilesContext(napi_env env) : AsyncContext(env) {};
-    std::vector<CloneFileInfo> cloneFile;
+    explicit WakeupSourceFilesContext(napi_env env) : AsyncContext(env) {};
+    std::vector<WakeupSourceFile> cloneFile;
 };
 
 class UploadFilesContext : public AsyncContext {
@@ -73,8 +73,8 @@ napi_value WakeupManagerNapi::Export(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("setParameter", SetParameter),
         DECLARE_NAPI_FUNCTION("getParameter", GetParameter),
         DECLARE_NAPI_FUNCTION("getUploadFiles", GetUploadFiles),
-        DECLARE_NAPI_FUNCTION("getCloneFiles", GetCloneFiles),
-        DECLARE_NAPI_FUNCTION("cloneForResult", CloneForResult),
+        DECLARE_NAPI_FUNCTION("getWakeupSourceFiles", GetWakeupSourceFiles),
+        DECLARE_NAPI_FUNCTION("enrollWithWakeupFilesForResult", EnrollWithWakeupFilesForResult),
     };
 
     napi_property_descriptor static_prop[] = {
@@ -375,12 +375,12 @@ EXIT:
     std::vector<UploadFilesInfo>().swap(uploadFiles);
 }
 
-napi_value WakeupManagerNapi::GetCloneFiles(napi_env env, napi_callback_info info)
+napi_value WakeupManagerNapi::GetWakeupSourceFiles(napi_env env, napi_callback_info info)
 {
     INTELL_VOICE_LOG_INFO("enter");
     size_t cbIndex = ARG_INDEX_0;
 
-    auto context = std::make_shared<CloneFilesContext>(env);
+    auto context = std::make_shared<WakeupSourceFilesContext>(env);
     CHECK_CONDITION_RETURN_RET(context == nullptr, nullptr, "create clone file context failed");
 
     context->result_ = (context->GetCbInfo(env, info, cbIndex, nullptr) ? NAPI_INTELLIGENT_VOICE_SUCCESS :
@@ -389,14 +389,14 @@ napi_value WakeupManagerNapi::GetCloneFiles(napi_env env, napi_callback_info inf
     AsyncExecute execute;
     if (context->result_ == NAPI_INTELLIGENT_VOICE_SUCCESS) {
         execute = [](napi_env env, void *data) {
-            auto *context = static_cast<CloneFilesContext *>(data);
+            auto *context = static_cast<WakeupSourceFilesContext *>(data);
             IntellVoiceManager *manager = IntellVoiceManager::GetInstance();
             if (manager == nullptr) {
                 context->result_ = NAPI_INTELLIGENT_VOICE_NO_MEMORY;
                 return;
             }
 
-            int ret = manager->GetCloneFiles(context->cloneFile);
+            int ret = manager->GetWakeupSourceFiles(context->cloneFile);
             if (ret != 0) {
                 INTELL_VOICE_LOG_ERROR("get clone files error, ret:%{public}d", ret);
                 context->result_ = NAPI_INTELLIGENT_VOICE_SYSTEM_ERROR;
@@ -409,17 +409,17 @@ napi_value WakeupManagerNapi::GetCloneFiles(napi_env env, napi_callback_info inf
     context->complete_ = [](napi_env env, AsyncContext *asyncContext, napi_value &result) {
         GetCloneCompleteCallback(env, asyncContext, result);
     };
-    return NapiAsync::AsyncWork(env, context, "GetCloneFiles", execute);
+    return NapiAsync::AsyncWork(env, context, "GetWakeupSourceFiles", execute);
 }
 
 void WakeupManagerNapi::GetCloneCompleteCallback(napi_env env, AsyncContext *data, napi_value &result)
 {
     INTELL_VOICE_LOG_INFO("enter");
     CHECK_CONDITION_RETURN_VOID(data == nullptr, "get clone file context null");
-    auto *context = reinterpret_cast<CloneFilesContext *>(data);
+    auto *context = reinterpret_cast<WakeupSourceFilesContext *>(data);
     napi_get_undefined(env, &result);
 
-    std::vector<CloneFileInfo> &files = context->cloneFile;
+    std::vector<WakeupSourceFile> &files = context->cloneFile;
     if (files.size() == 0) {
         context->result_ = NAPI_INTELLIGENT_VOICE_SYSTEM_ERROR;
         goto EXIT;
@@ -442,7 +442,7 @@ void WakeupManagerNapi::GetCloneCompleteCallback(napi_env env, AsyncContext *dat
     }
 
 EXIT:
-    vector<CloneFileInfo>().swap(files);
+    vector<WakeupSourceFile>().swap(files);
 }
 
 void WakeupManagerNapi::CloneForResultCompleteCallback(napi_env env, napi_status status, void *data)
@@ -482,7 +482,7 @@ void WakeupManagerNapi::CloneForResultCompleteCallback(napi_env env, napi_status
     }
 }
 
-bool WakeupManagerNapi::CloneForResultParser(std::shared_ptr<UpdateAsyncContext> context,
+bool WakeupManagerNapi::WakeupFilesForResultParser(std::shared_ptr<UpdateAsyncContext> context,
     napi_env env, size_t argc, napi_value *argv)
 {
     CHECK_CONDITION_RETURN_FALSE((argc < ARGC_TWO), "argc less than 2");
@@ -509,7 +509,7 @@ bool WakeupManagerNapi::CloneForResultParser(std::shared_ptr<UpdateAsyncContext>
         napi_typeof(env, value, &valueType);
         CHECK_CONDITION_RETURN_FALSE((valueType != napi_object), "get array element object mismatch");
 
-        CloneFileInfo fileInfo;
+        WakeupSourceFile fileInfo;
         status = napi_get_named_property(env, value, "filePath", &tempResult);
         CHECK_CONDITION_RETURN_FALSE((status != napi_ok), "get property failed");
         status = GetValue(env, tempResult, fileInfo.filePath);
@@ -522,19 +522,19 @@ bool WakeupManagerNapi::CloneForResultParser(std::shared_ptr<UpdateAsyncContext>
         context->cloneFiles.push_back(fileInfo);
     }
 
-    status = GetValue(env, argv[1], context->cloneInfo);
+    status = GetValue(env, argv[1], context->wakeupInfo);
     CHECK_CONDITION_RETURN_FALSE((status != napi_ok), "get clone info failed");
     return true;
 }
 
-napi_value WakeupManagerNapi::CloneForResult(napi_env env, napi_callback_info info)
+napi_value WakeupManagerNapi::EnrollWithWakeupFilesForResult(napi_env env, napi_callback_info info)
 {
     INTELL_VOICE_LOG_INFO("enter");
     size_t cbIndex = ARG_INDEX_2;
     auto context = make_shared<UpdateAsyncContext>(env);
     CHECK_CONDITION_RETURN_RET(context == nullptr, nullptr, "create context failed, no memory");
     CbInfoParser parser = [env, context](size_t argc, napi_value *argv) -> bool {
-        return CloneForResultParser(context, env, argc, argv);
+        return WakeupFilesForResultParser(context, env, argc, argv);
     };
 
     context->result_ = (context->GetCbInfo(env, info, cbIndex, parser) ? NAPI_INTELLIGENT_VOICE_SUCCESS :
@@ -544,7 +544,7 @@ napi_value WakeupManagerNapi::CloneForResult(napi_env env, napi_callback_info in
             std::make_shared<IntellVoiceUpdateCallbackNapi>(env);
     }
 
-    context->result = CLONE_FAILED;
+    context->result = EnrollResult::UNKNOWN_ERROR;
     context->processWork = [&](AsyncContext *asyncContext) -> int32_t {
         auto context = reinterpret_cast<UpdateAsyncContext *>(asyncContext);
         auto wakeupManagerNapi = reinterpret_cast<WakeupManagerNapi *>(context->instanceNapi_);
@@ -563,7 +563,7 @@ napi_value WakeupManagerNapi::CloneForResult(napi_env env, napi_callback_info in
             goto PROCESS_ERR_EXIT;
         }
 
-        if (manager->CloneForResult(context->cloneFiles, context->cloneInfo,
+        if (manager->EnrollWithWakeupFilesForResult(context->cloneFiles, context->wakeupInfo,
             wakeupManagerNapi->callbackNapi_) != 0) {
             INTELL_VOICE_LOG_ERROR("clone for result failed");
             wakeupManagerNapi->callbackNapi_ = nullptr;
@@ -580,7 +580,7 @@ PROCESS_ERR_EXIT:
 
     AsyncExecute execute = [](napi_env env, void *data) {};
 
-    return NapiAsync::AsyncWork(env, context, "CloneForResult", execute, CloneForResultCompleteCallback);
+    return NapiAsync::AsyncWork(env, context, "EnrollWithWakeupFilesForResult", execute, CloneForResultCompleteCallback);
 }
 }  // namespace IntellVoiceNapi
 }  // namespace OHOS

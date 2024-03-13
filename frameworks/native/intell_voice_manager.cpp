@@ -185,11 +185,11 @@ int32_t IntellVoiceManager::GetUploadFiles(int numMax, std::vector<UploadFilesIn
         return -1;
     }
     INTELL_VOICE_LOG_INFO("upload files size:%{public}u", static_cast<uint32_t>(hdiFiles.size()));
-    for (auto it : hdiFiles) {
+    for (auto hdiFile : hdiFiles) {
         UploadFilesInfo filesInfo;
-        filesInfo.type = it.type;
-        filesInfo.filesDescription = it.filesDescription;
-        for (auto content : it.filesContent) {
+        filesInfo.type = hdiFile.type;
+        filesInfo.filesDescription = hdiFile.filesDescription;
+        for (auto content : hdiFile.filesContent) {
             if (content == nullptr) {
                 INTELL_VOICE_LOG_ERROR("fileContent is nullptr");
                 continue;
@@ -262,7 +262,7 @@ std::string IntellVoiceManager::GetParameter(const std::string &key)
     return g_sProxy->GetParameter(key);
 }
 
-int32_t IntellVoiceManager::GetCloneFiles(std::vector<CloneFileInfo> &cloneFileInfo)
+int32_t IntellVoiceManager::GetWakeupSourceFiles(std::vector<WakeupSourceFile> &cloneFileInfo)
 {
     INTELL_VOICE_LOG_INFO("enter");
     if (g_sProxy == nullptr) {
@@ -271,19 +271,19 @@ int32_t IntellVoiceManager::GetCloneFiles(std::vector<CloneFileInfo> &cloneFileI
     }
 
     std::vector<std::string> cloneFiles;
-    int ret = g_sProxy->GetCloneFilesList(cloneFiles);
+    int ret = g_sProxy->GetWakeupSourceFilesList(cloneFiles);
     if (ret != 0) {
         INTELL_VOICE_LOG_ERROR("get clone list err");
         return -1;
     }
 
-    CloneFileInfo fileInfo;
+    WakeupSourceFile fileInfo;
     size_t fileCount = cloneFiles.size();
     cloneFiles.reserve(fileCount);
 
     for (size_t index = 0; index < fileCount; ++index) {
         fileInfo.filePath = cloneFiles[index];
-        ret = g_sProxy->GetCloneFile(cloneFiles[index], fileInfo.fileContent);
+        ret = g_sProxy->GetWakeupSourceFile(cloneFiles[index], fileInfo.fileContent);
         if (ret != 0) {
             INTELL_VOICE_LOG_ERROR("get clone file err");
             return -1;
@@ -294,8 +294,8 @@ int32_t IntellVoiceManager::GetCloneFiles(std::vector<CloneFileInfo> &cloneFileI
     return 0;
 }
 
-int32_t IntellVoiceManager::CloneForResult(const std::vector<CloneFileInfo> &cloneFileInfo,
-    const std::string &cloneInfo, const shared_ptr<IIntellVoiceUpdateCallback> callback)
+int32_t IntellVoiceManager::EnrollWithWakeupFilesForResult(const std::vector<WakeupSourceFile> &cloneFileInfo,
+    const std::string &wakeupInfo, const shared_ptr<IIntellVoiceUpdateCallback> callback)
 {
     INTELL_VOICE_LOG_INFO("enter");
 
@@ -307,7 +307,7 @@ int32_t IntellVoiceManager::CloneForResult(const std::vector<CloneFileInfo> &clo
     int ret = 0;
     size_t fileCount = cloneFileInfo.size();
     for (size_t index = 0; index < fileCount; ++index) {
-        ret = g_sProxy->SendCloneFile(cloneFileInfo[index].filePath, cloneFileInfo[index].fileContent);
+        ret = g_sProxy->SendWakeupFile(cloneFileInfo[index].filePath, cloneFileInfo[index].fileContent);
         if (ret != 0) {
             INTELL_VOICE_LOG_ERROR("send clone file err, index %zu size %zu", index, fileCount);
             return -1;
@@ -321,7 +321,7 @@ int32_t IntellVoiceManager::CloneForResult(const std::vector<CloneFileInfo> &clo
     }
     callback_->SetUpdateCallback(callback);
 
-    return g_sProxy->CloneForResult(cloneInfo, callback_->AsObject());
+    return g_sProxy->EnrollWithWakeupFilesForResult(wakeupInfo, callback_->AsObject());
 }
 }  // namespace IntellVoice
 }  // namespace OHOS

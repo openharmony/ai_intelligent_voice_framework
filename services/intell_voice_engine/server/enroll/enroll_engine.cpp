@@ -214,7 +214,7 @@ bool EnrollEngine::SetParameterInner(const std::string &keyValueList)
     HistoryInfoMgr &historyInfoMgr = HistoryInfoMgr::GetInstance();
 
     std::map<std::string, std::string> kvpairs;
-    SplitStringToKVPair(keyValueList, kvpairs);
+    EngineUtil::SplitStringToKVPair(keyValueList, kvpairs);
     for (auto it : kvpairs) {
         if (it.first == std::string("wakeup_bundle_name")) {
             INTELL_VOICE_LOG_INFO("set wakeup bundle name:%{public}s", it.second.c_str());

@@ -112,7 +112,7 @@ std::string IntellVoiceServiceProxy::GetParameter(const std::string &key)
     return reply.ReadString();
 }
 
-int32_t IntellVoiceServiceProxy::GetCloneFilesList(std::vector<std::string>& cloneFiles)
+int32_t IntellVoiceServiceProxy::GetWakeupSourceFilesList(std::vector<std::string>& cloneFiles)
 {
     MessageParcel data;
     MessageParcel reply;
@@ -130,7 +130,7 @@ int32_t IntellVoiceServiceProxy::GetCloneFilesList(std::vector<std::string>& clo
     return reply.ReadInt32();
 }
 
-int32_t IntellVoiceServiceProxy::GetCloneFile(const std::string &filePath, std::vector<uint8_t> &buffer)
+int32_t IntellVoiceServiceProxy::GetWakeupSourceFile(const std::string &filePath, std::vector<uint8_t> &buffer)
 {
     MessageParcel data;
     MessageParcel reply;
@@ -159,7 +159,7 @@ int32_t IntellVoiceServiceProxy::GetCloneFile(const std::string &filePath, std::
     return reply.ReadInt32();
 }
 
-int32_t IntellVoiceServiceProxy::SendCloneFile(const std::string &filePath, const std::vector<uint8_t> &buffer)
+int32_t IntellVoiceServiceProxy::SendWakeupFile(const std::string &filePath, const std::vector<uint8_t> &buffer)
 {
     MessageParcel data;
     MessageParcel reply;
@@ -183,14 +183,14 @@ int32_t IntellVoiceServiceProxy::SendCloneFile(const std::string &filePath, cons
     return reply.ReadInt32();
 }
 
-int32_t IntellVoiceServiceProxy::CloneForResult(const std::string &cloneInfo, sptr<IRemoteObject> object)
+int32_t IntellVoiceServiceProxy::EnrollWithWakeupFilesForResult(const std::string &wakeupInfo, sptr<IRemoteObject> object)
 {
     MessageParcel data;
     MessageParcel reply;
     MessageOption option;
 
     data.WriteInterfaceToken(IIntellVoiceService::GetDescriptor());
-    data.WriteString(cloneInfo);
+    data.WriteString(wakeupInfo);
     data.WriteRemoteObject(object);
     Remote()->SendRequest(HDI_INTELL_VOICE_SERVICE_CLONE_FOR_RESULT, data, reply, option);
     return reply.ReadInt32();

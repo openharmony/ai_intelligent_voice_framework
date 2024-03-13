@@ -41,11 +41,11 @@ private:
     static napi_value GetParameter(napi_env env, napi_callback_info info);
     static napi_value GetUploadFiles(napi_env env, napi_callback_info info);
     static void GetUploadFilesComplete(napi_env env, AsyncContext *data, napi_value &result);
-    static napi_value GetCloneFiles(napi_env env, napi_callback_info info);
+    static napi_value GetWakeupSourceFiles(napi_env env, napi_callback_info info);
     static void GetCloneCompleteCallback(napi_env env, AsyncContext *data, napi_value &result);
-    static napi_value CloneForResult(napi_env env, napi_callback_info info);
+    static napi_value EnrollWithWakeupFilesForResult(napi_env env, napi_callback_info info);
     static void CloneForResultCompleteCallback(napi_env env, napi_status status, void *data);
-    static bool CloneForResultParser(std::shared_ptr<UpdateAsyncContext> context,
+    static bool WakeupFilesForResultParser(std::shared_ptr<UpdateAsyncContext> context,
         napi_env env, size_t argc, napi_value *argv);
 
 private:

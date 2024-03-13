@@ -42,10 +42,10 @@ public:
     int32_t GetUploadFiles(int numMax, std::vector<UploadHdiFile> &files) override;
 
     std::string GetParameter(const std::string &key) override;
-    int32_t GetCloneFilesList(std::vector<std::string>& cloneFiles) override;
-    int32_t GetCloneFile(const std::string &filePath, std::vector<uint8_t> &buffer) override;
-    int32_t SendCloneFile(const std::string &filePath, const std::vector<uint8_t> &buffer) override;
-    int32_t CloneForResult(const std::string &cloneInfo, const sptr<IRemoteObject> object) override;
+    int32_t GetWakeupSourceFilesList(std::vector<std::string>& cloneFiles) override;
+    int32_t GetWakeupSourceFile(const std::string &filePath, std::vector<uint8_t> &buffer) override;
+    int32_t SendWakeupFile(const std::string &filePath, const std::vector<uint8_t> &buffer) override;
+    int32_t EnrollWithWakeupFilesForResult(const std::string &wakeupInfo, const sptr<IRemoteObject> object) override;
 
     class PerStateChangeCbCustomizeCallback : public Security::AccessToken::PermStateChangeCallbackCustomize {
     public:

@@ -117,7 +117,7 @@ int32_t IntellVoiceServiceStub::GetCloneFileListInner(MessageParcel &data, Messa
     int32_t ret = 0;
     std::vector<std::string> cloneFiles;
 
-    ret = GetCloneFilesList(cloneFiles);
+    ret = GetWakeupSourceFilesList(cloneFiles);
     reply.WriteUint32(cloneFiles.size());
     for (auto i : cloneFiles) {
         reply.WriteString(i);
@@ -130,7 +130,7 @@ int32_t IntellVoiceServiceStub::GetCloneFileInner(MessageParcel &data, MessagePa
 {
     std::string filePath = data.ReadString();
     std::vector<uint8_t> buffer;
-    int32_t ret = GetCloneFile(filePath, buffer);
+    int32_t ret = GetWakeupSourceFile(filePath, buffer);
 
     reply.WriteUint32(buffer.size());
     reply.WriteBuffer(buffer.data(), buffer.size());
@@ -148,7 +148,7 @@ int32_t IntellVoiceServiceStub::SendCloneFileInner(MessageParcel &data, MessageP
     buffer.resize(size);
     const uint8_t *readBuf = data.ReadBuffer(size);
     std::copy(readBuf, readBuf + size, buffer.data());
-    ret = SendCloneFile(filePath, buffer);
+    ret = SendWakeupFile(filePath, buffer);
     reply.WriteInt32(ret);
     return ret;
 }
@@ -156,10 +156,10 @@ int32_t IntellVoiceServiceStub::SendCloneFileInner(MessageParcel &data, MessageP
 int32_t IntellVoiceServiceStub::CloneForResultInner(MessageParcel &data, MessageParcel &reply)
 {
     int32_t ret = 0;
-    std::string cloneInfo = data.ReadString();
+    std::string wakeupInfo = data.ReadString();
     sptr<IRemoteObject> object = data.ReadRemoteObject();
 
-    ret = CloneForResult(cloneInfo, object);
+    ret = EnrollWithWakeupFilesForResult(wakeupInfo, object);
     reply.WriteInt32(ret);
     return ret;
 }

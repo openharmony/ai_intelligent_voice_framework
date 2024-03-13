@@ -36,8 +36,8 @@ public:
     explicit UpdateAsyncContext(napi_env env) : AsyncContext(env) {};
     ProcessWorkFunc processWork = nullptr;
     int32_t result;
-    std::vector <OHOS::IntellVoice::CloneFileInfo> cloneFiles;
-    std::string cloneInfo;
+    std::vector <OHOS::IntellVoice::WakeupSourceFile> cloneFiles;
+    std::string wakeupInfo;
 };
 
 class IntellVoiceUpdateCallbackNapi : public IIntellVoiceUpdateCallback {

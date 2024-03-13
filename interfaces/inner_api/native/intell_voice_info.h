@@ -104,13 +104,6 @@ enum UploadFileType {
     WAKEUP_FILE = 1,
 };
 
-enum CloneResult {
-    /* Clone success */
-    CLONE_SUCCESS = 0,
-    /* Clone fail */
-    CLONE_FAILED = -1,
-};
-
 enum EvaluationResultCode {
     /* Unknown */
     UNKNOWN = 0,
@@ -147,7 +140,7 @@ struct WakeupHapInfo {
     std::string abilityName;
 };
 
-struct CloneFileInfo {
+struct WakeupSourceFile {
     std::string filePath;
     std::vector<uint8_t> fileContent;
 };

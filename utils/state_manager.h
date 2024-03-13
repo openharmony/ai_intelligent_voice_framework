@@ -64,7 +64,7 @@ struct State {
         return std::to_string(state);
     };
 
-    int32_t state;
+    int32_t state = -1;
 };
 
 struct StateInfo {

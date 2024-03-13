@@ -52,9 +52,9 @@ public:
 
     int32_t SetParameter(const std::string &key, const std::string &value);
     std::string GetParameter(const std::string &key);
-    int32_t GetCloneFiles(std::vector<CloneFileInfo> &cloneFileInfo);
-    int32_t CloneForResult(const std::vector<CloneFileInfo> &cloneFileInfo,
-        const std::string &cloneInfo, const std::shared_ptr<IIntellVoiceUpdateCallback> callback);
+    int32_t GetWakeupSourceFiles(std::vector<WakeupSourceFile> &cloneFileInfo);
+    int32_t EnrollWithWakeupFilesForResult(const std::vector<WakeupSourceFile> &cloneFileInfo,
+        const std::string &wakeupInfo, const std::shared_ptr<IIntellVoiceUpdateCallback> callback);
 private:
     IntellVoiceManager();
     ~IntellVoiceManager();

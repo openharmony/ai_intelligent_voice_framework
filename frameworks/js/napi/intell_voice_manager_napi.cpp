@@ -41,7 +41,6 @@ napi_ref IntellVoiceManagerNapi::wakeupEventTypeRef_ = nullptr;
 napi_ref IntellVoiceManagerNapi::errorCodeRef_ = nullptr;
 napi_ref IntellVoiceManagerNapi::enrollResultRef_ = nullptr;
 napi_ref IntellVoiceManagerNapi::uploadFileTypeRef_ = nullptr;
-napi_ref IntellVoiceManagerNapi::cloneResultRef_ = nullptr;
 napi_ref IntellVoiceManagerNapi::evaluationResultCodeRef_ = nullptr;
 
 static const std::map<std::string, OHOS::IntellVoice::ServiceChangeType> SERVICE_CHANGE_TYPE_MAP = {
@@ -94,11 +93,6 @@ static const std::map<std::string, OHOS::IntellVoice::EnrollResult> ENROLL_RESUL
 static const std::map<std::string, OHOS::IntellVoice::UploadFileType> UPLOAD_FILE_TYPE_MAP = {
     {"ENROLL_FILE", OHOS::IntellVoice::UploadFileType::ENROLL_FILE},
     {"WAKEUP_FILE", OHOS::IntellVoice::UploadFileType::WAKEUP_FILE},
-};
-
-static const std::map<std::string, OHOS::IntellVoice::CloneResult> ClONE_RESULT_MAP = {
-    {"CLONE_SUCCESS", OHOS::IntellVoice::CLONE_SUCCESS},
-    {"CLONE_FAILED", OHOS::IntellVoice::CLONE_FAILED},
 };
 
 static const std::map<std::string, OHOS::IntellVoice::EvaluationResultCode> EVALUATION_RESULT_CODE_MAP = {
@@ -209,7 +203,6 @@ napi_value IntellVoiceManagerNapi::Export(napi_env env, napi_value exports)
         DECLARE_NAPI_PROPERTY("IntelligentVoiceErrorCode", CreatePropertyBase(env, ERROR_CODE_MAP, errorCodeRef_)),
         DECLARE_NAPI_PROPERTY("EnrollResult", CreatePropertyBase(env, ENROLL_RESULT_MAP, enrollResultRef_)),
         DECLARE_NAPI_PROPERTY("UploadFileType", CreatePropertyBase(env, UPLOAD_FILE_TYPE_MAP, uploadFileTypeRef_)),
-        DECLARE_NAPI_PROPERTY("CloneResult", CreatePropertyBase(env, ClONE_RESULT_MAP, cloneResultRef_)),
         DECLARE_NAPI_PROPERTY("EvaluationResultCode",
             CreatePropertyBase(env, EVALUATION_RESULT_CODE_MAP, evaluationResultCodeRef_)),
     };

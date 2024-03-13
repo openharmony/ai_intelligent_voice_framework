@@ -24,7 +24,7 @@ namespace IntellVoiceUtils {
 class IntellVoiceUtil final {
 public:
     static uint32_t GetHdiVersionId(uint32_t majorVer, uint32_t minorVer);
-    static bool DeinterleaveAudioData(int16_t *buffer, uint32_t size, int32_t channelCnt,
+    static bool DeinterleaveAudioData(const int16_t *buffer, uint32_t size, int32_t channelCnt,
         std::vector<std::vector<uint8_t>> &audioData);
     static bool VerifySystemPermission(const std::string &permissionName);
     static bool ReadFile(const std::string &filePath, std::shared_ptr<uint8_t> &buffer, uint32_t &size);

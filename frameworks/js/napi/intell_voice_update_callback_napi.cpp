@@ -57,7 +57,7 @@ void IntellVoiceUpdateCallbackNapi::ClearAsyncWork(bool error, const std::string
         }
 
         INTELL_VOICE_LOG_WARN("fail occured");
-        context->result_ = CLONE_FAILED;
+        context->result_ = EnrollResult::UNKNOWN_ERROR;
 
         OnJsCallBack(context);
     }
@@ -75,7 +75,7 @@ void IntellVoiceUpdateCallbackNapi::OnUpdateComplete(const int result)
     }
     context_.pop();
 
-    context->result = (result == 0) ? CLONE_SUCCESS : CLONE_FAILED;
+    context->result = (result == 0) ? EnrollResult::SUCCESS : EnrollResult::UNKNOWN_ERROR;
     OnJsCallBack(context);
 }
 

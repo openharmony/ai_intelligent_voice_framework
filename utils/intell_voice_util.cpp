@@ -38,7 +38,7 @@ uint32_t IntellVoiceUtil::GetHdiVersionId(uint32_t majorVer, uint32_t minorVer)
     return ((majorVer << VERSION_OFFSET) | minorVer);
 }
 
-bool IntellVoiceUtil::DeinterleaveAudioData(int16_t *buffer, uint32_t size, int32_t channelCnt,
+bool IntellVoiceUtil::DeinterleaveAudioData(const int16_t *buffer, uint32_t size, int32_t channelCnt,
     std::vector<std::vector<uint8_t>> &audioData)
 {
     if (channelCnt == 0) {
@@ -76,7 +76,6 @@ bool IntellVoiceUtil::ReadFile(const std::string &filePath, std::shared_ptr<uint
         INTELL_VOICE_LOG_ERROR("file is empty");
         return false;
     }
-
     buffer = std::shared_ptr<uint8_t>(new uint8_t[size], [](uint8_t *p) { delete[] p; });
     if (buffer == nullptr) {
         INTELL_VOICE_LOG_ERROR("failed to allocate buffer");

@@ -391,7 +391,7 @@ std::string IntellVoiceService::GetParameter(const std::string &key)
     return manager->GetParameter(key);
 }
 
-int32_t IntellVoiceService::GetCloneFilesList(std::vector<std::string>& cloneFiles)
+int32_t IntellVoiceService::GetWakeupSourceFilesList(std::vector<std::string>& cloneFiles)
 {
     if (!IntellVoiceUtil::VerifySystemPermission(OHOS_PERMISSION_INTELL_VOICE)) {
         INTELL_VOICE_LOG_WARN("verify permission");
@@ -404,10 +404,10 @@ int32_t IntellVoiceService::GetCloneFilesList(std::vector<std::string>& cloneFil
         return -1;
     }
 
-    return mgr->GetCloneFilesList(cloneFiles);
+    return mgr->GetWakeupSourceFilesList(cloneFiles);
 }
 
-int32_t IntellVoiceService::GetCloneFile(const std::string &filePath, std::vector<uint8_t> &buffer)
+int32_t IntellVoiceService::GetWakeupSourceFile(const std::string &filePath, std::vector<uint8_t> &buffer)
 {
     if (!IntellVoiceUtil::VerifySystemPermission(OHOS_PERMISSION_INTELL_VOICE)) {
         INTELL_VOICE_LOG_WARN("verify permission");
@@ -420,10 +420,10 @@ int32_t IntellVoiceService::GetCloneFile(const std::string &filePath, std::vecto
         return -1;
     }
 
-    return mgr->GetCloneFile(filePath, buffer);
+    return mgr->GetWakeupSourceFile(filePath, buffer);
 }
 
-int32_t IntellVoiceService::SendCloneFile(const std::string &filePath, const std::vector<uint8_t> &buffer)
+int32_t IntellVoiceService::SendWakeupFile(const std::string &filePath, const std::vector<uint8_t> &buffer)
 {
     if (!IntellVoiceUtil::VerifySystemPermission(OHOS_PERMISSION_INTELL_VOICE)) {
         INTELL_VOICE_LOG_WARN("verify permission");
@@ -436,23 +436,23 @@ int32_t IntellVoiceService::SendCloneFile(const std::string &filePath, const std
         return -1;
     }
 
-    return mgr->SendCloneFile(filePath, buffer);
+    return mgr->SendWakeupFile(filePath, buffer);
 }
 
-int32_t IntellVoiceService::CloneForResult(const std::string &cloneInfo, const sptr<IRemoteObject> object)
+int32_t IntellVoiceService::EnrollWithWakeupFilesForResult(const std::string &wakeupInfo, const sptr<IRemoteObject> object)
 {
     if (!IntellVoiceUtil::VerifySystemPermission(OHOS_PERMISSION_INTELL_VOICE)) {
         INTELL_VOICE_LOG_WARN("verify permission");
     }
 
-    INTELL_VOICE_LOG_INFO("CloneForResult");
+    INTELL_VOICE_LOG_INFO("EnrollWithWakeupFilesForResult");
     std::unique_ptr<IntellVoiceServiceManager> &mgr = IntellVoiceServiceManager::GetInstance();
     if (mgr == nullptr) {
         INTELL_VOICE_LOG_ERROR("mgr is nullptr");
         return -1;
     }
 
-    return mgr->CloneUpdate(cloneInfo, object);
+    return mgr->CloneUpdate(wakeupInfo, object);
 }
 }  // namespace IntellVoiceEngine
 }  // namespace OHOS

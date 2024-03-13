@@ -190,7 +190,7 @@ void EngineHostManager::OnEngineHDIDiedCallback()
     _Exit(0);
 }
 
-int32_t EngineHostManager::GetCloneFilesList(std::vector<std::string>& cloneFiles)
+int32_t EngineHostManager::GetWakeupSourceFilesList(std::vector<std::string>& cloneFiles)
 {
     INTELL_VOICE_LOG_INFO("enter");
     if (engineHostProxy1_2_ == nullptr) {
@@ -201,7 +201,7 @@ int32_t EngineHostManager::GetCloneFilesList(std::vector<std::string>& cloneFile
     return engineHostProxy1_2_->GetCloneFilesList(cloneFiles);
 }
 
-int32_t EngineHostManager::GetCloneFile(const std::string &filePath, std::vector<uint8_t> &buffer)
+int32_t EngineHostManager::GetWakeupSourceFile(const std::string &filePath, std::vector<uint8_t> &buffer)
 {
     INTELL_VOICE_LOG_INFO("enter");
     if (engineHostProxy1_2_ == nullptr) {
@@ -212,7 +212,7 @@ int32_t EngineHostManager::GetCloneFile(const std::string &filePath, std::vector
     return engineHostProxy1_2_->GetCloneFile(filePath, buffer);
 }
 
-int32_t EngineHostManager::SendCloneFile(const std::string &filePath, const std::vector<uint8_t> &buffer)
+int32_t EngineHostManager::SendWakeupFile(const std::string &filePath, const std::vector<uint8_t> &buffer)
 {
     INTELL_VOICE_LOG_INFO("enter");
     if (engineHostProxy1_2_ == nullptr) {

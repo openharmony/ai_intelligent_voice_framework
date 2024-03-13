@@ -43,9 +43,9 @@ public:
     std::shared_ptr<AdapterHostManager> CreateEngineAdapter(const IntellVoiceEngineAdapterDescriptor &desc);
     void ReleaseEngineAdapter(const IntellVoiceEngineAdapterDescriptor &desc);
     int GetUploadFiles(int numMax, std::vector<UploadHdiFile> &files);
-    int32_t GetCloneFilesList(std::vector<std::string>& cloneFiles);
-    int32_t GetCloneFile(const std::string &filePath, std::vector<uint8_t> &buffer);
-    int32_t SendCloneFile(const std::string &filePath, const std::vector<uint8_t> &buffer);
+    int32_t GetWakeupSourceFilesList(std::vector<std::string>& cloneFiles);
+    int32_t GetWakeupSourceFile(const std::string &filePath, std::vector<uint8_t> &buffer);
+    int32_t SendWakeupFile(const std::string &filePath, const std::vector<uint8_t> &buffer);
 
 private:
     static void OnEngineHDIDiedCallback();

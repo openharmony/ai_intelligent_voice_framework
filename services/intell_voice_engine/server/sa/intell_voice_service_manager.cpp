@@ -629,26 +629,26 @@ std::string IntellVoiceServiceManager::GetParameter(const std::string &key)
     return val;
 }
 
-int32_t IntellVoiceServiceManager::GetCloneFilesList(std::vector<std::string>& cloneFiles)
+int32_t IntellVoiceServiceManager::GetWakeupSourceFilesList(std::vector<std::string>& cloneFiles)
 {
-    return EngineHostManager::GetInstance().GetCloneFilesList(cloneFiles);
+    return EngineHostManager::GetInstance().GetWakeupSourceFilesList(cloneFiles);
 }
 
-int32_t IntellVoiceServiceManager::GetCloneFile(const std::string &filePath, std::vector<uint8_t> &buffer)
+int32_t IntellVoiceServiceManager::GetWakeupSourceFile(const std::string &filePath, std::vector<uint8_t> &buffer)
 {
-    return EngineHostManager::GetInstance().GetCloneFile(filePath, buffer);
+    return EngineHostManager::GetInstance().GetWakeupSourceFile(filePath, buffer);
 }
 
-int32_t IntellVoiceServiceManager::SendCloneFile(const std::string &filePath, const std::vector<uint8_t> &buffer)
+int32_t IntellVoiceServiceManager::SendWakeupFile(const std::string &filePath, const std::vector<uint8_t> &buffer)
 {
     if (buffer.data() == nullptr) {
         INTELL_VOICE_LOG_ERROR("send update callback is nullptr");
     }
 
-    return EngineHostManager::GetInstance().SendCloneFile(filePath, buffer);
+    return EngineHostManager::GetInstance().SendWakeupFile(filePath, buffer);
 }
 
-int32_t IntellVoiceServiceManager::CloneUpdate(const std::string &cloneInfo, const sptr<IRemoteObject> &object)
+int32_t IntellVoiceServiceManager::CloneUpdate(const std::string &wakeupInfo, const sptr<IRemoteObject> &object)
 {
     sptr<IIntelligentVoiceUpdateCallback> updateCallback = iface_cast<IIntelligentVoiceUpdateCallback>(object);
     if (updateCallback == nullptr) {
@@ -656,13 +656,13 @@ int32_t IntellVoiceServiceManager::CloneUpdate(const std::string &cloneInfo, con
         return -1;
     }
 
-    if (cloneInfo.empty()) {
+    if (wakeupInfo.empty()) {
         INTELL_VOICE_LOG_ERROR("clone info empty");
         return -1;
     }
 
     std::shared_ptr<CloneUpdateStrategy> cloneStrategy =
-        std::make_shared<CloneUpdateStrategy>(cloneInfo, updateCallback);
+        std::make_shared<CloneUpdateStrategy>(wakeupInfo, updateCallback);
     if (cloneStrategy == nullptr) {
         INTELL_VOICE_LOG_ERROR("clone strategy is nullptr");
         return -1;

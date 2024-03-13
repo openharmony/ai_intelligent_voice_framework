@@ -35,16 +35,16 @@ public:
     int32_t GetWakeupPcm(std::vector<uint8_t> &data);
     int32_t Evaluate(const std::string &word, EvaluationResultInfo &info);
     bool SetDspFeatures();
-    void SplitStringToKVPair(const std::string &inputStr, std::map<std::string, std::string> &kvpairs);
     void ProcDspModel();
     void ReleaseAdapterInner();
 
 protected:
+    static void SplitStringToKVPair(const std::string &inputStr, std::map<std::string, std::string> &kvpairs);
     std::shared_ptr<AdapterHostManager> adapter_ = nullptr;
     OHOS::HDI::IntelligentVoice::Engine::V1_0::IntellVoiceEngineAdapterDescriptor desc_;
 
 private:
-    void WriteBufferFromAshmem(uint8_t *&buffer, uint32_t size, sptr<OHOS::Ashmem> ashmem);
+    static void WriteBufferFromAshmem(uint8_t *&buffer, uint32_t size, sptr<OHOS::Ashmem> ashmem);
 };
 }
 }
