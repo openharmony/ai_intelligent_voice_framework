@@ -32,7 +32,7 @@ public:
 };
 
 napi_value SetValue(napi_env env, const int32_t value);
-napi_value SetValue(napi_env env, const uint32_t value)
+napi_value SetValue(napi_env env, const uint32_t value);
 napi_value SetValue(napi_env env, const std::string &value);
 napi_value SetValue(napi_env env, const std::vector<uint8_t> &value);
 

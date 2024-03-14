@@ -580,7 +580,8 @@ PROCESS_ERR_EXIT:
 
     AsyncExecute execute = [](napi_env env, void *data) {};
 
-    return NapiAsync::AsyncWork(env, context, "EnrollWithWakeupFilesForResult", execute, CloneForResultCompleteCallback);
+    return NapiAsync::AsyncWork(env, context, "EnrollWithWakeupFilesForResult", execute,
+        CloneForResultCompleteCallback);
 }
 }  // namespace IntellVoiceNapi
 }  // namespace OHOS

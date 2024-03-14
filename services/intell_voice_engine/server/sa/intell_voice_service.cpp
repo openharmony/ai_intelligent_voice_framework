@@ -439,7 +439,8 @@ int32_t IntellVoiceService::SendWakeupFile(const std::string &filePath, const st
     return mgr->SendWakeupFile(filePath, buffer);
 }
 
-int32_t IntellVoiceService::EnrollWithWakeupFilesForResult(const std::string &wakeupInfo, const sptr<IRemoteObject> object)
+int32_t IntellVoiceService::EnrollWithWakeupFilesForResult(const std::string &wakeupInfo,
+    const sptr<IRemoteObject> object)
 {
     if (!IntellVoiceUtil::VerifySystemPermission(OHOS_PERMISSION_INTELL_VOICE)) {
         INTELL_VOICE_LOG_WARN("verify permission");
