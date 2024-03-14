@@ -121,8 +121,9 @@ int UpdateEngineController::CreateUpdateEngineUntilTime(std::shared_ptr<IUpdateS
     }
 
     retryTimesLimit_ = updateStrategy->GetRetryTimes();
-    if (retryTimes_ < retryTimesLimit_)
+    if (retryTimes_ < retryTimesLimit_) {
         TimerMgr::Start(nullptr);
+    }
 
     updateStrategy_ = updateStrategy;
     curPriority_ = updateStrategy->GetUpdatePriority();

@@ -69,12 +69,12 @@ IntellVoiceService::~IntellVoiceService()
 
 int32_t IntellVoiceService::CreateIntellVoiceEngine(IntellVoiceEngineType type, sptr<IIntellVoiceEngine> &inst)
 {
+    INTELL_VOICE_LOG_INFO("enter, type: %{public}d", type);
     if (!IntellVoiceUtil::VerifySystemPermission(OHOS_PERMISSION_INTELL_VOICE)) {
         INTELL_VOICE_LOG_WARN("verify permission denied");
         return -1;
     }
 
-    INTELL_VOICE_LOG_INFO("enter, type: %{public}d", type);
     std::unique_ptr<IntellVoiceServiceManager> &mgr = IntellVoiceServiceManager::GetInstance();
     if (mgr == nullptr) {
         INTELL_VOICE_LOG_ERROR("mgr is nullptr");
@@ -93,6 +93,10 @@ int32_t IntellVoiceService::CreateIntellVoiceEngine(IntellVoiceEngineType type, 
 int32_t IntellVoiceService::ReleaseIntellVoiceEngine(IntellVoiceEngineType type)
 {
     INTELL_VOICE_LOG_INFO("enter, type: %{public}d", type);
+    if (!IntellVoiceUtil::VerifySystemPermission(OHOS_PERMISSION_INTELL_VOICE)) {
+        INTELL_VOICE_LOG_WARN("verify permission denied");
+        return -1;
+    }
     std::unique_ptr<IntellVoiceServiceManager> &mgr = IntellVoiceServiceManager::GetInstance();
     if (mgr == nullptr) {
         INTELL_VOICE_LOG_ERROR("mgr is nullptr");

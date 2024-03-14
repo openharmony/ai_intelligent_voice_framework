@@ -116,14 +116,14 @@ bool IntellVoiceUtil::VerifySystemPermission(const std::string &permissionName)
 {
     if (IPCSkeleton::GetCallingUid() == UID_ROOT) {
         INTELL_VOICE_LOG_INFO("callingUid is root");
+        return true;
+    }
+
+    if (!CheckIsSystemApp()) {
         return false;
     }
 
     if (!VerifyClientPermission(permissionName)) {
-        return false;
-    }
-
-    if (!CheckIsSystemApp()) {
         return false;
     }
 
