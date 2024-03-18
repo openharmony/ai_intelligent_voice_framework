@@ -63,7 +63,7 @@ std::unique_ptr<IntellVoiceServiceManager> &IntellVoiceServiceManager::GetInstan
     return g_intellVoiceServiceMgr;
 }
 
-sptr<IIntellVoiceEngine> IntellVoiceServiceManager::CreateEngine(IntellVoiceEngineType type, std::string param)
+sptr<IIntellVoiceEngine> IntellVoiceServiceManager::CreateEngine(IntellVoiceEngineType type, const std::string &param)
 {
     INTELL_VOICE_LOG_INFO("enter, type:%{public}d", type);
     if (type == INTELL_VOICE_ENROLL) {
@@ -89,7 +89,8 @@ sptr<IIntellVoiceEngine> IntellVoiceServiceManager::CreateEngine(IntellVoiceEngi
     return CreateEngineInner(type, param);
 }
 
-sptr<IIntellVoiceEngine> IntellVoiceServiceManager::CreateEngineInner(IntellVoiceEngineType type, std::string param)
+sptr<IIntellVoiceEngine> IntellVoiceServiceManager::CreateEngineInner(IntellVoiceEngineType type,
+    const std::string &param)
 {
     INTELL_VOICE_LOG_INFO("create engine enter, type: %{public}d", type);
     OHOS::IntellVoiceUtils::MemoryGuard memoryGuard;
@@ -435,7 +436,7 @@ void IntellVoiceServiceManager::OnWakeupSwitchChange()
     }
 }
 
-void IntellVoiceServiceManager::OnSwitchChange(const std::string switchKey)
+void IntellVoiceServiceManager::OnSwitchChange(const std::string &switchKey)
 {
     if (switchKey == WAKEUP_KEY) {
         OnWakeupSwitchChange();
@@ -547,7 +548,7 @@ void IntellVoiceServiceManager::ProcBreathModel()
     }
 }
 
-bool IntellVoiceServiceManager::CreateUpdateEngine(std::string param)
+bool IntellVoiceServiceManager::CreateUpdateEngine(const std::string &param)
 {
     sptr<IIntellVoiceEngine> updateEngine = CreateEngine(INTELL_VOICE_UPDATE, param);
     if (updateEngine == nullptr) {

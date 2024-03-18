@@ -57,7 +57,7 @@ public:
 
         return enrollResult_[type].load();
     }
-    sptr<IIntellVoiceEngine> CreateEngine(IntellVoiceEngineType type, std::string param = "");
+    sptr<IIntellVoiceEngine> CreateEngine(IntellVoiceEngineType type, const std::string &param = "");
     int32_t ReleaseEngine(IntellVoiceEngineType type);
 
     void OnServiceStart();
@@ -83,17 +83,17 @@ public:
 private:
     IntellVoiceServiceManager();
     void OnWakeupSwitchChange();
-    void OnSwitchChange(const std::string switchKey);
+    void OnSwitchChange(const std::string &switchKey);
     void OnDetected(int32_t uuid);
     void CreateDetector(int32_t uuid);
 
-    sptr<IIntellVoiceEngine> CreateEngineInner(IntellVoiceEngineType type, std::string param = "");
+    sptr<IIntellVoiceEngine> CreateEngineInner(IntellVoiceEngineType type, const std::string &param = "");
     int32_t ReleaseEngineInner(IntellVoiceEngineType type);
     bool CreateOrResetWakeupEngine();
     bool IsEngineExist(IntellVoiceEngineType type);
 
     void ReleaseUpdateEngine() override;
-    bool CreateUpdateEngine(std::string param = "") override;
+    bool CreateUpdateEngine(const std::string &param) override;
     void UpdateCompleteHandler(UpdateState result, bool islast) override;
     void RegisterObserver(const std::string &switchKey);
     void SetImproveParam(sptr<EngineBase> engine);

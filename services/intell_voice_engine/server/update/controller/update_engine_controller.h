@@ -31,7 +31,7 @@ public:
     virtual ~UpdateEngineController();
     UpdateEngineController();
 
-    virtual bool CreateUpdateEngine(std::string param)
+    virtual bool CreateUpdateEngine(const std::string &param)
     {
         return false;
     }
