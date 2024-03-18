@@ -47,8 +47,8 @@ const std::string OHOS_PERMISSION_INTELL_VOICE = "ohos.permission.MANAGE_INTELLI
 IntellVoiceService::IntellVoiceService(int32_t systemAbilityId, bool runOnCreate)
     : SystemAbility(INTELL_VOICE_SERVICE_ID, true)
 {
-    systemAbilityChangeMap_[COMMON_EVENT_SERVICE_ID] = [this](
-                                                           bool isAdded) { this->OnCommonEventServiceChange(isAdded); };
+    systemAbilityChangeMap_[COMMON_EVENT_SERVICE_ID] = [this](bool isAdded) {
+        this->OnCommonEventServiceChange(isAdded); };
     systemAbilityChangeMap_[DISTRIBUTED_KV_DATA_SERVICE_ABILITY_ID] = [this](bool isAdded) {
         this->OnDistributedKvDataServiceChange(isAdded);
     };
