@@ -52,7 +52,7 @@ bool TriggerHostManager::Init()
     uint32_t minorVer = 0;
     triggerHostProxy_->GetVersion(majorVer, minorVer);
 
-    if (GetHdiVersionId(majorVer, minorVer) == GetHdiVersionId(1, 1)) {
+    if (IntellVoiceUtil::GetHdiVersionId(majorVer, minorVer) == IntellVoiceUtil::GetHdiVersionId(1, 1)) {
         INTELL_VOICE_LOG_INFO("version is 1.1");
         auto castResult_V1_1 =
             OHOS::HDI::IntelligentVoice::Trigger::V1_1::IIntellVoiceTriggerManager::CastFrom(triggerHostProxy_);

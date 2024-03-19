@@ -29,6 +29,7 @@ const std::string KEY_WAKEUP_ENGINE_ABILITY_NAME = "WakeupEngineAbilityName";
 const std::string KEY_WAKEUP_VESRION = "WakeupVersion";
 const std::string KEY_LANGUAGE = "Language";
 const std::string KEY_AREA = "Area";
+const std::string KEY_WAKEUP_PHRASE = "WakeupPhrase";
 
 HistoryInfoMgr::HistoryInfoMgr()
     : ServiceDbHelper("intell_voice_service_manager", "local_intell_voice_history_mgr_storeId")
@@ -94,6 +95,16 @@ void HistoryInfoMgr::SetArea(const std::string &area)
 std::string HistoryInfoMgr::GetArea()
 {
     return GetValue(KEY_AREA);
+}
+
+void HistoryInfoMgr::SetWakeupPhrase(const std::string &wakeupPhrase)
+{
+    SetValue(KEY_WAKEUP_PHRASE, wakeupPhrase);
+}
+
+std::string HistoryInfoMgr::GetWakeupPhrase()
+{
+    return GetValue(KEY_WAKEUP_PHRASE);
 }
 }
 }

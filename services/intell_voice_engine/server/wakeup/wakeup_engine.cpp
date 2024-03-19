@@ -33,9 +33,9 @@ WakeupEngine::~WakeupEngine()
     INTELL_VOICE_LOG_INFO("enter");
 }
 
-void WakeupEngine::OnDetected()
+void WakeupEngine::OnDetected(int32_t uuid)
 {
-    INTELL_VOICE_LOG_INFO("on detected");
+    INTELL_VOICE_LOG_INFO("enter, uuid is %{public}d", uuid);
     std::thread(&WakeupEngine::StartAbility, this).detach();
     StateMsg msg(START_RECOGNIZE);
     if (ROLE(WakeupEngineImpl).Handle(msg) != 0) {
@@ -43,19 +43,18 @@ void WakeupEngine::OnDetected()
         std::thread([]() {
             const auto &manager = IntellVoiceServiceManager::GetInstance();
             if (manager != nullptr) {
-                manager->StartDetection();
+                manager->StartDetection(VOICE_WAKEUP_MODEL_UUID);
             }
         }).detach();
     }
 }
 
-bool WakeupEngine::Init()
+bool WakeupEngine::Init(const std::string & /* param */)
 {
     StateMsg msg(INIT);
     if (ROLE(WakeupEngineImpl).Handle(msg) != 0) {
         return false;
     }
-
     return true;
 }
 
@@ -137,6 +136,20 @@ int32_t WakeupEngine::Stop()
     return ROLE(WakeupEngineImpl).Handle(msg);
 }
 
+int32_t WakeupEngine::GetWakeupPcm(std::vector<uint8_t> &data)
+{
+    CapturerData capturerData;
+    StateMsg msg(GET_WAKEUP_PCM, nullptr, 0, reinterpret_cast<void *>(&capturerData));
+    int32_t ret = ROLE(WakeupEngineImpl).Handle(msg);
+    if (ret != 0) {
+        INTELL_VOICE_LOG_ERROR("get wakeup pcm failed, ret:%{public}d", ret);
+        return -1;
+    }
+
+    data.swap(capturerData.data);
+    return 0;
+}
+
 void WakeupEngine::StartAbility()
 {
     AAFwk::Want want;
@@ -148,6 +161,7 @@ void WakeupEngine::StartAbility()
     want.SetElementName(bundleName, abilityName);
     want.SetParam("serviceName", std::string("intell_voice"));
     want.SetParam("servicePid", getpid());
+    want.SetParam("eventType", std::string("recognition_event"));
     AAFwk::AbilityManagerClient::GetInstance()->StartAbility(want);
 }
 

@@ -48,6 +48,7 @@ private:
     static napi_value StartCapturer(napi_env env, napi_callback_info info);
     static napi_value Read(napi_env env, napi_callback_info info);
     static napi_value StopCapturer(napi_env env, napi_callback_info info);
+    static napi_value GetPcm(napi_env env, napi_callback_info info);
 
     static napi_value RegisterCallback(napi_env env, napi_value jsThis, napi_value *args);
     static napi_value UnregisterCallback(napi_env env, napi_value jsThis, const std::string &callbackName,

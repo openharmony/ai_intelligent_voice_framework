@@ -43,6 +43,8 @@ public:
     std::string GetLanguage();
     void SetArea(const std::string &area);
     std::string GetArea();
+    void SetWakeupPhrase(const std::string &wakeupPhrase);
+    std::string GetWakeupPhrase();
 
 private:
     DISALLOW_COPY_AND_MOVE(HistoryInfoMgr);

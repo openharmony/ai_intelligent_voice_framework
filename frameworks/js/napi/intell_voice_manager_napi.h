@@ -22,6 +22,8 @@
 #include "napi/native_node_api.h"
 #include "service_change_callback_napi.h"
 #include "intell_voice_manager.h"
+#include "intell_voice_napi_queue.h"
+#include "intell_voice_update_callback_napi.h"
 
 namespace OHOS {
 namespace IntellVoiceNapi {
@@ -61,6 +63,9 @@ private:
     static napi_ref wakeupEventTypeRef_;
     static napi_ref errorCodeRef_;
     static napi_ref enrollResultRef_;
+    static napi_ref uploadFileTypeRef_;
+    static napi_ref cloneResultRef_;
+    static napi_ref evaluationResultCodeRef_;
 };
 }  // namespace IntellVoiceNapi
 }  // namespace OHOS

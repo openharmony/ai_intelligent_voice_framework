@@ -24,7 +24,6 @@ using namespace OHOS::IntellVoiceUtils;
 namespace OHOS {
 namespace IntellVoiceEngine {
 const std::string SWITCH_URI_PROXY = "datashare:///com.ohos.settingsdata/entry/settingsdata/SETTINGSDATA?Proxy=true";
-const std::string SWITCH_KEY = "intell_voice_trigger_enabled";
 
 namespace {
 Uri AssembleUri(const std::string& key)
@@ -61,28 +60,27 @@ bool SwitchProvider::Init()
         INTELL_VOICE_LOG_ERROR("helper_ is nullptr");
         return false;
     }
-
     return true;
 }
 
-void SwitchProvider::RegisterObserver(const sptr<SwitchObserver> &observer)
+void SwitchProvider::RegisterObserver(const sptr<SwitchObserver> &observer, const std::string &key)
 {
-    auto uri = AssembleUri(SWITCH_KEY);
+    auto uri = AssembleUri(key);
     helper_->RegisterObserver(uri, observer);
 }
 
-void SwitchProvider::UnregisterObserver(const sptr<SwitchObserver> &observer)
+void SwitchProvider::UnregisterObserver(const sptr<SwitchObserver> &observer, const std::string &key)
 {
-    auto uri = AssembleUri(SWITCH_KEY);
+    auto uri = AssembleUri(key);
     helper_->UnregisterObserver(uri, observer);
 }
 
-bool SwitchProvider::QuerySwitchStatus()
+bool SwitchProvider::QuerySwitchStatus(const std::string &key)
 {
     std::vector<std::string> columns = {"VALUE"};
     DataShare::DataSharePredicates predicates;
-    predicates.EqualTo("KEYWORD", SWITCH_KEY);
-    auto uri = AssembleUri(SWITCH_KEY);
+    predicates.EqualTo("KEYWORD", key);
+    auto uri = AssembleUri(key);
     auto resultSet = helper_->Query(uri, predicates, columns);
     if (resultSet == nullptr) {
         INTELL_VOICE_LOG_ERROR("helper->Query return nullptr");

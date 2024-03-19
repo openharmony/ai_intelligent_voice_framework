@@ -18,16 +18,17 @@
 #include <fcntl.h>
 #include <cstdio>
 #include <unistd.h>
-#include "tokenid_kit.h"
 #include "idevmgr_hdi.h"
 #include "audio_system_manager.h"
 #include "intell_voice_log.h"
+#include "ipc_skeleton.h"
 #include "system_ability_definition.h"
 #include "intell_voice_service_manager.h"
 #include "common_event_manager.h"
 #include "common_event_support.h"
 #include "update_state.h"
 #include "engine_host_manager.h"
+#include "intell_voice_util.h"
 
 #define LOG_TAG "IntellVoiceService"
 
@@ -35,19 +36,20 @@ using namespace std;
 using namespace OHOS::AppExecFwk;
 using namespace OHOS::EventFwk;
 using namespace OHOS::AudioStandard;
+using namespace OHOS::IntellVoiceUtils;
 using OHOS::HDI::DeviceManager::V1_0::IDeviceManager;
 
 namespace OHOS {
 namespace IntellVoiceEngine {
 REGISTER_SYSTEM_ABILITY_BY_ID(IntellVoiceService, INTELL_VOICE_SERVICE_ID, true);
 const std::string OHOS_PERMISSION_INTELL_VOICE = "ohos.permission.MANAGE_INTELLIGENT_VOICE";
-constexpr uid_t UID_ROOT = 0;
 
 IntellVoiceService::IntellVoiceService(int32_t systemAbilityId, bool runOnCreate)
     : SystemAbility(INTELL_VOICE_SERVICE_ID, true)
 {
-    systemAbilityChangeMap_[COMMON_EVENT_SERVICE_ID] = [this](
-                                                           bool isAdded) { this->OnCommonEventServiceChange(isAdded); };
+    systemAbilityChangeMap_[COMMON_EVENT_SERVICE_ID] = [this](bool isAdded) {
+        this->OnCommonEventServiceChange(isAdded);
+    };
     systemAbilityChangeMap_[DISTRIBUTED_KV_DATA_SERVICE_ABILITY_ID] = [this](bool isAdded) {
         this->OnDistributedKvDataServiceChange(isAdded);
     };
@@ -68,16 +70,12 @@ IntellVoiceService::~IntellVoiceService()
 
 int32_t IntellVoiceService::CreateIntellVoiceEngine(IntellVoiceEngineType type, sptr<IIntellVoiceEngine> &inst)
 {
-    if (!CheckIsSystemApp()) {
-        INTELL_VOICE_LOG_WARN("not system app");
-        return -1;
-    }
-    if (!VerifyClientPermission(OHOS_PERMISSION_INTELL_VOICE)) {
+    INTELL_VOICE_LOG_INFO("enter, type: %{public}d", type);
+    if (!IntellVoiceUtil::VerifySystemPermission(OHOS_PERMISSION_INTELL_VOICE)) {
         INTELL_VOICE_LOG_WARN("verify permission denied");
         return -1;
     }
 
-    INTELL_VOICE_LOG_INFO("enter, type: %{public}d", type);
     std::unique_ptr<IntellVoiceServiceManager> &mgr = IntellVoiceServiceManager::GetInstance();
     if (mgr == nullptr) {
         INTELL_VOICE_LOG_ERROR("mgr is nullptr");
@@ -96,6 +94,10 @@ int32_t IntellVoiceService::CreateIntellVoiceEngine(IntellVoiceEngineType type, 
 int32_t IntellVoiceService::ReleaseIntellVoiceEngine(IntellVoiceEngineType type)
 {
     INTELL_VOICE_LOG_INFO("enter, type: %{public}d", type);
+    if (!IntellVoiceUtil::VerifySystemPermission(OHOS_PERMISSION_INTELL_VOICE)) {
+        INTELL_VOICE_LOG_WARN("verify permission denied");
+        return -1;
+    }
     std::unique_ptr<IntellVoiceServiceManager> &mgr = IntellVoiceServiceManager::GetInstance();
     if (mgr == nullptr) {
         INTELL_VOICE_LOG_ERROR("mgr is nullptr");
@@ -200,38 +202,6 @@ void IntellVoiceService::CreateSystemEventObserver()
     INTELL_VOICE_LOG_INFO("create system event observer successfully");
 }
 
-bool IntellVoiceService::VerifyClientPermission(const std::string &permissionName)
-{
-    if (IPCSkeleton::GetCallingUid() == UID_ROOT) {
-        INTELL_VOICE_LOG_INFO("callingUid is root");
-        return true;
-    }
-    Security::AccessToken::AccessTokenID clientTokenId = IPCSkeleton::GetCallingTokenID();
-    INTELL_VOICE_LOG_INFO("clientTokenId:%{public}d", clientTokenId);
-    int res = Security::AccessToken::AccessTokenKit::VerifyAccessToken(clientTokenId, permissionName);
-    if (res != Security::AccessToken::PermissionState::PERMISSION_GRANTED) {
-        INTELL_VOICE_LOG_ERROR("Permission denied!");
-        return false;
-    }
-    return true;
-}
-
-bool IntellVoiceService::CheckIsSystemApp()
-{
-    if (IPCSkeleton::GetCallingUid() == UID_ROOT) {
-        INTELL_VOICE_LOG_INFO("callingUid is root");
-        return true;
-    }
-    uint64_t fullTokenId = IPCSkeleton::GetCallingFullTokenID();
-    if (!Security::AccessToken::TokenIdKit::IsSystemAppByFullTokenID(fullTokenId)) {
-        INTELL_VOICE_LOG_INFO("Not system app, permission reject tokenid: %{public}" PRIu64 "", fullTokenId);
-        return false;
-    }
-
-    INTELL_VOICE_LOG_INFO("System app, fullTokenId:%{public}" PRIu64 "", fullTokenId);
-    return true;
-}
-
 void IntellVoiceService::LoadIntellVoiceHost()
 {
     auto devmgr = IDeviceManager::Get();
@@ -311,16 +281,16 @@ void IntellVoiceService::OnDistributedKvDataServiceChange(bool isAdded)
 
         if (reasonId_ == static_cast<int32_t>(OHOS::OnDemandReasonId::COMMON_EVENT)) {
             INTELL_VOICE_LOG_INFO("power on start");
-            if (manager->CreateUpdateEngineUntilTime(UPDATE_DELAY_TIME_SECONDS)) {
+            if (manager->SilenceUpdate() == 0) {
                 INTELL_VOICE_LOG_INFO("update in");
-            } else if (manager->QuerySwitchStatus()) {
+            } else if (manager->QuerySwitchStatus(WAKEUP_KEY)) {
                 manager->OnServiceStart();
             } else {
                 manager->UnloadIntellVoiceService();
             }
         } else if (reasonId_ == static_cast<int32_t>(OHOS::OnDemandReasonId::INTERFACE_CALL)) {
             INTELL_VOICE_LOG_INFO("interface call start");
-            if (manager->QuerySwitchStatus() && !manager->CreateUpdateEngineUntilTime(UPDATE_DELAY_TIME_SECONDS)) {
+            if (manager->QuerySwitchStatus(WAKEUP_KEY) && manager->SilenceUpdate() != 0) {
                 manager->OnServiceStart();
             }
         } else {
@@ -404,6 +374,91 @@ bool IntellVoiceService::DeregisterDeathRecipient(IntellVoiceEngineType type)
         return false;
     }
     return manager->DeregisterProxyDeathRecipient(type);
+}
+
+int32_t IntellVoiceService::GetUploadFiles(int numMax, std::vector<UploadHdiFile> &files)
+{
+    if (!IntellVoiceUtil::VerifySystemPermission(OHOS_PERMISSION_INTELL_VOICE)) {
+        INTELL_VOICE_LOG_WARN("verify permission denied");
+    }
+
+    INTELL_VOICE_LOG_INFO("get upload files enter, numMax: %{public}d", numMax);
+    return EngineHostManager::GetInstance().GetUploadFiles(numMax, files);
+}
+
+std::string IntellVoiceService::GetParameter(const std::string &key)
+{
+    const auto &manager = IntellVoiceServiceManager::GetInstance();
+    if (manager == nullptr) {
+        INTELL_VOICE_LOG_INFO("manager is nullptr");
+        return "";
+    }
+    return manager->GetParameter(key);
+}
+
+int32_t IntellVoiceService::GetWakeupSourceFilesList(std::vector<std::string>& cloneFiles)
+{
+    if (!IntellVoiceUtil::VerifySystemPermission(OHOS_PERMISSION_INTELL_VOICE)) {
+        INTELL_VOICE_LOG_WARN("verify permission");
+    }
+
+    INTELL_VOICE_LOG_INFO("get clone file list");
+    std::unique_ptr<IntellVoiceServiceManager> &mgr = IntellVoiceServiceManager::GetInstance();
+    if (mgr == nullptr) {
+        INTELL_VOICE_LOG_ERROR("mgr is nullptr");
+        return -1;
+    }
+
+    return mgr->GetWakeupSourceFilesList(cloneFiles);
+}
+
+int32_t IntellVoiceService::GetWakeupSourceFile(const std::string &filePath, std::vector<uint8_t> &buffer)
+{
+    if (!IntellVoiceUtil::VerifySystemPermission(OHOS_PERMISSION_INTELL_VOICE)) {
+        INTELL_VOICE_LOG_WARN("verify permission");
+    }
+
+    INTELL_VOICE_LOG_INFO("get clone file");
+    std::unique_ptr<IntellVoiceServiceManager> &mgr = IntellVoiceServiceManager::GetInstance();
+    if (mgr == nullptr) {
+        INTELL_VOICE_LOG_ERROR("mgr is nullptr");
+        return -1;
+    }
+
+    return mgr->GetWakeupSourceFile(filePath, buffer);
+}
+
+int32_t IntellVoiceService::SendWakeupFile(const std::string &filePath, const std::vector<uint8_t> &buffer)
+{
+    if (!IntellVoiceUtil::VerifySystemPermission(OHOS_PERMISSION_INTELL_VOICE)) {
+        INTELL_VOICE_LOG_WARN("verify permission");
+    }
+
+    INTELL_VOICE_LOG_INFO("send clone file");
+    std::unique_ptr<IntellVoiceServiceManager> &mgr = IntellVoiceServiceManager::GetInstance();
+    if (mgr == nullptr) {
+        INTELL_VOICE_LOG_ERROR("mgr is nullptr");
+        return -1;
+    }
+
+    return mgr->SendWakeupFile(filePath, buffer);
+}
+
+int32_t IntellVoiceService::EnrollWithWakeupFilesForResult(const std::string &wakeupInfo,
+    const sptr<IRemoteObject> object)
+{
+    if (!IntellVoiceUtil::VerifySystemPermission(OHOS_PERMISSION_INTELL_VOICE)) {
+        INTELL_VOICE_LOG_WARN("verify permission");
+    }
+
+    INTELL_VOICE_LOG_INFO("EnrollWithWakeupFilesForResult");
+    std::unique_ptr<IntellVoiceServiceManager> &mgr = IntellVoiceServiceManager::GetInstance();
+    if (mgr == nullptr) {
+        INTELL_VOICE_LOG_ERROR("mgr is nullptr");
+        return -1;
+    }
+
+    return mgr->CloneUpdate(wakeupInfo, object);
 }
 }  // namespace IntellVoiceEngine
 }  // namespace OHOS

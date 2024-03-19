@@ -53,7 +53,7 @@
     do {                                           \
         if (condition) {       \
             INTELL_VOICE_LOG_ERROR(message);       \
-            return result;                                \
+            return (result);                                \
         }                                          \
     } while (0)
 

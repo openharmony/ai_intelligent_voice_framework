@@ -25,17 +25,22 @@
 #include "intell_voice_engine_arbitration.h"
 #include "intell_voice_death_recipient.h"
 #include "update_engine_controller.h"
+#include "data_operation_callback.h"
+#include "i_intell_voice_update_callback.h"
 
 namespace OHOS {
 namespace IntellVoiceEngine {
+constexpr int32_t VOICE_WAKEUP_MODEL_UUID = 1;
+constexpr int32_t PROXIMAL_WAKEUP_MODEL_UUID = 2;
+const std::string WAKEUP_KEY = "intell_voice_trigger_enabled";
+const std::string BREATH_KEY = "intell_voice_breath_enabled";
+const std::string IMPROVE_KEY = "intell_voice_improve_enabled";
+const std::string SHORTWORD_KEY = "intell_voice_shortword_enabled";
+
 class IntellVoiceServiceManager : private IntellVoiceEngineArbitration, private UpdateEngineController {
 public:
     ~IntellVoiceServiceManager();
     static std::unique_ptr<IntellVoiceServiceManager> &GetInstance();
-    static int32_t GetEnrollModelUuid()
-    {
-        return g_enrollModelUuid;
-    }
     static void SetEnrollResult(IntellVoiceEngineType type, bool result)
     {
         if (type >= ENGINE_TYPE_BUT) {
@@ -52,40 +57,50 @@ public:
 
         return enrollResult_[type].load();
     }
-    sptr<IIntellVoiceEngine> CreateEngine(IntellVoiceEngineType type);
+    sptr<IIntellVoiceEngine> CreateEngine(IntellVoiceEngineType type, const std::string &param = "");
     int32_t ReleaseEngine(IntellVoiceEngineType type);
 
     void OnServiceStart();
     void OnServiceStop();
     void CreateSwitchProvider();
     void ReleaseSwitchProvider();
-    void StartDetection();
+    void StartDetection(int32_t uuid);
     void StopDetection();
-    bool QuerySwitchStatus();
+    bool QuerySwitchStatus(const std::string &key);
     void UnloadIntellVoiceService();
 
     bool RegisterProxyDeathRecipient(IntellVoiceEngineType type, const sptr<IRemoteObject> &object);
     bool DeregisterProxyDeathRecipient(IntellVoiceEngineType type);
 
-    using UpdateEngineController::SaveWakeupVesion;
     using UpdateEngineController::OnUpdateComplete;
-    using UpdateEngineController::CreateUpdateEngineUntilTime;
 
+    std::string GetParameter(const std::string &key);
+    int32_t GetWakeupSourceFilesList(std::vector<std::string>& cloneFiles);
+    int32_t GetWakeupSourceFile(const std::string &filePath, std::vector<uint8_t> &buffer);
+    int32_t SendWakeupFile(const std::string &filePath, const std::vector<uint8_t> &buffer);
+    int32_t CloneUpdate(const std::string &wakeupInfo, const sptr<IRemoteObject> &object);
+    int32_t SilenceUpdate();
 private:
     IntellVoiceServiceManager();
-    void OnSwitchChange();
-    void OnDetected();
-    void CreateDetector();
+    void OnWakeupSwitchChange();
+    void OnSwitchChange(const std::string &switchKey);
+    void OnDetected(int32_t uuid);
+    void CreateDetector(int32_t uuid);
 
-    sptr<IIntellVoiceEngine> CreateEngineInner(IntellVoiceEngineType type);
+    sptr<IIntellVoiceEngine> CreateEngineInner(IntellVoiceEngineType type, const std::string &param = "");
     int32_t ReleaseEngineInner(IntellVoiceEngineType type);
     bool CreateOrResetWakeupEngine();
     bool IsEngineExist(IntellVoiceEngineType type);
+
     void ReleaseUpdateEngine() override;
-    bool CreateUpdateEngine() override;
-    void UpdateCompleteHandler(UpdateState result, bool isLast) override;
+    bool CreateUpdateEngine(const std::string &param) override;
+    void UpdateCompleteHandler(UpdateState result, bool islast) override;
+    void RegisterObserver(const std::string &switchKey);
+    void SetImproveParam(sptr<EngineBase> engine);
+    void ProcBreathModel();
+    void CreateAndStartServiceObject(int32_t uuid);
+
 private:
-    static const int32_t g_enrollModelUuid;
     static std::unique_ptr<IntellVoiceServiceManager> g_intellVoiceServiceMgr;
     static std::atomic<bool> enrollResult_[ENGINE_TYPE_BUT];
     std::atomic<bool> isServiceUnloaded_ = false;
@@ -93,8 +108,8 @@ private:
     std::mutex detectorMutex_;
     std::mutex switchMutex_;
     std::map<IntellVoiceEngineType, sptr<EngineBase>> engines_;
-    std::shared_ptr<IntellVoiceTrigger::TriggerDetector> detector_ = nullptr;
-    sptr<SwitchObserver> switchObserver_ = nullptr;
+    std::map<int32_t, std::shared_ptr<IntellVoiceTrigger::TriggerDetector>> detector_;
+    std::map<const std::string, sptr<SwitchObserver>> switchObserver_;
     IntellVoiceUtils::UniqueProductType<SwitchProvider> switchProvider_ =
         IntellVoiceUtils::UniqueProductType<SwitchProvider> {nullptr, nullptr};
     std::map<IntellVoiceEngineType, sptr<IntellVoiceUtils::IntellVoiceDeathRecipient>> proxyDeathRecipient_;

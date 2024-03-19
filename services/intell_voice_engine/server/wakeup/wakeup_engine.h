@@ -26,7 +26,7 @@ class WakeupEngine : public EngineBase {
 public:
     WakeupEngine();
     ~WakeupEngine();
-    bool Init() override;
+    bool Init(const std::string &param) override;
     void SetCallback(sptr<IRemoteObject> object) override;
     int32_t Attach(const IntellVoiceEngineInfo &info) override;
     int32_t Detach(void) override;
@@ -34,8 +34,9 @@ public:
     int32_t SetParameter(const std::string &keyValueList) override;
     std::string GetParameter(const std::string &key) override;
     int32_t Stop() override;
+    int32_t GetWakeupPcm(std::vector<uint8_t> &data) override;
 
-    void OnDetected() override;
+    void OnDetected(int32_t uuid) override;
     bool ResetAdapter() override;
     void ReleaseAdapter() override;
 

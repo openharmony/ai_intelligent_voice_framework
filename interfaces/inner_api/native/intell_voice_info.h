@@ -89,12 +89,62 @@ enum IntelligentVoiceErrorCode {
     INTELLIGENT_VOICE_INIT_FAILED = 22700103,
     /* Commit enroll failed. */
     INTELLIGENT_VOICE_COMMIT_ENROLL_FAILED = 22700104,
+    /* Start capturer failed. */
+    INTELLIGENT_VOICE_START_CAPTURER_FAILED = 22700105,
+    /* Read failed. */
+    INTELLIGENT_VOICE_READ_FAILED = 22700106,
+    /* System error. */
+    INTELLIGENT_VOICE_SYSTEM_ERROR = 22700107,
+};
+
+enum UploadFileType {
+    /* Enroll file. */
+    ENROLL_FILE = 0,
+    /* Wakeup file. */
+    WAKEUP_FILE = 1,
+};
+
+enum EvaluationResultCode {
+    /* Unknown */
+    UNKNOWN = 0,
+    /* Pass */
+    PASS = 1,
+    /* Word is empty */
+    WORD_EMPTY = 2,
+    /* Only chinese is supported */
+    CHINESE_ONLY = 3,
+    /* Invalid length */
+    INVALID_LENGTH = 4,
+    /* Unusual word */
+    UNUSUAL_WORD = 5,
+    /* Consecutive same word */
+    CONSECUTIVE_SAME_WORD = 6,
+    /* Too few phonemes */
+    TOO_FEW_PHONEMES = 7,
+    /* Too many phoneme */
+    TOO_MANY_PHONEMES = 8,
+    /* Contain common instruction */
+    COMMON_INSTRUCTION = 9,
+    /* Contain common spoken language */
+    COMMON_SPOKEN_LANGUAGE = 10,
+    /* Contain sensitive word */
+    SENSITIVE_WORD = 11,
+    /* Two consecutive words without initial consonant */
+    NO_INITIAL_CONSONANT = 12,
+    /* Contain repeated phoneme */
+    REPEATED_PHONEME = 13,
 };
 
 struct WakeupHapInfo {
     std::string bundleName;
     std::string abilityName;
 };
+
+struct WakeupSourceFile {
+    std::string filePath;
+    std::vector<uint8_t> fileContent;
+};
+
 }  // namespace IntellVoice
 }  // namespace OHOS
 #endif

@@ -134,6 +134,19 @@ int32_t EnrollIntellVoiceEngine::SetParameter(const string &key, const string &v
     return engine_->SetParameter(keyValueList);
 }
 
+int32_t EnrollIntellVoiceEngine::Evaluate(const std::string &word, EvaluationResultInfo &info)
+{
+    INTELL_VOICE_LOG_INFO("enter");
+    if (descriptor_ != nullptr) {
+        descriptor_->wakeupPhrase = word;
+    }
+    if (engine_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("engine_ is nullptr");
+        return -1;
+    }
+    return engine_->Evaluate(word, info);
+}
+
 int32_t EnrollIntellVoiceEngine::Release()
 {
     INTELL_VOICE_LOG_INFO("enter");

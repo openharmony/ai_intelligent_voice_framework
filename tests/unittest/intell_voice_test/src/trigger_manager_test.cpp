@@ -92,7 +92,7 @@ void TriggerManagerTest::ReadFile(const std::string &path)
 HWTEST_F(TriggerManagerTest, start_recognition_001, TestSize.Level1)
 {
     int32_t uuid = 11;
-    auto model = std::make_shared<GenericTriggerModel>(uuid, 100);
+    auto model = std::make_shared<GenericTriggerModel>(uuid, 100, TriggerModel::TriggerModelType::VOICE_WAKEUP_TYPE);
     model->SetData(modelData);
     triggerManager->UpdateModel(model);
 

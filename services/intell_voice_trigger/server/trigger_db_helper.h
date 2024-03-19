@@ -36,6 +36,7 @@ private:
     bool GetVendorUuid(std::shared_ptr<OHOS::NativeRdb::AbsSharedResultSet> &set, int32_t &vendorUuid) const;
     bool GetBlob(std::shared_ptr<OHOS::NativeRdb::AbsSharedResultSet> &set, std::vector<uint8_t> &data) const;
     bool GetModelVersion(std::shared_ptr<OHOS::NativeRdb::AbsSharedResultSet> &set, int32_t &version) const;
+    bool GetModelType(std::shared_ptr<OHOS::NativeRdb::AbsSharedResultSet> &set, int32_t &type) const;
 
 private:
     std::mutex mutex_;

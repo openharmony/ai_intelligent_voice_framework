@@ -67,7 +67,7 @@ void EngineEventCallback::OnEvent(
     }
 }
 
-void EngineEventCallback::ReadFile(const std::string path)
+void EngineEventCallback::ReadFile(const std::string &path)
 {
     INTELL_VOICE_LOG_INFO("path: %{public}s", path.c_str());
     ifstream infile;

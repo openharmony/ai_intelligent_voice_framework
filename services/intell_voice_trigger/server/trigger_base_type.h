@@ -24,11 +24,13 @@ namespace IntellVoiceTrigger {
 class TriggerModel {
 public:
     enum TriggerModelType {
-        GENERIC_TYPE = 1,
         UNKNOWN_TYPE = -1,
+        GENERIC_TYPE = 1,
+        VOICE_WAKEUP_TYPE = 1,
+        PROXIMAL_WAKEUP_TYPE = 2,
     };
 
-    TriggerModel(TriggerModelType type, int32_t uuid, int32_t version);
+    TriggerModel(int32_t uuid, int32_t version, TriggerModelType type);
     virtual ~TriggerModel();
 
     bool SetData(const uint8_t *data, uint32_t size);
@@ -61,10 +63,10 @@ public:
     }
 
 protected:
-    TriggerModelType type_ = UNKNOWN_TYPE;
     int32_t uuid_ = -1;
     int32_t vendorUuid_ = -1;
     int32_t version_ = -1;
+    TriggerModelType type_ = UNKNOWN_TYPE;
 
 private:
     std::vector<uint8_t> data_;
@@ -72,8 +74,8 @@ private:
 
 class GenericTriggerModel : public TriggerModel {
 public:
-    GenericTriggerModel(int32_t uuid, int32_t version)
-        : TriggerModel(TriggerModel::TriggerModelType::GENERIC_TYPE, uuid, version)
+    GenericTriggerModel(int32_t uuid, int32_t version, TriggerModel::TriggerModelType type)
+        : TriggerModel(uuid, version, type)
     {}
     ~GenericTriggerModel() override
     {}

@@ -21,6 +21,7 @@
 #include "intell_voice_generic_factory.h"
 #include "timer_mgr.h"
 #include "update_state.h"
+#include "update_strategy.h"
 
 namespace OHOS {
 namespace IntellVoiceEngine {
@@ -30,17 +31,14 @@ public:
     virtual ~UpdateEngineController();
     UpdateEngineController();
 
-    bool IsVersionUpdate();
-    void SaveWakeupVesion();
-    void GetCurWakeupVesion(std::string &versionNumber);
-    virtual bool CreateUpdateEngine()
+    virtual bool CreateUpdateEngine(const std::string &param)
     {
         return false;
     }
     virtual void ReleaseUpdateEngine() {};
     virtual void UpdateCompleteHandler(UpdateState result, bool isLast) {};
     void OnUpdateComplete(UpdateState result);
-    bool CreateUpdateEngineUntilTime(int delaySecond = 0);
+    int CreateUpdateEngineUntilTime(std::shared_ptr<IUpdateStrategy> updateStrategy_);
 
     static bool GetUpdateState()
     {
@@ -58,13 +56,17 @@ private:
         isUpdating_.store(state);
     }
     void ClearRetryState(void);
+    int UpdateArbitration(int priority);
 private:
     static std::atomic<bool> isUpdating_;
     int timerId_ = OHOS::IntellVoiceUtils::INVALID_ID;
-    int retryTimes = 0;
-    int delaySecond_ = 0;
+    int retryTimes_ = 0;
+    int retryTimesLimit_ = 0;
+    int delaySecond_ = UPDATE_DELAY_TIME_SECONDS;
     std::mutex updateEngineMutex_;
     UpdateState updateResult_ = UpdateState::UPDATE_STATE_DEFAULT;
+    std::shared_ptr<IUpdateStrategy> updateStrategy_;
+    int curPriority_ = UPDATE_PRIORITY_DEFAULT;
 };
 }
 }

@@ -23,7 +23,7 @@ class EngineFactory {
 public:
     EngineFactory() = default;
     ~EngineFactory() = default;
-    static sptr<EngineBase> CreateEngineInst(IntellVoiceEngineType type);
+    static sptr<EngineBase> CreateEngineInst(IntellVoiceEngineType type, const std::string &param = "");
 };
 }
 }

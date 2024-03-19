@@ -95,6 +95,25 @@ int32_t EngineUtil::Stop()
     return adapter_->Stop();
 }
 
+int32_t EngineUtil::GetWakeupPcm(std::vector<uint8_t> &data)
+{
+    if (adapter_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("adapter is nullptr");
+        return -1;
+    }
+    return adapter_->GetWakeupPcm(data);
+}
+
+int32_t EngineUtil::Evaluate(const std::string &word, EvaluationResultInfo &info)
+{
+    if (adapter_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("adapter is nullptr");
+        return -1;
+    }
+
+    return adapter_->Evaluate(word, info);
+}
+
 bool EngineUtil::SetDspFeatures()
 {
     if (adapter_ == nullptr) {
@@ -196,7 +215,7 @@ void EngineUtil::ProcDspModel()
     };
 
     std::shared_ptr<GenericTriggerModel> model = std::make_shared<GenericTriggerModel>(
-        (IntellVoiceServiceManager::GetEnrollModelUuid()), 1);
+        VOICE_WAKEUP_MODEL_UUID, 1, TriggerModel::TriggerModelType::VOICE_WAKEUP_TYPE);
     if (model == nullptr) {
         INTELL_VOICE_LOG_ERROR("model is null");
         return;

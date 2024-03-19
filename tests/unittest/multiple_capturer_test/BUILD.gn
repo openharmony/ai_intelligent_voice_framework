@@ -22,7 +22,9 @@ ohos_unittest("multiple_capturer_test") {
     "../../../utils",
     "../../../services/intell_voice_engine",
     "../../../services/intell_voice_engine/server/base",
+    "../../../services/intell_voice_engine/server/hdi_adapter",
     "../../../services/intell_voice_engine/server/sa",
+    "../../../services/intell_voice_engine/server/utils",
     "../../../services/intell_voice_engine/server/wakeup",
   ]
 

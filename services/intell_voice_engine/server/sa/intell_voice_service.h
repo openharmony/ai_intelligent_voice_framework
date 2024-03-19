@@ -22,6 +22,7 @@
 #include "intell_voice_service_stub.h"
 #include "i_intell_voice_engine.h"
 #include "system_event_observer.h"
+#include "i_intell_voice_service.h"
 
 #include "trigger_manager.h"
 
@@ -38,6 +39,14 @@ public:
     bool RegisterDeathRecipient(IntellVoiceEngineType type, const sptr<IRemoteObject> &object) override;
     bool DeregisterDeathRecipient(IntellVoiceEngineType type) override;
 
+    int32_t GetUploadFiles(int numMax, std::vector<UploadHdiFile> &files) override;
+
+    std::string GetParameter(const std::string &key) override;
+    int32_t GetWakeupSourceFilesList(std::vector<std::string>& cloneFiles) override;
+    int32_t GetWakeupSourceFile(const std::string &filePath, std::vector<uint8_t> &buffer) override;
+    int32_t SendWakeupFile(const std::string &filePath, const std::vector<uint8_t> &buffer) override;
+    int32_t EnrollWithWakeupFilesForResult(const std::string &wakeupInfo, const sptr<IRemoteObject> object) override;
+
     class PerStateChangeCbCustomizeCallback : public Security::AccessToken::PermStateChangeCallbackCustomize {
     public:
         explicit PerStateChangeCbCustomizeCallback(const Security::AccessToken::PermStateChangeScope &scopeInfo)
@@ -48,15 +57,13 @@ public:
     };
 
 protected:
-    void OnStart(const SystemAbilityOnDemandReason& startReason) override;
+    void OnStart(const SystemAbilityOnDemandReason &startReason) override;
     void OnStop() override;
-    void OnAddSystemAbility(int32_t systemAbilityId, const std::string& deviceId) override;
-    void OnRemoveSystemAbility(int32_t systemAbilityId, const std::string& deviceId) override;
+    void OnAddSystemAbility(int32_t systemAbilityId, const std::string &deviceId) override;
+    void OnRemoveSystemAbility(int32_t systemAbilityId, const std::string &deviceId) override;
 
 private:
     void CreateSystemEventObserver();
-    bool VerifyClientPermission(const std::string &permissionName);
-    bool CheckIsSystemApp();
     void RegisterPermissionCallback(const std::string &permissionName);
     void LoadIntellVoiceHost();
     void UnloadIntellVoiceHost();

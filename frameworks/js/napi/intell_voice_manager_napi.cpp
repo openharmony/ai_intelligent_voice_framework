@@ -14,11 +14,12 @@
  */
 #include "intell_voice_manager_napi.h"
 #include "intell_voice_log.h"
-#include "intell_voice_napi_queue.h"
 #include "intell_voice_common_napi.h"
 #include "intell_voice_napi_util.h"
 #include "enroll_intell_voice_engine_napi.h"
 #include "wakeup_intell_voice_engine_napi.h"
+#include "wakeup_manager_napi.h"
+#include "intell_voice_update_callback_napi.h"
 #include "intell_voice_info.h"
 
 #define LOG_TAG "IntellVoiceManagerNapi"
@@ -39,6 +40,8 @@ napi_ref IntellVoiceManagerNapi::enrollEventTypeRef_ = nullptr;
 napi_ref IntellVoiceManagerNapi::wakeupEventTypeRef_ = nullptr;
 napi_ref IntellVoiceManagerNapi::errorCodeRef_ = nullptr;
 napi_ref IntellVoiceManagerNapi::enrollResultRef_ = nullptr;
+napi_ref IntellVoiceManagerNapi::uploadFileTypeRef_ = nullptr;
+napi_ref IntellVoiceManagerNapi::evaluationResultCodeRef_ = nullptr;
 
 static const std::map<std::string, OHOS::IntellVoice::ServiceChangeType> SERVICE_CHANGE_TYPE_MAP = {
     {"SERVICE_UNAVAILABLE", SERVICE_UNAVAILABLE},
@@ -73,6 +76,7 @@ static const std::map<std::string, OHOS::IntellVoice::IntelligentVoiceErrorCode>
     {"INTELLIGENT_VOICE_INVALID_PARAM", INTELLIGENT_VOICE_INVALID_PARAM},
     {"INTELLIGENT_VOICE_INIT_FAILED", INTELLIGENT_VOICE_INIT_FAILED},
     {"INTELLIGENT_VOICE_COMMIT_ENROLL_FAILED", INTELLIGENT_VOICE_COMMIT_ENROLL_FAILED},
+    {"INTELLIGENT_VOICE_SYSTEM_ERROR", INTELLIGENT_VOICE_SYSTEM_ERROR},
 };
 
 static const std::map<std::string, OHOS::IntellVoice::EnrollResult> ENROLL_RESULT_MAP = {
@@ -84,6 +88,28 @@ static const std::map<std::string, OHOS::IntellVoice::EnrollResult> ENROLL_RESUL
     {"INTERVAL_LARGE", OHOS::IntellVoice::EnrollResult::INTERVAL_LARGE},
     {"DIFFERENT_PERSON", OHOS::IntellVoice::EnrollResult::DIFFERENT_PERSON},
     {"UNKNOWN_ERROR", OHOS::IntellVoice::EnrollResult::UNKNOWN_ERROR},
+};
+
+static const std::map<std::string, OHOS::IntellVoice::UploadFileType> UPLOAD_FILE_TYPE_MAP = {
+    {"ENROLL_FILE", OHOS::IntellVoice::UploadFileType::ENROLL_FILE},
+    {"WAKEUP_FILE", OHOS::IntellVoice::UploadFileType::WAKEUP_FILE},
+};
+
+static const std::map<std::string, OHOS::IntellVoice::EvaluationResultCode> EVALUATION_RESULT_CODE_MAP = {
+    {"UNKNOWN", OHOS::IntellVoice::UNKNOWN},
+    {"PASS", OHOS::IntellVoice::PASS},
+    {"WORD_EMPTY", OHOS::IntellVoice::WORD_EMPTY},
+    {"CHINESE_ONLY", OHOS::IntellVoice::CHINESE_ONLY},
+    {"INVALID_LENGTH", OHOS::IntellVoice::INVALID_LENGTH},
+    {"UNUSUAL_WORD", OHOS::IntellVoice::UNUSUAL_WORD},
+    {"CONSECUTIVE_SAME_WORD", OHOS::IntellVoice::CONSECUTIVE_SAME_WORD},
+    {"TOO_FEW_PHONEMES", OHOS::IntellVoice::TOO_FEW_PHONEMES},
+    {"TOO_MANY_PHONEMES", OHOS::IntellVoice::TOO_MANY_PHONEMES},
+    {"COMMON_INSTRUCTION", OHOS::IntellVoice::COMMON_INSTRUCTION},
+    {"COMMON_SPOKEN_LANGUAGE", OHOS::IntellVoice::COMMON_SPOKEN_LANGUAGE},
+    {"SENSITIVE_WORD", OHOS::IntellVoice::SENSITIVE_WORD},
+    {"NO_INITIAL_CONSONANT", OHOS::IntellVoice::NO_INITIAL_CONSONANT},
+    {"REPEATED_PHONEME", OHOS::IntellVoice::REPEATED_PHONEME},
 };
 
 IntellVoiceManagerNapi::IntellVoiceManagerNapi()
@@ -152,7 +178,6 @@ napi_value IntellVoiceManagerNapi::Construct(napi_env env, napi_callback_info in
 
 napi_value IntellVoiceManagerNapi::Export(napi_env env, napi_value exports)
 {
-    INTELL_VOICE_LOG_INFO("enter");
     napi_status status;
     napi_value constructor;
     napi_value result = nullptr;
@@ -167,26 +192,23 @@ napi_value IntellVoiceManagerNapi::Export(napi_env env, napi_value exports)
 
     napi_property_descriptor staticProperties[] = {
         DECLARE_NAPI_STATIC_FUNCTION("getIntelligentVoiceManager", GetIntelligentVoiceManager),
-        DECLARE_NAPI_PROPERTY(
-            "ServiceChangeType", CreatePropertyBase(env, SERVICE_CHANGE_TYPE_MAP, serviceChangeTypeRef_)),
+        DECLARE_NAPI_PROPERTY("ServiceChangeType",
+            CreatePropertyBase(env, SERVICE_CHANGE_TYPE_MAP, serviceChangeTypeRef_)),
         DECLARE_NAPI_PROPERTY("IntelligentVoiceEngineType", CreatePropertyBase(env, ENGINE_TYPE_MAP, engineTypeRef_)),
         DECLARE_NAPI_PROPERTY("SensibilityType", CreatePropertyBase(env, SENSIBILITY_TYPE_MAP, sensibilityTypeRef_)),
-        DECLARE_NAPI_PROPERTY(
-            "EnrollIntelligentVoiceEventType", CreatePropertyBase(env, ENROLL_EVENT_TYPE_MAP, enrollEventTypeRef_)),
-        DECLARE_NAPI_PROPERTY(
-            "WakeupIntelligentVoiceEventType", CreatePropertyBase(env, WAKEUP_EVENT_TYPE_MAP, wakeupEventTypeRef_)),
+        DECLARE_NAPI_PROPERTY("EnrollIntelligentVoiceEventType",
+            CreatePropertyBase(env, ENROLL_EVENT_TYPE_MAP, enrollEventTypeRef_)),
+        DECLARE_NAPI_PROPERTY("WakeupIntelligentVoiceEventType",
+            CreatePropertyBase(env, WAKEUP_EVENT_TYPE_MAP, wakeupEventTypeRef_)),
         DECLARE_NAPI_PROPERTY("IntelligentVoiceErrorCode", CreatePropertyBase(env, ERROR_CODE_MAP, errorCodeRef_)),
         DECLARE_NAPI_PROPERTY("EnrollResult", CreatePropertyBase(env, ENROLL_RESULT_MAP, enrollResultRef_)),
+        DECLARE_NAPI_PROPERTY("UploadFileType", CreatePropertyBase(env, UPLOAD_FILE_TYPE_MAP, uploadFileTypeRef_)),
+        DECLARE_NAPI_PROPERTY("EvaluationResultCode",
+            CreatePropertyBase(env, EVALUATION_RESULT_CODE_MAP, evaluationResultCodeRef_)),
     };
 
-    status = napi_define_class(env,
-        INTELLIGENT_VOICE_MANAGER_NAPI_CLASS_NAME.c_str(),
-        NAPI_AUTO_LENGTH,
-        Construct,
-        nullptr,
-        sizeof(properties) / sizeof(properties[0]),
-        properties,
-        &constructor);
+    status = napi_define_class(env, INTELLIGENT_VOICE_MANAGER_NAPI_CLASS_NAME.c_str(), NAPI_AUTO_LENGTH, Construct,
+        nullptr, sizeof(properties) / sizeof(properties[0]), properties, &constructor);
     if (status != napi_ok) {
         return result;
     }
@@ -430,6 +452,7 @@ napi_value IntellVoiceManagerNapi::CreatePropertyBase(napi_env env, T &propertyM
 static napi_value Export(napi_env env, napi_value exports)
 {
     IntellVoiceManagerNapi::Export(env, exports);
+    WakeupManagerNapi::Export(env, exports);
     EnrollIntellVoiceEngineNapi::Export(env, exports);
     WakeupIntellVoiceEngineNapi::Export(env, exports);
     return exports;

@@ -18,12 +18,14 @@
 #include "intell_voice_log.h"
 #include "history_info_mgr.h"
 #include "intell_voice_util.h"
+#include "trigger_manager.h"
 
 #define LOG_TAG "WakeupEngineImpl"
 
+using namespace OHOS::AudioStandard;
 using namespace OHOS::HDI::IntelligentVoice::Engine::V1_0;
 using namespace OHOS::IntellVoiceUtils;
-using namespace OHOS::AudioStandard;
+using namespace OHOS::IntellVoiceTrigger;
 
 namespace OHOS {
 namespace IntellVoiceEngine {
@@ -34,6 +36,7 @@ static constexpr int32_t BITS_PER_SAMPLE = 16;
 static constexpr int32_t SAMPLE_RATE = 16000;
 static const std::string LANGUAGE_TEXT = "language=";
 static const std::string AREA_TEXT = "area=";
+static const std::string WAKEUP_SOURCE_CHANNEL = "wakeup_source_channel";
 static constexpr int64_t RECOGNIZING_TIMEOUT_US = 10 * 1000 * 1000; //10s
 static constexpr int64_t RECOGNIZE_COMPLETE_TIMEOUT_US = 1 * 1000; //1ms
 static constexpr int64_t READ_CAPTURER_TIMEOUT_US = 10 * 1000 * 1000; //10s
@@ -41,7 +44,7 @@ static constexpr int64_t READ_CAPTURER_TIMEOUT_US = 10 * 1000 * 1000; //10s
 WakeupEngineImpl::WakeupEngineImpl() : ModuleStates(State(IDLE), "WakeupEngineImpl")
 {
     InitStates();
-    capturerOptions_.streamInfo.channels = AudioChannel::MONO;
+    capturerOptions_.streamInfo.channels = GetWakeupSourceChannel();
     capturerOptions_.streamInfo.samplingRate = AudioSamplingRate::SAMPLE_RATE_16000;
     capturerOptions_.streamInfo.encoding = AudioEncodingType::ENCODING_PCM;
     capturerOptions_.streamInfo.format = AudioSampleFormat::SAMPLE_S16LE;
@@ -88,6 +91,7 @@ bool WakeupEngineImpl::InitStates()
         .WaitUntil(RECOGNIZE_COMPLETE_TIMEOUT,
             std::bind(&WakeupEngineImpl::HandleStopCapturer, this, std::placeholders::_1, std::placeholders::_2),
             RECOGNIZE_COMPLETE_TIMEOUT_US)
+        .ACT(GET_WAKEUP_PCM, HandleGetWakeupPcm)
         .ACT(START_CAPTURER, HandleStartCapturer);
 
     ForState(READ_CAPTURER)
@@ -112,6 +116,29 @@ int32_t WakeupEngineImpl::Handle(const StateMsg &msg)
     }
 
     return ModuleStates::HandleMsg(msg);
+}
+
+OHOS::AudioStandard::AudioChannel WakeupEngineImpl::GetWakeupSourceChannel()
+{
+    auto triggerMgr = TriggerManager::GetInstance();
+    if (triggerMgr == nullptr) {
+        INTELL_VOICE_LOG_ERROR("trigger manager is nullptr");
+        return AudioChannel::MONO;
+    }
+
+    std::string channel = triggerMgr->GetParameter(WAKEUP_SOURCE_CHANNEL);
+    if (channel == "") {
+        INTELL_VOICE_LOG_INFO("no channle info");
+        return AudioChannel::MONO;
+    }
+
+    auto ret = static_cast<OHOS::AudioStandard::AudioChannel>(std::stoi(channel));
+    if (ret > AudioChannel::CHANNEL_4) {
+        INTELL_VOICE_LOG_INFO("invalid channel, ret:%{public}d", ret);
+        return AudioChannel::MONO;
+    }
+
+    return ret;
 }
 
 bool WakeupEngineImpl::SetCallbackInner()
@@ -203,7 +230,7 @@ bool WakeupEngineImpl::StartAudioSource()
     auto listener = std::make_unique<AudioSourceListener>(
         [&](uint8_t *buffer, uint32_t size, bool isEnd) {
             std::vector<std::vector<uint8_t>> audioData;
-            auto ret = DeinterleaveAudioData(reinterpret_cast<int16_t *>(buffer),
+            auto ret = IntellVoiceUtil::DeinterleaveAudioData(reinterpret_cast<int16_t *>(buffer),
                 size / sizeof(int16_t), static_cast<int32_t>(capturerOptions_.streamInfo.channels), audioData);
             if (!ret || (audioData.size() != static_cast<uint32_t>(capturerOptions_.streamInfo.channels))) {
                 INTELL_VOICE_LOG_ERROR("failed to deinterleave, ret:%{public}d", ret);
@@ -318,14 +345,13 @@ int32_t WakeupEngineImpl::HandleInit(const StateMsg & /* msg */, State &nextStat
     adapter_->SetParameter(AREA_TEXT + HistoryInfoMgr::GetInstance().GetArea());
     SetDspFeatures();
     IntellVoiceEngineInfo info = {
-        .wakeupPhrase = "\xE5\xB0\x8F\xE8\x89\xBA\xE5\xB0\x8F\xE8\x89\xBA",
+        .wakeupPhrase = HistoryInfoMgr::GetInstance().GetWakeupPhrase(),
         .isPcmFromExternal = false,
         .minBufSize = MIN_BUFFER_SIZE,
         .sampleChannels = CHANNEL_CNT,
         .bitsPerSample = BITS_PER_SAMPLE,
         .sampleRate = SAMPLE_RATE,
     };
-
     if (AttachInner(info) != 0) {
         INTELL_VOICE_LOG_ERROR("failed to attach");
         return -1;
@@ -437,6 +463,11 @@ int32_t WakeupEngineImpl::HandleStartCapturer(const StateMsg &msg, State &nextSt
 int32_t WakeupEngineImpl::HandleRead(const StateMsg &msg, State & /* nextState */)
 {
     CapturerData *capturerData = reinterpret_cast<CapturerData *>(msg.outMsg);
+    if (capturerData == nullptr) {
+        INTELL_VOICE_LOG_ERROR("capturer data is nullptr");
+        return -1;
+    }
+
     auto ret = WakeupSourceProcess::Read(capturerData->data, channels_);
     if (ret != 0) {
         INTELL_VOICE_LOG_ERROR("read capturer data failed");
@@ -464,6 +495,21 @@ int32_t WakeupEngineImpl::HandleRecognizingTimeout(const StateMsg & /* msg */, S
     return 0;
 }
 
+int32_t WakeupEngineImpl::HandleGetWakeupPcm(const StateMsg &msg, State & /* nextState */)
+{
+    CapturerData *capturerData = reinterpret_cast<CapturerData *>(msg.outMsg);
+    if (capturerData == nullptr) {
+        INTELL_VOICE_LOG_ERROR("capturer data is nullptr");
+        return -1;
+    }
+    auto ret = EngineUtil::GetWakeupPcm(capturerData->data);
+    if (ret != 0) {
+        INTELL_VOICE_LOG_ERROR("get wakeup pcm failed");
+        return ret;
+    }
+    return 0;
+}
+
 int32_t WakeupEngineImpl::HandleResetAdapter(const StateMsg & /* msg */, State &nextState)
 {
     INTELL_VOICE_LOG_ERROR("enter");
@@ -477,13 +523,12 @@ int32_t WakeupEngineImpl::HandleResetAdapter(const StateMsg & /* msg */, State &
     SetDspFeatures();
 
     IntellVoiceEngineAdapterInfo adapterInfo = {
-        .wakeupPhrase = "\xE5\xB0\x8F\xE8\x89\xBA\xE5\xB0\x8F\xE8\x89\xBA",
+        .wakeupPhrase = HistoryInfoMgr::GetInstance().GetWakeupPhrase(),
         .minBufSize = MIN_BUFFER_SIZE,
         .sampleChannels = CHANNEL_CNT,
         .bitsPerSample = BITS_PER_SAMPLE,
         .sampleRate = SAMPLE_RATE,
     };
-
     if (adapter_->Attach(adapterInfo) != 0) {
         INTELL_VOICE_LOG_ERROR("failed to attach");
         EngineUtil::ReleaseAdapterInner();

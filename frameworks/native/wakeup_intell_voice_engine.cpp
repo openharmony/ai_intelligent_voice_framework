@@ -18,8 +18,10 @@
 #include "intell_voice_manager.h"
 #include "intell_voice_log.h"
 
-using namespace std;
 #define LOG_TAG "WakeupIntellVoiceEngine"
+
+using namespace std;
+using namespace OHOS::IntellVoiceEngine;
 
 namespace OHOS {
 namespace IntellVoice {
@@ -117,11 +119,17 @@ int32_t WakeupIntellVoiceEngine::Read(std::vector<uint8_t> &data)
 int32_t WakeupIntellVoiceEngine::StopCapturer()
 {
     INTELL_VOICE_LOG_INFO("enter");
-    if (engine_ == nullptr) {
-        INTELL_VOICE_LOG_ERROR("engine is null");
-        return -1;
-    }
+    CHECK_CONDITION_RETURN_RET(engine_ == nullptr, -1, "engine is null");
+
     return engine_->StopCapturer();
+}
+
+int32_t WakeupIntellVoiceEngine::GetWakeupPcm(std::vector<uint8_t> &data)
+{
+    INTELL_VOICE_LOG_INFO("enter");
+    CHECK_CONDITION_RETURN_RET(engine_ == nullptr, -1, "engine is null");
+
+    return engine_->GetWakeupPcm(data);
 }
 }
 }

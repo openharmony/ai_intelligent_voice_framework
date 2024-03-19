@@ -18,7 +18,6 @@
 #include "intell_voice_info.h"
 #include "intell_voice_log.h"
 #include "intell_voice_napi_util.h"
-#include "intell_voice_info.h"
 #include "scope_guard.h"
 #include "intell_voice_common_napi.h"
 

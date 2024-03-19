@@ -73,6 +73,7 @@ napi_value WakeupIntellVoiceEngineNapi::Export(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("startCapturer", StartCapturer),
         DECLARE_NAPI_FUNCTION("read", Read),
         DECLARE_NAPI_FUNCTION("stopCapturer", StopCapturer),
+        DECLARE_NAPI_FUNCTION("getPcm", GetPcm),
     };
 
     napi_property_descriptor static_prop[] = {
@@ -269,7 +270,7 @@ napi_value WakeupIntellVoiceEngineNapi::SetParameter(napi_env env, napi_callback
         execute = [](napi_env env, void *data) {
             CHECK_CONDITION_RETURN_VOID((data == nullptr), "data is nullptr");
             auto asyncContext = static_cast<SetParameterContext *>(data);
-            auto engine = reinterpret_cast<WakeupIntellVoiceEngineNapi *>(asyncContext->engineNapi_)->engine_;
+            auto engine = reinterpret_cast<WakeupIntellVoiceEngineNapi *>(asyncContext->instanceNapi_)->engine_;
             CHECK_CONDITION_RETURN_VOID((engine == nullptr), "get engine instance failed");
             engine->SetParameter(asyncContext->key, asyncContext->value);
         };
@@ -331,7 +332,7 @@ napi_value WakeupIntellVoiceEngineNapi::SetSensibility(napi_env env, napi_callba
         CHECK_CONDITION_RETURN_VOID((data == nullptr), "data is nullptr");
         auto asyncContext = static_cast<SetSensibilityContext *>(data);
         CHECK_CONDITION_RETURN_VOID((asyncContext->result_ != NAPI_INTELLIGENT_VOICE_SUCCESS), "no need to execute");
-        auto engine = reinterpret_cast<WakeupIntellVoiceEngineNapi *>(asyncContext->engineNapi_)->engine_;
+        auto engine = reinterpret_cast<WakeupIntellVoiceEngineNapi *>(asyncContext->instanceNapi_)->engine_;
         CHECK_CONDITION_RETURN_VOID((engine == nullptr), "get engine instance failed");
         engine->SetSensibility(asyncContext->sensibility);
     };
@@ -375,7 +376,7 @@ napi_value WakeupIntellVoiceEngineNapi::SetWakeupHapInfo(napi_env env, napi_call
         CHECK_CONDITION_RETURN_VOID((data == nullptr), "data is nullptr");
         auto asyncContext = static_cast<SetWakeupHapContext *>(data);
         CHECK_CONDITION_RETURN_VOID((asyncContext->result_ != NAPI_INTELLIGENT_VOICE_SUCCESS), "no need to execute");
-        auto engine = reinterpret_cast<WakeupIntellVoiceEngineNapi *>(asyncContext->engineNapi_)->engine_;
+        auto engine = reinterpret_cast<WakeupIntellVoiceEngineNapi *>(asyncContext->instanceNapi_)->engine_;
         CHECK_CONDITION_RETURN_VOID((engine == nullptr), "get engine instance failed");
         engine->SetWakeupHapInfo(asyncContext->hapInfo);
     };
@@ -400,10 +401,10 @@ napi_value WakeupIntellVoiceEngineNapi::Release(napi_env env, napi_callback_info
         CHECK_CONDITION_RETURN_VOID((data == nullptr), "data is nullptr");
         auto asyncContext = static_cast<AsyncContext *>(data);
         CHECK_CONDITION_RETURN_VOID((asyncContext->result_ != NAPI_INTELLIGENT_VOICE_SUCCESS), "no need to execute");
-        auto engine = reinterpret_cast<WakeupIntellVoiceEngineNapi *>(asyncContext->engineNapi_)->engine_;
+        auto engine = reinterpret_cast<WakeupIntellVoiceEngineNapi *>(asyncContext->instanceNapi_)->engine_;
         CHECK_CONDITION_RETURN_VOID((engine == nullptr), "get engine instance failed");
         engine->Release();
-        reinterpret_cast<WakeupIntellVoiceEngineNapi *>(asyncContext->engineNapi_)->engine_ = nullptr;
+        reinterpret_cast<WakeupIntellVoiceEngineNapi *>(asyncContext->instanceNapi_)->engine_ = nullptr;
     };
 
     return NapiAsync::AsyncWork(env, context, "Release", execute);
@@ -595,7 +596,7 @@ napi_value WakeupIntellVoiceEngineNapi::StartCapturer(napi_env env, napi_callbac
         execute = [](napi_env env, void *data) {
             CHECK_CONDITION_RETURN_VOID((data == nullptr), "data is nullptr");
             auto asyncContext = static_cast<StartCapturerContext *>(data);
-            auto engine = reinterpret_cast<WakeupIntellVoiceEngineNapi *>(asyncContext->engineNapi_)->engine_;
+            auto engine = reinterpret_cast<WakeupIntellVoiceEngineNapi *>(asyncContext->instanceNapi_)->engine_;
             if (engine == nullptr) {
                 INTELL_VOICE_LOG_ERROR("get engine instance failed");
                 asyncContext->result_ = NAPI_INTELLIGENT_VOICE_START_CAPTURER_FAILED;
@@ -636,7 +637,7 @@ napi_value WakeupIntellVoiceEngineNapi::Read(napi_env env, napi_callback_info in
         execute = [](napi_env env, void *data) {
             CHECK_CONDITION_RETURN_VOID((data == nullptr), "data is nullptr");
             auto asyncContext = static_cast<GetAudioContext *>(data);
-            auto engine = reinterpret_cast<WakeupIntellVoiceEngineNapi *>(asyncContext->engineNapi_)->engine_;
+            auto engine = reinterpret_cast<WakeupIntellVoiceEngineNapi *>(asyncContext->instanceNapi_)->engine_;
             if (engine == nullptr) {
                 INTELL_VOICE_LOG_ERROR("get engine instance failed");
                 asyncContext->result_ = NAPI_INTELLIGENT_VOICE_READ_FAILED;
@@ -679,7 +680,7 @@ napi_value WakeupIntellVoiceEngineNapi::StopCapturer(napi_env env, napi_callback
         execute = [](napi_env env, void *data) {
             CHECK_CONDITION_RETURN_VOID((data == nullptr), "data is nullptr");
             auto asyncContext = static_cast<AsyncContext *>(data);
-            auto engine = reinterpret_cast<WakeupIntellVoiceEngineNapi *>(asyncContext->engineNapi_)->engine_;
+            auto engine = reinterpret_cast<WakeupIntellVoiceEngineNapi *>(asyncContext->instanceNapi_)->engine_;
             CHECK_CONDITION_RETURN_VOID((engine == nullptr), "get engine instance failed");
             engine->StopCapturer();
         };
@@ -689,5 +690,54 @@ napi_value WakeupIntellVoiceEngineNapi::StopCapturer(napi_env env, napi_callback
 
     return NapiAsync::AsyncWork(env, context, "StopCapturer", execute);
 }
+
+napi_value WakeupIntellVoiceEngineNapi::GetPcm(napi_env env, napi_callback_info info)
+{
+    INTELL_VOICE_LOG_INFO("enter");
+    napi_value undefined = nullptr;
+    napi_get_undefined(env, &undefined);
+
+    class GetPcmContext : public AsyncContext {
+    public:
+        explicit GetPcmContext(napi_env env) : AsyncContext(env) {};
+        std::vector<uint8_t> data;
+    };
+
+    auto context = make_shared<GetPcmContext>(env);
+    CHECK_CONDITION_RETURN_RET(context == nullptr, undefined, "create context fail");
+
+    context->result_ = (context->GetCbInfo(env, info, 0, nullptr) ? NAPI_INTELLIGENT_VOICE_SUCCESS :
+        NAPI_INTELLIGENT_VOICE_INVALID_PARAM);
+
+    AsyncExecute execute;
+    if (context->result_ == NAPI_INTELLIGENT_VOICE_SUCCESS) {
+        execute = [](napi_env env, void *data) {
+            CHECK_CONDITION_RETURN_VOID((data == nullptr), "data is nullptr");
+            auto asyncContext = static_cast<GetPcmContext *>(data);
+            auto engine = reinterpret_cast<WakeupIntellVoiceEngineNapi *>(asyncContext->instanceNapi_)->engine_;
+            if (engine == nullptr) {
+                INTELL_VOICE_LOG_ERROR("get engine instance failed");
+                asyncContext->result_ = NAPI_INTELLIGENT_VOICE_NO_MEMORY;
+                return;
+            }
+            if (engine->GetWakeupPcm(asyncContext->data) != 0) {
+                INTELL_VOICE_LOG_ERROR("failed to get wakeup pcm");
+                asyncContext->result_ = NAPI_INTELLIGENT_VOICE_SYSTEM_ERROR;
+            }
+        };
+    } else {
+        execute = [](napi_env env, void *data) {};
+    }
+
+    context->complete_ = [](napi_env env, AsyncContext *asyncContext, napi_value &result) {
+        CHECK_CONDITION_RETURN_VOID((asyncContext == nullptr), "async context is null");
+        auto context = static_cast<GetPcmContext *>(asyncContext);
+        result = SetValue(env, context->data);
+        vector<uint8_t>().swap(context->data);
+    };
+
+    return NapiAsync::AsyncWork(env, context, "GetPcm", execute);
+}
+
 }  // namespace IntellVoiceNapi
 }  // namespace OHOS

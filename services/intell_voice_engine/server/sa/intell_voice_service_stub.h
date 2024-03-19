@@ -15,6 +15,8 @@
 
 #ifndef INTELL_VOICE_SERVICE_STUB_H
 #define INTELL_VOICE_SERVICE_STUB_H
+#include <map>
+#include <functional>
 #include "iremote_stub.h"
 #include "i_intell_voice_service.h"
 
@@ -23,10 +25,23 @@ namespace IntellVoiceEngine {
 class IntellVoiceServiceStub : public IRemoteStub<IIntellVoiceService> {
 public:
     int32_t OnRemoteRequest(uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option) override;
+    IntellVoiceServiceStub();
+    ~IntellVoiceServiceStub();
 
 protected:
     virtual bool RegisterDeathRecipient(IntellVoiceEngineType type, const sptr<IRemoteObject> &object) = 0;
     virtual bool DeregisterDeathRecipient(IntellVoiceEngineType type) = 0;
+
+private:
+    std::map<uint32_t, std::function<int32_t(MessageParcel &data, MessageParcel &reply)>> processServiceFuncMap_;
+    int32_t CreateEngineInner(MessageParcel &data, MessageParcel &reply);
+    int32_t ReleaseEngineInner(MessageParcel &data, MessageParcel &reply);
+    int32_t GetParameterInner(MessageParcel &data, MessageParcel &reply);
+    int32_t GetReportedFilesInner(MessageParcel &data, MessageParcel &reply);
+    int32_t GetCloneFileListInner(MessageParcel &data, MessageParcel &reply);
+    int32_t GetCloneFileInner(MessageParcel &data, MessageParcel &reply);
+    int32_t SendCloneFileInner(MessageParcel &data, MessageParcel &reply);
+    int32_t CloneForResultInner(MessageParcel &data, MessageParcel &reply);
 };
 }  // namespace IntellVoiceEngine
 }  // namespace OHOS

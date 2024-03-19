@@ -45,6 +45,10 @@ IntellVoiceEngineStub::IntellVoiceEngineStub()
         MessageParcel &reply) -> int32_t { return this->ReadInner(data, reply); };
     processFuncMap_[INTELL_VOICE_ENGINE_STOP_CAPTURER] = [this](MessageParcel &data,
         MessageParcel &reply) -> int32_t { return this->StopCapturerInner(data, reply); };
+    processFuncMap_[INTELL_VOICE_ENGINE_GET_WAKEUP_PCM] = [this](MessageParcel &data,
+        MessageParcel &reply) -> int32_t { return this->GetWakeupPcmInner(data, reply); };
+    processFuncMap_[INTELL_VOICE_ENGINE_EVALUATE] = [this](MessageParcel &data,
+        MessageParcel &reply) -> int32_t { return this->EvaluateInner(data, reply); };
 }
 
 IntellVoiceEngineStub::~IntellVoiceEngineStub()
@@ -171,6 +175,35 @@ int32_t IntellVoiceEngineStub::StopCapturerInner(MessageParcel &data, MessagePar
 {
     int32_t ret = StopCapturer();
     reply.WriteInt32(ret);
+    return ret;
+}
+
+int32_t IntellVoiceEngineStub::GetWakeupPcmInner(MessageParcel &data, MessageParcel &reply)
+{
+    std::vector<uint8_t> pcmData;
+    int32_t ret = GetWakeupPcm(pcmData);
+    reply.WriteInt32(ret);
+    if (ret != 0) {
+        INTELL_VOICE_LOG_ERROR("failed to get cloud pcm, ret:%{public}d", ret);
+        return ret;
+    }
+
+    reply.WriteUint32(pcmData.size());
+    reply.WriteBuffer(pcmData.data(), pcmData.size());
+    return ret;
+}
+
+int32_t IntellVoiceEngineStub::EvaluateInner(MessageParcel &data, MessageParcel &reply)
+{
+    HDI::IntelligentVoice::Engine::V1_2::EvaluationResultInfo info;
+    int32_t ret = Evaluate(data.ReadString(), info);
+    reply.WriteInt32(ret);
+    if (ret != 0) {
+        INTELL_VOICE_LOG_ERROR("failed to evaluate");
+        return ret;
+    }
+    reply.WriteInt32(info.score);
+    reply.WriteInt32(info.resultCode);
     return ret;
 }
 }
