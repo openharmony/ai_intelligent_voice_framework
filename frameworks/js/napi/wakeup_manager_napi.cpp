@@ -38,7 +38,7 @@ public:
 class UploadFilesContext : public AsyncContext {
 public:
     explicit UploadFilesContext(napi_env env) : AsyncContext(env) {};
-    int numMax;
+    int numMax = 0;
     std::vector<OHOS::IntellVoice::UploadFilesInfo> uploadFiles;
 };
 

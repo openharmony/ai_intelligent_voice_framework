@@ -22,6 +22,10 @@
 namespace OHOS {
 namespace IntellVoiceEngine {
 using OHOS::IntellVoiceUtils::Uint8ArrayBufferQueue;
+constexpr uint32_t CHANNEL_ID_0 = 0;
+constexpr uint32_t CHANNEL_ID_1 = 1;
+constexpr uint32_t CHANNEL_ID_2 = 2;
+constexpr uint32_t CHANNEL_ID_3 = 3;
 
 class WakeupSourceProcess {
 public:

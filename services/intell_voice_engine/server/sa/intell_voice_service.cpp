@@ -76,13 +76,13 @@ int32_t IntellVoiceService::CreateIntellVoiceEngine(IntellVoiceEngineType type, 
         return -1;
     }
 
-    std::unique_ptr<IntellVoiceServiceManager> &mgr = IntellVoiceServiceManager::GetInstance();
+    auto &mgr = IntellVoiceServiceManager::GetInstance();
     if (mgr == nullptr) {
         INTELL_VOICE_LOG_ERROR("mgr is nullptr");
         return -1;
     }
 
-    inst = mgr->CreateEngine(type);
+    inst = mgr->HandleCreateEngine(type);
     if (inst == nullptr) {
         INTELL_VOICE_LOG_ERROR("engine is nullptr");
         return -1;
@@ -98,12 +98,12 @@ int32_t IntellVoiceService::ReleaseIntellVoiceEngine(IntellVoiceEngineType type)
         INTELL_VOICE_LOG_WARN("verify permission denied");
         return -1;
     }
-    std::unique_ptr<IntellVoiceServiceManager> &mgr = IntellVoiceServiceManager::GetInstance();
+    auto &mgr = IntellVoiceServiceManager::GetInstance();
     if (mgr == nullptr) {
         INTELL_VOICE_LOG_ERROR("mgr is nullptr");
         return -1;
     }
-    return mgr->ReleaseEngine(type);
+    return mgr->HandleReleaseEngine(type);
 }
 
 void IntellVoiceService::OnStart(const SystemAbilityOnDemandReason &startReason)
@@ -134,7 +134,8 @@ void IntellVoiceService::OnStop(void)
 
     const auto &manager = IntellVoiceServiceManager::GetInstance();
     if (manager != nullptr) {
-        manager->OnServiceStop();
+        manager->HandleServiceStop();
+        manager->StopThread();
         manager->ReleaseSwitchProvider();
     }
 
@@ -276,23 +277,19 @@ void IntellVoiceService::OnDistributedKvDataServiceChange(bool isAdded)
             INTELL_VOICE_LOG_INFO("manager is nullptr");
             return;
         }
-
         manager->CreateSwitchProvider();
+        manager->ProcBreathModel();
+        manager->HandleSilenceUpdate();
 
         if (reasonId_ == static_cast<int32_t>(OHOS::OnDemandReasonId::COMMON_EVENT)) {
             INTELL_VOICE_LOG_INFO("power on start");
-            if (manager->SilenceUpdate() == 0) {
-                INTELL_VOICE_LOG_INFO("update in");
-            } else if (manager->QuerySwitchStatus(WAKEUP_KEY)) {
-                manager->OnServiceStart();
-            } else {
-                manager->UnloadIntellVoiceService();
-            }
+            manager->HandleSwitchOn(true, VOICE_WAKEUP_MODEL_UUID, false);
+            manager->HandleSwitchOn(true, PROXIMAL_WAKEUP_MODEL_UUID, false);
+            manager->HandleUnloadIntellVoiceService(true);
         } else if (reasonId_ == static_cast<int32_t>(OHOS::OnDemandReasonId::INTERFACE_CALL)) {
             INTELL_VOICE_LOG_INFO("interface call start");
-            if (manager->QuerySwitchStatus(WAKEUP_KEY) && manager->SilenceUpdate() != 0) {
-                manager->OnServiceStart();
-            }
+            manager->HandleSwitchOn(true, VOICE_WAKEUP_MODEL_UUID, false);
+            manager->HandleSwitchOn(true, PROXIMAL_WAKEUP_MODEL_UUID, false);
         } else {
             INTELL_VOICE_LOG_INFO("no need to process, reason id:%{public}d", reasonId_);
         }
@@ -451,14 +448,14 @@ int32_t IntellVoiceService::EnrollWithWakeupFilesForResult(const std::string &wa
         INTELL_VOICE_LOG_WARN("verify permission");
     }
 
-    INTELL_VOICE_LOG_INFO("EnrollWithWakeupFilesForResult");
-    std::unique_ptr<IntellVoiceServiceManager> &mgr = IntellVoiceServiceManager::GetInstance();
+    INTELL_VOICE_LOG_INFO("enter");
+    auto &mgr = IntellVoiceServiceManager::GetInstance();
     if (mgr == nullptr) {
         INTELL_VOICE_LOG_ERROR("mgr is nullptr");
         return -1;
     }
 
-    return mgr->CloneUpdate(wakeupInfo, object);
+    return mgr->HandleCloneUpdate(wakeupInfo, object);
 }
 }  // namespace IntellVoiceEngine
 }  // namespace OHOS

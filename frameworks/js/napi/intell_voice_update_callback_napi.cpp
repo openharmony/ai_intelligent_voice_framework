@@ -69,7 +69,6 @@ void IntellVoiceUpdateCallbackNapi::OnUpdateComplete(const int result)
 
     UpdateAsyncContext *context = context_.front();
     if (context == nullptr) {
-        context->result_ = NAPI_INTELLIGENT_VOICE_INVALID_PARAM;
         INTELL_VOICE_LOG_ERROR("context is nullptr");
         return;
     }

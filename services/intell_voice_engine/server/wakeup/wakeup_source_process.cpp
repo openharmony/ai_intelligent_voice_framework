@@ -22,10 +22,6 @@ using namespace OHOS::IntellVoiceUtils;
 namespace OHOS {
 namespace IntellVoiceEngine {
 static constexpr uint32_t WAIT_TIME = 1000;  // 1000ms
-static constexpr uint32_t CHANNEL_ID_0 = 0;
-// static constexpr uint32_t CHANNEL_ID_1 = 1;
-static constexpr uint32_t CHANNEL_ID_2 = 2;
-static constexpr uint32_t CHANNEL_ID_3 = 3;
 static constexpr uint32_t CHANNEL_CNT_1 = 1;
 static constexpr uint32_t CHANNEL_CNT_4 = 4;
 static constexpr uint32_t MAX_CHANNEL_CNT = 4;
@@ -64,6 +60,7 @@ void WakeupSourceProcess::Write(const std::vector<std::vector<uint8_t>> &audioDa
     if (channelCnt_ == CHANNEL_CNT_1) {
         WriteChannelData(audioData[CHANNEL_ID_0], CHANNEL_ID_0);
     } else if (channelCnt_ == CHANNEL_CNT_4) {
+        WriteChannelData(audioData[CHANNEL_ID_1], CHANNEL_ID_1);
         WriteChannelData(audioData[CHANNEL_ID_2], CHANNEL_ID_2);
         WriteChannelData(audioData[CHANNEL_ID_3], CHANNEL_ID_3);
     } else {

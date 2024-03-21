@@ -69,7 +69,7 @@ void UpdateEngine::OnCommitEnrollComplete(int32_t result)
     std::thread([=]() {
         const auto &manager = IntellVoiceServiceManager::GetInstance();
         if (manager != nullptr) {
-            manager->OnUpdateComplete(updateResult_);
+            manager->OnUpdateComplete(updateResult_, param_);
         }
     }).detach();
 }
@@ -110,6 +110,7 @@ bool UpdateEngine::Init(const std::string &param)
         return false;
     }
 
+    param_= param;
     return true;
 }
 
@@ -160,10 +161,11 @@ int32_t UpdateEngine::Detach(void)
 
     if (updateResult_ == UpdateState::UPDATE_STATE_DEFAULT) {
         INTELL_VOICE_LOG_WARN("detach defore receive commit enroll msg");
-        std::thread([]() {
+        std::string param = param_;
+        std::thread([param]() {
             const auto &manager = IntellVoiceServiceManager::GetInstance();
             if (manager != nullptr) {
-                manager->OnUpdateComplete(UpdateState::UPDATE_STATE_DEFAULT);
+                manager->OnUpdateComplete(UpdateState::UPDATE_STATE_DEFAULT, param);
             }
         }).detach();
     }

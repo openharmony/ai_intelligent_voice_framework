@@ -26,7 +26,7 @@ using namespace OHOS::IntellVoiceUtils;
 
 namespace OHOS {
 namespace IntellVoiceEngine {
-CloneUpdateStrategy::CloneUpdateStrategy(const std::string param,
+CloneUpdateStrategy::CloneUpdateStrategy(const std::string &param,
     sptr<IIntelligentVoiceUpdateCallback> updateCallback): IUpdateStrategy(param), updateCallback_(updateCallback)
 {
 }
