@@ -29,7 +29,7 @@ namespace OHOS {
 namespace IntellVoiceEngine {
 static constexpr int32_t SILENCE_UPDATE_RETRY_TIMES = 5;
 
-SilenceUpdateStrategy::SilenceUpdateStrategy(const std::string param): IUpdateStrategy(param)
+SilenceUpdateStrategy::SilenceUpdateStrategy(const std::string &param): IUpdateStrategy(param)
 {
 }
 

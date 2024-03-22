@@ -18,6 +18,7 @@
 #include "intell_voice_log.h"
 #include "history_info_mgr.h"
 #include "intell_voice_util.h"
+#include "intell_voice_service_manager.h"
 #include "trigger_manager.h"
 
 #define LOG_TAG "WakeupEngineImpl"
@@ -137,7 +138,7 @@ OHOS::AudioStandard::AudioChannel WakeupEngineImpl::GetWakeupSourceChannel()
         INTELL_VOICE_LOG_INFO("invalid channel, ret:%{public}d", ret);
         return AudioChannel::MONO;
     }
-
+    INTELL_VOICE_LOG_INFO("channle:%{public}d", static_cast<int32_t>(ret));
     return ret;
 }
 
@@ -232,12 +233,13 @@ bool WakeupEngineImpl::StartAudioSource()
             std::vector<std::vector<uint8_t>> audioData;
             auto ret = IntellVoiceUtil::DeinterleaveAudioData(reinterpret_cast<int16_t *>(buffer),
                 size / sizeof(int16_t), static_cast<int32_t>(capturerOptions_.streamInfo.channels), audioData);
-            if (!ret || (audioData.size() != static_cast<uint32_t>(capturerOptions_.streamInfo.channels))) {
-                INTELL_VOICE_LOG_ERROR("failed to deinterleave, ret:%{public}d", ret);
+            if ((!ret) || ((audioData.size() != static_cast<uint32_t>(capturerOptions_.streamInfo.channels))) ||
+                (channelId_ >= audioData.size())) {
+                INTELL_VOICE_LOG_ERROR("failed to deinterleave, ret:%{public}d, id:%{public}d", ret, channelId_);
                 return;
             }
             if ((adapter_ != nullptr) && !isEnd) {
-                adapter_->WriteAudio(audioData[0]);
+                adapter_->WriteAudio(audioData[channelId_]);
             }
             WakeupSourceProcess::Write(audioData);
         },
@@ -386,9 +388,17 @@ int32_t WakeupEngineImpl::HandleSetListener(const StateMsg &msg, State & /* next
     return 0;
 }
 
-int32_t WakeupEngineImpl::HandleStart(const StateMsg & /* msg */, State &nextState)
+int32_t WakeupEngineImpl::HandleStart(const StateMsg &msg, State &nextState)
 {
-    INTELL_VOICE_LOG_INFO("enter");
+    int32_t *msgBody = reinterpret_cast<int32_t *>(msg.inMsg);
+    if (msgBody == nullptr) {
+        INTELL_VOICE_LOG_ERROR("msgBody is nullptr");
+        return -1;
+    }
+
+    channelId_ = ((*msgBody == PROXIMAL_WAKEUP_MODEL_UUID) ? CHANNEL_ID_1 : CHANNEL_ID_0);
+    INTELL_VOICE_LOG_INFO("enter, channel id is %{public}d", channelId_);
+
     EngineUtil::SetParameter("VprTrdType=0;WakeupScene=0");
 
     if (adapter_ == nullptr) {

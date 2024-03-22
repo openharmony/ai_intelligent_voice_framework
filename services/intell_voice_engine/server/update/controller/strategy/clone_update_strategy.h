@@ -24,7 +24,7 @@ using namespace OHOS::IntellVoice;
 class CloneUpdateStrategy final: public IUpdateStrategy {
 public:
     ~CloneUpdateStrategy() override;
-    CloneUpdateStrategy(const std::string param, sptr<IIntelligentVoiceUpdateCallback> updateCallback);
+    CloneUpdateStrategy(const std::string &param, sptr<IIntelligentVoiceUpdateCallback> updateCallback);
     bool UpdateRestrain() override;
     UpdatePriority GetUpdatePriority() override;
     int GetRetryTimes() override;

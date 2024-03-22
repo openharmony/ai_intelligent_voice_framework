@@ -43,6 +43,7 @@ private:
 
 private:
     std::string name_ = "update engine instance";
+    std::string param_;
     UpdateState updateResult_ = UpdateState::UPDATE_STATE_DEFAULT;
     sptr<OHOS::HDI::IntelligentVoice::Engine::V1_0::IIntellVoiceEngineCallback> callback_ = nullptr;
     std::mutex mutex_;

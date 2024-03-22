@@ -15,7 +15,7 @@
 #include "trigger_connector_internal_validation.h"
 #include "intell_voice_log.h"
 
-#define LOG_TAG "TriggerConnectorInternalValidation"
+#define LOG_TAG "TriggerConnectorValidation"
 
 namespace OHOS {
 namespace IntellVoiceTrigger {
@@ -92,7 +92,8 @@ bool TriggerConnectorInternalValidation::TriggerConnectorModuleValidation::Valid
         return false;
     }
 
-    if (model->GetType() != TriggerModel::TriggerModelType::GENERIC_TYPE) {
+    if ((model->GetType() != TriggerModel::TriggerModelType::VOICE_WAKEUP_TYPE) &&
+        (model->GetType() != TriggerModel::TriggerModelType::PROXIMAL_WAKEUP_TYPE)) {
         INTELL_VOICE_LOG_ERROR("generic model type:%{public}d is invalid", model->GetType());
         return false;
     }

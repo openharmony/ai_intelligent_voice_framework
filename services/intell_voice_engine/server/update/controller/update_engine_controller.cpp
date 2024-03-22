@@ -46,17 +46,17 @@ UpdateEngineController::~UpdateEngineController()
 void UpdateEngineController::OnTimerEvent(TimerEvent &info)
 {
     INTELL_VOICE_LOG_INFO("TimerEvent %{public}d", timerId_);
-    OnUpdateRetry();
+    HandleUpdateRetry();
 }
 
-void UpdateEngineController::OnUpdateRetry()
+bool UpdateEngineController::UpdateRetryProc()
 {
     std::lock_guard<std::mutex> lock(updateEngineMutex_);
     if (updateStrategy_ != nullptr && !updateStrategy_->UpdateRestrain()) {
         if (CreateUpdateEngine(updateStrategy_->param_)) {
             INTELL_VOICE_LOG_INFO("retry update, times %{public}d", retryTimes_);
             timerId_ = INVALID_ID;
-            return;
+            return true;
         }
         updateResult_ = UpdateState::UPDATE_STATE_COMPLETE_FAIL;
     } else {
@@ -64,10 +64,10 @@ void UpdateEngineController::OnUpdateRetry()
     }
 
     INTELL_VOICE_LOG_INFO("retry err, times %{public}d, result %{public}d", retryTimes_, updateResult_);
-    ReleaseUpdateEngine();
-    UpdateCompleteHandler(updateResult_, true);
     ClearRetryState();
-    std::thread([this]() { TimerMgr::Stop(); }).detach();
+    ReleaseUpdateEngine();
+    TimerMgr::Stop();
+    return false;
 }
 
 int UpdateEngineController::UpdateArbitration(int priority)
@@ -82,7 +82,7 @@ int UpdateEngineController::UpdateArbitration(int priority)
     }
 
     if (curPriority_ == priority) {
-        INTELL_VOICE_LOG_INFO("same priority, do nothing");
+        INTELL_VOICE_LOG_INFO("same priority, retry update process");
         return 0;
     }
 
@@ -93,7 +93,6 @@ int UpdateEngineController::UpdateArbitration(int priority)
     ReleaseUpdateEngine();
     ClearRetryState();
     TimerMgr::Stop();
-
     return 0;
 }
 
@@ -116,7 +115,7 @@ int UpdateEngineController::CreateUpdateEngineUntilTime(std::shared_ptr<IUpdateS
     }
 
     if (!CreateUpdateEngine(updateStrategy->param_)) {
-        INTELL_VOICE_LOG_ERROR("create update engine err");
+        INTELL_VOICE_LOG_ERROR("create update engine error");
         return -1;
     }
 
@@ -193,11 +192,19 @@ void UpdateEngineController::ClearRetryState()
     SetUpdateState(false);
 }
 
-void UpdateEngineController::OnUpdateComplete(UpdateState result)
+void UpdateEngineController::OnUpdateComplete(UpdateState result, const std::string &param)
+{
+    HandleUpdateComplete(result, param);
+}
+
+void UpdateEngineController::UpdateCompleteProc(UpdateState result, const std::string &param, bool &isLast)
 {
     std::lock_guard<std::mutex> lock(updateEngineMutex_);
-    bool isLast = false;
-
+    isLast = false;
+    if (updateStrategy_ == nullptr || param != updateStrategy_->param_) {
+        INTELL_VOICE_LOG_WARN("param is not equal");
+        return;
+    }
     updateResult_ = result;
     StopUpdateTimer();
 
@@ -211,10 +218,7 @@ void UpdateEngineController::OnUpdateComplete(UpdateState result)
         isLast = true;
         TimerMgr::Stop();
     }
-
     ReleaseUpdateEngine();
-
-    UpdateCompleteHandler(result, isLast);
 }
 }
 }

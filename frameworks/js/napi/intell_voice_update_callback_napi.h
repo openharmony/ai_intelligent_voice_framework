@@ -35,7 +35,7 @@ class UpdateAsyncContext : public AsyncContext {
 public:
     explicit UpdateAsyncContext(napi_env env) : AsyncContext(env) {};
     ProcessWorkFunc processWork = nullptr;
-    int32_t result;
+    int32_t result = OHOS::IntellVoice::EnrollResult::UNKNOWN_ERROR;
     std::vector <OHOS::IntellVoice::WakeupSourceFile> cloneFiles;
     std::string wakeupInfo;
 };

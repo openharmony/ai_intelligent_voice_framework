@@ -23,7 +23,7 @@ namespace IntellVoiceEngine {
 
 class IUpdateStrategy {
 public:
-    explicit IUpdateStrategy(const std::string param) : param_(param) {};
+    explicit IUpdateStrategy(const std::string &param) : param_(param) {};
     virtual ~IUpdateStrategy() = default;
     virtual bool UpdateRestrain() = 0;
     virtual UpdatePriority GetUpdatePriority() = 0;

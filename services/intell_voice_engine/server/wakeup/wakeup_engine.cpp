@@ -37,7 +37,7 @@ void WakeupEngine::OnDetected(int32_t uuid)
 {
     INTELL_VOICE_LOG_INFO("enter, uuid is %{public}d", uuid);
     std::thread(&WakeupEngine::StartAbility, this).detach();
-    StateMsg msg(START_RECOGNIZE);
+    StateMsg msg(START_RECOGNIZE, &uuid, sizeof(int32_t));
     if (ROLE(WakeupEngineImpl).Handle(msg) != 0) {
         INTELL_VOICE_LOG_WARN("start failed");
         std::thread([]() {

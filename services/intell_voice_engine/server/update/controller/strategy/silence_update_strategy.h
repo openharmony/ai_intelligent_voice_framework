@@ -23,13 +23,13 @@ namespace IntellVoiceEngine {
 class SilenceUpdateStrategy final: public IUpdateStrategy {
 public:
     ~SilenceUpdateStrategy() override;
-    explicit SilenceUpdateStrategy(const std::string param);
+    explicit SilenceUpdateStrategy(const std::string &param);
     bool UpdateRestrain() override;
     UpdatePriority GetUpdatePriority() override;
     int GetRetryTimes() override;
     int OnUpdateCompleteCallback(const int result, bool isLast) override;
 private:
-    void NotifyUpdateFail();
+    static void NotifyUpdateFail();
 };
 }
 }

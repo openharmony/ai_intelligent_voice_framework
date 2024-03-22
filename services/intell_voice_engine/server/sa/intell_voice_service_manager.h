@@ -27,17 +27,20 @@
 #include "update_engine_controller.h"
 #include "data_operation_callback.h"
 #include "i_intell_voice_update_callback.h"
+#include "task_executor.h"
 
 namespace OHOS {
 namespace IntellVoiceEngine {
 constexpr int32_t VOICE_WAKEUP_MODEL_UUID = 1;
 constexpr int32_t PROXIMAL_WAKEUP_MODEL_UUID = 2;
 const std::string WAKEUP_KEY = "intell_voice_trigger_enabled";
-const std::string BREATH_KEY = "intell_voice_breath_enabled";
+const std::string WHISPER_KEY = "intell_voice_trigger_whisper";
 const std::string IMPROVE_KEY = "intell_voice_improve_enabled";
 const std::string SHORTWORD_KEY = "intell_voice_shortword_enabled";
 
-class IntellVoiceServiceManager : private IntellVoiceEngineArbitration, private UpdateEngineController {
+class IntellVoiceServiceManager : private IntellVoiceEngineArbitration,
+    private UpdateEngineController,
+    private OHOS::IntellVoiceUtils::TaskExecutor {
 public:
     ~IntellVoiceServiceManager();
     static std::unique_ptr<IntellVoiceServiceManager> &GetInstance();
@@ -57,32 +60,61 @@ public:
 
         return enrollResult_[type].load();
     }
-    sptr<IIntellVoiceEngine> CreateEngine(IntellVoiceEngineType type, const std::string &param = "");
-    int32_t ReleaseEngine(IntellVoiceEngineType type);
 
-    void OnServiceStart();
-    void OnServiceStop();
+    sptr<IIntellVoiceEngine> HandleCreateEngine(IntellVoiceEngineType type);
+    int32_t HandleReleaseEngine(IntellVoiceEngineType type);
+    void HandleSilenceUpdate();
+    int32_t HandleCloneUpdate(const std::string &wakeupInfo, const sptr<IRemoteObject> &object);
+    void HandleSwitchOn(bool isAsync, int32_t uuid, bool needUpdateAdapter);
+    void HandleSwitchOff(bool isAsync, int32_t uuid);
+    void HandleCloseWakeupSource();
+    void HandleUnloadIntellVoiceService(bool isAsync);
+    void HandleServiceStop();
+
+    void ProcBreathModel();
     void CreateSwitchProvider();
     void ReleaseSwitchProvider();
     void StartDetection(int32_t uuid);
     void StopDetection();
     bool QuerySwitchStatus(const std::string &key);
-    void UnloadIntellVoiceService();
 
     bool RegisterProxyDeathRecipient(IntellVoiceEngineType type, const sptr<IRemoteObject> &object);
     bool DeregisterProxyDeathRecipient(IntellVoiceEngineType type);
 
     using UpdateEngineController::OnUpdateComplete;
+    using TaskExecutor::AddAsyncTask;
+    using TaskExecutor::AddSyncTask;
+    using TaskExecutor::StopThread;
 
     std::string GetParameter(const std::string &key);
     int32_t GetWakeupSourceFilesList(std::vector<std::string>& cloneFiles);
     int32_t GetWakeupSourceFile(const std::string &filePath, std::vector<uint8_t> &buffer);
     int32_t SendWakeupFile(const std::string &filePath, const std::vector<uint8_t> &buffer);
-    int32_t CloneUpdate(const std::string &wakeupInfo, const sptr<IRemoteObject> &object);
-    int32_t SilenceUpdate();
+
 private:
     IntellVoiceServiceManager();
-    void OnWakeupSwitchChange();
+    static bool IsSwitchKeyValid(const std::string &key)
+    {
+        if ((key == WAKEUP_KEY) || (key == WHISPER_KEY) || (key == IMPROVE_KEY) || (key == SHORTWORD_KEY)) {
+            return true;
+        }
+        return false;
+    }
+
+    bool QuerySwitchByUuid(int32_t uuid)
+    {
+        if (uuid == VOICE_WAKEUP_MODEL_UUID) {
+            return QuerySwitchStatus(WAKEUP_KEY);
+        }
+
+        if (uuid == PROXIMAL_WAKEUP_MODEL_UUID) {
+            return QuerySwitchStatus(WHISPER_KEY);
+        }
+
+        return false;
+    }
+    sptr<IIntellVoiceEngine> CreateEngine(IntellVoiceEngineType type, const std::string &param = "");
+    int32_t ReleaseEngine(IntellVoiceEngineType type);
     void OnSwitchChange(const std::string &switchKey);
     void OnDetected(int32_t uuid);
     void CreateDetector(int32_t uuid);
@@ -91,20 +123,27 @@ private:
     int32_t ReleaseEngineInner(IntellVoiceEngineType type);
     bool CreateOrResetWakeupEngine();
     bool IsEngineExist(IntellVoiceEngineType type);
+    int32_t ServiceStopProc();
 
     void ReleaseUpdateEngine() override;
     bool CreateUpdateEngine(const std::string &param) override;
-    void UpdateCompleteHandler(UpdateState result, bool islast) override;
+    void HandleUpdateComplete(UpdateState result, const std::string &param) override;
+    void HandleUpdateRetry() override;
+    int32_t SilenceUpdate();
+    int32_t CloneUpdate(const std::string &wakeupInfo, const sptr<IRemoteObject> &object);
     void RegisterObserver(const std::string &switchKey);
     void SetImproveParam(sptr<EngineBase> engine);
-    void ProcBreathModel();
-    void CreateAndStartServiceObject(int32_t uuid);
+    void CreateAndStartServiceObject(int32_t uuid, bool needResetAdapter);
+    void ReleaseServiceObject(int32_t uuid);
+    int32_t SwitchOnProc(int32_t uuid, bool needUpdateAdapter);
+    int32_t SwitchOffProc(int32_t uuid);
+    int32_t UnloadIntellVoiceService();
 
 private:
     static std::unique_ptr<IntellVoiceServiceManager> g_intellVoiceServiceMgr;
     static std::atomic<bool> enrollResult_[ENGINE_TYPE_BUT];
     std::atomic<bool> isServiceUnloaded_ = false;
-    std::mutex engineMutex_;
+    std::mutex deathMutex_;
     std::mutex detectorMutex_;
     std::mutex switchMutex_;
     std::map<IntellVoiceEngineType, sptr<EngineBase>> engines_;

@@ -304,12 +304,12 @@ int32_t IntellVoiceManager::EnrollWithWakeupFilesForResult(const std::vector<Wak
         return -1;
     }
 
-    int ret = 0;
     size_t fileCount = cloneFileInfo.size();
     for (size_t index = 0; index < fileCount; ++index) {
-        ret = g_sProxy->SendWakeupFile(cloneFileInfo[index].filePath, cloneFileInfo[index].fileContent);
+        int ret = g_sProxy->SendWakeupFile(cloneFileInfo[index].filePath, cloneFileInfo[index].fileContent);
         if (ret != 0) {
-            INTELL_VOICE_LOG_ERROR("send clone file err, index %zu size %zu", index, fileCount);
+            INTELL_VOICE_LOG_ERROR("send clone file err, index:%{public}zu, size:%{public}zu, ret:%{public}d",
+                index, fileCount, ret);
             return -1;
         }
     }

@@ -44,6 +44,8 @@ public:
             std::forward<F>(func), std::forward<Args>(args)...));
         auto ret = task->get_future();
         Push([task]() { (*task)(); });
+
+        ret.wait();
         return ret.get();
     }
 
@@ -53,7 +55,7 @@ private:
 private:
     std::mutex mutex_;
     std::string threadName_;
-    pthread_t tid_;
+    pthread_t tid_ = 0;
     bool isRuning_ = false;
 };
 }

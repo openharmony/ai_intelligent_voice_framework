@@ -120,6 +120,7 @@ private:
     using EngineUtil::adapter_;
     bool isPcmFromExternal_ = false;
     int32_t channels_ = 0;
+    uint32_t channelId_ = 0;
     sptr<OHOS::HDI::IntelligentVoice::Engine::V1_0::IIntellVoiceEngineCallback> callback_ = nullptr;
     std::shared_ptr<WakeupAdapterListener> adapterListener_ = nullptr;
     std::shared_ptr<WakeupSourceStopCallback> wakeupSourceStopCallback_ = nullptr;

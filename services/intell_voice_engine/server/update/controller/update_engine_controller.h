@@ -25,7 +25,7 @@
 
 namespace OHOS {
 namespace IntellVoiceEngine {
-class UpdateEngineController : private OHOS::IntellVoiceUtils::ITimerObserver,
+class UpdateEngineController : public OHOS::IntellVoiceUtils::ITimerObserver,
     private OHOS::IntellVoiceUtils::TimerMgr {
 public:
     virtual ~UpdateEngineController();
@@ -36,18 +36,22 @@ public:
         return false;
     }
     virtual void ReleaseUpdateEngine() {};
-    virtual void UpdateCompleteHandler(UpdateState result, bool isLast) {};
-    void OnUpdateComplete(UpdateState result);
-    int CreateUpdateEngineUntilTime(std::shared_ptr<IUpdateStrategy> updateStrategy_);
+    void OnUpdateComplete(UpdateState result, const std::string &param);
+    int CreateUpdateEngineUntilTime(std::shared_ptr<IUpdateStrategy> updateStrategy);
 
     static bool GetUpdateState()
     {
         return isUpdating_.load();
     }
 
+protected:
+    void UpdateCompleteProc(UpdateState result, const std::string &param, bool &isLast);
+    bool UpdateRetryProc();
+
 private:
+    virtual void HandleUpdateComplete(UpdateState result, const std::string &param) {};
+    virtual void HandleUpdateRetry() {};
     void OnTimerEvent(OHOS::IntellVoiceUtils::TimerEvent &info) override;
-    void OnUpdateRetry();
     void StartUpdateTimer();
     void StopUpdateTimer();
     bool IsNeedRetryUpdate();
