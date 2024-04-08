@@ -36,7 +36,7 @@ WakeupEngine::~WakeupEngine()
 void WakeupEngine::OnDetected(int32_t uuid)
 {
     INTELL_VOICE_LOG_INFO("enter, uuid is %{public}d", uuid);
-    std::thread(&WakeupEngine::StartAbility, this).detach();
+    std::thread([uuid]() { WakeupEngine::StartAbility(uuid); }).detach();
     StateMsg msg(START_RECOGNIZE, &uuid, sizeof(int32_t));
     if (ROLE(WakeupEngineImpl).Handle(msg) != 0) {
         INTELL_VOICE_LOG_WARN("start failed");
@@ -150,7 +150,16 @@ int32_t WakeupEngine::GetWakeupPcm(std::vector<uint8_t> &data)
     return 0;
 }
 
-void WakeupEngine::StartAbility()
+std::string WakeupEngine::GetEventValue(int32_t uuid)
+{
+    if (uuid == PROXIMAL_WAKEUP_MODEL_UUID) {
+        return "whisper_event";
+    }
+
+    return "recognition_event";
+}
+
+void WakeupEngine::StartAbility(int32_t uuid)
 {
     AAFwk::Want want;
     HistoryInfoMgr &historyInfoMgr = HistoryInfoMgr::GetInstance();
@@ -161,7 +170,7 @@ void WakeupEngine::StartAbility()
     want.SetElementName(bundleName, abilityName);
     want.SetParam("serviceName", std::string("intell_voice"));
     want.SetParam("servicePid", getpid());
-    want.SetParam("eventType", std::string("recognition_event"));
+    want.SetParam("eventType", GetEventValue(uuid));
     AAFwk::AbilityManagerClient::GetInstance()->StartAbility(want);
 }
 

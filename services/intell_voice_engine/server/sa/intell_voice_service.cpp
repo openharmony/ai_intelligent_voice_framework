@@ -153,6 +153,23 @@ void IntellVoiceService::OnStop(void)
     UnloadIntellVoiceHost();
 }
 
+int32_t IntellVoiceService::OnIdle(const SystemAbilityOnDemandReason &idleReason)
+{
+    INTELL_VOICE_LOG_INFO("enter");
+    const auto &manager = IntellVoiceServiceManager::GetInstance();
+    if (manager == nullptr) {
+        INTELL_VOICE_LOG_ERROR("manager is nullptr");
+        return 0;
+    }
+
+    if (!manager->HandleOnIdle()) {
+        INTELL_VOICE_LOG_INFO("reject to unload service");
+        return -1;
+    }
+
+    return 0;
+}
+
 void IntellVoiceService::OnAddSystemAbility(int32_t systemAbilityId, const std::string &deviceId)
 {
     INTELL_VOICE_LOG_INFO("add systemAbilityId:%{public}d", systemAbilityId);

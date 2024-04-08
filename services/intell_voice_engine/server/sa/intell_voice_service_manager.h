@@ -46,7 +46,7 @@ public:
     static std::unique_ptr<IntellVoiceServiceManager> &GetInstance();
     static void SetEnrollResult(IntellVoiceEngineType type, bool result)
     {
-        if (type >= ENGINE_TYPE_BUT) {
+        if ((type < INTELL_VOICE_ENROLL) || (type >= ENGINE_TYPE_BUT)) {
             return;
         }
 
@@ -69,6 +69,7 @@ public:
     void HandleSwitchOff(bool isAsync, int32_t uuid);
     void HandleCloseWakeupSource();
     void HandleUnloadIntellVoiceService(bool isAsync);
+    bool HandleOnIdle();
     void HandleServiceStop();
 
     void ProcBreathModel();
@@ -137,12 +138,12 @@ private:
     void ReleaseServiceObject(int32_t uuid);
     int32_t SwitchOnProc(int32_t uuid, bool needUpdateAdapter);
     int32_t SwitchOffProc(int32_t uuid);
+    bool IsNeedToUnloadService();
     int32_t UnloadIntellVoiceService();
 
 private:
     static std::unique_ptr<IntellVoiceServiceManager> g_intellVoiceServiceMgr;
     static std::atomic<bool> enrollResult_[ENGINE_TYPE_BUT];
-    std::atomic<bool> isServiceUnloaded_ = false;
     std::mutex deathMutex_;
     std::mutex detectorMutex_;
     std::mutex switchMutex_;

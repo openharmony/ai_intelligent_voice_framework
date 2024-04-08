@@ -30,7 +30,7 @@ using namespace OHOS::IntellVoiceEngine;
 
 namespace OHOS {
 namespace IntellVoice {
-constexpr int32_t LOADSA_TIMEOUT_MS = 5000;
+constexpr int32_t LOAD_SA_TIMEOUT_MS = 5000;
 
 IntellVoiceManager::IntellVoiceManager()
 {
@@ -76,7 +76,7 @@ bool IntellVoiceManager::Init()
         return false;
     }
 
-    auto waitStatus = proxyConVar_.wait_for(lock, std::chrono::milliseconds(LOADSA_TIMEOUT_MS));
+    auto waitStatus = proxyConVar_.wait_for(lock, std::chrono::milliseconds(LOAD_SA_TIMEOUT_MS));
     if (waitStatus != std::cv_status::no_timeout) {
         INTELL_VOICE_LOG_ERROR("Load systemAbility timeout");
         return false;

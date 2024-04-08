@@ -25,24 +25,24 @@ using OHOS::HDI::IntelligentVoice::Engine::V1_0::IntellVoiceEngineAdapterDescrip
 using OHOS::HDI::IntelligentVoice::Engine::V1_0::IIntellVoiceEngineCallback;
 using OHOS::HDI::IntelligentVoice::Engine::V1_2::EvaluationResultInfo;
 
-class AdapterHostManager : public HDI::IntelligentVoice::Engine::V1_2::IIntellVoiceEngineAdapter {
+class AdapterHostManager {
 public:
     AdapterHostManager() = default;
     ~AdapterHostManager();
     bool Init(const IntellVoiceEngineAdapterDescriptor &desc,
         const sptr<OHOS::HDI::IntelligentVoice::Engine::V1_0::IIntellVoiceEngineManager> &engineHostProxy1_0,
         const sptr<OHOS::HDI::IntelligentVoice::Engine::V1_2::IIntellVoiceEngineManager> &engineHostProxy1_2);
-    int32_t SetCallback(const sptr<IIntellVoiceEngineCallback> &engineCallback) override;
-    int32_t Attach(const OHOS::HDI::IntelligentVoice::Engine::V1_0::IntellVoiceEngineAdapterInfo &info) override;
-    int32_t Detach() override;
-    int32_t SetParameter(const std::string &keyValueList) override;
-    int32_t GetParameter(const std::string &keyList, std::string &valueList) override;
-    int32_t Start(const OHOS::HDI::IntelligentVoice::Engine::V1_0::StartInfo &info) override;
-    int32_t Stop() override;
-    int32_t WriteAudio(const std::vector<uint8_t> &buffer) override;
-    int32_t Read(OHOS::HDI::IntelligentVoice::Engine::V1_0::ContentType type, sptr<Ashmem> &buffer) override;
-    int32_t GetWakeupPcm(std::vector<uint8_t> &data) override;
-    int32_t Evaluate(const std::string &word, EvaluationResultInfo &info) override;
+    int32_t SetCallback(const sptr<IIntellVoiceEngineCallback> &engineCallback);
+    int32_t Attach(const OHOS::HDI::IntelligentVoice::Engine::V1_0::IntellVoiceEngineAdapterInfo &info);
+    int32_t Detach();
+    int32_t SetParameter(const std::string &keyValueList);
+    int32_t GetParameter(const std::string &keyList, std::string &valueList);
+    int32_t Start(const OHOS::HDI::IntelligentVoice::Engine::V1_0::StartInfo &info);
+    int32_t Stop();
+    int32_t WriteAudio(const std::vector<uint8_t> &buffer);
+    int32_t Read(OHOS::HDI::IntelligentVoice::Engine::V1_0::ContentType type, sptr<Ashmem> &buffer);
+    int32_t GetWakeupPcm(std::vector<uint8_t> &data);
+    int32_t Evaluate(const std::string &word, EvaluationResultInfo &info);
 
 private:
     sptr<OHOS::HDI::IntelligentVoice::Engine::V1_0::IIntellVoiceEngineAdapter> adapterProxy1_0_ = nullptr;

@@ -59,6 +59,7 @@ public:
 protected:
     void OnStart(const SystemAbilityOnDemandReason &startReason) override;
     void OnStop() override;
+    int32_t OnIdle(const SystemAbilityOnDemandReason &idleReason) override;
     void OnAddSystemAbility(int32_t systemAbilityId, const std::string &deviceId) override;
     void OnRemoveSystemAbility(int32_t systemAbilityId, const std::string &deviceId) override;
 
