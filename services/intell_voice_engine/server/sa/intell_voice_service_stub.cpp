@@ -116,13 +116,18 @@ int32_t IntellVoiceServiceStub::GetCloneFileListInner(MessageParcel &data, Messa
 {
     int32_t ret = 0;
     std::vector<std::string> cloneFiles;
-
     ret = GetWakeupSourceFilesList(cloneFiles);
+    reply.WriteInt32(ret);
+    if (ret != 0) {
+        INTELL_VOICE_LOG_ERROR("get clone files list failed, ret:%{public}d", ret);
+        return ret;
+    }
+
     reply.WriteUint32(cloneFiles.size());
     for (auto i : cloneFiles) {
         reply.WriteString(i);
     }
-    reply.WriteInt32(ret);
+
     return ret;
 }
 
@@ -131,10 +136,14 @@ int32_t IntellVoiceServiceStub::GetCloneFileInner(MessageParcel &data, MessagePa
     std::string filePath = data.ReadString();
     std::vector<uint8_t> buffer;
     int32_t ret = GetWakeupSourceFile(filePath, buffer);
+    reply.WriteInt32(ret);
+    if (ret != 0) {
+        INTELL_VOICE_LOG_ERROR("get clone file failed, ret:%{public}d", ret);
+        return ret;
+    }
 
     reply.WriteUint32(buffer.size());
     reply.WriteBuffer(buffer.data(), buffer.size());
-    reply.WriteInt32(ret);
     return ret;
 }
 
@@ -143,12 +152,20 @@ int32_t IntellVoiceServiceStub::SendCloneFileInner(MessageParcel &data, MessageP
     std::string filePath = data.ReadString();
     std::vector<uint8_t> buffer;
     uint32_t size = data.ReadUint32();
-    int32_t ret = 0;
+    if (size == 0) {
+        INTELL_VOICE_LOG_ERROR("invalid size");
+        return -1;
+    }
+
+    const uint8_t *readBuf = data.ReadBuffer(size);
+    if (readBuf == nullptr) {
+        INTELL_VOICE_LOG_ERROR("read buffer is nullptr");
+        return -1;
+    }
 
     buffer.resize(size);
-    const uint8_t *readBuf = data.ReadBuffer(size);
     std::copy(readBuf, readBuf + size, buffer.data());
-    ret = SendWakeupFile(filePath, buffer);
+    int32_t ret = SendWakeupFile(filePath, buffer);
     reply.WriteInt32(ret);
     return ret;
 }

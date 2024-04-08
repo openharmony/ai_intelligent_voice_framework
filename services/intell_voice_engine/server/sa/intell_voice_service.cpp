@@ -466,6 +466,11 @@ int32_t IntellVoiceService::EnrollWithWakeupFilesForResult(const std::string &wa
     }
 
     INTELL_VOICE_LOG_INFO("enter");
+    if (object == nullptr) {
+        INTELL_VOICE_LOG_ERROR("object is nullptr");
+        return -1;
+    }
+
     auto &mgr = IntellVoiceServiceManager::GetInstance();
     if (mgr == nullptr) {
         INTELL_VOICE_LOG_ERROR("mgr is nullptr");
