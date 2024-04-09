@@ -262,10 +262,6 @@ void IntellVoiceServiceManager::CreateDetector(int32_t uuid)
 
 void IntellVoiceServiceManager::StartDetection(int32_t uuid)
 {
-    if (isServiceUnloaded_.load()) {
-        INTELL_VOICE_LOG_INFO("service is unloading");
-        return;
-    }
     if ((IsEngineExist(INTELL_VOICE_ENROLL)) || (IsEngineExist(INTELL_VOICE_UPDATE))) {
         INTELL_VOICE_LOG_INFO("enroll engine or update engine exist, do nothing");
         return;
@@ -403,7 +399,7 @@ void IntellVoiceServiceManager::OnSwitchChange(const std::string &switchKey)
             HandleSwitchOn(false, VOICE_WAKEUP_MODEL_UUID, false);
         } else {
             HandleSwitchOff(false, VOICE_WAKEUP_MODEL_UUID);
-            INTELL_VOICE_LOG_INFO("switch on process finish");
+            INTELL_VOICE_LOG_INFO("switch off process finish");
             HandleUnloadIntellVoiceService(false);
         }
     } else if (switchKey == WHISPER_KEY) {
@@ -558,7 +554,7 @@ void IntellVoiceServiceManager::HandleUpdateComplete(UpdateState result, const s
             return;
         }
         SwitchOnProc(VOICE_WAKEUP_MODEL_UUID, true);
-        SwitchOnProc(PROXIMAL_WAKEUP_MODEL_UUID, false);
+        SwitchOnProc(PROXIMAL_WAKEUP_MODEL_UUID, true);
         UnloadIntellVoiceService();
     });
 }
@@ -575,7 +571,7 @@ void IntellVoiceServiceManager::HandleUpdateRetry()
             return;
         }
         SwitchOnProc(VOICE_WAKEUP_MODEL_UUID, true);
-        SwitchOnProc(PROXIMAL_WAKEUP_MODEL_UUID, false);
+        SwitchOnProc(PROXIMAL_WAKEUP_MODEL_UUID, true);
         UnloadIntellVoiceService();
     });
 }
@@ -701,11 +697,6 @@ int32_t IntellVoiceServiceManager::SwitchOnProc(int32_t uuid, bool needUpdateAda
         return 0;
     }
 
-    if (isServiceUnloaded_.load()) {
-        INTELL_VOICE_LOG_INFO("service is unloading");
-        return 0;
-    }
-
     CreateAndStartServiceObject(uuid, needUpdateAdapter);
     INTELL_VOICE_LOG_INFO("exit");
     return 0;
@@ -760,31 +751,44 @@ void IntellVoiceServiceManager::HandleCloseWakeupSource()
     TaskExecutor::AddAsyncTask([this]() { StartDetection(PROXIMAL_WAKEUP_MODEL_UUID); });
 }
 
-int32_t IntellVoiceServiceManager::UnloadIntellVoiceService()
+bool IntellVoiceServiceManager::IsNeedToUnloadService()
 {
-    INTELL_VOICE_LOG_INFO("enter");
     if ((IsEngineExist(INTELL_VOICE_ENROLL)) || (IsEngineExist(INTELL_VOICE_UPDATE))) {
-        INTELL_VOICE_LOG_INFO("enroll engine or update engine exist, do nothing");
-        return 0;
+        INTELL_VOICE_LOG_INFO("enroll engine or update engine exist, no need to unload service");
+        return false;
     }
 
     if ((QuerySwitchStatus(WAKEUP_KEY)) || (QuerySwitchStatus(WHISPER_KEY))) {
-        INTELL_VOICE_LOG_INFO("switch is on, do nothing");
+        INTELL_VOICE_LOG_INFO("switch is on, no need to unload service");
+        return false;
+    }
+
+    return true;
+}
+
+int32_t IntellVoiceServiceManager::UnloadIntellVoiceService()
+{
+    INTELL_VOICE_LOG_INFO("enter");
+    if (!IsNeedToUnloadService()) {
         return 0;
     }
 
-    auto systemAbilityMgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    if (systemAbilityMgr == nullptr) {
-        INTELL_VOICE_LOG_ERROR("Failed to get systemabilitymanager.");
-        return 0;
-    }
-    int32_t ret = systemAbilityMgr->UnloadSystemAbility(INTELL_VOICE_SERVICE_ID);
-    if (ret != 0) {
-        INTELL_VOICE_LOG_ERROR("Failed to unload intellvoice service, ret: %{public}d", ret);
-        return ret;
-    }
-    isServiceUnloaded_.store(true);
-    INTELL_VOICE_LOG_INFO("Success to unload intellvoice service");
+    std::thread([]() {
+        auto systemAbilityMgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+        if (systemAbilityMgr == nullptr) {
+            INTELL_VOICE_LOG_ERROR("failed to get systemabilitymanager");
+            return;
+        }
+
+        int32_t ret = systemAbilityMgr->UnloadSystemAbility(INTELL_VOICE_SERVICE_ID);
+        if (ret != 0) {
+            INTELL_VOICE_LOG_ERROR("failed to unload intellvoice service, ret: %{public}d", ret);
+            return;
+        }
+
+        INTELL_VOICE_LOG_INFO("success to notify samgr to unload intell voice service");
+    }).detach();
+
     return 0;
 }
 
@@ -796,6 +800,11 @@ void IntellVoiceServiceManager::HandleUnloadIntellVoiceService(bool isAsync)
     } else {
         TaskExecutor::AddSyncTask([this]() -> int32_t { return UnloadIntellVoiceService(); });
     }
+}
+
+bool IntellVoiceServiceManager::HandleOnIdle()
+{
+    return TaskExecutor::AddSyncTask([this]() -> bool { return IsNeedToUnloadService(); });
 }
 
 void IntellVoiceServiceManager::HandleServiceStop()

@@ -45,7 +45,8 @@ public:
     int32_t StopCapturer() override;
 
 private:
-    void StartAbility();
+    static void StartAbility(int32_t uuid);
+    static std::string GetEventValue(int32_t uuid);
     USE_ROLE(WakeupEngineImpl);
 };
 }

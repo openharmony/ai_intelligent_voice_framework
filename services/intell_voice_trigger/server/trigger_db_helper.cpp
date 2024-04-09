@@ -22,32 +22,51 @@
 #include "rdb_helper.h"
 #include "rdb_open_callback.h"
 
-#define LOG_TAG "TriggerDbhelper"
+#define LOG_TAG "TriggerDbHelper"
 
 using namespace OHOS::NativeRdb;
 
 namespace OHOS {
 namespace IntellVoiceTrigger {
+enum {
+    VERSION_ADD_MODEL_TYPE = 2,
+};
+static const std::string TABLE_NAME = "trigger";
+
 class TriggerModelOpenCallback : public RdbOpenCallback {
 public:
     int OnCreate(RdbStore &rdbStore) override;
     int OnUpgrade(RdbStore &rdbStore, int oldVersion, int newVersion) override;
+private:
+    static void VersionAddModelType(RdbStore &store);
 };
 
 int TriggerModelOpenCallback::OnCreate(RdbStore &rdbStore)
 {
-    INTELL_VOICE_LOG_DEBUG("OnCreate");
-    std::string CREATE_TABLE_Trigger =
-        std::string("CREATE TABLE IF NOT EXISTS trigger ") +
-        std::string("(model_uuid INTEGER PRIMARY KEY, vendor_uuid INTEGER, data BLOB,"\
-            " model_version INTEGER, model_type INTEGER)");
+    INTELL_VOICE_LOG_INFO("enter");
+    const std::string CREATE_TABLE_Trigger = "CREATE TABLE IF NOT EXISTS " + TABLE_NAME +
+        " (model_uuid INTEGER PRIMARY KEY, vendor_uuid INTEGER, data BLOB, model_version INTEGER)";
 
     return rdbStore.ExecuteSql(CREATE_TABLE_Trigger);
 }
 
 int TriggerModelOpenCallback::OnUpgrade(RdbStore &rdbStore, int oldVersion, int newVersion)
 {
+    INTELL_VOICE_LOG_INFO("enter, oldVersion:%{public}d, newVersion:%{public}d", oldVersion, newVersion);
+    if (oldVersion < VERSION_ADD_MODEL_TYPE) {
+        VersionAddModelType(rdbStore);
+    }
     return E_OK;
+}
+
+void TriggerModelOpenCallback::VersionAddModelType(RdbStore &store)
+{
+    const std::string alterModelType = "ALTER TABLE " + TABLE_NAME +
+        " ADD COLUMN " + "model_type" + " INTEGER";
+    int32_t result = store.ExecuteSql(alterModelType);
+    if (result != NativeRdb::E_OK) {
+        INTELL_VOICE_LOG_WARN("Upgrade rbd model type failed, ret:%{public}d", result);
+    }
 }
 
 TriggerDbHelper::TriggerDbHelper()
@@ -55,7 +74,7 @@ TriggerDbHelper::TriggerDbHelper()
     int errCode = E_OK;
     RdbStoreConfig config("/data/service/el1/public/database/intell_voice_service_manager/triggerModel.db");
     TriggerModelOpenCallback helper;
-    store_ = RdbHelper::GetRdbStore(config, 1, helper, errCode);
+    store_ = RdbHelper::GetRdbStore(config, VERSION_ADD_MODEL_TYPE, helper, errCode);
     if (store_ == nullptr) {
         INTELL_VOICE_LOG_ERROR("store is nullptr");
     }
@@ -101,13 +120,13 @@ bool TriggerDbHelper::GetVendorUuid(std::shared_ptr<AbsSharedResultSet> &set, in
     int columnIndex;
     int ret = set->GetColumnIndex("vendor_uuid", columnIndex);
     if (ret != E_OK) {
-        INTELL_VOICE_LOG_ERROR("failed to get model uuid column index");
+        INTELL_VOICE_LOG_ERROR("failed to get model uuid column index, ret:%{public}d", ret);
         return false;
     }
 
     ret = set->GetInt(columnIndex, vendorUuid);
     if (ret != E_OK) {
-        INTELL_VOICE_LOG_ERROR("failed to get model uuid");
+        INTELL_VOICE_LOG_ERROR("failed to get vendor uuid, ret:%{public}d", ret);
         return false;
     }
     return true;
@@ -118,13 +137,13 @@ bool TriggerDbHelper::GetBlob(std::shared_ptr<AbsSharedResultSet> &set, std::vec
     int columnIndex;
     int ret = set->GetColumnIndex("data", columnIndex);
     if (ret != E_OK) {
-        INTELL_VOICE_LOG_ERROR("failed to get data column index");
+        INTELL_VOICE_LOG_ERROR("failed to get data column index, ret:%{public}d", ret);
         return false;
     }
 
     ret = set->GetBlob(columnIndex, data);
     if (ret != E_OK) {
-        INTELL_VOICE_LOG_ERROR("failed to get data");
+        INTELL_VOICE_LOG_ERROR("failed to get data, ret:%{public}d", ret);
         return false;
     }
     return true;
@@ -135,13 +154,13 @@ bool TriggerDbHelper::GetModelVersion(std::shared_ptr<AbsSharedResultSet> &set, 
     int columnIndex;
     int ret = set->GetColumnIndex("model_version", columnIndex);
     if (ret != E_OK) {
-        INTELL_VOICE_LOG_ERROR("failed to get model version column index");
+        INTELL_VOICE_LOG_ERROR("failed to get model version column index, ret:%{public}d", ret);
         return false;
     }
 
     ret = set->GetInt(columnIndex, version);
     if (ret != E_OK) {
-        INTELL_VOICE_LOG_ERROR("failed to get model version");
+        INTELL_VOICE_LOG_ERROR("failed to get model version, ret:%{public}d", ret);
         return false;
     }
     return true;
@@ -152,13 +171,13 @@ bool TriggerDbHelper::GetModelType(std::shared_ptr<AbsSharedResultSet> &set, int
     int columnIndex;
     int ret = set->GetColumnIndex("model_type", columnIndex);
     if (ret != E_OK) {
-        INTELL_VOICE_LOG_ERROR("failed to get model type column index");
+        INTELL_VOICE_LOG_ERROR("failed to get model type column index, ret:%{public}d", ret);
         return false;
     }
 
     ret = set->GetInt(columnIndex, type);
     if (ret != E_OK) {
-        INTELL_VOICE_LOG_ERROR("failed to get model type");
+        INTELL_VOICE_LOG_ERROR("failed to get model type, ret:%{public}d", ret);
         return false;
     }
     return true;
@@ -167,7 +186,7 @@ bool TriggerDbHelper::GetModelType(std::shared_ptr<AbsSharedResultSet> &set, int
 std::shared_ptr<GenericTriggerModel> TriggerDbHelper::GetGenericTriggerModel(const int32_t modelUuid)
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    INTELL_VOICE_LOG_INFO("enter");
+    INTELL_VOICE_LOG_INFO("enter, model uuid:%{public}d", modelUuid);
     if (store_ == nullptr) {
         INTELL_VOICE_LOG_ERROR("store is nullptr");
         return nullptr;

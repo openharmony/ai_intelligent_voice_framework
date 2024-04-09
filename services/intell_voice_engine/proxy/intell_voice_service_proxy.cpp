@@ -120,6 +120,11 @@ int32_t IntellVoiceServiceProxy::GetWakeupSourceFilesList(std::vector<std::strin
 
     data.WriteInterfaceToken(IIntellVoiceService::GetDescriptor());
     Remote()->SendRequest(HDI_INTELL_VOICE_SERVICE_GET_CLONE_FILES_LIST, data, reply, option);
+    int32_t ret = reply.ReadInt32();
+    if (ret != 0) {
+        INTELL_VOICE_LOG_ERROR("get wakeup source files list failed, ret:%{public}d", ret);
+        return ret;
+    }
 
     uint32_t size = reply.ReadUint32();
     cloneFiles.reserve(size);
@@ -127,7 +132,7 @@ int32_t IntellVoiceServiceProxy::GetWakeupSourceFilesList(std::vector<std::strin
         cloneFiles.push_back(reply.ReadString());
     }
 
-    return reply.ReadInt32();
+    return ret;
 }
 
 int32_t IntellVoiceServiceProxy::GetWakeupSourceFile(const std::string &filePath, std::vector<uint8_t> &buffer)
@@ -139,10 +144,14 @@ int32_t IntellVoiceServiceProxy::GetWakeupSourceFile(const std::string &filePath
     data.WriteInterfaceToken(IIntellVoiceService::GetDescriptor());
     data.WriteString(filePath);
     Remote()->SendRequest(HDI_INTELL_VOICE_SERVICE_GET_CLONE_FILE, data, reply, option);
+    int32_t ret = reply.ReadInt32();
+    if (ret != 0) {
+        INTELL_VOICE_LOG_ERROR("get wakeup source file failed, ret:%{public}d", ret);
+        return ret;
+    }
 
     uint32_t size = reply.ReadUint32();
     const uint8_t *buff = reply.ReadBuffer(size);
-
     if (buff == nullptr) {
         INTELL_VOICE_LOG_ERROR("buf is null");
         return -1;
@@ -156,7 +165,7 @@ int32_t IntellVoiceServiceProxy::GetWakeupSourceFile(const std::string &filePath
     buffer.resize(size);
     std::copy(buff, buff + size, buffer.data());
 
-    return reply.ReadInt32();
+    return ret;
 }
 
 int32_t IntellVoiceServiceProxy::SendWakeupFile(const std::string &filePath, const std::vector<uint8_t> &buffer)
