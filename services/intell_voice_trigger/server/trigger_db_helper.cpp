@@ -47,7 +47,14 @@ int TriggerModelOpenCallback::OnCreate(RdbStore &rdbStore)
     const std::string CREATE_TABLE_Trigger = "CREATE TABLE IF NOT EXISTS " + TABLE_NAME +
         " (model_uuid INTEGER PRIMARY KEY, vendor_uuid INTEGER, data BLOB, model_version INTEGER)";
 
-    return rdbStore.ExecuteSql(CREATE_TABLE_Trigger);
+    int32_t result = rdbStore.ExecuteSql(CREATE_TABLE_Trigger);
+    if (result != NativeRdb::E_OK) {
+        INTELL_VOICE_LOG_ERROR("create table failed, ret:%{public}d", result);
+        return result;
+    }
+
+    VersionAddModelType(rdbStore);
+    return NativeRdb::E_OK;
 }
 
 int TriggerModelOpenCallback::OnUpgrade(RdbStore &rdbStore, int oldVersion, int newVersion)
