@@ -108,23 +108,9 @@ void AudioSource::ReadThread()
 
 bool AudioSource::Read()
 {
-    size_t bytesRead = 0;
-    while (bytesRead < minBufferSize_) {
-        if (!isReading_.load()) {
-            INTELL_VOICE_LOG_WARN("stop to read");
-            break;
-        }
-        int32_t len = audioCapturer_->Read(*(buffer_.get() + bytesRead), minBufferSize_ - bytesRead, 0);
-        if (len >= 0) {
-            bytesRead += static_cast<uint32_t>(len);
-        } else {
-            INTELL_VOICE_LOG_ERROR("read data error, len is %{public}d", len);
-            break;
-        }
-    }
-
-    if (bytesRead != minBufferSize_) {
-        INTELL_VOICE_LOG_ERROR("failed to read data,  bytesRead is %{public}zu", bytesRead);
+    int32_t len = audioCapturer_->Read(*(buffer_.get()), minBufferSize_, 1);
+    if (len != static_cast<int32_t>(minBufferSize_)) {
+        INTELL_VOICE_LOG_ERROR("failed to read data,  len is %{public}d", len);
         return false;
     }
 

@@ -16,10 +16,11 @@
 
 #include <thread>
 #include "intell_voice_log.h"
+#include "v1_2/intell_voice_engine_types.h"
 
 #define LOG_TAG "WakeupAdapterListener"
 
-using namespace OHOS::HDI::IntelligentVoice::Engine::V1_0;
+using namespace OHOS::HDI::IntelligentVoice::Engine::V1_2;
 
 namespace OHOS {
 namespace IntellVoiceEngine {
@@ -62,7 +63,8 @@ void WakeupAdapterListener::OnIntellVoiceHdiEvent(const IntellVoiceEngineCallBac
         }
 
         historyEvent_ = nullptr;
-        if (event.msgId == INTELL_VOICE_ENGINE_MSG_RECOGNIZE_COMPLETE) {
+        if ((event.msgId == OHOS::HDI::IntelligentVoice::Engine::V1_0::INTELL_VOICE_ENGINE_MSG_RECOGNIZE_COMPLETE) ||
+            (event.msgId == static_cast<OHOS::HDI::IntelligentVoice::Engine::V1_0::IntellVoiceEngineMessageType>(INTELL_VOICE_ENGINE_MSG_RECONFIRM_RECOGNITION_COMPLETE))) {
             cb_->OnIntellVoiceEngineEvent(event);
         }
     }
@@ -72,7 +74,7 @@ void WakeupAdapterListener::OnIntellVoiceHdiEvent(const IntellVoiceEngineCallBac
 
 void WakeupAdapterListener::BackupCallBackEvent(const IntellVoiceEngineCallBackEvent &event)
 {
-    if (event.msgId != INTELL_VOICE_ENGINE_MSG_RECOGNIZE_COMPLETE) {
+    if (event.msgId != OHOS::HDI::IntelligentVoice::Engine::V1_0::INTELL_VOICE_ENGINE_MSG_RECOGNIZE_COMPLETE) {
         return;
     }
 

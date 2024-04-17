@@ -35,7 +35,7 @@ public:
     int32_t GetWakeupPcm(std::vector<uint8_t> &data);
     int32_t Evaluate(const std::string &word, EvaluationResultInfo &info);
     bool SetDspFeatures();
-    void ProcDspModel();
+    void ProcDspModel(OHOS::HDI::IntelligentVoice::Engine::V1_0::ContentType type);
     void ReleaseAdapterInner();
 
 protected:

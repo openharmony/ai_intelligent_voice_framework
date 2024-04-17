@@ -45,7 +45,6 @@ void IntellVoiceUpdateCallbackNapi::ClearAsyncWork(bool error, const std::string
 {
     INTELL_VOICE_LOG_INFO("%{public}s", msg.c_str());
     std::lock_guard<std::mutex> lock(mutex_);
-
     while (!context_.empty()) {
         UpdateAsyncContext *context = context_.front();
         context_.pop();
@@ -66,13 +65,18 @@ void IntellVoiceUpdateCallbackNapi::ClearAsyncWork(bool error, const std::string
 void IntellVoiceUpdateCallbackNapi::OnUpdateComplete(const int result)
 {
     INTELL_VOICE_LOG_INFO("OnUpdateComplete: result: %{public}d", result);
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (context_.empty()) {
+        INTELL_VOICE_LOG_WARN("queue is empty");
+        return;
+    }
 
     UpdateAsyncContext *context = context_.front();
+    context_.pop();
     if (context == nullptr) {
         INTELL_VOICE_LOG_ERROR("context is nullptr");
         return;
     }
-    context_.pop();
 
     context->result = (result == 0) ? EnrollResult::SUCCESS : EnrollResult::UNKNOWN_ERROR;
     OnJsCallBack(context);

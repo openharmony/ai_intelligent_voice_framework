@@ -129,12 +129,19 @@ bool EngineUtil::SetDspFeatures()
 
     std::string features = triggerMgr->GetParameter(KEY_GET_WAKEUP_FEATURE);
     if (features == "") {
-        INTELL_VOICE_LOG_ERROR("trigger manager is nullptr");
-        return false;
+        INTELL_VOICE_LOG_WARN("failed to get wakeup dsp feature");
+        features = HistoryInfoMgr::GetInstance().GetWakeupDspFeature();
+        if (features == "") {
+            INTELL_VOICE_LOG_WARN("no historical wakeup dsp feature");
+            return false;
+        }
+    } else {
+        HistoryInfoMgr::GetInstance().SetWakeupDspFeature(features);
     }
 
     std::string kvPair = KEY_GET_WAKEUP_FEATURE + "=" + features;
-    return adapter_->SetParameter(kvPair);
+    adapter_->SetParameter(kvPair);
+    return true;
 }
 
 void EngineUtil::SplitStringToKVPair(const std::string &inputStr, std::map<std::string, std::string> &kvpairs)
@@ -176,13 +183,13 @@ void EngineUtil::WriteBufferFromAshmem(uint8_t *&buffer, uint32_t size, sptr<OHO
     }
 }
 
-void EngineUtil::ProcDspModel()
+void EngineUtil::ProcDspModel(OHOS::HDI::IntelligentVoice::Engine::V1_0::ContentType type)
 {
     INTELL_VOICE_LOG_INFO("enter");
     uint8_t *buffer = nullptr;
     uint32_t size = 0;
     sptr<Ashmem> ashmem;
-    adapter_->Read(DSP_MODLE, ashmem);
+    adapter_->Read(type, ashmem);
     if (ashmem == nullptr) {
         INTELL_VOICE_LOG_ERROR("ashmem is nullptr");
         return;
@@ -220,7 +227,6 @@ void EngineUtil::ProcDspModel()
         INTELL_VOICE_LOG_ERROR("model is null");
         return;
     }
-
     model->SetData(buffer, size);
     auto triggerMgr = TriggerManager::GetInstance();
     if (triggerMgr == nullptr) {

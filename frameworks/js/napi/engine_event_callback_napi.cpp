@@ -17,6 +17,7 @@
 #include "intell_voice_info.h"
 #include "intell_voice_log.h"
 #include "intell_voice_common_napi.h"
+#include "v1_2/intell_voice_engine_types.h"
 
 #define LOG_TAG "EngineEventCallbackNapi"
 
@@ -85,13 +86,17 @@ void EngineEventCallbackNapi::OnEvent(const IntellVoiceEngineCallBackEvent &even
 {
     std::lock_guard<std::mutex> lock(mutex_);
     INTELL_VOICE_LOG_INFO("enter");
-    if (event.msgId != HDI::IntelligentVoice::Engine::V1_0::INTELL_VOICE_ENGINE_MSG_RECOGNIZE_COMPLETE) {
-        INTELL_VOICE_LOG_ERROR("error msgId");
+    int32_t eventId = -1;
+    if (event.msgId == HDI::IntelligentVoice::Engine::V1_0::INTELL_VOICE_ENGINE_MSG_RECOGNIZE_COMPLETE) {
+        eventId = INTELLIGENT_VOICE_EVENT_RECOGNIZE_COMPLETE;
+    } else if (event.msgId == static_cast<OHOS::HDI::IntelligentVoice::Engine::V1_0::IntellVoiceEngineMessageType>(
+        OHOS::HDI::IntelligentVoice::Engine::V1_2::INTELL_VOICE_ENGINE_MSG_RECONFIRM_RECOGNITION_COMPLETE)) {
+        eventId = INTELLIGENT_VOICE_EVENT_RECONFIRM_RECOGNITION_COMPLETE;
+    } else {
+        INTELL_VOICE_LOG_ERROR("error msgId:%{public}d", event.msgId);
         return;
     }
-
-    EngineCallBackInfo cbInfo = {INTELLIGENT_VOICE_EVENT_RECOGNIZE_COMPLETE,
-        event.result == 0 ? true : false, event.info};
+    EngineCallBackInfo cbInfo = {eventId, event.result == 0 ? true : false, event.info};
 
     INTELL_VOICE_LOG_INFO("OnEvent EngineCallBackInfo: eventId: %{public}d, isSuccess: %{public}u, context: %{public}s",
         cbInfo.eventId, cbInfo.isSuccess, cbInfo.context.c_str());

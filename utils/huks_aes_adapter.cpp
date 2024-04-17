@@ -51,6 +51,9 @@ static struct HksParam g_genParams[] = {
     }, {
         .tag = HKS_TAG_BLOCK_MODE,
         .uint32Param = HKS_MODE_GCM
+    }, {
+        .tag = HKS_TAG_AUTH_STORAGE_LEVEL,
+        .uint32Param = HKS_AUTH_STORAGE_LEVEL_DE
     }
 };
 
@@ -93,6 +96,9 @@ int32_t HuksAesAdapter::CreateEncryptParamSet(struct HksParamSet **encryptParamS
                 .size = encryptNonce->size,
                 .data = encryptNonce->data
             }
+        }, {
+            .tag = HKS_TAG_AUTH_STORAGE_LEVEL,
+            .uint32Param = HKS_AUTH_STORAGE_LEVEL_DE
         }
     };
     ret = ConstructParamSet(encryptParamSet, encryptParams, sizeof(encryptParams) / sizeof(struct HksParam));
@@ -142,6 +148,9 @@ int32_t HuksAesAdapter::CreateDecryptParamSet(struct HksParamSet **decryptParamS
                 .size = decryptAead->size,
                 .data = decryptAead->data
             }
+        }, {
+            .tag = HKS_TAG_AUTH_STORAGE_LEVEL,
+            .uint32Param = HKS_AUTH_STORAGE_LEVEL_DE
         }
     };
 

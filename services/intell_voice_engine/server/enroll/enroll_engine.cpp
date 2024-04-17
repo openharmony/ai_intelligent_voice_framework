@@ -140,7 +140,7 @@ int32_t EnrollEngine::Detach(void)
     }
 
     if (enrollResult_ == 0) {
-        ProcDspModel();
+        ProcDspModel(OHOS::HDI::IntelligentVoice::Engine::V1_0::DSP_MODLE);
         /* save new version number */
         UpdateEngineUtils::SaveWakeupVesion();
         INTELL_VOICE_LOG_INFO("enroll save version");

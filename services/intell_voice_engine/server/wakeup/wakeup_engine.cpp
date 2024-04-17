@@ -43,7 +43,7 @@ void WakeupEngine::OnDetected(int32_t uuid)
         std::thread([]() {
             const auto &manager = IntellVoiceServiceManager::GetInstance();
             if (manager != nullptr) {
-                manager->StartDetection(VOICE_WAKEUP_MODEL_UUID);
+                manager->HandleCloseWakeupSource();
             }
         }).detach();
     }
