@@ -30,6 +30,7 @@ public:
     static int32_t Decrypt(std::unique_ptr<Uint8ArrayBuffer> &inBuffer, std::unique_ptr<Uint8ArrayBuffer> &outBuffer);
 private:
 
+    static int32_t IsKeyExist(struct HksBlob *keyAlias, bool &isExist);
     static int32_t GenerateKey(struct HksBlob *keyAlias);
     static int32_t ConstructParamSet(struct HksParamSet **paramSet, const struct HksParam *params,
         uint32_t paramCount);
