@@ -35,6 +35,13 @@ static constexpr uint32_t MAX_OUTDATA_SIZE = 128 * 1024;
 static constexpr uint32_t NONCE_SIZE = 12;
 static constexpr uint32_t AEAD_SIZE = 16;
 
+static struct HksParam g_existParams[] = {
+    {
+        .tag = HKS_TAG_AUTH_STORAGE_LEVEL,
+        .uint32Param = HKS_AUTH_STORAGE_LEVEL_DE
+    }
+};
+
 static struct HksParam g_genParams[] = {
     {
         .tag = HKS_TAG_ALGORITHM,
@@ -51,6 +58,9 @@ static struct HksParam g_genParams[] = {
     }, {
         .tag = HKS_TAG_BLOCK_MODE,
         .uint32Param = HKS_MODE_GCM
+    }, {
+        .tag = HKS_TAG_AUTH_STORAGE_LEVEL,
+        .uint32Param = HKS_AUTH_STORAGE_LEVEL_DE
     }
 };
 
@@ -93,6 +103,9 @@ int32_t HuksAesAdapter::CreateEncryptParamSet(struct HksParamSet **encryptParamS
                 .size = encryptNonce->size,
                 .data = encryptNonce->data
             }
+        }, {
+            .tag = HKS_TAG_AUTH_STORAGE_LEVEL,
+            .uint32Param = HKS_AUTH_STORAGE_LEVEL_DE
         }
     };
     ret = ConstructParamSet(encryptParamSet, encryptParams, sizeof(encryptParams) / sizeof(struct HksParam));
@@ -142,6 +155,9 @@ int32_t HuksAesAdapter::CreateDecryptParamSet(struct HksParamSet **decryptParamS
                 .size = decryptAead->size,
                 .data = decryptAead->data
             }
+        }, {
+            .tag = HKS_TAG_AUTH_STORAGE_LEVEL,
+            .uint32Param = HKS_AUTH_STORAGE_LEVEL_DE
         }
     };
 
@@ -158,18 +174,19 @@ int32_t HuksAesAdapter::Encrypt(std::unique_ptr<Uint8ArrayBuffer> &inBuffer,
     CHECK_CONDITION_RETURN_RET(((inBuffer == nullptr) || (inBuffer->GetSize() == 0)), HKS_ERROR_INVALID_ARGUMENT,
         "invalid arguments");
     struct HksBlob keyAlias = { static_cast<uint32_t>(strlen(g_aliasName)), reinterpret_cast<uint8_t *>(g_aliasName) };
-    int32_t ret = GenerateKey(&keyAlias);
-    if (ret != HKS_SUCCESS) {
-        return ret;
+    bool isExist = false;
+    int32_t ret = IsKeyExist(&keyAlias, isExist);
+    CHECK_CONDITION_RETURN_RET((ret != HKS_SUCCESS), ret, "key exist failed");
+    if (!isExist) {
+        ret = GenerateKey(&keyAlias);
+        CHECK_CONDITION_RETURN_RET((ret != HKS_SUCCESS), ret, "generate key failed");
     }
 
     struct HksParamSet *encryptParamSet = nullptr;
     uint8_t nonceValue[NONCE_SIZE] = { 0 };
     struct HksBlob encryptNonce = { NONCE_SIZE, nonceValue};
     ret = CreateEncryptParamSet(&encryptParamSet, &encryptNonce);
-    if (ret != HKS_SUCCESS) {
-        return ret;
-    }
+    CHECK_CONDITION_RETURN_RET((ret != HKS_SUCCESS), ret, "create encrypt param set failed");
 
     ON_SCOPE_EXIT {
         HksFreeParamSet(&encryptParamSet);
@@ -190,9 +207,7 @@ int32_t HuksAesAdapter::Encrypt(std::unique_ptr<Uint8ArrayBuffer> &inBuffer,
     struct HksBlob outData = { inBuffer->GetSize() * sizeof(uint8_t) + AEAD_SIZE, encryptData.get() + NONCE_SIZE };
 
     ret = UpdateAndFinish(&handleEncrypt, encryptParamSet, &inData, &outData);
-    if (ret != HKS_SUCCESS) {
-        return ret;
-    }
+    CHECK_CONDITION_RETURN_RET((ret != HKS_SUCCESS), ret, "update and finish failed");
 
     (void)memcpy_s(encryptData.get(), NONCE_SIZE, encryptNonce.data, encryptNonce.size);
     outBuffer = CreateArrayBuffer<uint8_t>(outData.size + NONCE_SIZE, encryptData.get());
@@ -211,18 +226,16 @@ int32_t HuksAesAdapter::Decrypt(std::unique_ptr<Uint8ArrayBuffer> &inBuffer,
     }
 
     struct HksBlob keyAlias = { static_cast<uint32_t>(strlen(g_aliasName)), reinterpret_cast<uint8_t *>(g_aliasName) };
-    int32_t ret = GenerateKey(&keyAlias);
-    if (ret != HKS_SUCCESS) {
-        return ret;
-    }
+    bool isExist = false;
+    int32_t ret = IsKeyExist(&keyAlias, isExist);
+    CHECK_CONDITION_RETURN_RET((ret != HKS_SUCCESS), ret, "key exist failed");
+    CHECK_CONDITION_RETURN_RET((!isExist), HKS_FAILURE, "key is not exist");
 
     struct HksParamSet *decryptParamSet = nullptr;
     struct HksBlob decryptNonce = { NONCE_SIZE, inBuffer->GetData() };
     struct HksBlob decryptAead = { AEAD_SIZE, inBuffer->GetData() + inBuffer->GetSize() * sizeof(uint8_t) - AEAD_SIZE};
     ret = CreateDecryptParamSet(&decryptParamSet, &decryptNonce, &decryptAead);
-    if (ret != HKS_SUCCESS) {
-        return ret;
-    }
+    CHECK_CONDITION_RETURN_RET((ret != HKS_SUCCESS), ret, "create decrypt param set failed");
 
     ON_SCOPE_EXIT {
         HksFreeParamSet(&decryptParamSet);
@@ -257,13 +270,29 @@ int32_t HuksAesAdapter::Decrypt(std::unique_ptr<Uint8ArrayBuffer> &inBuffer,
     return HKS_SUCCESS;
 }
 
-int32_t HuksAesAdapter::GenerateKey(struct HksBlob *keyAlias)
+int32_t HuksAesAdapter::IsKeyExist(struct HksBlob *keyAlias, bool &isExist)
 {
-    if (HksKeyExist(keyAlias, nullptr) == HKS_SUCCESS) {
-        INTELL_VOICE_LOG_INFO("key is already exist");
-        return HKS_SUCCESS;
+    struct HksParamSet *existParamSet = nullptr;
+    int32_t ret = ConstructParamSet(&existParamSet, g_existParams, sizeof(g_existParams) / sizeof(struct HksParam));
+    if (ret != HKS_SUCCESS) {
+        INTELL_VOICE_LOG_ERROR("constuct exist param set failed");
+        return ret;
     }
 
+    if (HksKeyExist(keyAlias, existParamSet) == HKS_SUCCESS) {
+        INTELL_VOICE_LOG_INFO("key is already exist");
+        isExist = true;
+    } else {
+        INTELL_VOICE_LOG_INFO("key is not exist");
+        isExist = false;
+    }
+
+    HksFreeParamSet(&existParamSet);
+    return HKS_SUCCESS;
+}
+
+int32_t HuksAesAdapter::GenerateKey(struct HksBlob *keyAlias)
+{
     struct HksParamSet *genParamSet = nullptr;
     int32_t ret = ConstructParamSet(&genParamSet, g_genParams, sizeof(g_genParams) / sizeof(struct HksParam));
     if (ret != HKS_SUCCESS) {

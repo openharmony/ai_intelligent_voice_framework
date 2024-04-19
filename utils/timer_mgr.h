@@ -82,7 +82,7 @@ public:
     explicit TimerMgr(int maxTimerNum = 10);
     ~TimerMgr() override;
 
-    void Start(ITimerObserver *observer = nullptr);
+    void Start(const std::string &threadName, ITimerObserver *observer = nullptr);
     void Stop();
     int SetTimer(int type, int64_t delayUs, int cookie = 0, ITimerObserver *currObserver = nullptr);
     int ResetTimer(int timerId, int type, int64_t delayUs, int cookie, ITimerObserver *currObserver);

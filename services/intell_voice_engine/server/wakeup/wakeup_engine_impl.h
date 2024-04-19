@@ -40,6 +40,7 @@ enum EngineEvent {
     START_RECOGNIZE,
     STOP_RECOGNIZE,
     RECOGNIZE_COMPLETE,
+    RECONFIRM_RECOGNITION_COMPLETE,
     START_CAPTURER,
     READ,
     STOP_CAPTURER,
@@ -96,6 +97,8 @@ private:
     void OnWakeupEvent(int32_t msgId, int32_t result);
     void OnInitDone(int32_t result);
     void OnWakeupRecognition(int32_t result);
+    void OnWakeupKws3Recognition(int32_t result);
+    void UpdateDspModel();
     OHOS::AudioStandard::AudioChannel GetWakeupSourceChannel();
 
 private:
@@ -108,6 +111,7 @@ private:
     int32_t HandleStart(const StateMsg &msg, State &nextState);
     int32_t HandleStop(const StateMsg &msg, State &nextState);
     int32_t HandleRecognizeComplete(const StateMsg &msg, State &nextState);
+    int32_t HandleReconfirmRecognitionComplete(const StateMsg &msg, State &nextState);
     int32_t HandleStartCapturer(const StateMsg &msg, State &nextState);
     int32_t HandleRead(const StateMsg &msg, State &nextState);
     int32_t HandleStopCapturer(const StateMsg &msg, State &nextState);

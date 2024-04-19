@@ -44,9 +44,9 @@ namespace OHOS {
 namespace IntellVoiceEngine {
 static constexpr int32_t MAX_ATTEMPT_CNT = 10;
 static constexpr uint32_t MAX_TASK_NUM = 200;
-static const std::string SERVICE_MANAGER_THREAD_NAME = "ServiceMgrThread";
+static const std::string SERVICE_MANAGER_THREAD_NAME = "ServMgrThread";
 static const std::string WHISPER_MODEL_PATH =
-    "/sys_prod/variant/region_comm/china/etc/intellvoice/wakeup/dsp/wakeup_dsp_config";
+    "/sys_prod/variant/region_comm/china/etc/intellvoice/wakeup/dsp/whisper_wakeup_dsp_config";
 
 std::atomic<bool> IntellVoiceServiceManager::enrollResult_[ENGINE_TYPE_BUT] = {false, false, false};
 
@@ -73,7 +73,8 @@ sptr<IIntellVoiceEngine> IntellVoiceServiceManager::CreateEngine(IntellVoiceEngi
 {
     INTELL_VOICE_LOG_INFO("enter, type:%{public}d", type);
     if (type == INTELL_VOICE_ENROLL) {
-        StopDetection();
+        StopDetection(VOICE_WAKEUP_MODEL_UUID);
+        StopDetection(PROXIMAL_WAKEUP_MODEL_UUID);
     }
 
     SetEnrollResult(type, false);
@@ -164,6 +165,7 @@ bool IntellVoiceServiceManager::CreateOrResetWakeupEngine()
     auto engine = GetEngine(INTELL_VOICE_WAKEUP, engines_);
     if (engine != nullptr) {
         INTELL_VOICE_LOG_INFO("wakeup engine is existed");
+        engine->ReleaseAdapter();
         if (!engine->ResetAdapter()) {
             INTELL_VOICE_LOG_ERROR("failed to reset adapter");
             return false;
@@ -299,14 +301,14 @@ void IntellVoiceServiceManager::StartDetection(int32_t uuid)
     INTELL_VOICE_LOG_ERROR("failed to start recognition");
 }
 
-void IntellVoiceServiceManager::StopDetection()
+void IntellVoiceServiceManager::StopDetection(int32_t uuid)
 {
     std::lock_guard<std::mutex> lock(detectorMutex_);
-    for (auto it : detector_) {
-        if (it.second != nullptr) {
-            it.second->StopRecognition();
-        }
+    if ((detector_.count(uuid) == 0) || (detector_[uuid] == nullptr)) {
+        INTELL_VOICE_LOG_INFO("detector is not existed, uuid:%{public}d", uuid);
+        return;
     }
+    detector_[uuid]->StopRecognition();
 }
 
 void IntellVoiceServiceManager::OnDetected(int32_t uuid)
@@ -418,7 +420,14 @@ void IntellVoiceServiceManager::OnSwitchChange(const std::string &switchKey)
             return 0;
         });
     } else if (switchKey == SHORTWORD_KEY) {
-        INTELL_VOICE_LOG_INFO("shot word switch change");
+        TaskExecutor::AddSyncTask([this]() {
+            INTELL_VOICE_LOG_INFO("short word switch change");
+            StopDetection(VOICE_WAKEUP_MODEL_UUID);
+            StopDetection(PROXIMAL_WAKEUP_MODEL_UUID);
+            CreateOrResetWakeupEngine();
+            StartDetection(VOICE_WAKEUP_MODEL_UUID);
+            StartDetection(PROXIMAL_WAKEUP_MODEL_UUID);
+        });
     }
 }
 

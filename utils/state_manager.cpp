@@ -31,11 +31,12 @@ int StateActions::Handle(const StateMsg &msg, State &nextState)
     return (actions[msg.msgId])(msg, nextState);
 }
 
-ModuleStates::ModuleStates(const State &defaultState, const std::string &name) : isInitSucc_(true), name_(name)
+ModuleStates::ModuleStates(const State &defaultState, const std::string &name, const std::string &threadName)
+    : isInitSucc_(true), name_(name)
 {
     states_[defaultState] = nullptr;
     currState_ = states_.begin();
-    Start();
+    Start(threadName);
 }
 
 ModuleStates::~ModuleStates()

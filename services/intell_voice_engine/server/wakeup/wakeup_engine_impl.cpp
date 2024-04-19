@@ -20,6 +20,7 @@
 #include "intell_voice_util.h"
 #include "intell_voice_service_manager.h"
 #include "trigger_manager.h"
+#include "v1_2/intell_voice_engine_types.h"
 
 #define LOG_TAG "WakeupEngineImpl"
 
@@ -42,10 +43,9 @@ static constexpr int64_t RECOGNIZING_TIMEOUT_US = 10 * 1000 * 1000; //10s
 static constexpr int64_t RECOGNIZE_COMPLETE_TIMEOUT_US = 1 * 1000; //1ms
 static constexpr int64_t READ_CAPTURER_TIMEOUT_US = 10 * 1000 * 1000; //10s
 
-WakeupEngineImpl::WakeupEngineImpl() : ModuleStates(State(IDLE), "WakeupEngineImpl")
+WakeupEngineImpl::WakeupEngineImpl() : ModuleStates(State(IDLE), "WakeupEngineImpl", "WakeupThread")
 {
     InitStates();
-    capturerOptions_.streamInfo.channels = GetWakeupSourceChannel();
     capturerOptions_.streamInfo.samplingRate = AudioSamplingRate::SAMPLE_RATE_16000;
     capturerOptions_.streamInfo.encoding = AudioEncodingType::ENCODING_PCM;
     capturerOptions_.streamInfo.format = AudioSampleFormat::SAMPLE_S16LE;
@@ -93,14 +93,16 @@ bool WakeupEngineImpl::InitStates()
             std::bind(&WakeupEngineImpl::HandleStopCapturer, this, std::placeholders::_1, std::placeholders::_2),
             RECOGNIZE_COMPLETE_TIMEOUT_US)
         .ACT(GET_WAKEUP_PCM, HandleGetWakeupPcm)
-        .ACT(START_CAPTURER, HandleStartCapturer);
+        .ACT(START_CAPTURER, HandleStartCapturer)
+        .ACT(RECONFIRM_RECOGNITION_COMPLETE, HandleReconfirmRecognitionComplete);
 
     ForState(READ_CAPTURER)
         .WaitUntil(READ_CAPTURER_TIMEOUT,
             std::bind(&WakeupEngineImpl::HandleStopCapturer, this, std::placeholders::_1, std::placeholders::_2),
             READ_CAPTURER_TIMEOUT_US)
         .ACT(READ, HandleRead)
-        .ACT(STOP_CAPTURER, HandleStopCapturer);
+        .ACT(STOP_CAPTURER, HandleStopCapturer)
+        .ACT(RECONFIRM_RECOGNITION_COMPLETE, HandleReconfirmRecognitionComplete);
 
     FromState(INITIALIZING, READ_CAPTURER)
         .ACT(RELEASE_ADAPTER, HandleRelease)
@@ -227,6 +229,7 @@ void WakeupEngineImpl::DestroyWakeupSourceStopCallback()
 
 bool WakeupEngineImpl::StartAudioSource()
 {
+    capturerOptions_.streamInfo.channels = GetWakeupSourceChannel();
     WakeupSourceProcess::Init(capturerOptions_.streamInfo.channels);
     auto listener = std::make_unique<AudioSourceListener>(
         [&](uint8_t *buffer, uint32_t size, bool isEnd) {
@@ -289,6 +292,9 @@ void WakeupEngineImpl::OnWakeupEvent(int32_t msgId, int32_t result)
         std::thread(&WakeupEngineImpl::OnInitDone, this, result).detach();
     } else if (msgId == INTELL_VOICE_ENGINE_MSG_RECOGNIZE_COMPLETE) {
         std::thread(&WakeupEngineImpl::OnWakeupRecognition, this, result).detach();
+    } else if (msgId == static_cast<OHOS::HDI::IntelligentVoice::Engine::V1_0::IntellVoiceEngineMessageType>(
+        HDI::IntelligentVoice::Engine::V1_2::INTELL_VOICE_ENGINE_MSG_RECONFIRM_RECOGNITION_COMPLETE)) {
+        std::thread(&WakeupEngineImpl::OnWakeupKws3Recognition, this, result).detach();
     } else {
     }
 }
@@ -304,6 +310,13 @@ void WakeupEngineImpl::OnWakeupRecognition(int32_t result)
 {
     INTELL_VOICE_LOG_INFO("on wakeup recognition, result:%{public}d", result);
     StateMsg msg(RECOGNIZE_COMPLETE, &result, sizeof(int32_t));
+    Handle(msg);
+}
+
+void WakeupEngineImpl::OnWakeupKws3Recognition(int32_t result)
+{
+    INTELL_VOICE_LOG_INFO("on wakeup kws3 recognition, result:%{public}d", result);
+    StateMsg msg(RECONFIRM_RECOGNITION_COMPLETE, &result, sizeof(int32_t));
     Handle(msg);
 }
 
@@ -342,9 +355,11 @@ int32_t WakeupEngineImpl::HandleInit(const StateMsg & /* msg */, State &nextStat
         INTELL_VOICE_LOG_ERROR("failed to set callback");
         return -1;
     }
+    UpdateDspModel();
 
     adapter_->SetParameter(LANGUAGE_TEXT + HistoryInfoMgr::GetInstance().GetLanguage());
     adapter_->SetParameter(AREA_TEXT + HistoryInfoMgr::GetInstance().GetArea());
+
     SetDspFeatures();
     IntellVoiceEngineInfo info = {
         .wakeupPhrase = HistoryInfoMgr::GetInstance().GetWakeupPhrase(),
@@ -441,7 +456,6 @@ int32_t WakeupEngineImpl::HandleStop(const StateMsg & /* msg */, State &nextStat
 
 int32_t WakeupEngineImpl::HandleRecognizeComplete(const StateMsg &msg, State &nextState)
 {
-    EngineUtil::Stop();
     int32_t *result = reinterpret_cast<int32_t *>(msg.inMsg);
     if (result == nullptr) {
         INTELL_VOICE_LOG_ERROR("result is nullptr");
@@ -450,10 +464,17 @@ int32_t WakeupEngineImpl::HandleRecognizeComplete(const StateMsg &msg, State &ne
     if (*result != 0) {
         INTELL_VOICE_LOG_INFO("wakeup failed");
         StopAudioSource();
+        EngineUtil::Stop();
         nextState = State(INITIALIZED);
     } else {
         nextState = State(RECOGNIZED);
     }
+    return 0;
+}
+
+int32_t WakeupEngineImpl::HandleReconfirmRecognitionComplete(const StateMsg &msg, State &nextState)
+{
+    EngineUtil::Stop();
     return 0;
 }
 
@@ -492,6 +513,7 @@ int32_t WakeupEngineImpl::HandleStopCapturer(const StateMsg & /* msg */, State &
 {
     INTELL_VOICE_LOG_ERROR("enter");
     StopAudioSource();
+    EngineUtil::Stop();
     nextState = State(INITIALIZED);
     return 0;
 }
@@ -526,8 +548,8 @@ int32_t WakeupEngineImpl::HandleResetAdapter(const StateMsg & /* msg */, State &
     if (!EngineUtil::CreateAdapterInner(WAKEUP_ADAPTER_TYPE)) {
         return -1;
     }
-
     adapter_->SetCallback(callback_);
+    UpdateDspModel();
     adapter_->SetParameter(LANGUAGE_TEXT + HistoryInfoMgr::GetInstance().GetLanguage());
     adapter_->SetParameter(AREA_TEXT + HistoryInfoMgr::GetInstance().GetArea());
     SetDspFeatures();
@@ -559,6 +581,23 @@ int32_t WakeupEngineImpl::HandleRelease(const StateMsg & /* msg */, State &nextS
     }
     nextState = State(IDLE);
     return 0;
+}
+
+void WakeupEngineImpl::UpdateDspModel()
+{
+    auto &mgr = IntellVoiceServiceManager::GetInstance();
+    if (mgr == nullptr) {
+        INTELL_VOICE_LOG_ERROR("mgr is nullptr");
+        return;
+    }
+    if (mgr->QuerySwitchStatus(SHORTWORD_KEY)) {
+        adapter_->SetParameter("WakeupMode=1");
+        ProcDspModel(static_cast<OHOS::HDI::IntelligentVoice::Engine::V1_0::ContentType>(
+            OHOS::HDI::IntelligentVoice::Engine::V1_2::SHORT_WORD_DSP_MODEL));
+    } else {
+        adapter_->SetParameter("WakeupMode=0");
+        ProcDspModel(OHOS::HDI::IntelligentVoice::Engine::V1_0::DSP_MODLE);
+    }
 }
 }
 }

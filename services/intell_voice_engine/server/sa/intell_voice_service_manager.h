@@ -28,6 +28,7 @@
 #include "data_operation_callback.h"
 #include "i_intell_voice_update_callback.h"
 #include "task_executor.h"
+#include "engine_util.h"
 
 namespace OHOS {
 namespace IntellVoiceEngine {
@@ -36,7 +37,7 @@ constexpr int32_t PROXIMAL_WAKEUP_MODEL_UUID = 2;
 const std::string WAKEUP_KEY = "intell_voice_trigger_enabled";
 const std::string WHISPER_KEY = "intell_voice_trigger_whisper";
 const std::string IMPROVE_KEY = "intell_voice_improve_enabled";
-const std::string SHORTWORD_KEY = "intell_voice_shortword_enabled";
+const std::string SHORTWORD_KEY = "intell_voice_trigger_shortword";
 
 class IntellVoiceServiceManager : private IntellVoiceEngineArbitration,
     private UpdateEngineController,
@@ -76,7 +77,7 @@ public:
     void CreateSwitchProvider();
     void ReleaseSwitchProvider();
     void StartDetection(int32_t uuid);
-    void StopDetection();
+    void StopDetection(int32_t uuid);
     bool QuerySwitchStatus(const std::string &key);
 
     bool RegisterProxyDeathRecipient(IntellVoiceEngineType type, const sptr<IRemoteObject> &object);

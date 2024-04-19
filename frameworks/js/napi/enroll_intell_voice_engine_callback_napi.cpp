@@ -122,9 +122,7 @@ void EnrollIntellVoiceEngineCallbackNapi::ClearAsyncWork(bool error, const std::
 void EnrollIntellVoiceEngineCallbackNapi::OnEvent(const IntellVoiceEngineCallBackEvent &event)
 {
     INTELL_VOICE_LOG_INFO("OnEvent: msgId: %{public}d, errCode: %{public}d, context: %{public}s",
-        event.msgId,
-        event.result,
-        event.info.c_str());
+        event.msgId, event.result, event.info.c_str());
     EnrollAsyncWorkType asyncType = ASYNC_WORK_INVALID;
     switch (event.msgId) {
         case HDI::IntelligentVoice::Engine::V1_0::INTELL_VOICE_ENGINE_MSG_INIT_DONE:
@@ -139,6 +137,7 @@ void EnrollIntellVoiceEngineCallbackNapi::OnEvent(const IntellVoiceEngineCallBac
         default:
             break;
     }
+    std::lock_guard<std::mutex> lock(mutex_);
     if (contextMap_.find(asyncType) == contextMap_.end() || contextMap_.at(asyncType).empty()) {
         INTELL_VOICE_LOG_ERROR("callback is called, But context is empty");
         return;

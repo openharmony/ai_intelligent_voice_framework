@@ -45,6 +45,8 @@ public:
     std::string GetArea();
     void SetWakeupPhrase(const std::string &wakeupPhrase);
     std::string GetWakeupPhrase();
+    void SetWakeupDspFeature(const std::string &wakeupDspFeature);
+    std::string GetWakeupDspFeature();
 
 private:
     DISALLOW_COPY_AND_MOVE(HistoryInfoMgr);

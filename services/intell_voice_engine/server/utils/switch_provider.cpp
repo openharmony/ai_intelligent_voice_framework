@@ -90,7 +90,8 @@ bool SwitchProvider::QuerySwitchStatus(const std::string &key)
     int32_t count;
     resultSet->GetRowCount(count);
     if (count == 0) {
-        INTELL_VOICE_LOG_ERROR("not found value");
+        INTELL_VOICE_LOG_WARN("not found value, key is %{public}s", key.c_str());
+        resultSet->Close();
         return false;
     }
     const int32_t INDEX = 0;

@@ -150,7 +150,8 @@ private:
 };
 
 struct ModuleStates : public ITimerObserver, private TimerMgr, private StateGroup {
-    explicit ModuleStates(const State &defaultState = State(0), const std::string &name = "");
+    explicit ModuleStates(const State &defaultState = State(0), const std::string &name = "",
+        const std::string &threadName = "StateThread");
     ~ModuleStates() override;
 
     StateActions& ForState(const State &s);

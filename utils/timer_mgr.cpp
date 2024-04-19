@@ -72,7 +72,7 @@ TimerMgr::~TimerMgr()
     Stop();
 }
 
-void TimerMgr::Start(ITimerObserver *observer)
+void TimerMgr::Start(const std::string &threadName, ITimerObserver *observer)
 {
     unique_lock<mutex> lock(timeMutex_);
 
@@ -86,6 +86,7 @@ void TimerMgr::Start(ITimerObserver *observer)
     }
 
     workThread_ = thread(&TimerMgr::WorkThread, this);
+    pthread_setname_np(workThread_.native_handle(), threadName.c_str());
 
     timerObserver_ = observer;
     status_ = TimerStatus::TIMER_STATUS_STARTED;
