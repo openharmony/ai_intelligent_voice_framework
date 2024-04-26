@@ -35,13 +35,22 @@ bool AdapterHostManager::Init(const IntellVoiceEngineAdapterDescriptor &desc,
 {
     INTELL_VOICE_LOG_INFO("enter");
     CHECK_CONDITION_RETURN_FALSE(engineHostProxy1_0 == nullptr, "engine host proxy_v1_0 is null");
-    engineHostProxy1_0->CreateAdapter(desc, adapterProxy1_0_);
 
     if (engineHostProxy1_2 != nullptr) {
         engineHostProxy1_2->CreateAdapter_V_2(desc, adapterProxy1_2_);
-        if (adapterProxy1_2_ != nullptr) {
-            adapterProxy1_0_ = adapterProxy1_2_;
+        if (adapterProxy1_2_ == nullptr) {
+            INTELL_VOICE_LOG_ERROR("engine adapter proxy1_2_ is nullptr");
+            return false;
         }
+
+        adapterProxy1_0_ = adapterProxy1_2_;
+        return true;
+    }
+
+    engineHostProxy1_0->CreateAdapter(desc, adapterProxy1_0_);
+    if (adapterProxy1_0_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("engine adapter proxy1_0_ is nullptr");
+        return false;
     }
     return true;
 }

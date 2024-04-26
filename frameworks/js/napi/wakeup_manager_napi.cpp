@@ -29,6 +29,8 @@ using namespace OHOS::IntellVoice;
 
 namespace OHOS {
 namespace IntellVoiceNapi {
+static constexpr int32_t UPLOAD_NUM_MAX = 100;
+
 class WakeupSourceFilesContext : public AsyncContext {
 public:
     explicit WakeupSourceFilesContext(napi_env env) : AsyncContext(env) {};
@@ -298,7 +300,13 @@ napi_value WakeupManagerNapi::GetUploadFiles(napi_env env, napi_callback_info in
     CHECK_CONDITION_RETURN_RET(context == nullptr, nullptr, "create upload files context failed");
 
     CbInfoParser parser = [env, context](size_t argc, napi_value *argv) {
-        return (GetValue(env, argv[ARG_INDEX_0], context->numMax) == napi_ok);
+        napi_status status = GetValue(env, argv[ARG_INDEX_0], context->numMax);
+        CHECK_CONDITION_RETURN_FALSE((status != napi_ok), "Failed to get numMax");
+        if ((context->numMax <= 0) || (context->numMax > UPLOAD_NUM_MAX)) {
+            INTELL_VOICE_LOG_ERROR("numMax:%{public}d is invalid", context->numMax);
+            return false;
+        }
+        return true;
     };
     context->result_ = (context->GetCbInfo(env, info, ARG_INDEX_1, parser) ? NAPI_INTELLIGENT_VOICE_SUCCESS :
         NAPI_INTELLIGENT_VOICE_INVALID_PARAM);

@@ -107,6 +107,7 @@ bool TriggerDbHelper::UpdateGenericTriggerModel(std::shared_ptr<GenericTriggerMo
         return false;
     }
 
+    model->Print();
     int64_t rowId = -1;
     ValuesBucket values;
     values.PutInt("model_uuid", model->GetUuid());
@@ -114,7 +115,7 @@ bool TriggerDbHelper::UpdateGenericTriggerModel(std::shared_ptr<GenericTriggerMo
     values.PutBlob("data", model->GetData());
     values.PutInt("model_version", model->GetVersion());
     values.PutInt("model_type", model->GetType());
-    int ret = store_->InsertWithConflictResolution(rowId, "trigger", values, ConflictResolution::ON_CONFLICT_REPLACE);
+    int ret = store_->InsertWithConflictResolution(rowId, TABLE_NAME, values, ConflictResolution::ON_CONFLICT_REPLACE);
     if (ret != E_OK) {
         INTELL_VOICE_LOG_ERROR("update generic model failed");
         return false;
@@ -187,6 +188,7 @@ bool TriggerDbHelper::GetModelType(std::shared_ptr<AbsSharedResultSet> &set, int
         INTELL_VOICE_LOG_ERROR("failed to get model type, ret:%{public}d", ret);
         return false;
     }
+    INTELL_VOICE_LOG_INFO("model type:%{public}d", type);
     return true;
 }
 

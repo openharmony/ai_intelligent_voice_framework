@@ -31,6 +31,8 @@ using namespace OHOS::IntellVoiceTrigger;
 namespace OHOS {
 namespace IntellVoiceEngine {
 static const std::string KEY_GET_WAKEUP_FEATURE = "wakeup_features";
+static const std::string LANGUAGE_TEXT = "language=";
+static const std::string AREA_TEXT = "area=";
 
 EngineUtil::EngineUtil()
 {
@@ -240,6 +242,37 @@ void EngineUtil::ReleaseAdapterInner()
 {
     EngineHostManager::GetInstance().ReleaseEngineAdapter(desc_);
     adapter_ = nullptr;
+}
+
+void EngineUtil::SetLanguage()
+{
+    if (adapter_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("adapter is nullptr");
+        return;
+    }
+
+    std::string language = HistoryInfoMgr::GetInstance().GetLanguage();
+    if (language.empty()) {
+        INTELL_VOICE_LOG_WARN("language is empty");
+        return;
+    }
+    adapter_->SetParameter(LANGUAGE_TEXT + language);
+}
+
+void EngineUtil::SetArea()
+{
+    if (adapter_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("adapter is nullptr");
+        return;
+    }
+
+    std::string area = HistoryInfoMgr::GetInstance().GetArea();
+    if (area.empty()) {
+        INTELL_VOICE_LOG_WARN("area is empty");
+        return;
+    }
+
+    adapter_->SetParameter(AREA_TEXT + area);
 }
 }
 }

@@ -119,6 +119,7 @@ private:
     int32_t HandleRecognizingTimeout(const StateMsg &msg, State &nextState);
     int32_t HandleResetAdapter(const StateMsg &msg, State &nextState);
     int32_t HandleRelease(const StateMsg &msg, State &nextState);
+    std::string GetWakeupPhrase();
 
 private:
     using EngineUtil::adapter_;
