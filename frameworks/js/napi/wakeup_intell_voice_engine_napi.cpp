@@ -36,6 +36,7 @@ namespace IntellVoiceNapi {
 static __thread napi_ref g_wakeupEngineConstructor = nullptr;
 WakeupIntelligentVoiceEngineDescriptor WakeupIntellVoiceEngineNapi::g_wakeupEngineDesc_;
 int32_t WakeupIntellVoiceEngineNapi::constructResult_ = NAPI_INTELLIGENT_VOICE_SUCCESS;
+static constexpr uint32_t MAX_CHANNEL_CNT = 4;
 
 static const std::string WAKEUP_ENGINE_NAPI_CLASS_NAME = "WakeupIntelligentVoiceEngine";
 static const std::string INTELL_VOICE_EVENT_CALLBACK_NAME = "wakeupIntelligentVoiceEvent";
@@ -585,6 +586,10 @@ napi_value WakeupIntellVoiceEngineNapi::StartCapturer(napi_env env, napi_callbac
         CHECK_CONDITION_RETURN_FALSE((argc < ARGC_ONE), "argc less than 1");
         CHECK_CONDITION_RETURN_FALSE((GetValue(env, argv[0], context->channels) != napi_ok),
             "Failed to get channels");
+        if ((context->channels <= 0) || (context->channels >= (0x1 << MAX_CHANNEL_CNT))) {
+            INTELL_VOICE_LOG_ERROR("channels:%{public}d is invalid", context->channels);
+            return false;
+        }
         return true;
     };
 

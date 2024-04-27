@@ -36,9 +36,8 @@ static constexpr uint32_t INTERVAL = 100;
 static constexpr int32_t CHANNEL_CNT = 1;
 static constexpr int32_t BITS_PER_SAMPLE = 16;
 static constexpr int32_t SAMPLE_RATE = 16000;
-static const std::string LANGUAGE_TEXT = "language=";
-static const std::string AREA_TEXT = "area=";
 static const std::string WAKEUP_SOURCE_CHANNEL = "wakeup_source_channel";
+static constexpr std::string_view DEFAULT_WAKEUP_PHRASE = "\xE5\xB0\x8F\xE8\x89\xBA\xE5\xB0\x8F\xE8\x89\xBA";
 static constexpr int64_t RECOGNIZING_TIMEOUT_US = 10 * 1000 * 1000; //10s
 static constexpr int64_t RECOGNIZE_COMPLETE_TIMEOUT_US = 1 * 1000; //1ms
 static constexpr int64_t READ_CAPTURER_TIMEOUT_US = 10 * 1000 * 1000; //10s
@@ -356,13 +355,12 @@ int32_t WakeupEngineImpl::HandleInit(const StateMsg & /* msg */, State &nextStat
         return -1;
     }
     UpdateDspModel();
-
-    adapter_->SetParameter(LANGUAGE_TEXT + HistoryInfoMgr::GetInstance().GetLanguage());
-    adapter_->SetParameter(AREA_TEXT + HistoryInfoMgr::GetInstance().GetArea());
-
+    EngineUtil::SetLanguage();
+    EngineUtil::SetArea();
     SetDspFeatures();
+
     IntellVoiceEngineInfo info = {
-        .wakeupPhrase = HistoryInfoMgr::GetInstance().GetWakeupPhrase(),
+        .wakeupPhrase = GetWakeupPhrase(),
         .isPcmFromExternal = false,
         .minBufSize = MIN_BUFFER_SIZE,
         .sampleChannels = CHANNEL_CNT,
@@ -550,12 +548,12 @@ int32_t WakeupEngineImpl::HandleResetAdapter(const StateMsg & /* msg */, State &
     }
     adapter_->SetCallback(callback_);
     UpdateDspModel();
-    adapter_->SetParameter(LANGUAGE_TEXT + HistoryInfoMgr::GetInstance().GetLanguage());
-    adapter_->SetParameter(AREA_TEXT + HistoryInfoMgr::GetInstance().GetArea());
+    EngineUtil::SetLanguage();
+    EngineUtil::SetArea();
     SetDspFeatures();
 
     IntellVoiceEngineAdapterInfo adapterInfo = {
-        .wakeupPhrase = HistoryInfoMgr::GetInstance().GetWakeupPhrase(),
+        .wakeupPhrase = GetWakeupPhrase(),
         .minBufSize = MIN_BUFFER_SIZE,
         .sampleChannels = CHANNEL_CNT,
         .bitsPerSample = BITS_PER_SAMPLE,
@@ -598,6 +596,17 @@ void WakeupEngineImpl::UpdateDspModel()
         adapter_->SetParameter("WakeupMode=0");
         ProcDspModel(OHOS::HDI::IntelligentVoice::Engine::V1_0::DSP_MODLE);
     }
+}
+
+std::string WakeupEngineImpl::GetWakeupPhrase()
+{
+    std::string wakeupPhrase = HistoryInfoMgr::GetInstance().GetWakeupPhrase();
+    if (wakeupPhrase.empty()) {
+        INTELL_VOICE_LOG_WARN("no phrase, use default phrase");
+        return std::string(DEFAULT_WAKEUP_PHRASE);
+    }
+
+    return wakeupPhrase;
 }
 }
 }

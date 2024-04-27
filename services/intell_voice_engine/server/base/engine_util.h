@@ -37,6 +37,8 @@ public:
     bool SetDspFeatures();
     void ProcDspModel(OHOS::HDI::IntelligentVoice::Engine::V1_0::ContentType type);
     void ReleaseAdapterInner();
+    void SetLanguage();
+    void SetArea();
 
 protected:
     static void SplitStringToKVPair(const std::string &inputStr, std::map<std::string, std::string> &kvpairs);
