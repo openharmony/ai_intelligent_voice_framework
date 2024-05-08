@@ -72,6 +72,7 @@ public:
     void HandleUnloadIntellVoiceService(bool isAsync);
     bool HandleOnIdle();
     void HandleServiceStop();
+    void HandleHeadsetHostDie();
 
     void ProcBreathModel();
     void CreateSwitchProvider();

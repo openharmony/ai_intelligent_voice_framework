@@ -13,6 +13,15 @@
 
 import("//build/ohos.gni")
 
+config("intellvoice_native_config") {
+  include_dirs = [
+    "../../interfaces/inner_api/native",
+    "../../services/intell_voice_engine",
+    "../../services/intell_voice_engine/proxy",
+    "../../utils",
+  ]
+}
+
 ohos_shared_library("intellvoice_native") {
   sources = [
     "enroll_intell_voice_engine.cpp",
@@ -27,6 +36,8 @@ ohos_shared_library("intellvoice_native") {
     "../../services/intell_voice_engine/proxy",
     "../../utils",
   ]
+
+  public_configs = [ ":intellvoice_native_config" ]
 
   cflags_cc = [
     "-Wno-error=unused-parameter",

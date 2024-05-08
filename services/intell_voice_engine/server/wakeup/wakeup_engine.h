@@ -19,6 +19,7 @@
 #include "base_macros.h"
 #include "engine_base.h"
 #include "wakeup_engine_impl.h"
+#include "headset_wakeup_engine_impl.h"
 
 namespace OHOS {
 namespace IntellVoiceEngine {
@@ -43,11 +44,20 @@ public:
     int32_t StartCapturer(int32_t channels) override;
     int32_t Read(std::vector<uint8_t> &data) override;
     int32_t StopCapturer() override;
+    int32_t NotifyHeadsetWakeEvent() override;
+    int32_t NotifyHeadsetHostEvent(HeadsetHostEventType event) override;
 
 private:
-    static void StartAbility(int32_t uuid);
+    static void StartAbility(const std::string &event);
     static std::string GetEventValue(int32_t uuid);
+    int32_t HandleHeadsetOff();
+    int32_t HandleHeadsetOn();
     USE_ROLE(WakeupEngineImpl);
+
+private:
+    OHOS::IntellVoiceUtils::UniqueProductType<HeadsetWakeupEngineImpl> headsetImpl_ =
+        OHOS::IntellVoiceUtils::UniqueProductType<HeadsetWakeupEngineImpl>(nullptr, nullptr);
+    std::mutex headsetMutex_;
 };
 }
 }

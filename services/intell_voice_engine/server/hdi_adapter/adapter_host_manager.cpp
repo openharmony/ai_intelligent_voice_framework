@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 #include "adapter_host_manager.h"
+#include "engine_host_manager.h"
 
 #include "intell_voice_log.h"
 #include "intell_voice_util.h"
@@ -29,11 +30,11 @@ AdapterHostManager::~AdapterHostManager()
     adapterProxy1_2_ = nullptr;
 }
 
-bool AdapterHostManager::Init(const IntellVoiceEngineAdapterDescriptor &desc,
-    const sptr<OHOS::HDI::IntelligentVoice::Engine::V1_0::IIntellVoiceEngineManager> &engineHostProxy1_0,
-    const sptr<OHOS::HDI::IntelligentVoice::Engine::V1_2::IIntellVoiceEngineManager> &engineHostProxy1_2)
+bool AdapterHostManager::Init(const IntellVoiceEngineAdapterDescriptor &desc)
 {
     INTELL_VOICE_LOG_INFO("enter");
+    const auto &engineHostProxy1_0 = EngineHostManager::GetInstance().GetEngineHostProxy1_0();
+    const auto &engineHostProxy1_2 = EngineHostManager::GetInstance().GetEngineHostProxy1_2();
     CHECK_CONDITION_RETURN_FALSE(engineHostProxy1_0 == nullptr, "engine host proxy_v1_0 is null");
 
     if (engineHostProxy1_2 != nullptr) {

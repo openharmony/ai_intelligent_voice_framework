@@ -68,6 +68,18 @@
                       "//foundation/ai/intelligent_voice_framework/frameworks/js/napi/include"
                     ]
                   }
+                },
+                {
+                  "type": "none",
+                  "name": "//foundation/ai/intelligent_voice_framework/frameworks/native:intellvoice_native",
+                  "header": {
+                    "header_files": [
+                      "intell_voice_manager.h",
+                      "i_headset_wakeup.h",
+                      "wakeup_intell_voice_engine.h"
+                    ],
+                    "header_base": "//foundation/ai/intelligent_voice_framework/interfaces/inner_api/native"
+                  }
                 }
             ],
             "test": [

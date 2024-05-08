@@ -12,17 +12,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef ADAPTER_MANAGER_HOST_H
-#define ADAPTER_MANAGER_HOST_H
+#ifndef HEADSET_ADAPTER_MANAGER_HOST_H
+#define HEADSET_ADAPTER_MANAGER_HOST_H
 
 #include "i_adapter_host_manager.h"
 
 namespace OHOS {
 namespace IntellVoiceEngine {
-class AdapterHostManager : public IAdapterHostManager {
+class HeadsetAdapterHostManager : public IAdapterHostManager {
 public:
-    AdapterHostManager() = default;
-    ~AdapterHostManager() override;
+    HeadsetAdapterHostManager() = default;
+    ~HeadsetAdapterHostManager() override;
     bool Init(const IntellVoiceEngineAdapterDescriptor &desc) override;
     int32_t SetCallback(const sptr<IIntellVoiceEngineCallback> &engineCallback) override;
     int32_t Attach(const OHOS::HDI::IntelligentVoice::Engine::V1_0::IntellVoiceEngineAdapterInfo &info) override;
@@ -37,8 +37,7 @@ public:
     int32_t Evaluate(const std::string &word, EvaluationResultInfo &info) override;
 
 private:
-    sptr<OHOS::HDI::IntelligentVoice::Engine::V1_0::IIntellVoiceEngineAdapter> adapterProxy1_0_ = nullptr;
-    sptr<OHOS::HDI::IntelligentVoice::Engine::V1_2::IIntellVoiceEngineAdapter> adapterProxy1_2_ = nullptr;
+    sptr<OHOS::HDI::IntelligentVoice::Engine::V1_0::IIntellVoiceEngineAdapter> headsetAdapterProxy1_0_ = nullptr;
 };
 }
 }

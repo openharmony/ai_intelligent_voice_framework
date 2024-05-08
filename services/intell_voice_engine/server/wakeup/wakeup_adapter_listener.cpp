@@ -36,6 +36,7 @@ WakeupAdapterListener::~WakeupAdapterListener()
 
 void WakeupAdapterListener::SetCallback(const sptr<IIntelligentVoiceEngineCallback> &cb)
 {
+    INTELL_VOICE_LOG_INFO("enter");
     std::lock_guard<std::mutex> lock(mutex_);
     if (cb == nullptr) {
         INTELL_VOICE_LOG_INFO("clear callback");
@@ -65,7 +66,9 @@ void WakeupAdapterListener::OnIntellVoiceHdiEvent(const IntellVoiceEngineCallBac
         historyEvent_ = nullptr;
         if ((event.msgId == OHOS::HDI::IntelligentVoice::Engine::V1_0::INTELL_VOICE_ENGINE_MSG_RECOGNIZE_COMPLETE) ||
             (event.msgId == static_cast<OHOS::HDI::IntelligentVoice::Engine::V1_0::IntellVoiceEngineMessageType>(
-            INTELL_VOICE_ENGINE_MSG_RECONFIRM_RECOGNITION_COMPLETE))) {
+                INTELL_VOICE_ENGINE_MSG_RECONFIRM_RECOGNITION_COMPLETE)) || (
+                event.msgId == static_cast<OHOS::HDI::IntelligentVoice::Engine::V1_0::IntellVoiceEngineMessageType>(
+                INTELL_VOICE_ENGINE_MSG_HEADSET_RECOGNIZE_COMPLETE))) {
             cb_->OnIntellVoiceEngineEvent(event);
         }
     }
@@ -75,21 +78,23 @@ void WakeupAdapterListener::OnIntellVoiceHdiEvent(const IntellVoiceEngineCallBac
 
 void WakeupAdapterListener::BackupCallBackEvent(const IntellVoiceEngineCallBackEvent &event)
 {
-    if (event.msgId != OHOS::HDI::IntelligentVoice::Engine::V1_0::INTELL_VOICE_ENGINE_MSG_RECOGNIZE_COMPLETE) {
-        return;
+    if ((event.msgId == OHOS::HDI::IntelligentVoice::Engine::V1_0::INTELL_VOICE_ENGINE_MSG_RECOGNIZE_COMPLETE) || (
+        event.msgId == static_cast<OHOS::HDI::IntelligentVoice::Engine::V1_0::IntellVoiceEngineMessageType>(
+        INTELL_VOICE_ENGINE_MSG_HEADSET_RECOGNIZE_COMPLETE))) {
+        INTELL_VOICE_LOG_INFO("backup callBackEvent, msg id:%{public}d", event.msgId);
+
+        historyEvent_ = std::make_shared<IntellVoiceEngineCallBackEvent>();
+        if (historyEvent_ == nullptr) {
+            INTELL_VOICE_LOG_INFO("historyEvent_ is nullptr");
+            return;
+        }
+
+        historyEvent_->msgId = event.msgId;
+        historyEvent_->result = event.result;
+        historyEvent_->info = event.info;
+    } else {
+        INTELL_VOICE_LOG_WARN("unknow msg id:%{public}d", event.msgId);
     }
-
-    INTELL_VOICE_LOG_INFO("Backup CallBackEvent");
-
-    historyEvent_ = std::make_shared<IntellVoiceEngineCallBackEvent>();
-    if (historyEvent_ == nullptr) {
-        INTELL_VOICE_LOG_INFO("historyEvent_ is nullptr");
-        return;
-    }
-
-    historyEvent_->msgId = event.msgId;
-    historyEvent_->result = event.result;
-    historyEvent_->info = event.info;
 }
 }
 }

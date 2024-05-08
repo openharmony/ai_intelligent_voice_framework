@@ -18,6 +18,7 @@
 #include "intell_voice_log.h"
 #include "data_operation_callback.h"
 #include "intell_voice_util.h"
+#include "adapter_host_manager.h"
 
 #define LOG_TAG "EngineHostManager"
 
@@ -56,9 +57,8 @@ bool EngineHostManager::Init()
         if (castResult_V1_1 != nullptr) {
             engineHostProxy1_1_ = castResult_V1_1;
         }
-    }
-
-    if (IntellVoiceUtil::GetHdiVersionId(majorVer, minorVer) == IntellVoiceUtil::GetHdiVersionId(1, MINOR_VERSION_2)) {
+    } else if (IntellVoiceUtil::GetHdiVersionId(majorVer, minorVer) ==
+        IntellVoiceUtil::GetHdiVersionId(1, MINOR_VERSION_2)) {
         INTELL_VOICE_LOG_INFO("version is 1.2");
         auto castResult_V1_2 =
             OHOS::HDI::IntelligentVoice::Engine::V1_2::IIntellVoiceEngineManager::CastFrom(engineHostProxy1_0_);
@@ -141,7 +141,7 @@ void EngineHostManager::SetDataOprCallback()
     engineHostProxy1_1_->SetDataOprCallback(dataOprCb_);
 }
 
-std::shared_ptr<AdapterHostManager> EngineHostManager::CreateEngineAdapter(
+std::shared_ptr<IAdapterHostManager> EngineHostManager::CreateEngineAdapter(
     const IntellVoiceEngineAdapterDescriptor &desc)
 {
     INTELL_VOICE_LOG_INFO("enter");
@@ -156,7 +156,7 @@ std::shared_ptr<AdapterHostManager> EngineHostManager::CreateEngineAdapter(
         return nullptr;
     }
 
-    if (!adapter->Init(desc, engineHostProxy1_0_, engineHostProxy1_2_)) {
+    if (!adapter->Init(desc)) {
         return nullptr;
     }
 

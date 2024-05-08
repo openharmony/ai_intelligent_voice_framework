@@ -46,6 +46,8 @@ public:
     int32_t Read(std::vector<uint8_t> &data);
     int32_t StopCapturer();
     int32_t GetWakeupPcm(std::vector<uint8_t> &data);
+    int32_t NotifyHeadsetWakeEvent();
+    int32_t NotifyHeadsetHostEvent(int32_t event);
     sptr<IIntellVoiceEngine> GetEngine()
     {
         return engine_;

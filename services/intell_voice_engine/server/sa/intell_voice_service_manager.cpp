@@ -794,7 +794,6 @@ int32_t IntellVoiceServiceManager::UnloadIntellVoiceService()
             INTELL_VOICE_LOG_ERROR("failed to unload intellvoice service, ret: %{public}d", ret);
             return;
         }
-
         INTELL_VOICE_LOG_INFO("success to notify samgr to unload intell voice service");
     }).detach();
 
@@ -819,6 +818,16 @@ bool IntellVoiceServiceManager::HandleOnIdle()
 void IntellVoiceServiceManager::HandleServiceStop()
 {
     TaskExecutor::AddSyncTask([this]() -> int32_t { return ServiceStopProc(); });
+}
+
+void IntellVoiceServiceManager::HandleHeadsetHostDie()
+{
+    TaskExecutor::AddAsyncTask([this]() {
+        auto engine = GetEngine(INTELL_VOICE_WAKEUP, engines_);
+        if (engine != nullptr) {
+            engine->NotifyHeadsetHostEvent(HEADSET_HOST_ON);
+        }
+    });
 }
 }  // namespace IntellVoiceEngine
 }  // namespace OHOS

@@ -39,18 +39,6 @@ EngineUtil::EngineUtil()
     desc_.adapterType = ADAPTER_TYPE_BUT;
 }
 
-bool EngineUtil::CreateAdapterInner(OHOS::HDI::IntelligentVoice::Engine::V1_0::IntellVoiceEngineAdapterType type)
-{
-    desc_.adapterType = type;
-    adapter_ = EngineHostManager::GetInstance().CreateEngineAdapter(desc_);
-    if (adapter_ == nullptr) {
-        INTELL_VOICE_LOG_ERROR("adapter is nullptr");
-        return false;
-    }
-
-    return true;
-}
-
 int32_t EngineUtil::SetParameter(const std::string &keyValueList)
 {
     if (adapter_ == nullptr) {
@@ -236,12 +224,6 @@ void EngineUtil::ProcDspModel(OHOS::HDI::IntelligentVoice::Engine::V1_0::Content
         return;
     }
     triggerMgr->UpdateModel(model);
-}
-
-void EngineUtil::ReleaseAdapterInner()
-{
-    EngineHostManager::GetInstance().ReleaseEngineAdapter(desc_);
-    adapter_ = nullptr;
 }
 
 void EngineUtil::SetLanguage()

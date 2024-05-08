@@ -31,12 +31,23 @@ int32_t EngineBase::StopCapturer()
     return 0;
 }
 
+
 int32_t EngineBase::GetWakeupPcm(std::vector<uint8_t> & /* data */)
 {
     return 0;
 }
 
+int32_t EngineBase::NotifyHeadsetWakeEvent()
+{
+    return 0;
+}
+
 int32_t EngineBase::Evaluate(const std::string & /* word */, EvaluationResultInfo & /* info */)
+{
+    return 0;
+}
+
+int32_t EngineBase::NotifyHeadsetHostEvent(HeadsetHostEventType /* event */)
 {
     return 0;
 }

@@ -14,13 +14,14 @@
  */
 #include "wakeup_engine_impl.h"
 #include "audio_system_manager.h"
+#include "v1_2/intell_voice_engine_types.h"
 #include "adapter_callback_service.h"
 #include "intell_voice_log.h"
 #include "history_info_mgr.h"
 #include "intell_voice_util.h"
 #include "intell_voice_service_manager.h"
 #include "trigger_manager.h"
-#include "v1_2/intell_voice_engine_types.h"
+#include "engine_host_manager.h"
 
 #define LOG_TAG "WakeupEngineImpl"
 
@@ -346,7 +347,8 @@ int32_t WakeupEngineImpl::HandleGetParam(const StateMsg &msg, State & /* nextSta
 int32_t WakeupEngineImpl::HandleInit(const StateMsg & /* msg */, State &nextState)
 {
     INTELL_VOICE_LOG_INFO("enter");
-    if (!EngineUtil::CreateAdapterInner(WAKEUP_ADAPTER_TYPE)) {
+    if (!EngineUtil::CreateAdapterInner(EngineHostManager::GetInstance(), WAKEUP_ADAPTER_TYPE)) {
+        INTELL_VOICE_LOG_ERROR("failed to create adapter");
         return -1;
     }
 
@@ -460,7 +462,7 @@ int32_t WakeupEngineImpl::HandleRecognizeComplete(const StateMsg &msg, State &ne
         return -1;
     }
     if (*result != 0) {
-        INTELL_VOICE_LOG_INFO("wakeup failed");
+        INTELL_VOICE_LOG_ERROR("wakeup failed");
         StopAudioSource();
         EngineUtil::Stop();
         nextState = State(INITIALIZED);
@@ -478,7 +480,7 @@ int32_t WakeupEngineImpl::HandleReconfirmRecognitionComplete(const StateMsg &msg
 
 int32_t WakeupEngineImpl::HandleStartCapturer(const StateMsg &msg, State &nextState)
 {
-    INTELL_VOICE_LOG_ERROR("enter");
+    INTELL_VOICE_LOG_INFO("enter");
     int32_t *msgBody = reinterpret_cast<int32_t *>(msg.inMsg);
     if (msgBody == nullptr) {
         INTELL_VOICE_LOG_ERROR("msgBody is nullptr");
@@ -509,7 +511,7 @@ int32_t WakeupEngineImpl::HandleRead(const StateMsg &msg, State & /* nextState *
 
 int32_t WakeupEngineImpl::HandleStopCapturer(const StateMsg & /* msg */, State &nextState)
 {
-    INTELL_VOICE_LOG_ERROR("enter");
+    INTELL_VOICE_LOG_INFO("enter");
     StopAudioSource();
     EngineUtil::Stop();
     nextState = State(INITIALIZED);
@@ -518,7 +520,7 @@ int32_t WakeupEngineImpl::HandleStopCapturer(const StateMsg & /* msg */, State &
 
 int32_t WakeupEngineImpl::HandleRecognizingTimeout(const StateMsg & /* msg */, State &nextState)
 {
-    INTELL_VOICE_LOG_ERROR("enter");
+    INTELL_VOICE_LOG_INFO("enter");
     StopAudioSource();
     EngineUtil::Stop();
     nextState = State(INITIALIZED);
@@ -542,8 +544,9 @@ int32_t WakeupEngineImpl::HandleGetWakeupPcm(const StateMsg &msg, State & /* nex
 
 int32_t WakeupEngineImpl::HandleResetAdapter(const StateMsg & /* msg */, State &nextState)
 {
-    INTELL_VOICE_LOG_ERROR("enter");
-    if (!EngineUtil::CreateAdapterInner(WAKEUP_ADAPTER_TYPE)) {
+    INTELL_VOICE_LOG_INFO("enter");
+    if (!EngineUtil::CreateAdapterInner(EngineHostManager::GetInstance(), WAKEUP_ADAPTER_TYPE)) {
+        INTELL_VOICE_LOG_ERROR("failed to create adapter");
         return -1;
     }
     adapter_->SetCallback(callback_);
@@ -561,7 +564,7 @@ int32_t WakeupEngineImpl::HandleResetAdapter(const StateMsg & /* msg */, State &
     };
     if (adapter_->Attach(adapterInfo) != 0) {
         INTELL_VOICE_LOG_ERROR("failed to attach");
-        EngineUtil::ReleaseAdapterInner();
+        EngineUtil::ReleaseAdapterInner(EngineHostManager::GetInstance());
         return -1;
     }
 
@@ -575,7 +578,7 @@ int32_t WakeupEngineImpl::HandleRelease(const StateMsg & /* msg */, State &nextS
     StopAudioSource();
     if (adapter_ != nullptr) {
         adapter_->Detach();
-        ReleaseAdapterInner();
+        ReleaseAdapterInner(EngineHostManager::GetInstance());
     }
     nextState = State(IDLE);
     return 0;

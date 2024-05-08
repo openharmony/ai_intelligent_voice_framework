@@ -24,6 +24,7 @@
 #include "adapter_callback_service.h"
 #include "intell_voice_service_manager.h"
 #include "update_engine_utils.h"
+#include "engine_host_manager.h"
 
 #define LOG_TAG "UpdateEngine"
 
@@ -80,7 +81,8 @@ void UpdateEngine::OnUpdateEvent(int32_t msgId, int32_t result)
 
 bool UpdateEngine::Init(const std::string &param)
 {
-    if (!EngineUtil::CreateAdapterInner(UPDATE_ADAPTER_TYPE)) {
+    if (!EngineUtil::CreateAdapterInner(EngineHostManager::GetInstance(), UPDATE_ADAPTER_TYPE)) {
+        INTELL_VOICE_LOG_ERROR("failed to create adapter");
         return false;
     }
 
@@ -103,7 +105,7 @@ bool UpdateEngine::Init(const std::string &param)
     int ret = Attach(info);
     if (ret != 0) {
         INTELL_VOICE_LOG_ERROR("attach err");
-        ReleaseAdapterInner();
+        EngineUtil::ReleaseAdapterInner(EngineHostManager::GetInstance());
         return false;
     }
 
@@ -154,7 +156,7 @@ int32_t UpdateEngine::Detach(void)
     }
 
     int ret =  adapter_->Detach();
-    ReleaseAdapterInner();
+    EngineUtil::ReleaseAdapterInner(EngineHostManager::GetInstance());
 
     if (updateResult_ == UpdateState::UPDATE_STATE_DEFAULT) {
         INTELL_VOICE_LOG_WARN("detach defore receive commit enroll msg");
