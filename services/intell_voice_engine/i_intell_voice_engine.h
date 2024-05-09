@@ -38,6 +38,11 @@ enum IntellVoiceUpdateSceneType {
     INTELL_VOICE_SCENE_TYPE_BUT
 };
 
+enum HeadsetHostEventType {
+    HEADSET_HOST_OFF = 0,
+    HEADSET_HOST_ON = 1,
+};
+
 struct IntellVoiceEngineInfo {
     std::string wakeupPhrase;
     bool isPcmFromExternal { false };
@@ -64,7 +69,9 @@ public:
         INTELL_VOICE_ENGINE_READ,
         INTELL_VOICE_ENGINE_STOP_CAPTURER,
         INTELL_VOICE_ENGINE_GET_WAKEUP_PCM,
-        INTELL_VOICE_ENGINE_EVALUATE
+        INTELL_VOICE_ENGINE_EVALUATE,
+        INTELL_VOICE_ENGINE_NOTIFY_HEADSET_WAKE_EVENT,
+        INTELL_VOICE_ENGINE_NOTIFY_HEADSET_HOSTEVENT
     };
 
     virtual void SetCallback(sptr<IRemoteObject> object) = 0;
@@ -80,6 +87,8 @@ public:
     virtual int32_t StopCapturer() = 0;
     virtual int32_t GetWakeupPcm(std::vector<uint8_t> &data) = 0;
     virtual int32_t Evaluate(const std::string &word, EvaluationResultInfo &info) = 0;
+    virtual int32_t NotifyHeadsetWakeEvent() = 0;
+    virtual int32_t NotifyHeadsetHostEvent(HeadsetHostEventType event) = 0;
 };
 }
 }

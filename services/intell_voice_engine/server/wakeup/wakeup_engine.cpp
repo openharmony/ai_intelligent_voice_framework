@@ -14,12 +14,15 @@
  */
 #include "wakeup_engine.h"
 #include "ability_manager_client.h"
+#include "idevmgr_hdi.h"
 #include "intell_voice_service_manager.h"
 #include "intell_voice_log.h"
+#include "headset_host_manager.h"
 
 #define LOG_TAG "WakeupEngine"
 
 using namespace OHOS::IntellVoiceUtils;
+using OHOS::HDI::DeviceManager::V1_0::IDeviceManager;
 
 namespace OHOS {
 namespace IntellVoiceEngine {
@@ -36,7 +39,15 @@ WakeupEngine::~WakeupEngine()
 void WakeupEngine::OnDetected(int32_t uuid)
 {
     INTELL_VOICE_LOG_INFO("enter, uuid is %{public}d", uuid);
-    std::thread([uuid]() { WakeupEngine::StartAbility(uuid); }).detach();
+    {
+        std::lock_guard<std::mutex> lock(headsetMutex_);
+        if ((headsetImpl_ != nullptr) && (headsetImpl_->GetHeadsetAwakeState() == 1)) {
+            INTELL_VOICE_LOG_INFO("headset wakeup is exist");
+            return;
+        }
+    }
+
+    std::thread([uuid]() { WakeupEngine::StartAbility(GetEventValue(uuid)); }).detach();
     StateMsg msg(START_RECOGNIZE, &uuid, sizeof(int32_t));
     if (ROLE(WakeupEngineImpl).Handle(msg) != 0) {
         INTELL_VOICE_LOG_WARN("start failed");
@@ -67,6 +78,12 @@ void WakeupEngine::SetCallback(sptr<IRemoteObject> object)
     SetListenerMsg listenerMsg(callback);
     StateMsg msg(SET_LISTENER, &listenerMsg, sizeof(SetListenerMsg));
     ROLE(WakeupEngineImpl).Handle(msg);
+    {
+        std::lock_guard<std::mutex> lock(headsetMutex_);
+        if (headsetImpl_ != nullptr) {
+            headsetImpl_->Handle(msg);
+        }
+    }
 }
 
 int32_t WakeupEngine::Attach(const IntellVoiceEngineInfo & /* info */)
@@ -98,6 +115,84 @@ int32_t WakeupEngine::StopCapturer()
 {
     StateMsg msg(STOP_CAPTURER);
     return ROLE(WakeupEngineImpl).Handle(msg);
+}
+
+int32_t WakeupEngine::NotifyHeadsetWakeEvent()
+{
+    INTELL_VOICE_LOG_INFO("enter");
+    std::lock_guard<std::mutex> lock(headsetMutex_);
+    if (headsetImpl_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("headset impl is nullptr");
+        return -1;
+    }
+
+    std::thread([]() { WakeupEngine::StartAbility("headset_event"); }).detach();
+
+    StateMsg msg(START_RECOGNIZE);
+    return headsetImpl_->Handle(msg);
+}
+
+int32_t WakeupEngine::HandleHeadsetOff()
+{
+    {
+        std::lock_guard<std::mutex> lock(headsetMutex_);
+        if (headsetImpl_ != nullptr) {
+            StateMsg msg(RELEASE);
+            if (headsetImpl_->Handle(msg) != 0) {
+                INTELL_VOICE_LOG_ERROR("release headset wakeup engine impl failed");
+            }
+            headsetImpl_ = nullptr;
+        }
+    }
+    HeadsetHostManager::GetInstance().DeregisterEngineHDIDeathRecipient();
+    auto devmgr = IDeviceManager::Get();
+    if (devmgr == nullptr) {
+        INTELL_VOICE_LOG_ERROR("get devmgr failed");
+        return -1;
+    }
+    devmgr->UnloadDevice("intell_voice_headset_manager_service");
+    return 0;
+}
+
+int32_t WakeupEngine::HandleHeadsetOn()
+{
+    auto devmgr = IDeviceManager::Get();
+    if (devmgr == nullptr) {
+        INTELL_VOICE_LOG_ERROR("get devmgr failed");
+        return -1;
+    }
+    devmgr->LoadDevice("intell_voice_headset_manager_service");
+    if (!HeadsetHostManager::GetInstance().Init()) {
+        INTELL_VOICE_LOG_ERROR("init headset host failed");
+        return -1;
+    }
+
+    std::lock_guard<std::mutex> lock(headsetMutex_);
+    headsetImpl_ = UniquePtrFactory<HeadsetWakeupEngineImpl>::CreateInstance();
+    if (headsetImpl_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("failed to allocate headset impl");
+        return -1;
+    }
+
+    StateMsg msg(INIT);
+    if (headsetImpl_->Handle(msg) != 0) {
+        INTELL_VOICE_LOG_ERROR("init headset wakeup engine impl failed");
+        return -1;
+    }
+    return 0;
+}
+
+int32_t WakeupEngine::NotifyHeadsetHostEvent(HeadsetHostEventType event)
+{
+    INTELL_VOICE_LOG_INFO("enter, event:%{public}d", event);
+    if (event == HEADSET_HOST_OFF) {
+        return HandleHeadsetOff();
+    } else if (event == HEADSET_HOST_ON) {
+        return HandleHeadsetOn();
+    }
+
+    INTELL_VOICE_LOG_WARN("invalid event:%{public}d", event);
+    return 0;
 }
 
 int32_t WakeupEngine::Detach(void)
@@ -159,7 +254,7 @@ std::string WakeupEngine::GetEventValue(int32_t uuid)
     return "recognition_event";
 }
 
-void WakeupEngine::StartAbility(int32_t uuid)
+void WakeupEngine::StartAbility(const std::string &event)
 {
     AAFwk::Want want;
     HistoryInfoMgr &historyInfoMgr = HistoryInfoMgr::GetInstance();
@@ -170,7 +265,7 @@ void WakeupEngine::StartAbility(int32_t uuid)
     want.SetElementName(bundleName, abilityName);
     want.SetParam("serviceName", std::string("intell_voice"));
     want.SetParam("servicePid", getpid());
-    want.SetParam("eventType", GetEventValue(uuid));
+    want.SetParam("eventType", event);
     AAFwk::AbilityManagerClient::GetInstance()->StartAbility(want);
 }
 

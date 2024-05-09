@@ -23,6 +23,7 @@
 #include "adapter_callback_service.h"
 #include "intell_voice_service_manager.h"
 #include "update_engine_utils.h"
+#include "engine_host_manager.h"
 
 #define LOG_TAG "EnrollEngine"
 
@@ -72,7 +73,11 @@ void EnrollEngine::OnEnrollComplete()
 
 bool EnrollEngine::Init(const std::string &param)
 {
-    return EngineUtil::CreateAdapterInner(ENROLL_ADAPTER_TYPE);
+    if (!EngineUtil::CreateAdapterInner(EngineHostManager::GetInstance(), ENROLL_ADAPTER_TYPE)) {
+        INTELL_VOICE_LOG_ERROR("failed to create adapter");
+        return false;
+    }
+    return true;
 }
 
 void EnrollEngine::SetCallback(sptr<IRemoteObject> object)
@@ -147,7 +152,7 @@ int32_t EnrollEngine::Detach(void)
     }
 
     int32_t ret = adapter_->Detach();
-    ReleaseAdapterInner();
+    ReleaseAdapterInner(EngineHostManager::GetInstance());
     return ret;
 }
 

@@ -19,6 +19,7 @@ ohos_unittest("multiple_capturer_test") {
   module_out_path = module_output_path
   include_dirs = [
     "./include",
+    "../../../interfaces/inner_api/native",
     "../../../utils",
     "../../../services/intell_voice_engine",
     "../../../services/intell_voice_engine/server/base",
@@ -26,6 +27,7 @@ ohos_unittest("multiple_capturer_test") {
     "../../../services/intell_voice_engine/server/sa",
     "../../../services/intell_voice_engine/server/utils",
     "../../../services/intell_voice_engine/server/wakeup",
+    "../../../services/intell_voice_engine/server/wakeup/headset",
   ]
 
   cflags_cc = [

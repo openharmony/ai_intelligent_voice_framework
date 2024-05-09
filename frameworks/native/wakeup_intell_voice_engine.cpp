@@ -131,5 +131,25 @@ int32_t WakeupIntellVoiceEngine::GetWakeupPcm(std::vector<uint8_t> &data)
 
     return engine_->GetWakeupPcm(data);
 }
+
+int32_t WakeupIntellVoiceEngine::NotifyHeadsetWakeEvent()
+{
+    INTELL_VOICE_LOG_INFO("enter");
+    if (engine_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("engine is null");
+        return -1;
+    }
+    return engine_->NotifyHeadsetWakeEvent();
+}
+
+int32_t WakeupIntellVoiceEngine::NotifyHeadsetHostEvent(int32_t event)
+{
+    INTELL_VOICE_LOG_INFO("enter, event:%{public}d", event);
+    if (engine_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("engine is null");
+        return -1;
+    }
+    return engine_->NotifyHeadsetHostEvent(static_cast<OHOS::IntellVoiceEngine::HeadsetHostEventType>(event));
+}
 }
 }

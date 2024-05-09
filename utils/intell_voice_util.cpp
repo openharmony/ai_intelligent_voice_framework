@@ -103,6 +103,12 @@ bool IntellVoiceUtil::VerifyClientPermission(const std::string &permissionName)
 bool IntellVoiceUtil::CheckIsSystemApp()
 {
     uint64_t fullTokenId = IPCSkeleton::GetCallingFullTokenID();
+    if (Security::AccessToken::AccessTokenKit::GetTokenTypeFlag(IPCSkeleton::GetCallingTokenID()) ==
+    Security::AccessToken::TOKEN_NATIVE) {
+        INTELL_VOICE_LOG_INFO("calling by native");
+        return true;
+    }
+
     if (!Security::AccessToken::TokenIdKit::IsSystemAppByFullTokenID(fullTokenId)) {
         INTELL_VOICE_LOG_INFO("Not system app, permission reject tokenid: %{public}" PRIu64 "", fullTokenId);
         return false;

@@ -229,5 +229,30 @@ int32_t IntellVoiceEngineProxy::Evaluate(const std::string &word, EvaluationResu
     info.resultCode = static_cast<OHOS::HDI::IntelligentVoice::Engine::V1_2::EvaluationResultCode>(reply.ReadInt32());
     return ret;
 }
+
+int32_t IntellVoiceEngineProxy::NotifyHeadsetWakeEvent()
+{
+    INTELL_VOICE_LOG_ERROR("enter");
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    data.WriteInterfaceToken(IIntellVoiceEngine::GetDescriptor());
+    Remote()->SendRequest(INTELL_VOICE_ENGINE_NOTIFY_HEADSET_WAKE_EVENT, data, reply, option);
+    return reply.ReadInt32();
+}
+
+int32_t IntellVoiceEngineProxy::NotifyHeadsetHostEvent(HeadsetHostEventType event)
+{
+    INTELL_VOICE_LOG_ERROR("enter");
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    data.WriteInterfaceToken(IIntellVoiceEngine::GetDescriptor());
+    data.WriteInt32(event);
+    Remote()->SendRequest(INTELL_VOICE_ENGINE_NOTIFY_HEADSET_HOSTEVENT, data, reply, option);
+    return reply.ReadInt32();
+}
 }
 }

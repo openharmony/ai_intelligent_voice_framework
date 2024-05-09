@@ -69,6 +69,8 @@ ohos_shared_library("intell_voice_server") {
     "intell_voice_engine/server/enroll/enroll_engine.cpp",
     "intell_voice_engine/server/hdi_adapter/adapter_host_manager.cpp",
     "intell_voice_engine/server/hdi_adapter/engine_host_manager.cpp",
+    "intell_voice_engine/server/hdi_adapter/headset_adapter_host_manager.cpp",
+    "intell_voice_engine/server/hdi_adapter/headset_host_manager.cpp",
     "intell_voice_engine/server/sa/intell_voice_engine_arbitration.cpp",
     "intell_voice_engine/server/sa/intell_voice_engine_callback_proxy.cpp",
     "intell_voice_engine/server/sa/intell_voice_engine_stub.cpp",
@@ -87,6 +89,8 @@ ohos_shared_library("intell_voice_server") {
     "intell_voice_engine/server/utils/switch_observer.cpp",
     "intell_voice_engine/server/utils/switch_provider.cpp",
     "intell_voice_engine/server/utils/system_event_observer.cpp",
+    "intell_voice_engine/server/wakeup/headset/headset_wakeup_engine_impl.cpp",
+    "intell_voice_engine/server/wakeup/headset/headset_wakeup_wrapper.cpp",
     "intell_voice_engine/server/wakeup/wakeup_adapter_listener.cpp",
     "intell_voice_engine/server/wakeup/wakeup_engine.cpp",
     "intell_voice_engine/server/wakeup/wakeup_engine_impl.cpp",
@@ -110,6 +114,7 @@ ohos_shared_library("intell_voice_server") {
 
   include_dirs = [
     "../../../ai/intelligent_voice_framework/utils",
+    "../../../ai/intelligent_voice_framework/interfaces/inner_api/native",
     "intell_voice_engine",
     "intell_voice_engine/server/base",
     "intell_voice_engine/server/enroll",
@@ -120,6 +125,7 @@ ohos_shared_library("intell_voice_server") {
     "intell_voice_engine/server/sa",
     "intell_voice_engine/server/utils",
     "intell_voice_engine/server/wakeup",
+    "intell_voice_engine/server/wakeup/headset",
     "intell_voice_trigger/server",
     "intell_voice_trigger/server/connector_mgr",
   ]

@@ -17,7 +17,7 @@
 #include "v1_0/iintell_voice_engine_manager.h"
 #include "v1_2/iintell_voice_engine_manager.h"
 #include "intell_voice_death_recipient.h"
-#include "adapter_host_manager.h"
+#include "i_adapter_host_manager.h"
 
 namespace OHOS {
 namespace IntellVoiceEngine {
@@ -40,12 +40,24 @@ public:
     bool RegisterEngineHDIDeathRecipient();
     void DeregisterEngineHDIDeathRecipient();
     void SetDataOprCallback();
-    std::shared_ptr<AdapterHostManager> CreateEngineAdapter(const IntellVoiceEngineAdapterDescriptor &desc);
+    std::shared_ptr<IAdapterHostManager> CreateEngineAdapter(const IntellVoiceEngineAdapterDescriptor &desc);
     void ReleaseEngineAdapter(const IntellVoiceEngineAdapterDescriptor &desc);
     int GetUploadFiles(int numMax, std::vector<UploadHdiFile> &files);
     int32_t GetWakeupSourceFilesList(std::vector<std::string>& cloneFiles);
     int32_t GetWakeupSourceFile(const std::string &filePath, std::vector<uint8_t> &buffer);
     int32_t SendWakeupFile(const std::string &filePath, const std::vector<uint8_t> &buffer);
+    const sptr<OHOS::HDI::IntelligentVoice::Engine::V1_0::IIntellVoiceEngineManager> &GetEngineHostProxy1_0()
+    {
+        return engineHostProxy1_0_;
+    }
+    const sptr<OHOS::HDI::IntelligentVoice::Engine::V1_1::IIntellVoiceEngineManager> &GetEngineHostProxy1_1()
+    {
+        return engineHostProxy1_1_;
+    }
+    const sptr<OHOS::HDI::IntelligentVoice::Engine::V1_2::IIntellVoiceEngineManager> &GetEngineHostProxy1_2()
+    {
+        return engineHostProxy1_2_;
+    }
 
 private:
     static void OnEngineHDIDiedCallback();
