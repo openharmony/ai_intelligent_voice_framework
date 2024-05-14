@@ -55,6 +55,8 @@ private:
     int32_t AttachInner(const IntellVoiceEngineInfo &info);
     bool StartAudioSource();
     void StopAudioSource();
+    void SetParamOnAudioStart(int32_t uuid);
+    void SetParamOnAudioStop();
     bool CreateWakeupSourceStopCallback();
     void DestroyWakeupSourceStopCallback();
     void OnWakeupEvent(int32_t msgId, int32_t result);

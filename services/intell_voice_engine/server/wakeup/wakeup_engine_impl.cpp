@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 #include "wakeup_engine_impl.h"
+#include "audio_asr.h"
 #include "audio_system_manager.h"
 #include "v1_2/intell_voice_engine_types.h"
 #include "adapter_callback_service.h"
@@ -40,7 +41,7 @@ static constexpr int32_t SAMPLE_RATE = 16000;
 static const std::string WAKEUP_SOURCE_CHANNEL = "wakeup_source_channel";
 static constexpr std::string_view DEFAULT_WAKEUP_PHRASE = "\xE5\xB0\x8F\xE8\x89\xBA\xE5\xB0\x8F\xE8\x89\xBA";
 static constexpr int64_t RECOGNIZING_TIMEOUT_US = 10 * 1000 * 1000; //10s
-static constexpr int64_t RECOGNIZE_COMPLETE_TIMEOUT_US = 1 * 1000; //1ms
+static constexpr int64_t RECOGNIZE_COMPLETE_TIMEOUT_US = 2 * 1000 * 1000; //2s
 static constexpr int64_t READ_CAPTURER_TIMEOUT_US = 10 * 1000 * 1000; //10s
 
 WakeupEngineImpl::WakeupEngineImpl() : ModuleStates(State(IDLE), "WakeupEngineImpl", "WakeupThread")
@@ -187,6 +188,35 @@ int32_t WakeupEngineImpl::AttachInner(const IntellVoiceEngineInfo &info)
     return adapter_->Attach(adapterInfo);
 }
 
+void WakeupEngineImpl::SetParamOnAudioStart(int32_t uuid)
+{
+    INTELL_VOICE_LOG_ERROR("enter");
+    auto audioSystemManager = AudioSystemManager::GetInstance();
+    if (audioSystemManager == nullptr) {
+        INTELL_VOICE_LOG_ERROR("audioSystemManager is nullptr");
+        return;
+    }
+
+    audioSystemManager->SetAsrAecMode(AsrAecMode::STANDARD);
+    if (uuid == PROXIMAL_WAKEUP_MODEL_UUID) {
+        audioSystemManager->SetAsrNoiseSuppressionMode(AsrNoiseSuppressionMode::NEAR_FIELD);
+    } else {
+        audioSystemManager->SetAsrNoiseSuppressionMode(AsrNoiseSuppressionMode::STANDARD);
+    }
+}
+
+void WakeupEngineImpl::SetParamOnAudioStop()
+{
+    INTELL_VOICE_LOG_ERROR("enter");
+    auto audioSystemManager = AudioSystemManager::GetInstance();
+    if (audioSystemManager == nullptr) {
+        INTELL_VOICE_LOG_ERROR("audioSystemManager is nullptr");
+        return;
+    }
+    audioSystemManager->SetAsrAecMode(AsrAecMode::BYPASS);
+    audioSystemManager->SetAsrNoiseSuppressionMode(AsrNoiseSuppressionMode::BYPASS);
+}
+
 bool WakeupEngineImpl::CreateWakeupSourceStopCallback()
 {
     if (wakeupSourceStopCallback_ != nullptr) {
@@ -280,7 +310,7 @@ void WakeupEngineImpl::StopAudioSource()
         INTELL_VOICE_LOG_INFO("audio source is nullptr, no need to stop");
         return;
     }
-
+    SetParamOnAudioStop();
     audioSource_->Stop();
     audioSource_ = nullptr;
     WakeupSourceProcess::Release();
@@ -435,8 +465,11 @@ int32_t WakeupEngineImpl::HandleStart(const StateMsg &msg, State &nextState)
         return -1;
     }
 
+    SetParamOnAudioStart(*msgBody);
+
     if (!StartAudioSource()) {
         INTELL_VOICE_LOG_ERROR("start audio source failed");
+        SetParamOnAudioStop();
         adapter_->Stop();
         return -1;
     }
