@@ -52,7 +52,7 @@ private:
     virtual void HandleUpdateComplete(UpdateState result, const std::string &param) {};
     virtual void HandleUpdateRetry() {};
     void OnTimerEvent(OHOS::IntellVoiceUtils::TimerEvent &info) override;
-    void StartUpdateTimer();
+    bool StartUpdateTimer();
     void StopUpdateTimer();
     bool IsNeedRetryUpdate();
     static void SetUpdateState(bool state)

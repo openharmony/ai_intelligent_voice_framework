@@ -262,6 +262,10 @@ void WakeupEngine::StartAbility(const std::string &event)
     std::string bundleName = historyInfoMgr.GetWakeupEngineBundleName();
     std::string abilityName = historyInfoMgr.GetWakeupEngineAbilityName();
     INTELL_VOICE_LOG_INFO("bundleName:%{public}s, abilityName:%{public}s", bundleName.c_str(), abilityName.c_str());
+    if (bundleName.empty() || abilityName.empty()) {
+        INTELL_VOICE_LOG_ERROR("bundle name is empty or ability name is empty");
+        return;
+    }
     want.SetElementName(bundleName, abilityName);
     want.SetParam("serviceName", std::string("intell_voice"));
     want.SetParam("servicePid", getpid());

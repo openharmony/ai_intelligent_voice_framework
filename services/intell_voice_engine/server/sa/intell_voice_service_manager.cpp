@@ -412,7 +412,7 @@ void IntellVoiceServiceManager::OnSwitchChange(const std::string &switchKey)
             HandleUnloadIntellVoiceService(false);
         }
     } else if (switchKey == IMPROVE_KEY) {
-        TaskExecutor::AddSyncTask([this]() {
+        TaskExecutor::AddSyncTask([this]() -> int32_t {
             auto engine = GetEngine(INTELL_VOICE_WAKEUP, engines_);
             if (engine != nullptr) {
                 SetImproveParam(engine);
@@ -420,13 +420,18 @@ void IntellVoiceServiceManager::OnSwitchChange(const std::string &switchKey)
             return 0;
         });
     } else if (switchKey == SHORTWORD_KEY) {
-        TaskExecutor::AddSyncTask([this]() {
+        TaskExecutor::AddSyncTask([this]() -> int32_t {
             INTELL_VOICE_LOG_INFO("short word switch change");
+            if ((IsEngineExist(INTELL_VOICE_ENROLL)) || (IsEngineExist(INTELL_VOICE_UPDATE))) {
+                INTELL_VOICE_LOG_INFO("enroll engine or update engine exist, do nothing");
+                return 0;
+            }
             StopDetection(VOICE_WAKEUP_MODEL_UUID);
             StopDetection(PROXIMAL_WAKEUP_MODEL_UUID);
             CreateOrResetWakeupEngine();
             StartDetection(VOICE_WAKEUP_MODEL_UUID);
             StartDetection(PROXIMAL_WAKEUP_MODEL_UUID);
+            return 0;
         });
     }
 }

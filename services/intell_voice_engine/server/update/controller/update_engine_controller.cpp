@@ -121,7 +121,7 @@ int UpdateEngineController::CreateUpdateEngineUntilTime(std::shared_ptr<IUpdateS
 
     retryTimesLimit_ = updateStrategy->GetRetryTimes();
     if (retryTimes_ < retryTimesLimit_) {
-        TimerMgr::Start(nullptr);
+        TimerMgr::Start("UpdateThread", nullptr);
     }
 
     updateStrategy_ = updateStrategy;
@@ -132,22 +132,22 @@ int UpdateEngineController::CreateUpdateEngineUntilTime(std::shared_ptr<IUpdateS
     return 0;
 }
 
-void UpdateEngineController::StartUpdateTimer()
+bool UpdateEngineController::StartUpdateTimer()
 {
     if (timerId_ != INVALID_ID) {
         INTELL_VOICE_LOG_INFO("timer already start %{public}d", timerId_);
-        return;
+        return true;
     }
 
     timerId_ = SetTimer(0, delaySecond_ * MS_PER_S * US_PER_MS, 0, this);
     if (timerId_ == INVALID_ID) {
         INTELL_VOICE_LOG_ERROR("timerId %{public}d is invalid", timerId_);
-        return;
+        return false;
     }
 
     retryTimes_++;
-
-    INTELL_VOICE_LOG_INFO("start update timer");
+    INTELL_VOICE_LOG_INFO("start update timer succeed");
+    return true;
 }
 
 void UpdateEngineController::StopUpdateTimer()
@@ -208,8 +208,8 @@ void UpdateEngineController::UpdateCompleteProc(UpdateState result, const std::s
     updateResult_ = result;
     StopUpdateTimer();
 
-    if (IsNeedRetryUpdate()) {
-        StartUpdateTimer();
+    if (IsNeedRetryUpdate() && StartUpdateTimer()) {
+        INTELL_VOICE_LOG_INFO("retry to update");
     } else {
         if (updateStrategy_ != nullptr) {
             updateStrategy_->OnUpdateCompleteCallback(result != UpdateState::UPDATE_STATE_COMPLETE_SUCCESS, true);

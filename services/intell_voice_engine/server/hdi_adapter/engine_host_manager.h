@@ -46,15 +46,15 @@ public:
     int32_t GetWakeupSourceFilesList(std::vector<std::string>& cloneFiles);
     int32_t GetWakeupSourceFile(const std::string &filePath, std::vector<uint8_t> &buffer);
     int32_t SendWakeupFile(const std::string &filePath, const std::vector<uint8_t> &buffer);
-    const sptr<OHOS::HDI::IntelligentVoice::Engine::V1_0::IIntellVoiceEngineManager> &GetEngineHostProxy1_0()
+    const sptr<OHOS::HDI::IntelligentVoice::Engine::V1_0::IIntellVoiceEngineManager> &GetEngineHostProxy1_0() const
     {
         return engineHostProxy1_0_;
     }
-    const sptr<OHOS::HDI::IntelligentVoice::Engine::V1_1::IIntellVoiceEngineManager> &GetEngineHostProxy1_1()
+    const sptr<OHOS::HDI::IntelligentVoice::Engine::V1_1::IIntellVoiceEngineManager> &GetEngineHostProxy1_1() const
     {
         return engineHostProxy1_1_;
     }
-    const sptr<OHOS::HDI::IntelligentVoice::Engine::V1_2::IIntellVoiceEngineManager> &GetEngineHostProxy1_2()
+    const sptr<OHOS::HDI::IntelligentVoice::Engine::V1_2::IIntellVoiceEngineManager> &GetEngineHostProxy1_2() const
     {
         return engineHostProxy1_2_;
     }

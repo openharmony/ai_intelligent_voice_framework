@@ -39,7 +39,7 @@ public:
     void DeregisterEngineHDIDeathRecipient();
     std::shared_ptr<IAdapterHostManager> CreateEngineAdapter(const IntellVoiceEngineAdapterDescriptor &desc);
     void ReleaseEngineAdapter(const IntellVoiceEngineAdapterDescriptor &desc);
-    const sptr<OHOS::HDI::IntelligentVoice::Engine::V1_0::IIntellVoiceEngineManager> &GetHeadsetHostProxy1_0()
+    const sptr<OHOS::HDI::IntelligentVoice::Engine::V1_0::IIntellVoiceEngineManager> &GetHeadsetHostProxy1_0() const
     {
         return headsetHostProxy1_0_;
     }
