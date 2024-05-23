@@ -29,6 +29,7 @@ using namespace OHOS::IntellVoiceEngine;
 using namespace OHOS::IntellVoice;
 
 namespace OHOS {
+namespace IntellVoiceTests {
 class EngineEventFuzzCallback : public OHOS::IntellVoiceEngine::IIntellVoiceEngineEventCallback {
 public:
     explicit EngineEventFuzzCallback() = default;
@@ -104,13 +105,14 @@ void WakeupEngineFuzzTest(const uint8_t* data, size_t size)
     wakeEngine->Release();
 }
 } // namespace.OHOS
+} // namespace.IntellVoiceTests
 
 /* Fuzzer entry point */
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
     /* Run your code on data */
-    OHOS::IntellVoiceManagerFuzzTest(data, size);
-    OHOS::EnrollEngineFuzzTest(data, size);
-    OHOS::WakeupEngineFuzzTest(data, size);
+    OHOS::IntellVoiceTests::IntellVoiceManagerFuzzTest(data, size);
+    OHOS::IntellVoiceTests::EnrollEngineFuzzTest(data, size);
+    OHOS::IntellVoiceTests::WakeupEngineFuzzTest(data, size);
     return 0;
 }

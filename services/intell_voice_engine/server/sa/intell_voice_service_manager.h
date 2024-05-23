@@ -55,7 +55,7 @@ public:
     }
     static bool GetEnrollResult(IntellVoiceEngineType type)
     {
-        if (type >= ENGINE_TYPE_BUT) {
+        if ((type < INTELL_VOICE_ENROLL) || (type >= ENGINE_TYPE_BUT)) {
             return false;
         }
 
