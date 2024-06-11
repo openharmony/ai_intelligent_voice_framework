@@ -52,25 +52,24 @@ void WakeupAdapterListener::SetCallback(const sptr<IIntelligentVoiceEngineCallba
 
 void WakeupAdapterListener::OnIntellVoiceHdiEvent(const IntellVoiceEngineCallBackEvent &event)
 {
-    INTELL_VOICE_LOG_INFO("OnIntellVoiceHdiEvent");
-    wakeupEventCb_(event.msgId, event.result);
+    INTELL_VOICE_LOG_INFO("enter");
+    wakeupEventCb_(event);
+}
 
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        if (cb_ == nullptr) {
-            INTELL_VOICE_LOG_WARN("cb_ is nullptr");
-            BackupCallBackEvent(event);
-            return;
-        }
+void WakeupAdapterListener::Notify(const IntellVoiceEngineCallBackEvent &event)
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (cb_ == nullptr) {
+        INTELL_VOICE_LOG_WARN("cb_ is nullptr");
+        BackupCallBackEvent(event);
+        return;
+    }
 
-        historyEvent_ = nullptr;
-        if ((event.msgId == OHOS::HDI::IntelligentVoice::Engine::V1_0::INTELL_VOICE_ENGINE_MSG_RECOGNIZE_COMPLETE) ||
-            (event.msgId == static_cast<OHOS::HDI::IntelligentVoice::Engine::V1_0::IntellVoiceEngineMessageType>(
-                INTELL_VOICE_ENGINE_MSG_RECONFIRM_RECOGNITION_COMPLETE)) || (
-                event.msgId == static_cast<OHOS::HDI::IntelligentVoice::Engine::V1_0::IntellVoiceEngineMessageType>(
-                INTELL_VOICE_ENGINE_MSG_HEADSET_RECOGNIZE_COMPLETE))) {
-            cb_->OnIntellVoiceEngineEvent(event);
-        }
+    historyEvent_ = nullptr;
+    if ((event.msgId == OHOS::HDI::IntelligentVoice::Engine::V1_0::INTELL_VOICE_ENGINE_MSG_RECOGNIZE_COMPLETE) ||
+        (event.msgId == static_cast<OHOS::HDI::IntelligentVoice::Engine::V1_0::IntellVoiceEngineMessageType>(
+            INTELL_VOICE_ENGINE_MSG_HEADSET_RECOGNIZE_COMPLETE))) {
+        cb_->OnIntellVoiceEngineEvent(event);
     }
 }
 

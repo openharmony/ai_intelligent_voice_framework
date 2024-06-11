@@ -36,6 +36,7 @@ private:
     std::map<uint32_t, std::function<int32_t(MessageParcel &data, MessageParcel &reply)>> processServiceFuncMap_;
     int32_t CreateEngineInner(MessageParcel &data, MessageParcel &reply);
     int32_t ReleaseEngineInner(MessageParcel &data, MessageParcel &reply);
+    int32_t SetParameterInner(MessageParcel &data, MessageParcel &reply);
     int32_t GetParameterInner(MessageParcel &data, MessageParcel &reply);
     int32_t GetReportedFilesInner(MessageParcel &data, MessageParcel &reply);
     int32_t GetCloneFileListInner(MessageParcel &data, MessageParcel &reply);

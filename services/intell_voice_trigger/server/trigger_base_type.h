@@ -30,6 +30,11 @@ public:
         PROXIMAL_WAKEUP_TYPE = 2,
     };
 
+    enum TriggerModelVersion {
+        MODLE_VERSION_1 = 1,
+        MODLE_VERSION_2 = 2,
+    };
+
     TriggerModel(int32_t uuid, int32_t version, TriggerModelType type);
     virtual ~TriggerModel();
 

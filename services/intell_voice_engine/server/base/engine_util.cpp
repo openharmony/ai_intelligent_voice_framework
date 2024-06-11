@@ -33,6 +33,7 @@ namespace IntellVoiceEngine {
 static const std::string KEY_GET_WAKEUP_FEATURE = "wakeup_features";
 static const std::string LANGUAGE_TEXT = "language=";
 static const std::string AREA_TEXT = "area=";
+static const std::string SENSIBILITY_TEXT = "sensibility=";
 
 EngineUtil::EngineUtil()
 {
@@ -134,20 +135,6 @@ bool EngineUtil::SetDspFeatures()
     return true;
 }
 
-void EngineUtil::SplitStringToKVPair(const std::string &inputStr, std::map<std::string, std::string> &kvpairs)
-{
-    std::vector<std::string> paramsList;
-    StringUtil::Split(inputStr, ";", paramsList);
-    for (auto &it : paramsList) {
-        std::string key;
-        std::string value;
-        if (StringUtil::SplitLineToPair(it, key, value)) {
-            kvpairs[key] = value;
-            INTELL_VOICE_LOG_INFO("key:%{public}s, value:%{public}s", key.c_str(), value.c_str());
-        }
-    }
-}
-
 void EngineUtil::WriteBufferFromAshmem(uint8_t *&buffer, uint32_t size, sptr<OHOS::Ashmem> ashmem)
 {
     if (!ashmem->MapReadOnlyAshmem()) {
@@ -211,8 +198,8 @@ void EngineUtil::ProcDspModel(OHOS::HDI::IntelligentVoice::Engine::V1_0::Content
         buffer = nullptr;
     };
 
-    std::shared_ptr<GenericTriggerModel> model = std::make_shared<GenericTriggerModel>(
-        VOICE_WAKEUP_MODEL_UUID, 1, TriggerModel::TriggerModelType::VOICE_WAKEUP_TYPE);
+    std::shared_ptr<GenericTriggerModel> model = std::make_shared<GenericTriggerModel>(VOICE_WAKEUP_MODEL_UUID,
+        TriggerModel::TriggerModelVersion::MODLE_VERSION_2, TriggerModel::TriggerModelType::VOICE_WAKEUP_TYPE);
     if (model == nullptr) {
         INTELL_VOICE_LOG_ERROR("model is null");
         return;
@@ -255,6 +242,27 @@ void EngineUtil::SetArea()
     }
 
     adapter_->SetParameter(AREA_TEXT + area);
+}
+
+void EngineUtil::SetSensibility()
+{
+    if (adapter_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("adapter is nullptr");
+        return;
+    }
+
+    std::string sensibility = HistoryInfoMgr::GetInstance().GetSensibility();
+    if (sensibility.empty()) {
+        INTELL_VOICE_LOG_WARN("sensibility is empty");
+        return;
+    }
+
+    auto &mgr = IntellVoiceServiceManager::GetInstance();
+    if (mgr != nullptr) {
+        mgr->SetDspSensibility(sensibility);
+    }
+
+    adapter_->SetParameter(SENSIBILITY_TEXT + sensibility);
 }
 }
 }

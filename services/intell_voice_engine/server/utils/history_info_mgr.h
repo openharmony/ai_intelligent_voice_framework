@@ -43,6 +43,8 @@ public:
     std::string GetLanguage();
     void SetArea(const std::string &area);
     std::string GetArea();
+    void SetSensibility(const std::string &sensibility);
+    std::string GetSensibility();
     void SetWakeupPhrase(const std::string &wakeupPhrase);
     std::string GetWakeupPhrase();
     void SetWakeupDspFeature(const std::string &wakeupDspFeature);

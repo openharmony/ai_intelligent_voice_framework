@@ -29,6 +29,7 @@ const std::string KEY_WAKEUP_ENGINE_ABILITY_NAME = "WakeupEngineAbilityName";
 const std::string KEY_WAKEUP_VESRION = "WakeupVersion";
 const std::string KEY_LANGUAGE = "Language";
 const std::string KEY_AREA = "Area";
+const std::string KEY_SENSIBILITY = "Sensibility";
 const std::string KEY_WAKEUP_PHRASE = "WakeupPhrase";
 const std::string KEY_WAKEUP_DSP_FEATURE = "WakeupDspFeature";
 
@@ -96,6 +97,16 @@ void HistoryInfoMgr::SetArea(const std::string &area)
 std::string HistoryInfoMgr::GetArea()
 {
     return GetValue(KEY_AREA);
+}
+
+void HistoryInfoMgr::SetSensibility(const std::string &sensibility)
+{
+    SetValue(KEY_SENSIBILITY, sensibility);
+}
+
+std::string HistoryInfoMgr::GetSensibility()
+{
+    return GetValue(KEY_SENSIBILITY);
 }
 
 void HistoryInfoMgr::SetWakeupPhrase(const std::string &wakeupPhrase)

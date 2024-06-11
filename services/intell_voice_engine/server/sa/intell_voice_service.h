@@ -41,6 +41,7 @@ public:
 
     int32_t GetUploadFiles(int numMax, std::vector<UploadHdiFile> &files) override;
 
+    int32_t SetParameter(const std::string &keyValueList) override;
     std::string GetParameter(const std::string &key) override;
     int32_t GetWakeupSourceFilesList(std::vector<std::string>& cloneFiles) override;
     int32_t GetWakeupSourceFile(const std::string &filePath, std::vector<uint8_t> &buffer) override;

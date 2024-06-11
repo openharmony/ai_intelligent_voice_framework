@@ -59,10 +59,10 @@ private:
     void SetParamOnAudioStop();
     bool CreateWakeupSourceStopCallback();
     void DestroyWakeupSourceStopCallback();
-    void OnWakeupEvent(int32_t msgId, int32_t result);
+    void OnWakeupEvent(const OHOS::HDI::IntelligentVoice::Engine::V1_0::IntellVoiceEngineCallBackEvent &event);
     void OnInitDone(int32_t result);
-    void OnWakeupRecognition(int32_t result);
-    void OnWakeupKws3Recognition(int32_t result);
+    void OnWakeupRecognition(int32_t result, const std::string &info);
+    void OnWakeupKws3Recognition(int32_t result, const std::string &info);
     void UpdateDspModel();
     OHOS::AudioStandard::AudioChannel GetWakeupSourceChannel();
 

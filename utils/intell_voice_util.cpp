@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 #include "intell_voice_util.h"
+#include <sys/stat.h>
 #include <memory>
 #include <malloc.h>
 #include <fcntl.h>
@@ -20,7 +21,7 @@
 #include <unistd.h>
 #include <cinttypes>
 #include <fstream>
-
+#include "string_util.h"
 #include "accesstoken_kit.h"
 #include "tokenid_kit.h"
 #include "ipc_skeleton.h"
@@ -85,6 +86,31 @@ bool IntellVoiceUtil::ReadFile(const std::string &filePath, std::shared_ptr<uint
     file.seekg(0, file.beg);
     file.read(reinterpret_cast<char *>(buffer.get()), size);
     file.close();
+    return true;
+}
+
+void IntellVoiceUtil::SplitStringToKVPair(const std::string &inputStr, std::map<std::string, std::string> &kvpairs)
+{
+    std::vector<std::string> paramsList;
+    StringUtil::Split(inputStr, ";", paramsList);
+    for (auto &it : paramsList) {
+        std::string key;
+        std::string value;
+        if (StringUtil::SplitLineToPair(it, key, value)) {
+            kvpairs[key] = value;
+            INTELL_VOICE_LOG_INFO("key:%{public}s, value:%{public}s", key.c_str(), value.c_str());
+        }
+    }
+}
+
+bool IntellVoiceUtil::IsFileExist(const std::string &filePath)
+{
+    struct stat sb;
+    if (stat(filePath.c_str(), &sb) != 0) {
+        INTELL_VOICE_LOG_ERROR("get file status failed");
+        return false;
+    }
+
     return true;
 }
 

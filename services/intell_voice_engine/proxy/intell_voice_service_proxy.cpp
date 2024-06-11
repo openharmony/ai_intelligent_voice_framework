@@ -112,6 +112,18 @@ std::string IntellVoiceServiceProxy::GetParameter(const std::string &key)
     return reply.ReadString();
 }
 
+int32_t IntellVoiceServiceProxy::SetParameter(const std::string &keyValueList)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    data.WriteInterfaceToken(IIntellVoiceService::GetDescriptor());
+    data.WriteString(keyValueList);
+    Remote()->SendRequest(HDI_INTELL_VOICE_SERVICE_SET_PARAMETER, data, reply, option);
+    return reply.ReadInt32();
+}
+
 int32_t IntellVoiceServiceProxy::GetWakeupSourceFilesList(std::vector<std::string>& cloneFiles)
 {
     MessageParcel data;

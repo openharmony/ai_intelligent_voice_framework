@@ -410,6 +410,16 @@ std::string IntellVoiceService::GetParameter(const std::string &key)
     return manager->GetParameter(key);
 }
 
+int32_t IntellVoiceService::SetParameter(const std::string &keyValueList)
+{
+    const auto &manager = IntellVoiceServiceManager::GetInstance();
+    if (manager == nullptr) {
+        INTELL_VOICE_LOG_INFO("manager is nullptr");
+        return -1;
+    }
+    return manager->SetParameter(keyValueList);
+}
+
 int32_t IntellVoiceService::GetWakeupSourceFilesList(std::vector<std::string>& cloneFiles)
 {
     if (!IntellVoiceUtil::VerifySystemPermission(OHOS_PERMISSION_INTELL_VOICE)) {

@@ -33,6 +33,7 @@
 #include "clone_update_strategy.h"
 #include "silence_update_strategy.h"
 #include "update_engine_utils.h"
+#include "json/json.h"
 
 #define LOG_TAG "IntellVoiceServiceManager"
 
@@ -45,11 +46,18 @@ namespace IntellVoiceEngine {
 static constexpr int32_t MAX_ATTEMPT_CNT = 10;
 static constexpr uint32_t MAX_TASK_NUM = 200;
 static const std::string SERVICE_MANAGER_THREAD_NAME = "ServMgrThread";
+static const std::string SENSIBILITY_TEXT = "sensibility=";
 static const std::string WHISPER_MODEL_PATH =
     "/sys_prod/variant/region_comm/china/etc/intellvoice/wakeup/dsp/whisper_wakeup_dsp_config";
+static const std::string VAD_MODEL_PATH =
+    "/sys_prod/variant/region_comm/china/etc/intellvoice/wakeup/ap/vad.om";
+static const std::string WAKEUP_CONFIG_USER_PATH =
+    "/sys_prod/variant/region_comm/china/etc/intellvoice/wakeup/ap/wakeup_config_user.json";
+static const std::string WAKEUP_CONFIG_PATH =
+    "/sys_prod/variant/region_comm/china/etc/intellvoice/wakeup/ap/wakeup_config.json";
 
-std::atomic<bool> IntellVoiceServiceManager::enrollResult_[ENGINE_TYPE_BUT] = {false, false, false};
-
+std::atomic<bool> IntellVoiceServiceManager::g_enrollResult[ENGINE_TYPE_BUT] = {false, false, false};
+std::vector<int32_t> IntellVoiceServiceManager::g_defaultDspSentenceThresholds = {101, 101, 101};
 std::unique_ptr<IntellVoiceServiceManager> IntellVoiceServiceManager::g_intellVoiceServiceMgr =
     std::unique_ptr<IntellVoiceServiceManager>(new (std::nothrow) IntellVoiceServiceManager());
 
@@ -349,6 +357,23 @@ void IntellVoiceServiceManager::CreateAndStartServiceObject(int32_t uuid, bool n
     StartDetection(uuid);
 }
 
+void IntellVoiceServiceManager::SetDspSensibility(const std::string &sensibility)
+{
+    auto triggerMgr = TriggerManager::GetInstance();
+    if (triggerMgr == nullptr) {
+        INTELL_VOICE_LOG_ERROR("trigger manager is nullptr");
+        return;
+    }
+
+    int32_t index = std::stoi(sensibility) - 1;
+    if ((index < 0) || (index >= static_cast<int32_t>(g_defaultDspSentenceThresholds.size()))) {
+        INTELL_VOICE_LOG_WARN("invalid index:%{public}d", index);
+        return;
+    }
+
+    triggerMgr->SetParameter("WAKEUP_SENSIBILITY", std::to_string(g_defaultDspSentenceThresholds[index]));
+}
+
 void IntellVoiceServiceManager::ReleaseServiceObject(int32_t uuid)
 {
     std::lock_guard<std::mutex> lock(detectorMutex_);
@@ -520,19 +545,14 @@ void IntellVoiceServiceManager::ProcBreathModel()
         return;
     }
 
-    if (triggerMgr->GetModel(PROXIMAL_WAKEUP_MODEL_UUID) != nullptr) {
-        INTELL_VOICE_LOG_INFO("proximal model is exist, do nothing");
-        return;
-    }
-
     std::shared_ptr<uint8_t> buffer = nullptr;
     uint32_t size = 0;
     if (!IntellVoiceUtil::ReadFile(WHISPER_MODEL_PATH, buffer, size)) {
         return;
     }
 
-    auto model = std::make_shared<GenericTriggerModel>(PROXIMAL_WAKEUP_MODEL_UUID, 1,
-        TriggerModel::TriggerModelType::PROXIMAL_WAKEUP_TYPE);
+    auto model = std::make_shared<GenericTriggerModel>(PROXIMAL_WAKEUP_MODEL_UUID,
+        TriggerModel::TriggerModelVersion::MODLE_VERSION_2, TriggerModel::TriggerModelType::PROXIMAL_WAKEUP_TYPE);
     if (model == nullptr) {
         INTELL_VOICE_LOG_ERROR("model is nullptr");
         return;
@@ -612,9 +632,79 @@ std::string IntellVoiceServiceManager::GetParameter(const std::string &key)
     } else if (key == "isNeedReEnroll") {
         val = UpdateEngineUtils::IsVersionUpdate() ? "true" : "false";
         INTELL_VOICE_LOG_INFO("get nedd reenroll result %{public}s", val.c_str());
+    } else if (key == "wakeup_capability") {
+        val = GetWakeupCapability();
+        INTELL_VOICE_LOG_INFO("get wakeup capability result %{public}s", val.c_str());
     }
 
     return val;
+}
+
+int32_t IntellVoiceServiceManager::SetParameter(const std::string &keyValueList)
+{
+    INTELL_VOICE_LOG_INFO("enter");
+    HistoryInfoMgr &historyInfoMgr = HistoryInfoMgr::GetInstance();
+    std::map<std::string, std::string> kvpairs;
+    IntellVoiceUtil::SplitStringToKVPair(keyValueList, kvpairs);
+    for (auto it : kvpairs) {
+        if (it.first == std::string("Sensibility")) {
+            INTELL_VOICE_LOG_INFO("set Sensibility:%{public}s", it.second.c_str());
+            std::string sensibility = it.second;
+            historyInfoMgr.SetSensibility(sensibility);
+            SetDspSensibility(sensibility);
+            TaskExecutor::AddSyncTask([this, sensibility]() -> int32_t {
+                auto engine = GetEngine(INTELL_VOICE_WAKEUP, engines_);
+                if (engine != nullptr) {
+                    engine->SetParameter(SENSIBILITY_TEXT + sensibility);
+                }
+                return 0;
+            });
+            break;
+        }
+    }
+    return 0;
+}
+
+std::string IntellVoiceServiceManager::GetWakeupCapability()
+{
+    INTELL_VOICE_LOG_INFO("enter");
+    Json::Value root;
+    if (IntellVoiceUtil::IsFileExist(VAD_MODEL_PATH)) {
+        root["SupportWhisperWakeup"] = true;
+    } else {
+        root["SupportWhisperWakeup"] = false;
+    }
+
+    if (IntellVoiceUtil::IsFileExist(WAKEUP_CONFIG_USER_PATH)) {
+        root["SupportUserDefinedWakeupPhrase"] = true;
+    } else {
+        root["SupportUserDefinedWakeupPhrase"] = false;
+    }
+
+    auto isSupportShortWordFunc = []() -> bool {
+        std::ifstream jsonStrm(WAKEUP_CONFIG_PATH);
+        if (!jsonStrm.is_open()) {
+            INTELL_VOICE_LOG_ERROR("open file faile!");
+            return false;
+        }
+        Json::Value wakeupJson;
+        Json::CharReaderBuilder reader;
+        reader["collectComments"] = false;
+        std::string errs;
+        if (!parseFromStream(reader, jsonStrm, &wakeupJson, &errs)) {
+            INTELL_VOICE_LOG_ERROR("parseFromStream json faile!");
+            return false;
+        }
+        Json::Value features = wakeupJson["Features"];
+        for (uint32_t i = 0; i < features.size(); i++) {
+            if (features[i].asString() == "short_phrase") {
+                return true;
+            }
+        }
+        return false;
+    };
+    root["SupportShortWord"] = isSupportShortWordFunc();
+    return root.toStyledString();
 }
 
 int32_t IntellVoiceServiceManager::GetWakeupSourceFilesList(std::vector<std::string>& cloneFiles)

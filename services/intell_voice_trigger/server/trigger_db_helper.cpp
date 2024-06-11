@@ -17,10 +17,11 @@
 
 #include <string>
 
-#include "intell_voice_log.h"
 #include "rdb_errno.h"
 #include "rdb_helper.h"
 #include "rdb_open_callback.h"
+#include "intell_voice_log.h"
+#include "intell_voice_service_manager.h"
 
 #define LOG_TAG "TriggerDbHelper"
 
@@ -229,9 +230,14 @@ std::shared_ptr<GenericTriggerModel> TriggerDbHelper::GetGenericTriggerModel(con
     }
 
     int32_t type;
-    if (!GetModelType(set, type)) {
-        INTELL_VOICE_LOG_ERROR("failed to get model type");
-        return nullptr;
+    if (modelVersion >= static_cast<int32_t>(TriggerModel::TriggerModelVersion::MODLE_VERSION_2)) {
+        if (!GetModelType(set, type)) {
+            INTELL_VOICE_LOG_ERROR("failed to get model type");
+            return nullptr;
+        }
+    } else {
+        type = (modelUuid == OHOS::IntellVoiceEngine::VOICE_WAKEUP_MODEL_UUID ?
+            TriggerModel::TriggerModelType::VOICE_WAKEUP_TYPE : TriggerModel::TriggerModelType::PROXIMAL_WAKEUP_TYPE);
     }
 
     std::shared_ptr<GenericTriggerModel> model = std::make_shared<GenericTriggerModel>(modelUuid, modelVersion,

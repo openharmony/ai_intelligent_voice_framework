@@ -56,9 +56,9 @@ private:
 private:
     bool SetCallbackInner();
     int32_t AttachInner(const IntellVoiceEngineInfo &info);
-    void OnWakeupEvent(int32_t msgId, int32_t result);
+    void OnWakeupEvent(const OHOS::HDI::IntelligentVoice::Engine::V1_0::IntellVoiceEngineCallBackEvent &event);
     void OnInitDone(int32_t result);
-    void OnWakeupRecognition(int32_t result);
+    void OnWakeupRecognition(int32_t result, const std::string &info);
     bool StartAudioSource();
     void StopAudioSource();
     void ReadThread();
