@@ -243,7 +243,12 @@ int32_t IntellVoiceManager::GetFileDataFromAshmem(sptr<Ashmem> ashmem, std::vect
 int32_t IntellVoiceManager::SetParameter(const std::string &key, const std::string &value)
 {
     INTELL_VOICE_LOG_INFO("enter, key:%{public}s, value:%{public}s", key.c_str(), value.c_str());
-    return 0;
+    if (g_sProxy == nullptr) {
+        INTELL_VOICE_LOG_ERROR("IntellVoiceService Proxy is null");
+        return -1;
+    }
+    string keyValueList = key + "=" + value;
+    return g_sProxy->SetParameter(keyValueList);
 }
 
 std::string IntellVoiceManager::GetParameter(const std::string &key)

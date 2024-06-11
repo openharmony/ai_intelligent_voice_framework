@@ -16,7 +16,7 @@
 #include <fstream>
 #include "securec.h"
 #include "intell_voice_log.h"
-
+#include "intell_voice_util.h"
 #include "enroll_adapter_listener.h"
 #include "time_util.h"
 #include "scope_guard.h"
@@ -219,7 +219,7 @@ bool EnrollEngine::SetParameterInner(const std::string &keyValueList)
     HistoryInfoMgr &historyInfoMgr = HistoryInfoMgr::GetInstance();
 
     std::map<std::string, std::string> kvpairs;
-    EngineUtil::SplitStringToKVPair(keyValueList, kvpairs);
+    IntellVoiceUtil::SplitStringToKVPair(keyValueList, kvpairs);
     for (auto it : kvpairs) {
         if (it.first == std::string("wakeup_bundle_name")) {
             INTELL_VOICE_LOG_INFO("set wakeup bundle name:%{public}s", it.second.c_str());
@@ -239,6 +239,11 @@ bool EnrollEngine::SetParameterInner(const std::string &keyValueList)
         if (it.first == std::string("area")) {
             INTELL_VOICE_LOG_INFO("set area:%{public}s", it.second.c_str());
             historyInfoMgr.SetArea(it.second);
+            continue;
+        }
+        if (it.first == std::string("Sensibility")) {
+            INTELL_VOICE_LOG_INFO("set Sensibility:%{public}s", it.second.c_str());
+            historyInfoMgr.SetSensibility(it.second);
             continue;
         }
     }

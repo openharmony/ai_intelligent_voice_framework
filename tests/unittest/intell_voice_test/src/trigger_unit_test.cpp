@@ -58,7 +58,8 @@ HWTEST_F(TriggerTest, trigger_db_helper_001, TestSize.Level1)
 {
     // insert model
     int32_t uuid = 11;
-    auto model = std::make_shared<GenericTriggerModel>(uuid, 100, TriggerModel::TriggerModelType::VOICE_WAKEUP_TYPE);
+    auto model = std::make_shared<GenericTriggerModel>(uuid, TriggerModel::TriggerModelVersion::MODLE_VERSION_2,
+        TriggerModel::TriggerModelType::VOICE_WAKEUP_TYPE);
     uint8_t data[4] = {0, 1, 2, 3};
     model->SetData(data, sizeof(data));
     std::vector<uint8_t> expect(data, data + (sizeof(data) / sizeof(uint8_t)));

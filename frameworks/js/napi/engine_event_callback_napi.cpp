@@ -90,9 +90,6 @@ void EngineEventCallbackNapi::OnEvent(const IntellVoiceEngineCallBackEvent &even
     if (event.msgId == HDI::IntelligentVoice::Engine::V1_0::INTELL_VOICE_ENGINE_MSG_RECOGNIZE_COMPLETE) {
         eventId = INTELLIGENT_VOICE_EVENT_RECOGNIZE_COMPLETE;
     } else if (event.msgId == static_cast<OHOS::HDI::IntelligentVoice::Engine::V1_0::IntellVoiceEngineMessageType>(
-        OHOS::HDI::IntelligentVoice::Engine::V1_2::INTELL_VOICE_ENGINE_MSG_RECONFIRM_RECOGNITION_COMPLETE)) {
-        eventId = INTELLIGENT_VOICE_EVENT_RECONFIRM_RECOGNITION_COMPLETE;
-    } else if (event.msgId == static_cast<OHOS::HDI::IntelligentVoice::Engine::V1_0::IntellVoiceEngineMessageType>(
         OHOS::HDI::IntelligentVoice::Engine::V1_2::INTELL_VOICE_ENGINE_MSG_HEADSET_RECOGNIZE_COMPLETE)) {
         eventId = INTELLIGENT_VOICE_EVENT_HEADSET_RECOGNIZE_COMPLETE;
     } else {

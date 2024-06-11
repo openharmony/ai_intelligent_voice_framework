@@ -168,6 +168,7 @@ ohos_shared_library("intell_voice_server") {
     "hilog:libhilog",
     "huks:libhukssdk",
     "ipc:ipc_core",
+    "jsoncpp:jsoncpp",
     "kv_store:distributeddata_inner",
     "relational_store:native_rdb",
     "safwk:system_ability_fwk",

@@ -35,7 +35,6 @@ enum EngineEvent {
     START_RECOGNIZE,
     STOP_RECOGNIZE,
     RECOGNIZE_COMPLETE,
-    RECONFIRM_RECOGNITION_COMPLETE,
     START_CAPTURER,
     READ,
     STOP_CAPTURER,
@@ -94,9 +93,9 @@ public:
     void ProcDspModel(OHOS::HDI::IntelligentVoice::Engine::V1_0::ContentType type);
     void SetLanguage();
     void SetArea();
+    void SetSensibility();
 
 protected:
-    static void SplitStringToKVPair(const std::string &inputStr, std::map<std::string, std::string> &kvpairs);
     std::shared_ptr<IAdapterHostManager> adapter_ = nullptr;
     OHOS::HDI::IntelligentVoice::Engine::V1_0::IntellVoiceEngineAdapterDescriptor desc_;
 

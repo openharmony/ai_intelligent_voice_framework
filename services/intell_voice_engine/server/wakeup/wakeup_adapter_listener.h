@@ -23,7 +23,8 @@
 
 namespace OHOS {
 namespace IntellVoiceEngine {
-using OnWakeupEventCb = std::function<void(int32_t, int32_t)>;
+using OnWakeupEventCb = std::function<void(
+    const OHOS::HDI::IntelligentVoice::Engine::V1_0::IntellVoiceEngineCallBackEvent &)>;
 
 class WakeupAdapterListener : public IntellVoiceAdapterListener {
 public:
@@ -33,6 +34,7 @@ public:
     void SetCallback(const sptr<IIntelligentVoiceEngineCallback> &cb);
     void OnIntellVoiceHdiEvent(
         const OHOS::HDI::IntelligentVoice::Engine::V1_0::IntellVoiceEngineCallBackEvent &event) override;
+    void Notify(const OHOS::HDI::IntelligentVoice::Engine::V1_0::IntellVoiceEngineCallBackEvent &event);
 
 private:
     void BackupCallBackEvent(const OHOS::HDI::IntelligentVoice::Engine::V1_0::IntellVoiceEngineCallBackEvent &event);

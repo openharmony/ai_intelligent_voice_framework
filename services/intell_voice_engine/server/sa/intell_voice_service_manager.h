@@ -51,7 +51,7 @@ public:
             return;
         }
 
-        enrollResult_[type].store(result);
+        g_enrollResult[type].store(result);
     }
     static bool GetEnrollResult(IntellVoiceEngineType type)
     {
@@ -59,7 +59,7 @@ public:
             return false;
         }
 
-        return enrollResult_[type].load();
+        return g_enrollResult[type].load();
     }
 
     sptr<IIntellVoiceEngine> HandleCreateEngine(IntellVoiceEngineType type);
@@ -89,10 +89,13 @@ public:
     using TaskExecutor::AddSyncTask;
     using TaskExecutor::StopThread;
 
+    int32_t SetParameter(const std::string &keyValueList);
     std::string GetParameter(const std::string &key);
+    std::string GetWakeupCapability();
     int32_t GetWakeupSourceFilesList(std::vector<std::string>& cloneFiles);
     int32_t GetWakeupSourceFile(const std::string &filePath, std::vector<uint8_t> &buffer);
     int32_t SendWakeupFile(const std::string &filePath, const std::vector<uint8_t> &buffer);
+    void SetDspSensibility(const std::string &sensibility);
 
 private:
     IntellVoiceServiceManager();
@@ -145,7 +148,8 @@ private:
 
 private:
     static std::unique_ptr<IntellVoiceServiceManager> g_intellVoiceServiceMgr;
-    static std::atomic<bool> enrollResult_[ENGINE_TYPE_BUT];
+    static std::atomic<bool> g_enrollResult[ENGINE_TYPE_BUT];
+    static std::vector<int32_t> g_defaultDspSentenceThresholds;
     std::mutex deathMutex_;
     std::mutex detectorMutex_;
     std::mutex switchMutex_;

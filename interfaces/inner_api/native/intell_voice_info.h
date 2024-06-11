@@ -78,10 +78,8 @@ enum WakeupIntelligentVoiceEventType {
     INTELLIGENT_VOICE_EVENT_WAKEUP_NONE = 0,
     /* Recognize complete. */
     INTELLIGENT_VOICE_EVENT_RECOGNIZE_COMPLETE = 1,
-    /* Reconfirm Recognition complete. */
-    INTELLIGENT_VOICE_EVENT_RECONFIRM_RECOGNITION_COMPLETE = 2,
     /* Headset Recognize complete. */
-    INTELLIGENT_VOICE_EVENT_HEADSET_RECOGNIZE_COMPLETE = 3,
+    INTELLIGENT_VOICE_EVENT_HEADSET_RECOGNIZE_COMPLETE = 2,
 };
 
 enum IntelligentVoiceErrorCode {

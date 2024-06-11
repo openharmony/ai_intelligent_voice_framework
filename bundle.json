@@ -38,7 +38,8 @@
                 "state_registry",
                 "core_service",
                 "call_manager",
-                "huks"
+                "huks",
+                "jsoncpp"
             ],
             "third_party": []
         },

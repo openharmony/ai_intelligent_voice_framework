@@ -18,6 +18,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <map>
 
 namespace OHOS {
 namespace IntellVoiceUtils {
@@ -28,6 +29,8 @@ public:
         std::vector<std::vector<uint8_t>> &audioData);
     static bool VerifySystemPermission(const std::string &permissionName);
     static bool ReadFile(const std::string &filePath, std::shared_ptr<uint8_t> &buffer, uint32_t &size);
+    static void SplitStringToKVPair(const std::string &inputStr, std::map<std::string, std::string> &kvpairs);
+    static bool IsFileExist(const std::string &filePath);
 
 private:
     static bool VerifyClientPermission(const std::string &permissionName);

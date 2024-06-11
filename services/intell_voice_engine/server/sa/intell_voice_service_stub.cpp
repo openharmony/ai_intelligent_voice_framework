@@ -38,6 +38,8 @@ IntellVoiceServiceStub::IntellVoiceServiceStub()
         MessageParcel &reply) -> int32_t { return this->SendCloneFileInner(data, reply); };
     processServiceFuncMap_[HDI_INTELL_VOICE_SERVICE_CLONE_FOR_RESULT] = [this](MessageParcel &data,
         MessageParcel &reply) -> int32_t { return this->CloneForResultInner(data, reply); };
+    processServiceFuncMap_[HDI_INTELL_VOICE_SERVICE_SET_PARAMETER] = [this](MessageParcel &data,
+        MessageParcel &reply) -> int32_t { return this->SetParameterInner(data, reply); };
 }
 
 IntellVoiceServiceStub::~IntellVoiceServiceStub()
@@ -110,6 +112,13 @@ int32_t IntellVoiceServiceStub::GetParameterInner(MessageParcel &data, MessagePa
     reply.WriteString(val);
 
     return 0;
+}
+
+int32_t IntellVoiceServiceStub::SetParameterInner(MessageParcel &data, MessageParcel &reply)
+{
+    int32_t ret = SetParameter(data.ReadString());
+    reply.WriteInt32(ret);
+    return ret;
 }
 
 int32_t IntellVoiceServiceStub::GetCloneFileListInner(MessageParcel &data, MessageParcel &reply)

@@ -50,7 +50,7 @@ bool HeadsetWakeupEngineImpl::Init()
     }
 
     adapterListener_ = std::make_shared<WakeupAdapterListener>(
-        std::bind(&HeadsetWakeupEngineImpl::OnWakeupEvent, this, std::placeholders::_1, std::placeholders::_2));
+        std::bind(&HeadsetWakeupEngineImpl::OnWakeupEvent, this, std::placeholders::_1));
     if (adapterListener_ == nullptr) {
         INTELL_VOICE_LOG_ERROR("adapterListener_ is nullptr");
         return false;
@@ -148,13 +148,16 @@ int32_t HeadsetWakeupEngineImpl::AttachInner(const IntellVoiceEngineInfo &info)
     return adapter_->Attach(adapterInfo);
 }
 
-void HeadsetWakeupEngineImpl::OnWakeupEvent(int32_t msgId, int32_t result)
+void HeadsetWakeupEngineImpl::OnWakeupEvent(
+    const OHOS::HDI::IntelligentVoice::Engine::V1_0::IntellVoiceEngineCallBackEvent &event)
 {
-    INTELL_VOICE_LOG_INFO("enter, msgId:%{public}d, result:%{public}d", msgId, result);
-    if (msgId == INTELL_VOICE_ENGINE_MSG_INIT_DONE) {
-        std::thread(&HeadsetWakeupEngineImpl::OnInitDone, this, result).detach();
-    } else if (msgId == HDI::IntelligentVoice::Engine::V1_2::INTELL_VOICE_ENGINE_MSG_HEADSET_RECOGNIZE_COMPLETE) {
-        std::thread(&HeadsetWakeupEngineImpl::OnWakeupRecognition, this, result).detach();
+    INTELL_VOICE_LOG_INFO("enter, msgId:%{public}d, result:%{public}d", event.msgId, event.result);
+    if (event.msgId == INTELL_VOICE_ENGINE_MSG_INIT_DONE) {
+        std::thread(&HeadsetWakeupEngineImpl::OnInitDone, this, event.result).detach();
+    } else if (
+        event.msgId == static_cast<OHOS::HDI::IntelligentVoice::Engine::V1_0::IntellVoiceEngineMessageType>(
+            OHOS::HDI::IntelligentVoice::Engine::V1_2::INTELL_VOICE_ENGINE_MSG_HEADSET_RECOGNIZE_COMPLETE)) {
+        std::thread(&HeadsetWakeupEngineImpl::OnWakeupRecognition, this, event.result, event.info).detach();
     } else {
     }
 }
@@ -166,10 +169,16 @@ void HeadsetWakeupEngineImpl::OnInitDone(int32_t result)
     Handle(msg);
 }
 
-void HeadsetWakeupEngineImpl::OnWakeupRecognition(int32_t result)
+void HeadsetWakeupEngineImpl::OnWakeupRecognition(int32_t result, const std::string &info)
 {
     INTELL_VOICE_LOG_INFO("enter, result:%{public}d", result);
-    StateMsg msg(RECOGNIZE_COMPLETE, &result, sizeof(int32_t));
+    OHOS::HDI::IntelligentVoice::Engine::V1_0::IntellVoiceEngineCallBackEvent event;
+    event.msgId = static_cast<OHOS::HDI::IntelligentVoice::Engine::V1_0::IntellVoiceEngineMessageType>(
+        HDI::IntelligentVoice::Engine::V1_2::INTELL_VOICE_ENGINE_MSG_HEADSET_RECOGNIZE_COMPLETE);
+    event.result = static_cast<OHOS::HDI::IntelligentVoice::Engine::V1_0::IntellVoiceEngineErrors>(result);
+    event.info = info;
+    StateMsg msg(RECOGNIZE_COMPLETE, reinterpret_cast<void *>(&event),
+        sizeof(OHOS::HDI::IntelligentVoice::Engine::V1_0::IntellVoiceEngineCallBackEvent));
     Handle(msg);
 }
 
@@ -303,12 +312,16 @@ int32_t HeadsetWakeupEngineImpl::HandleStop(const StateMsg & /* msg */, State &n
 int32_t HeadsetWakeupEngineImpl::HandleRecognizeComplete(const StateMsg &msg, State &nextState)
 {
     EngineUtil::Stop();
-    int32_t *result = reinterpret_cast<int32_t *>(msg.inMsg);
-    if (result == nullptr) {
-        INTELL_VOICE_LOG_ERROR("result is nullptr");
+    OHOS::HDI::IntelligentVoice::Engine::V1_0::IntellVoiceEngineCallBackEvent *event =
+        reinterpret_cast<OHOS::HDI::IntelligentVoice::Engine::V1_0::IntellVoiceEngineCallBackEvent *>(msg.inMsg);
+    if (event == nullptr) {
+        INTELL_VOICE_LOG_ERROR("event is nullptr");
         return -1;
     }
-    if (*result != 0) {
+
+    adapterListener_->Notify(*event);
+
+    if (event->result != 0) {
         INTELL_VOICE_LOG_INFO("wakeup failed");
         StopAudioSource();
         NotifyVerifyResult(false);

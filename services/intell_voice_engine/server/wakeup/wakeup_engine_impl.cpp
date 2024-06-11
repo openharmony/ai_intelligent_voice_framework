@@ -53,7 +53,7 @@ WakeupEngineImpl::WakeupEngineImpl() : ModuleStates(State(IDLE), "WakeupEngineIm
     capturerOptions_.capturerInfo.sourceType = SourceType::SOURCE_TYPE_WAKEUP;
     capturerOptions_.capturerInfo.capturerFlags = 0;
     adapterListener_ = std::make_shared<WakeupAdapterListener>(
-        std::bind(&WakeupEngineImpl::OnWakeupEvent, this, std::placeholders::_1, std::placeholders::_2));
+        std::bind(&WakeupEngineImpl::OnWakeupEvent, this, std::placeholders::_1));
     if (adapterListener_ == nullptr) {
         INTELL_VOICE_LOG_ERROR("adapterListener_ is nullptr");
     }
@@ -94,16 +94,14 @@ bool WakeupEngineImpl::InitStates()
             std::bind(&WakeupEngineImpl::HandleStopCapturer, this, std::placeholders::_1, std::placeholders::_2),
             RECOGNIZE_COMPLETE_TIMEOUT_US)
         .ACT(GET_WAKEUP_PCM, HandleGetWakeupPcm)
-        .ACT(START_CAPTURER, HandleStartCapturer)
-        .ACT(RECONFIRM_RECOGNITION_COMPLETE, HandleReconfirmRecognitionComplete);
+        .ACT(START_CAPTURER, HandleStartCapturer);
 
     ForState(READ_CAPTURER)
         .WaitUntil(READ_CAPTURER_TIMEOUT,
             std::bind(&WakeupEngineImpl::HandleStopCapturer, this, std::placeholders::_1, std::placeholders::_2),
             READ_CAPTURER_TIMEOUT_US)
         .ACT(READ, HandleRead)
-        .ACT(STOP_CAPTURER, HandleStopCapturer)
-        .ACT(RECONFIRM_RECOGNITION_COMPLETE, HandleReconfirmRecognitionComplete);
+        .ACT(STOP_CAPTURER, HandleStopCapturer);
 
     FromState(INITIALIZING, READ_CAPTURER)
         .ACT(RELEASE_ADAPTER, HandleRelease)
@@ -154,7 +152,7 @@ bool WakeupEngineImpl::SetCallbackInner()
     }
 
     if (adapterListener_ == nullptr) {
-        INTELL_VOICE_LOG_ERROR("adapterListener_ is nullptr");
+        INTELL_VOICE_LOG_ERROR("adapter listener is nullptr");
         return false;
     }
 
@@ -316,16 +314,15 @@ void WakeupEngineImpl::StopAudioSource()
     WakeupSourceProcess::Release();
 }
 
-void WakeupEngineImpl::OnWakeupEvent(int32_t msgId, int32_t result)
+void WakeupEngineImpl::OnWakeupEvent(
+    const OHOS::HDI::IntelligentVoice::Engine::V1_0::IntellVoiceEngineCallBackEvent &event)
 {
-    if (msgId == INTELL_VOICE_ENGINE_MSG_INIT_DONE) {
-        std::thread(&WakeupEngineImpl::OnInitDone, this, result).detach();
-    } else if (msgId == INTELL_VOICE_ENGINE_MSG_RECOGNIZE_COMPLETE) {
-        std::thread(&WakeupEngineImpl::OnWakeupRecognition, this, result).detach();
-    } else if (msgId == static_cast<OHOS::HDI::IntelligentVoice::Engine::V1_0::IntellVoiceEngineMessageType>(
-        HDI::IntelligentVoice::Engine::V1_2::INTELL_VOICE_ENGINE_MSG_RECONFIRM_RECOGNITION_COMPLETE)) {
-        std::thread(&WakeupEngineImpl::OnWakeupKws3Recognition, this, result).detach();
+    if (event.msgId == INTELL_VOICE_ENGINE_MSG_INIT_DONE) {
+        std::thread(&WakeupEngineImpl::OnInitDone, this, event.result).detach();
+    } else if (event.msgId == INTELL_VOICE_ENGINE_MSG_RECOGNIZE_COMPLETE) {
+        std::thread(&WakeupEngineImpl::OnWakeupRecognition, this, event.result, event.info).detach();
     } else {
+        INTELL_VOICE_LOG_WARN("invalid msg id:%{public}d", event.msgId);
     }
 }
 
@@ -336,17 +333,15 @@ void WakeupEngineImpl::OnInitDone(int32_t result)
     Handle(msg);
 }
 
-void WakeupEngineImpl::OnWakeupRecognition(int32_t result)
+void WakeupEngineImpl::OnWakeupRecognition(int32_t result, const std::string &info)
 {
     INTELL_VOICE_LOG_INFO("on wakeup recognition, result:%{public}d", result);
-    StateMsg msg(RECOGNIZE_COMPLETE, &result, sizeof(int32_t));
-    Handle(msg);
-}
-
-void WakeupEngineImpl::OnWakeupKws3Recognition(int32_t result)
-{
-    INTELL_VOICE_LOG_INFO("on wakeup kws3 recognition, result:%{public}d", result);
-    StateMsg msg(RECONFIRM_RECOGNITION_COMPLETE, &result, sizeof(int32_t));
+    OHOS::HDI::IntelligentVoice::Engine::V1_0::IntellVoiceEngineCallBackEvent event;
+    event.msgId = INTELL_VOICE_ENGINE_MSG_RECOGNIZE_COMPLETE;
+    event.result = static_cast<OHOS::HDI::IntelligentVoice::Engine::V1_0::IntellVoiceEngineErrors>(result);
+    event.info = info;
+    StateMsg msg(RECOGNIZE_COMPLETE, reinterpret_cast<void *>(&event),
+        sizeof(OHOS::HDI::IntelligentVoice::Engine::V1_0::IntellVoiceEngineCallBackEvent));
     Handle(msg);
 }
 
@@ -389,6 +384,7 @@ int32_t WakeupEngineImpl::HandleInit(const StateMsg & /* msg */, State &nextStat
     UpdateDspModel();
     EngineUtil::SetLanguage();
     EngineUtil::SetArea();
+    EngineUtil::SetSensibility();
     SetDspFeatures();
 
     IntellVoiceEngineInfo info = {
@@ -441,7 +437,13 @@ int32_t WakeupEngineImpl::HandleStart(const StateMsg &msg, State &nextState)
         return -1;
     }
 
-    channelId_ = ((*msgBody == PROXIMAL_WAKEUP_MODEL_UUID) ? CHANNEL_ID_1 : CHANNEL_ID_0);
+    if (*msgBody == PROXIMAL_WAKEUP_MODEL_UUID) {
+        channelId_ = CHANNEL_ID_1;
+        EngineUtil::SetParameter("WakeupType=3");
+    } else {
+        channelId_ = CHANNEL_ID_0;
+        EngineUtil::SetParameter("WakeupType=0");
+    }
     INTELL_VOICE_LOG_INFO("enter, channel id is %{public}d", channelId_);
 
     EngineUtil::SetParameter("VprTrdType=0;WakeupScene=0");
@@ -489,24 +491,24 @@ int32_t WakeupEngineImpl::HandleStop(const StateMsg & /* msg */, State &nextStat
 
 int32_t WakeupEngineImpl::HandleRecognizeComplete(const StateMsg &msg, State &nextState)
 {
-    int32_t *result = reinterpret_cast<int32_t *>(msg.inMsg);
-    if (result == nullptr) {
+    OHOS::HDI::IntelligentVoice::Engine::V1_0::IntellVoiceEngineCallBackEvent *event =
+        reinterpret_cast<OHOS::HDI::IntelligentVoice::Engine::V1_0::IntellVoiceEngineCallBackEvent *>(msg.inMsg);
+    if (event == nullptr) {
         INTELL_VOICE_LOG_ERROR("result is nullptr");
         return -1;
     }
-    if (*result != 0) {
+
+    if (adapterListener_ != nullptr) {
+        adapterListener_->Notify(*event);
+    }
+
+    if (event->result != 0) {
         INTELL_VOICE_LOG_ERROR("wakeup failed");
         StopAudioSource();
-        EngineUtil::Stop();
         nextState = State(INITIALIZED);
     } else {
         nextState = State(RECOGNIZED);
     }
-    return 0;
-}
-
-int32_t WakeupEngineImpl::HandleReconfirmRecognitionComplete(const StateMsg &msg, State &nextState)
-{
     EngineUtil::Stop();
     return 0;
 }
