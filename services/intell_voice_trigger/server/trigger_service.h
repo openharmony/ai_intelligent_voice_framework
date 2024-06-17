@@ -39,6 +39,8 @@ public:
     void DetachAudioCaptureListener();
     void AttachAudioRendererEventListener();
     void DetachAudioRendererEventListener();
+    void AttachHibernateObserver();
+    void DetachHibernateObserver();
 
 private:
     std::shared_ptr<TriggerDbHelper> dbHelper_ = nullptr;

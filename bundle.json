@@ -39,7 +39,8 @@
                 "core_service",
                 "call_manager",
                 "huks",
-                "jsoncpp"
+                "jsoncpp",
+                "power_manager"
             ],
             "third_party": []
         },

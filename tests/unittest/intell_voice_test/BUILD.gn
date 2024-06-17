@@ -82,6 +82,7 @@ ohos_unittest("trigger_unit_test") {
     "core_service:tel_core_service_api",
     "drivers_interface_intelligent_voice:intell_voice_trigger_idl_headers",
     "hilog:libhilog",
+    "power_manager:powermgr_client",
     "relational_store:native_rdb",
     "state_registry:tel_state_registry_api",
   ]

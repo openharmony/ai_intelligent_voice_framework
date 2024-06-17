@@ -62,6 +62,9 @@ IntellVoiceService::IntellVoiceService(int32_t systemAbilityId, bool runOnCreate
     systemAbilityChangeMap_[AUDIO_POLICY_SERVICE_ID] = [this](bool isAdded) {
         this->OnAudioPolicyServiceChange(isAdded);
     };
+    systemAbilityChangeMap_[POWER_MANAGER_SERVICE_ID] = [this](bool isAdded) {
+        this->OnPowerManagerServiceChange(isAdded);
+    };
 }
 
 IntellVoiceService::~IntellVoiceService()
@@ -124,6 +127,7 @@ void IntellVoiceService::OnStart(const SystemAbilityOnDemandReason &startReason)
     AddSystemAbilityListener(TELEPHONY_STATE_REGISTRY_SYS_ABILITY_ID);
     AddSystemAbilityListener(AUDIO_DISTRIBUTED_SERVICE_ID);
     AddSystemAbilityListener(AUDIO_POLICY_SERVICE_ID);
+    AddSystemAbilityListener(POWER_MANAGER_SERVICE_ID);
     RegisterPermissionCallback(OHOS_PERMISSION_INTELL_VOICE);
     INTELL_VOICE_LOG_INFO("publish ok");
 }
@@ -144,6 +148,7 @@ void IntellVoiceService::OnStop(void)
         triggerMgr->DetachTelephonyObserver();
         triggerMgr->DetachAudioCaptureListener();
         triggerMgr->DetachAudioRendererEventListener();
+        triggerMgr->DetachHibernateObserver();
     }
 
     if (systemEventObserver_ != nullptr) {
@@ -352,6 +357,19 @@ void IntellVoiceService::OnAudioPolicyServiceChange(bool isAdded)
         }
     } else {
         INTELL_VOICE_LOG_INFO("audio policy service is removed");
+    }
+}
+
+void IntellVoiceService::OnPowerManagerServiceChange(bool isAdded)
+{
+    if (isAdded) {
+        INTELL_VOICE_LOG_INFO("power manager service is added");
+        auto triggerMgr = IntellVoiceTrigger::TriggerManager::GetInstance();
+        if (triggerMgr != nullptr) {
+            triggerMgr->AttachHibernateObserver();
+        }
+    } else {
+        INTELL_VOICE_LOG_INFO("power manager service is removed");
     }
 }
 

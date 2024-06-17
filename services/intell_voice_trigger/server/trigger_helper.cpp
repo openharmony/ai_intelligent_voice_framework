@@ -21,6 +21,7 @@
 #include "telephony_types.h"
 #include "call_manager_inner_type.h"
 #include "audio_policy_manager.h"
+#include "power_mgr_client.h"
 
 #undef LOG_TAG
 #define LOG_TAG "TriggerHelper"
@@ -29,6 +30,7 @@ using namespace OHOS::HDI::IntelligentVoice::Trigger::V1_0;
 using namespace OHOS::AudioStandard;
 using namespace OHOS::Telephony;
 using namespace OHOS::AudioStandard;
+using namespace OHOS::PowerMgr;
 using namespace std;
 
 namespace OHOS {
@@ -442,8 +444,9 @@ void TriggerHelper::OnRecognition(int32_t modelHandle, const IntellVoiceRecognit
 
 bool TriggerHelper::IsConflictSceneActive()
 {
-    INTELL_VOICE_LOG_INFO("callActive: %{public}d, audioCaptureActive: %{public}d", callActive_, audioCaptureActive_);
-    return (callActive_ || audioCaptureActive_);
+    INTELL_VOICE_LOG_INFO("callActive: %{public}d, audioCaptureActive: %{public}d, systemHibernate: %{public}d",
+        callActive_, audioCaptureActive_, systemHibernate_);
+    return (callActive_ || audioCaptureActive_ || systemHibernate_);
 }
 
 void TriggerHelper::OnUpdateAllRecognitionState()
@@ -544,6 +547,16 @@ void TriggerHelper::OnCallStateUpdated(int32_t callState)
     OnUpdateAllRecognitionState();
 }
 
+void TriggerHelper::OnHibernateStateUpdated(bool isHibernate)
+{
+    lock_guard<std::mutex> lock(mutex_);
+    if (systemHibernate_ == isHibernate) {
+        return;
+    }
+    systemHibernate_ = isHibernate;
+    OnUpdateAllRecognitionState();
+}
+
 void TriggerHelper::TelephonyStateObserver::OnCallStateUpdated(
     int32_t slotId, int32_t callState, const std::u16string &phoneNumber)
 {
@@ -638,6 +651,27 @@ void TriggerHelper::AudioRendererStateChangeCallbackImpl::OnRendererStateChange(
     }
 }
 
+void TriggerHelper::HibernateCallback::OnSyncHibernate()
+{
+    if (helper_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("helper is nullptr");
+        return;
+    }
+
+    helper_->OnHibernateStateUpdated(true);
+}
+
+void TriggerHelper::HibernateCallback::OnSyncWakeup()
+{
+    if (helper_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("helper is nullptr");
+        return;
+    }
+
+    helper_->OnHibernateStateUpdated(false);
+}
+
+
 void TriggerHelper::AttachAudioRendererEventListener()
 {
     INTELL_VOICE_LOG_INFO("enter");
@@ -673,6 +707,43 @@ void TriggerHelper::DetachAudioRendererEventListener()
     int32_t ret = AudioStreamManager::GetInstance()->UnregisterAudioRendererEventListener(getpid());
     if (ret != 0) {
         INTELL_VOICE_LOG_ERROR("UnregisterAudioRendererEventListener failed");
+    }
+}
+
+void TriggerHelper::AttachHibernateObserver()
+{
+    INTELL_VOICE_LOG_INFO("enter");
+    std::lock_guard<std::mutex> lock(hiberateMutex_);
+    if (isHibernateDetached_) {
+        INTELL_VOICE_LOG_INFO("system hibernate is already detached");
+        return;
+    }
+
+    hibernateCallback_ = std::make_unique<HibernateCallback>(shared_from_this()).release();
+    if (hibernateCallback_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("hibernateCallback_ is nullptr");
+        return;
+    }
+
+    auto res =  PowerMgrClient::GetInstance().RegisterSyncHibernateCallback(hibernateCallback_);
+    if (!res) {
+        INTELL_VOICE_LOG_ERROR("hibernateCallback_ register failed");
+    }
+}
+
+void TriggerHelper::DetachHibernateObserver()
+{
+    INTELL_VOICE_LOG_INFO("enter");
+    std::lock_guard<std::mutex> lock(hiberateMutex_);
+
+    isHibernateDetached_ = true;
+    if (hibernateCallback_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("hibernateCallback_ is nullptr");
+        return;
+    }
+    auto res =  PowerMgrClient::GetInstance().UnRegisterSyncHibernateCallback(hibernateCallback_);
+    if (!res) {
+        INTELL_VOICE_LOG_ERROR("hibernateCallback_ unregister failed");
     }
 }
 }  // namespace IntellVoiceTrigger
