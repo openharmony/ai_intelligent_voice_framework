@@ -27,6 +27,7 @@
 #include "audio_system_manager.h"
 #include "audio_stream_manager.h"
 #include "audio_info.h"
+#include "sync_hibernate_callback_stub.h"
 
 namespace OHOS {
 namespace IntellVoiceTrigger {
@@ -84,6 +85,8 @@ public:
     void DetachAudioRendererEventListener();
     void AttachTelephonyObserver();
     void DetachTelephonyObserver();
+    void AttachHibernateObserver();
+    void DetachHibernateObserver();
 
 private:
     TriggerHelper();
@@ -103,6 +106,7 @@ private:
     void OnCapturerStateChange(bool isActive);
     void OnUpdateRendererState(int32_t streamUsage, bool isPlaying);
     void OnCallStateUpdated(int32_t callState);
+    void OnHibernateStateUpdated(bool isHibernate);
     class TelephonyStateObserver : public Telephony::TelephonyObserver {
     public:
         explicit TelephonyStateObserver(const std::shared_ptr<TriggerHelper> helper) : helper_(helper)
@@ -154,10 +158,30 @@ private:
         std::map<int32_t, bool> rendererStateMap_;
     };
 
+    class HibernateCallback : public PowerMgr::SyncHibernateCallbackStub {
+    public:
+        explicit HibernateCallback(const std::shared_ptr<TriggerHelper> helper)
+            : helper_(helper)
+        {}
+        ~HibernateCallback()
+        {
+            helper_ = nullptr;
+        }
+
+        void OnSyncHibernate();
+        void OnSyncWakeup();
+
+    private:
+        std::shared_ptr<TriggerHelper> helper_ = nullptr;
+    };
+
+    sptr<HibernateCallback> hibernateCallback_ = nullptr;
+
 private:
     std::mutex mutex_;
     std::mutex telephonyMutex_;
     std::mutex rendererMutex_;
+    std::mutex hiberateMutex_;
 
     std::map<int32_t, std::shared_ptr<TriggerModelData>> modelDataMap_;
     std::shared_ptr<IIntellVoiceTriggerConnectorModule> module_ = nullptr;
@@ -165,9 +189,11 @@ private:
     std::shared_ptr<AudioCapturerSourceChangeCallback> audioCapturerSourceChangeCallback_ = nullptr;
     std::shared_ptr<AudioRendererStateChangeCallbackImpl> audioRendererStateChangeCallback_ = nullptr;
     bool callActive_ = false;
+    bool systemHibernate_ = false;
     bool audioCaptureActive_ = false;
     bool isTelephonyDetached_ = false;
     bool isRendererDetached_ = false;
+    bool isHibernateDetached_ = false;
 };
 }  // namespace IntellVoiceTrigger
 }  // namespace OHOS

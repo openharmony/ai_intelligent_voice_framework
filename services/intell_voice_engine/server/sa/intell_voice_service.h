@@ -74,6 +74,7 @@ private:
     void OnTelephonyStateRegistryServiceChange(bool isAdded);
     void OnAudioDistributedServiceChange(bool isAdded);
     void OnAudioPolicyServiceChange(bool isAdded);
+    void OnPowerManagerServiceChange(bool isAdded);
 
 private:
     int32_t reasonId_ = -1;
