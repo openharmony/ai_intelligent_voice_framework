@@ -195,5 +195,23 @@ void TriggerService::DetachAudioRendererEventListener()
     }
     triggerHelper_->DetachAudioRendererEventListener();
 }
+
+void TriggerService::AttachHibernateObserver()
+{
+    if (triggerHelper_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("trigger helper is nullptr");
+        return;
+    }
+    triggerHelper_->AttachHibernateObserver();
+}
+
+void TriggerService::DetachHibernateObserver()
+{
+    if (triggerHelper_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("trigger helper is nullptr");
+        return;
+    }
+    triggerHelper_->DetachHibernateObserver();
+}
 }  // namespace IntellVoiceTrigger
 }  // namespace OHOS

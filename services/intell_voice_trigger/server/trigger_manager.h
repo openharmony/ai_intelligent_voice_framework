@@ -43,6 +43,8 @@ public:
     void DetachAudioCaptureListener();
     void AttachAudioRendererEventListener();
     void DetachAudioRendererEventListener();
+    void AttachHibernateObserver();
+    void DetachHibernateObserver();
 
 private:
     explicit TriggerManager();
