@@ -77,7 +77,7 @@ public:
     void ProcBreathModel();
     void CreateSwitchProvider();
     void ReleaseSwitchProvider();
-    void StartDetection(int32_t uuid);
+    bool StartDetection(int32_t uuid);
     void StopDetection(int32_t uuid);
     bool QuerySwitchStatus(const std::string &key);
 
@@ -96,6 +96,7 @@ public:
     int32_t GetWakeupSourceFile(const std::string &filePath, std::vector<uint8_t> &buffer);
     int32_t SendWakeupFile(const std::string &filePath, const std::vector<uint8_t> &buffer);
     void SetDspSensibility(const std::string &sensibility);
+    void OnTriggerConnectServiceStart();
 
 private:
     IntellVoiceServiceManager();

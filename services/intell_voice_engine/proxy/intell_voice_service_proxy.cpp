@@ -33,7 +33,7 @@ int32_t IntellVoiceServiceProxy::CreateIntellVoiceEngine(IntellVoiceEngineType t
     data.WriteInterfaceToken(IIntellVoiceService::GetDescriptor());
     data.WriteInt32(static_cast<int>(type));
 
-    auto stub = new IntellVoiceDeathRecipientStub();
+    auto stub = sptr<IntellVoiceDeathRecipientStub>(new (std::nothrow) IntellVoiceDeathRecipientStub());
     data.WriteRemoteObject(stub);
 
     Remote()->SendRequest(HDI_INTELL_VOICE_SERVICE_CREATE_ENGINE, data, reply, option);

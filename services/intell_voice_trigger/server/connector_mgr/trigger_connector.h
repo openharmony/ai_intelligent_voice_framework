@@ -20,7 +20,6 @@
 #include <map>
 #include <atomic>
 #include <mutex>
-#include <condition_variable>
 #include <iservmgr_hdi.h>
 #include "i_intell_voice_trigger_adapter_listener.h"
 #include "i_intell_voice_trigger_connector_module.h"
@@ -39,11 +38,11 @@ using OHOS::HDI::IntelligentVoice::Trigger::V1_0::IntellVoiceRecognitionEvent;
 using OHOS::HDI::IntelligentVoice::Trigger::V1_0::IntellVoiceTriggerAdapterDsecriptor;
 using OHOS::HDI::IntelligentVoice::Trigger::V1_0::IntellVoiceTriggerProperties;
 
-const std::string INTELL_VOICE_TRIGGER_SERVICE = "intell_voice_trigger_manager_service";
+using OnServiceStartCb = std::function<void(const IntellVoiceTriggerAdapterDsecriptor &desc)>;
 
 class TriggerConnector : public ServStatListenerStub, private TriggerHostManager {
 public:
-    explicit TriggerConnector(const IntellVoiceTriggerAdapterDsecriptor &desc);
+    TriggerConnector(OnServiceStartCb cb, const IntellVoiceTriggerAdapterDsecriptor &desc);
     ~TriggerConnector() override;
     std::shared_ptr<IIntellVoiceTriggerConnectorModule> GetModule(
         std::shared_ptr<IIntellVoiceTriggerConnectorCallback> callback);
@@ -134,11 +133,10 @@ private:
 
 private:
     std::mutex mutex_ {};
-    std::mutex serviceStateMutex_ {};
-    std::condition_variable cv_;
+    uint16_t serviceState_ = HDI::ServiceManager::V1_0::SERVIE_STATUS_MAX;
+    OnServiceStartCb cb_;
     IntellVoiceTriggerAdapterDsecriptor desc_;
     std::set<std::shared_ptr<TriggerSession>> activeSessions_;
-    uint16_t serviceState_ = HDI::ServiceManager::V1_0::SERVIE_STATUS_MAX;
 };
 }  // namespace IntellVoiceTrigger
 }  // namespace OHOS

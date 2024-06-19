@@ -25,7 +25,6 @@ config("intellvoice_native_config") {
 ohos_shared_library("intellvoice_native") {
   sources = [
     "enroll_intell_voice_engine.cpp",
-    "intell_voice_load_callback.cpp",
     "intell_voice_manager.cpp",
     "wakeup_intell_voice_engine.cpp",
   ]

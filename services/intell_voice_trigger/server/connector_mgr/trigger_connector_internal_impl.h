@@ -20,13 +20,13 @@
 #include "i_intell_voice_trigger_connector_internal.h"
 #include "trigger_connector.h"
 
-using OHOS::HDI::ServiceManager::V1_0::IServiceManager;
-
 namespace OHOS {
 namespace IntellVoiceTrigger {
+using OHOS::HDI::ServiceManager::V1_0::IServiceManager;
+
 class TriggerConnectorInternalImpl : public IIntellVoiceTriggerConnectorInternal {
 public:
-    TriggerConnectorInternalImpl();
+    explicit TriggerConnectorInternalImpl(OnServiceStartCb cb);
     ~TriggerConnectorInternalImpl() override;
     std::vector<TriggerConnectorModuleDesc> ListModuleDescriptors() override;
     std::shared_ptr<IIntellVoiceTriggerConnectorModule> GetModule(const std::string &adapterName,
