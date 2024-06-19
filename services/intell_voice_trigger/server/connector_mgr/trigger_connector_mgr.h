@@ -16,10 +16,13 @@
 #define INTELL_VOICE_TRIGGER_CONNECTOR_MGR_H
 
 #include "nocopyable.h"
+#include "v1_0/intell_voice_trigger_types.h"
 #include "i_intell_voice_trigger_connector_internal.h"
 
 namespace OHOS {
 namespace IntellVoiceTrigger {
+using OHOS::HDI::IntelligentVoice::Trigger::V1_0::IntellVoiceTriggerAdapterDsecriptor;
+
 class TriggerConnectorMgr {
 public:
     ~TriggerConnectorMgr() = default;
@@ -30,6 +33,7 @@ public:
 
 private:
     explicit TriggerConnectorMgr(std::unique_ptr<IIntellVoiceTriggerConnectorInternal> delegate);
+    static void OnTriggerConnectServiceStart(const IntellVoiceTriggerAdapterDsecriptor &desc);
 
 private:
     static std::unique_ptr<TriggerConnectorMgr> g_connectorMgr;

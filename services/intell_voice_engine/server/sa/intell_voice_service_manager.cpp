@@ -17,6 +17,7 @@
 #include <vector>
 #include <fstream>
 #include <cstdio>
+#include "audio_system_manager.h"
 #include "intell_voice_log.h"
 #include "intell_voice_util.h"
 #include "engine_factory.h"
@@ -270,11 +271,11 @@ void IntellVoiceServiceManager::CreateDetector(int32_t uuid)
     detector_[uuid] = detector;
 }
 
-void IntellVoiceServiceManager::StartDetection(int32_t uuid)
+bool IntellVoiceServiceManager::StartDetection(int32_t uuid)
 {
     if ((IsEngineExist(INTELL_VOICE_ENROLL)) || (IsEngineExist(INTELL_VOICE_UPDATE))) {
         INTELL_VOICE_LOG_INFO("enroll engine or update engine exist, do nothing");
-        return;
+        return false;
     }
 
     for (uint32_t cnt = 1; cnt <= MAX_ATTEMPT_CNT; ++cnt) {
@@ -282,24 +283,24 @@ void IntellVoiceServiceManager::StartDetection(int32_t uuid)
             std::lock_guard<std::mutex> lock(detectorMutex_);
             if ((detector_.count(uuid) == 0) || (detector_[uuid] == nullptr)) {
                 INTELL_VOICE_LOG_INFO("detector is not existed, uuid:%{public}d", uuid);
-                return;
+                return false;
             }
 
             if (!QuerySwitchByUuid(uuid)) {
                 INTELL_VOICE_LOG_INFO("switch is off, uuid is %{public}d", uuid);
-                return;
+                return false;
             }
 
             auto triggerMgr = TriggerManager::GetInstance();
             if (triggerMgr == nullptr) {
                 INTELL_VOICE_LOG_ERROR("trigger manager is nullptr");
-                return;
+                return false;
             }
 
             if (triggerMgr->GetParameter("audio_hal_status") == "true") {
                 INTELL_VOICE_LOG_INFO("audio hal is ready");
                 detector_[uuid]->StartRecognition();
-                return;
+                return true;
             }
         }
         INTELL_VOICE_LOG_INFO("begin to wait");
@@ -307,6 +308,7 @@ void IntellVoiceServiceManager::StartDetection(int32_t uuid)
         INTELL_VOICE_LOG_INFO("end to wait");
     }
     INTELL_VOICE_LOG_ERROR("failed to start recognition");
+    return false;
 }
 
 void IntellVoiceServiceManager::StopDetection(int32_t uuid)
@@ -324,6 +326,9 @@ void IntellVoiceServiceManager::OnDetected(int32_t uuid)
     TaskExecutor::AddAsyncTask([uuid, this]() {
         auto engine = GetEngine(INTELL_VOICE_WAKEUP, engines_);
         if (engine == nullptr) {
+            INTELL_VOICE_LOG_WARN("wakeup engine is nullptr");
+            StartDetection(VOICE_WAKEUP_MODEL_UUID);
+            StartDetection(PROXIMAL_WAKEUP_MODEL_UUID);
             return;
         }
         engine->OnDetected(uuid);
@@ -348,13 +353,17 @@ void IntellVoiceServiceManager::CreateAndStartServiceObject(int32_t uuid, bool n
         return;
     }
 
+    CreateDetector(uuid);
+    if (!StartDetection(uuid)) {
+        INTELL_VOICE_LOG_ERROR("failed to start detection");
+        return;
+    }
+
     if (!needResetAdapter) {
         CreateEngine(INTELL_VOICE_WAKEUP);
     } else {
         CreateOrResetWakeupEngine();
     }
-    CreateDetector(uuid);
-    StartDetection(uuid);
 }
 
 void IntellVoiceServiceManager::SetDspSensibility(const std::string &sensibility)
@@ -635,6 +644,14 @@ std::string IntellVoiceServiceManager::GetParameter(const std::string &key)
     } else if (key == "wakeup_capability") {
         val = GetWakeupCapability();
         INTELL_VOICE_LOG_INFO("get wakeup capability result %{public}s", val.c_str());
+    } else if (key == "isWhispering") {
+        auto audioSystemManager = AudioStandard::AudioSystemManager::GetInstance();
+        if (audioSystemManager == nullptr) {
+            INTELL_VOICE_LOG_ERROR("audioSystemManager is nullptr");
+            return val;
+        }
+        val = std::to_string(audioSystemManager->IsWhispering());
+        INTELL_VOICE_LOG_INFO("get isWhispering result %{public}s", val.c_str());
     }
 
     return val;
@@ -923,6 +940,12 @@ void IntellVoiceServiceManager::HandleHeadsetHostDie()
             engine->NotifyHeadsetHostEvent(HEADSET_HOST_ON);
         }
     });
+}
+
+void IntellVoiceServiceManager::OnTriggerConnectServiceStart()
+{
+    HandleSwitchOn(true, VOICE_WAKEUP_MODEL_UUID, false);
+    HandleSwitchOn(true, PROXIMAL_WAKEUP_MODEL_UUID, false);
 }
 }  // namespace IntellVoiceEngine
 }  // namespace OHOS

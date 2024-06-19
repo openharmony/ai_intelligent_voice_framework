@@ -27,7 +27,7 @@ using namespace OHOS::IntellVoiceUtils;
 
 namespace OHOS {
 namespace IntellVoiceEngine {
-const std::string HEADSET_SERVICE_NAME = "intell_voice_headset_manager_service";
+const std::string HEADSET_SERVICE_NAME = "tws_kws_service";
 
 HeadsetHostManager::~HeadsetHostManager()
 {

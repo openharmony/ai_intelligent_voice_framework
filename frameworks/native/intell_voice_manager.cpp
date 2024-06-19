@@ -20,7 +20,6 @@
 #include "memory_guard.h"
 #include "scope_guard.h"
 #include "intell_voice_log.h"
-#include "intell_voice_load_callback.h"
 #include "intell_voice_service_proxy.h"
 
 #define LOG_TAG "IntellVoiceManager"
@@ -30,7 +29,7 @@ using namespace OHOS::IntellVoiceEngine;
 
 namespace OHOS {
 namespace IntellVoice {
-constexpr int32_t LOAD_SA_TIMEOUT_MS = 5000;
+constexpr int32_t LOAD_SA_TIMEOUT_S = 4; // 4s
 
 IntellVoiceManager::IntellVoiceManager()
 {
@@ -53,8 +52,8 @@ IntellVoiceManager *IntellVoiceManager::GetInstance()
 
 bool IntellVoiceManager::Init()
 {
-    std::unique_lock<std::mutex> lock(mutex_);
     INTELL_VOICE_LOG_INFO("enter");
+    std::unique_lock<std::mutex> lock(mutex_);
 
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     if (samgr == nullptr) {
@@ -62,49 +61,18 @@ bool IntellVoiceManager::Init()
         return false;
     }
 
-    sptr<IntellVoiceLoadCallback> loadCallback = new (std::nothrow)
-        IntellVoiceLoadCallback(std::bind(&IntellVoiceManager::LoadSystemAbilitySuccess, this, std::placeholders::_1),
-            std::bind(&IntellVoiceManager::LoadSystemAbilityFail, this));
-    if (loadCallback == nullptr) {
-        INTELL_VOICE_LOG_ERROR("loadCallback is nullptr");
-        return false;
-    }
-
-    int32_t ret = samgr->LoadSystemAbility(INTELL_VOICE_SERVICE_ID, loadCallback);
-    if (ret != ERR_OK) {
+    auto object = samgr->LoadSystemAbility(INTELL_VOICE_SERVICE_ID, LOAD_SA_TIMEOUT_S);
+    if (object == nullptr) {
         INTELL_VOICE_LOG_ERROR("Failed to load systemAbility");
         return false;
     }
 
-    auto waitStatus = proxyConVar_.wait_for(lock, std::chrono::milliseconds(LOAD_SA_TIMEOUT_MS));
-    if (waitStatus != std::cv_status::no_timeout) {
-        INTELL_VOICE_LOG_ERROR("Load systemAbility timeout");
-        return false;
-    }
-    INTELL_VOICE_LOG_INFO("Load systemAbility success");
-    return true;
-}
-
-void IntellVoiceManager::LoadSystemAbilitySuccess(const sptr<IRemoteObject> &object)
-{
-    std::unique_lock<std::mutex> lock(mutex_);
-    INTELL_VOICE_LOG_INFO("IntellVoiceManager finish start systemAbility");
-    if (object == nullptr) {
-        INTELL_VOICE_LOG_ERROR("get system ability failed");
-        return;
-    }
     g_sProxy = iface_cast<IIntellVoiceService>(object);
     if (g_sProxy != nullptr) {
         INTELL_VOICE_LOG_INFO("init Service Proxy success");
     }
-    proxyConVar_.notify_one();
-}
-
-void IntellVoiceManager::LoadSystemAbilityFail()
-{
-    std::unique_lock<std::mutex> lock(mutex_);
-    g_sProxy = nullptr;
-    proxyConVar_.notify_one();
+    INTELL_VOICE_LOG_INFO("Load systemAbility success");
+    return true;
 }
 
 int32_t IntellVoiceManager::CreateIntellVoiceEngine(IntellVoiceEngineType type, sptr<IIntellVoiceEngine> &inst)

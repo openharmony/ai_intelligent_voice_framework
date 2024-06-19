@@ -42,8 +42,6 @@ public:
 
     int32_t CreateIntellVoiceEngine(IntellVoiceEngineType type, sptr<IIntellVoiceEngine> &inst);
     int32_t ReleaseIntellVoiceEngine(IntellVoiceEngineType type);
-    void LoadSystemAbilitySuccess(const sptr<IRemoteObject> &remoteObject);
-    void LoadSystemAbilityFail();
     bool Init();
 
     int32_t RegisterServiceDeathRecipient(sptr<OHOS::IRemoteObject::DeathRecipient> callback);

@@ -14,6 +14,7 @@
  */
 #include "trigger_connector_mgr.h"
 #include "intell_voice_log.h"
+#include "intell_voice_service_manager.h"
 #include "trigger_connector_internal_validation.h"
 #include "trigger_connector_internal_impl.h"
 
@@ -24,7 +25,9 @@ namespace IntellVoiceTrigger {
 std::unique_ptr<TriggerConnectorMgr> TriggerConnectorMgr::g_connectorMgr =
     std::unique_ptr<TriggerConnectorMgr>(
         new (std::nothrow) TriggerConnectorMgr(std::make_unique<TriggerConnectorInternalValidation>(
-            std::make_unique<TriggerConnectorInternalImpl>())));
+            std::make_unique<TriggerConnectorInternalImpl>([](const IntellVoiceTriggerAdapterDsecriptor &desc) {
+                TriggerConnectorMgr::OnTriggerConnectServiceStart(desc);
+            }))));
 
 TriggerConnectorMgr::TriggerConnectorMgr(std::unique_ptr<IIntellVoiceTriggerConnectorInternal> delegate)
     : delegate_(std::move(delegate))
@@ -54,6 +57,15 @@ std::shared_ptr<IIntellVoiceTriggerConnectorModule> TriggerConnectorMgr::GetConn
     }
 
     return delegate_->GetModule(adapterName, callback);
+}
+
+void TriggerConnectorMgr::OnTriggerConnectServiceStart(const IntellVoiceTriggerAdapterDsecriptor &desc)
+{
+    INTELL_VOICE_LOG_INFO("enter, adapter name:%{public}s", desc.adapterName.c_str());
+    const auto &manager = OHOS::IntellVoiceEngine::IntellVoiceServiceManager::GetInstance();
+    if (manager != nullptr) {
+        manager->OnTriggerConnectServiceStart();
+    }
 }
 }  // namespace IntellVoiceTrigger
 }  // namespace OHOS

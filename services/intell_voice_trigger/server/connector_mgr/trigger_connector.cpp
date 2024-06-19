@@ -33,11 +33,11 @@ using namespace OHOS::HDI::IntelligentVoice::Trigger::V1_1;
 
 namespace OHOS {
 namespace IntellVoiceTrigger {
-static constexpr int32_t MAX_GET_HDI_SERVICE_TIMEOUT = 3;
 static constexpr uint32_t MAX_RECOGNITION_EVENT_NUM = 100;
+static const std::string INTELL_VOICE_TRIGGER_SERVICE = "intell_voice_trigger_manager_service";
 static const std::string THREAD_NAME = "TriggerThread_";
 
-TriggerConnector::TriggerConnector(const IntellVoiceTriggerAdapterDsecriptor &desc)
+TriggerConnector::TriggerConnector(OnServiceStartCb cb, const IntellVoiceTriggerAdapterDsecriptor &desc) : cb_(cb)
 {
     desc_.adapterName = desc.adapterName;
     LoadHdiAdapter();
@@ -79,16 +79,6 @@ std::shared_ptr<IIntellVoiceTriggerConnectorModule> TriggerConnector::GetModule(
             INTELL_VOICE_LOG_INFO("already load hdi adapter");
             break;
         }
-        {
-            std::unique_lock<mutex> serviceStateLock(serviceStateMutex_);
-            if (serviceState_ != SERVIE_STATUS_START) {
-                if (!cv_.wait_for(serviceStateLock, chrono::seconds(MAX_GET_HDI_SERVICE_TIMEOUT),
-                    [&] { return serviceState_ == SERVIE_STATUS_START; })) {
-                    INTELL_VOICE_LOG_ERROR("time out");
-                    return nullptr;
-                }
-            }
-        }
         INTELL_VOICE_LOG_INFO("start to load hdi adapter");
         if (!LoadHdiAdapter()) {
             return nullptr;
@@ -118,14 +108,21 @@ void TriggerConnector::OnReceive(const ServiceStatus &serviceStatus)
     }
 
     INTELL_VOICE_LOG_INFO("status:%{public}d", serviceStatus.status);
-    {
-        std::unique_lock<mutex> serviceSatetLock(serviceStateMutex_);
-        if (serviceStatus.status == serviceState_) {
-            return;
-        }
-        serviceState_ = serviceStatus.status;
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (serviceStatus.status == serviceState_) {
+        INTELL_VOICE_LOG_INFO("service state not change");
+        return;
     }
-    cv_.notify_all();
+
+    serviceState_ = serviceStatus.status;
+    if ((serviceState_ != SERVIE_STATUS_START) || (TriggerHostManager::GetAdapter() != nullptr)) {
+        INTELL_VOICE_LOG_INFO("no need to notify mgr");
+        return;
+    }
+
+    if (cb_ != nullptr) {
+        cb_(desc_);
+    }
 }
 
 TriggerConnector::TriggerSession::TriggerSession(TriggerConnector *connector,

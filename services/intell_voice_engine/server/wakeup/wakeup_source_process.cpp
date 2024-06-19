@@ -60,6 +60,7 @@ void WakeupSourceProcess::Write(const std::vector<std::vector<uint8_t>> &audioDa
     if (channelCnt_ == CHANNEL_CNT_1) {
         WriteChannelData(audioData[CHANNEL_ID_0], CHANNEL_ID_0);
     } else if (channelCnt_ == CHANNEL_CNT_4) {
+        WriteChannelData(audioData[CHANNEL_ID_0], CHANNEL_ID_0);
         WriteChannelData(audioData[CHANNEL_ID_1], CHANNEL_ID_1);
         WriteChannelData(audioData[CHANNEL_ID_2], CHANNEL_ID_2);
         WriteChannelData(audioData[CHANNEL_ID_3], CHANNEL_ID_3);
