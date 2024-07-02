@@ -51,7 +51,7 @@ static const std::string SENSIBILITY_TEXT = "sensibility=";
 static const std::string WHISPER_MODEL_PATH =
     "/sys_prod/variant/region_comm/china/etc/intellvoice/wakeup/dsp/whisper_wakeup_dsp_config";
 static const std::string VAD_MODEL_PATH =
-    "/sys_prod/variant/region_comm/china/etc/intellvoice/wakeup/ap/vad.om";
+    "/sys_prod/variant/region_comm/china/etc/intellvoice/wakeup/ap/kws2_acousticsModel6.pb";
 static const std::string WAKEUP_CONFIG_USER_PATH =
     "/sys_prod/variant/region_comm/china/etc/intellvoice/wakeup/ap/wakeup_config_user.json";
 static const std::string WAKEUP_CONFIG_PATH =

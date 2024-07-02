@@ -624,7 +624,7 @@ void TriggerHelper::AudioRendererStateChangeCallbackImpl::OnRendererStateChange(
         INTELL_VOICE_LOG_ERROR("helper is nullptr");
         return;
     }
-
+    std::map<int32_t, bool> stateMap;
     for (const auto &info : audioRendererChangeInfos) {
         if (info == nullptr) {
             INTELL_VOICE_LOG_ERROR("info is nullptr");
@@ -634,18 +634,25 @@ void TriggerHelper::AudioRendererStateChangeCallbackImpl::OnRendererStateChange(
         if (info->rendererState == AudioStandard::RENDERER_RUNNING) {
             isPlaying = true;
         }
-        std::string key = isPlaying ? "start_stream" : "stop_stream";
-        if (rendererStateMap_.count(info->rendererInfo.streamUsage) == 0) {
-            rendererStateMap_[info->rendererInfo.streamUsage] = isPlaying;
-            INTELL_VOICE_LOG_INFO("first change, rendererState:%{public}d, usage:%{public}d, isPlaying:%{public}d",
-                static_cast<int32_t>(info->rendererState), info->rendererInfo.streamUsage, isPlaying);
-            helper_->SetParameter(key, std::to_string(info->rendererInfo.streamUsage));
+
+        if (stateMap.count(info->rendererInfo.streamUsage) == 0 || !stateMap[info->rendererInfo.streamUsage]) {
+            stateMap[info->rendererInfo.streamUsage] = isPlaying;
+        }
+    }
+
+    for (auto iter : stateMap) {
+        std::string key = iter.second ? "start_stream" : "stop_stream";
+        if (rendererStateMap_.count(iter.first) == 0) {
+            rendererStateMap_[iter.first] = iter.second;
+            INTELL_VOICE_LOG_INFO("first change, usage:%{public}d, isPlaying:%{public}d",
+                iter.first, iter.second);
+            helper_->SetParameter(key, std::to_string(iter.first));
         } else {
-            if (rendererStateMap_[info->rendererInfo.streamUsage] != isPlaying) {
-                INTELL_VOICE_LOG_INFO("state change, rendererState:%{public}d, usage:%{public}d, isPlaying:%{public}d",
-                    static_cast<int32_t>(info->rendererState), info->rendererInfo.streamUsage, isPlaying);
-                rendererStateMap_[info->rendererInfo.streamUsage] = isPlaying;
-                helper_->SetParameter(key, std::to_string(info->rendererInfo.streamUsage));
+            if (rendererStateMap_[iter.first] != iter.second) {
+                INTELL_VOICE_LOG_INFO("state change, usage:%{public}d, isPlaying:%{public}d",
+                    iter.first, iter.second);
+                rendererStateMap_[iter.first] = iter.second;
+                helper_->SetParameter(key, std::to_string(iter.first));
             }
         }
     }

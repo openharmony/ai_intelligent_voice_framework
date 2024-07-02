@@ -150,7 +150,7 @@ int32_t WakeupEngine::HandleHeadsetOff()
         INTELL_VOICE_LOG_ERROR("get devmgr failed");
         return -1;
     }
-    devmgr->UnloadDevice("intell_voice_headset_manager_service");
+    devmgr->UnloadDevice("tws_kws_service");
     return 0;
 }
 
@@ -161,7 +161,7 @@ int32_t WakeupEngine::HandleHeadsetOn()
         INTELL_VOICE_LOG_ERROR("get devmgr failed");
         return -1;
     }
-    devmgr->LoadDevice("intell_voice_headset_manager_service");
+    devmgr->LoadDevice("tws_kws_service");
     if (!HeadsetHostManager::GetInstance().Init()) {
         INTELL_VOICE_LOG_ERROR("init headset host failed");
         return -1;
