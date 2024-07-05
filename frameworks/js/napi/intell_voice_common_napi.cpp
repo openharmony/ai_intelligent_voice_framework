@@ -23,9 +23,9 @@ namespace OHOS {
 namespace IntellVoiceNapi {
 static const std::string NAPI_INTELLIGENT_VOICE_PERMISSION_DENIED_INFO = "Permission denied.";
 static const std::string NAPI_INTELLIGENT_VOICE_NO_MEMORY_INFO = "No memory.";
-static const std::string NAPI_INTELLIGENT_VOICE_INVALID_PARAM_INFO = "Input parameter value error.";
+static const std::string NAPI_INTELLIGENT_VOICE_INVALID_PARAM_INFO = "Invalid parameter.";
 static const std::string NAPI_INTELLIGENT_VOICE_INIT_FAILED_INFO = "Init failed.";
-static const std::string NAPI_INTELLIGENT_VOICE_COMMIT_ENROLL_FAILED_INFO = "Commit enroll failed.";
+static const std::string NAPI_INTELLIGENT_VOICE_COMMIT_ENROLL_FAILED_INFO = "Failed to commit the enrollment.";
 static const std::string NAPI_INTELLIGENT_VOICE_START_CAPTURER_INFO = "Start capturer failed.";
 static const std::string NAPI_INTELLIGENT_VOICE_READ_FAILED_INFO = "Read failed.";
 static const std::string NAPI_INTELLIGENT_VOICE_SYSTEM_ERROR_INFO = "System error.";
