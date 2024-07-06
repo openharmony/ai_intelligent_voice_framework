@@ -636,7 +636,7 @@ std::string IntellVoiceServiceManager::GetParameter(const std::string &key)
 
     if (key == "isEnrolled") {
         HistoryInfoMgr &historyInfoMgr = HistoryInfoMgr::GetInstance();
-        val = historyInfoMgr.GetWakeupVesion().empty() ? "true" : "false";
+        val = historyInfoMgr.GetWakeupVesion().empty() ? "false" : "true";
         INTELL_VOICE_LOG_INFO("get is enroll result %{public}s", val.c_str());
     } else if (key == "isNeedReEnroll") {
         val = UpdateEngineUtils::IsVersionUpdate() ? "true" : "false";
