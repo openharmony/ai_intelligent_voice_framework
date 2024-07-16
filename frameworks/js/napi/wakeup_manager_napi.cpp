@@ -77,6 +77,7 @@ napi_value WakeupManagerNapi::Export(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("getUploadFiles", GetUploadFiles),
         DECLARE_NAPI_FUNCTION("getWakeupSourceFiles", GetWakeupSourceFiles),
         DECLARE_NAPI_FUNCTION("enrollWithWakeupFilesForResult", EnrollWithWakeupFilesForResult),
+        DECLARE_NAPI_FUNCTION("clearUserData", ClearUserData),
     };
 
     napi_property_descriptor static_prop[] = {
@@ -590,6 +591,37 @@ PROCESS_ERR_EXIT:
 
     return NapiAsync::AsyncWork(env, context, "EnrollWithWakeupFilesForResult", execute,
         CloneForResultCompleteCallback);
+}
+
+napi_value WakeupManagerNapi::ClearUserData(napi_env env, napi_callback_info info)
+{
+    INTELL_VOICE_LOG_INFO("enter");
+    size_t cbIndex = ARG_INDEX_0;
+    auto context = std::make_shared<AsyncContext>(env);
+    if (context == nullptr) {
+        INTELL_VOICE_LOG_ERROR("create AsyncContext failed, No memory");
+        return nullptr;
+    }
+    context->result_ = (context->GetCbInfo(env, info, cbIndex, nullptr) ? NAPI_INTELLIGENT_VOICE_SUCCESS :
+        NAPI_INTELLIGENT_VOICE_INVALID_PARAM);
+    AsyncExecute execute;
+    if (context->result_ == NAPI_INTELLIGENT_VOICE_SUCCESS) {
+        execute = [](napi_env env, void *data) {
+            CHECK_CONDITION_RETURN_VOID((data == nullptr), "data is nullptr");
+            auto asyncContext = static_cast<AsyncContext *>(data);
+            IntellVoiceManager *manager = IntellVoiceManager::GetInstance();
+            if (manager == nullptr) {
+                INTELL_VOICE_LOG_ERROR("manager is nullptr");
+                asyncContext->result_ = NAPI_INTELLIGENT_VOICE_SYSTEM_ERROR;
+                return;
+            }
+            manager->ClearUserData();
+        };
+    } else {
+        execute = [](napi_env env, void *data) {};
+    }
+
+    return NapiAsync::AsyncWork(env, context, "ClearUserData", execute);
 }
 }  // namespace IntellVoiceNapi
 }  // namespace OHOS

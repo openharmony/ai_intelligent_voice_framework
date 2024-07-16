@@ -26,6 +26,7 @@ public:
 
     void SetValue(const std::string &key, const std::string &value);
     std::string GetValue(const std::string &key);
+    void Delete(const std::string &key);
 
 private:
     std::shared_ptr<DistributedKv::SingleKvStore> kvStore_ = nullptr;

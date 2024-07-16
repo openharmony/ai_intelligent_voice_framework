@@ -40,6 +40,8 @@ IntellVoiceServiceStub::IntellVoiceServiceStub()
         MessageParcel &reply) -> int32_t { return this->CloneForResultInner(data, reply); };
     processServiceFuncMap_[HDI_INTELL_VOICE_SERVICE_SET_PARAMETER] = [this](MessageParcel &data,
         MessageParcel &reply) -> int32_t { return this->SetParameterInner(data, reply); };
+    processServiceFuncMap_[HDI_INTELL_VOICE_SERVICE_CLEAR_USER_DATA] = [this](MessageParcel &data,
+        MessageParcel &reply) -> int32_t { return this->ClearUserDataInner(data, reply); };
 }
 
 IntellVoiceServiceStub::~IntellVoiceServiceStub()
@@ -186,6 +188,13 @@ int32_t IntellVoiceServiceStub::CloneForResultInner(MessageParcel &data, Message
     sptr<IRemoteObject> object = data.ReadRemoteObject();
 
     ret = EnrollWithWakeupFilesForResult(wakeupInfo, object);
+    reply.WriteInt32(ret);
+    return ret;
+}
+
+int32_t IntellVoiceServiceStub::ClearUserDataInner(MessageParcel &data, MessageParcel &reply)
+{
+    int32_t ret = ClearUserData();
     reply.WriteInt32(ret);
     return ret;
 }

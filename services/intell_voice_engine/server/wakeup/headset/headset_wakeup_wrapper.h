@@ -34,7 +34,7 @@ public:
     HeadsetWakeupWrapper();
     ~HeadsetWakeupWrapper();
 
-    int32_t ReadHeadsetStream(std::vector<uint8_t> &audioStream);
+    int32_t ReadHeadsetStream(std::vector<uint8_t> &audioStream, bool &hasAwakeWord);
     int32_t NotifyVerifyResult(bool result);
     int32_t StopReadingStream();
     int32_t GetHeadsetAwakeState();

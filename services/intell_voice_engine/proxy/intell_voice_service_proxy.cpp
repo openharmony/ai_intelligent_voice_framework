@@ -217,5 +217,16 @@ int32_t IntellVoiceServiceProxy::EnrollWithWakeupFilesForResult(const std::strin
     Remote()->SendRequest(HDI_INTELL_VOICE_SERVICE_CLONE_FOR_RESULT, data, reply, option);
     return reply.ReadInt32();
 }
+
+int32_t IntellVoiceServiceProxy::ClearUserData()
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    data.WriteInterfaceToken(IIntellVoiceService::GetDescriptor());
+    Remote()->SendRequest(HDI_INTELL_VOICE_SERVICE_CLEAR_USER_DATA, data, reply, option);
+    return reply.ReadInt32();
+}
 }  // namespace IntellVoiceEngine
 }  // namespace OHOS

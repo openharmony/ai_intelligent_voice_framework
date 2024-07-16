@@ -29,6 +29,10 @@ public:
     UpdatePriority GetUpdatePriority() override;
     int GetRetryTimes() override;
     int OnUpdateCompleteCallback(const int result, bool isLast) override;
+
+private:
+    void SetBundleAndAbilityName();
+    std::string GetBundleOrAbilityName(const std::string key);
 private:
     sptr<IIntelligentVoiceUpdateCallback> updateCallback_ = nullptr;
 };

@@ -137,6 +137,7 @@ ohos_shared_library("intell_voice_server") {
     "-Wno-error=unused-parameter",
     "-DHILOG_ENABLE",
     "-DENABLE_DEBUG",
+    "-DUSE_FFRT",
   ]
 
   deps = [ "../utils:intell_voice_utils" ]
@@ -163,6 +164,7 @@ ohos_shared_library("intell_voice_server") {
     "drivers_interface_intelligent_voice:libintell_voice_trigger_proxy_1.0",
     "drivers_interface_intelligent_voice:libintell_voice_trigger_proxy_1.1",
     "eventhandler:libeventhandler",
+    "ffrt:libffrt",
     "hdf_core:libhdf_host",
     "hdf_core:libhdi",
     "hilog:libhilog",

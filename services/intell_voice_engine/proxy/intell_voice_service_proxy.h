@@ -36,6 +36,7 @@ public:
     int32_t GetWakeupSourceFile(const std::string &filePath, std::vector<uint8_t> &buffer) override;
     int32_t SendWakeupFile(const std::string &filePath, const std::vector<uint8_t> &buffer) override;
     int32_t EnrollWithWakeupFilesForResult(const std::string &wakeupInfo, const sptr<IRemoteObject> object) override;
+    int32_t ClearUserData() override;
 
 private:
     static inline BrokerDelegator<IntellVoiceServiceProxy> delegator_;

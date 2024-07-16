@@ -19,6 +19,7 @@
 #include "scope_guard.h"
 #include "update_engine_utils.h"
 #include "history_info_mgr.h"
+#include "json/json.h"
 
 #define LOG_TAG "CloneUpdateStrategy"
 
@@ -41,11 +42,11 @@ bool CloneUpdateStrategy::UpdateRestrain()
     HistoryInfoMgr &historyInfoMgr = HistoryInfoMgr::GetInstance();
 
     versionNumberSave = historyInfoMgr.GetWakeupVesion();
-    if (versionNumberSave.empty()) {
-        INTELL_VOICE_LOG_ERROR("saved version number is null");
-        return false; // only for test, return true
+    if (!versionNumberSave.empty()) {
+        INTELL_VOICE_LOG_ERROR("saved version number is not null");
+        return true; // only for test, return false
     }
-    return true;  // only for test, return false;
+    return false;  // only for test, return true;
 }
 
 UpdatePriority CloneUpdateStrategy::GetUpdatePriority()
@@ -58,10 +59,51 @@ int CloneUpdateStrategy::GetRetryTimes()
     return 0;
 }
 
+std::string CloneUpdateStrategy::GetBundleOrAbilityName(const std::string key)
+{
+    std::istringstream jsonStrm(param_);
+    Json::CharReaderBuilder reader;
+    Json::Value root;
+    std::string errs;
+
+    reader["collectComments"] = false;
+    if (!parseFromStream(reader, jsonStrm, &root, &errs)) {
+        INTELL_VOICE_LOG_ERROR("input str is not json");
+        return "";
+    }
+
+    if (!root.isMember(key)) {
+        INTELL_VOICE_LOG_ERROR("key is not member of json");
+        return "";
+    }
+
+    return root[key].asString();
+}
+
+void CloneUpdateStrategy::SetBundleAndAbilityName()
+{
+    HistoryInfoMgr &historyInfoMgr = HistoryInfoMgr::GetInstance();
+
+    std::string bundleName = GetBundleOrAbilityName("bundle_name");
+    if (!bundleName.empty()) {
+        INTELL_VOICE_LOG_INFO("set bundle");
+        historyInfoMgr.SetWakeupEngineBundleName(bundleName);
+    }
+
+    std::string abilityName = GetBundleOrAbilityName("ability_name");
+    if (!abilityName.empty()) {
+        INTELL_VOICE_LOG_INFO("set ability");
+        historyInfoMgr.SetWakeupEngineAbilityName(abilityName);
+    }
+}
+
 int CloneUpdateStrategy::OnUpdateCompleteCallback(const int result, bool isLast)
 {
     if (updateCallback_ != nullptr) {
         INTELL_VOICE_LOG_INFO("enter");
+        if (result == UPDATE_STATE_COMPLETE_SUCCESS) {
+            SetBundleAndAbilityName();
+        }
         updateCallback_->OnUpdateComplete(result);
     }
 

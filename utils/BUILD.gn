@@ -28,23 +28,23 @@ ohos_shared_library("intell_voice_utils") {
     "state_manager.cpp",
     "string_util.cpp",
     "task_executor.cpp",
+    "thread_wrapper.cpp",
     "time_util.cpp",
     "timer_mgr.cpp",
   ]
 
-  defines = []
+  defines = [ "USE_FFRT" ]
   if (use_musl) {
     if (use_jemalloc && use_jemalloc_dfx_intf) {
       defines += [ "CONFIG_USE_JEMALLOC_DFX_INTF" ]
     }
   }
 
-  deps = []
-
   external_deps = [
     "access_token:libaccesstoken_sdk",
     "access_token:libtokenid_sdk",
     "c_utils:utils",
+    "ffrt:libffrt",
     "hilog:libhilog",
     "huks:libhukssdk",
     "ipc:ipc_core",

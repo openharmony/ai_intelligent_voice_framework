@@ -74,7 +74,7 @@ TimerMgr::~TimerMgr()
 
 void TimerMgr::Start(const std::string &threadName, ITimerObserver *observer)
 {
-    unique_lock<mutex> lock(timeMutex_);
+    std::unique_lock<ffrt::mutex> lock(timeMutex_);
 
     if (status_ == TimerStatus::TIMER_STATUS_STARTED) {
         return;
@@ -85,8 +85,10 @@ void TimerMgr::Start(const std::string &threadName, ITimerObserver *observer)
         return;
     }
 
-    workThread_ = thread(&TimerMgr::WorkThread, this);
-    pthread_setname_np(workThread_.native_handle(), threadName.c_str());
+    if (!ThreadWrapper::Start(threadName)) {
+        INTELL_VOICE_LOG_ERROR("failed to start timer");
+        return;
+    }
 
     timerObserver_ = observer;
     status_ = TimerStatus::TIMER_STATUS_STARTED;
@@ -96,7 +98,7 @@ void TimerMgr::Start(const std::string &threadName, ITimerObserver *observer)
 void TimerMgr::Stop()
 {
     {
-        lock_guard<mutex> lock(timeMutex_);
+        std::lock_guard<ffrt::mutex> lock(timeMutex_);
         if (status_ != TimerStatus::TIMER_STATUS_STARTED) {
             INTELL_VOICE_LOG_WARN("status is not started");
             return;
@@ -106,16 +108,14 @@ void TimerMgr::Stop()
         cv_.notify_all();
     }
 
-    if (workThread_.joinable()) {
-        workThread_.join();
-    }
+    ThreadWrapper::Join();
 
     Clear();
 }
 
 int TimerMgr::SetTimer(int type, int64_t delayUs, int cookie, ITimerObserver *currObserver)
 {
-    unique_lock<mutex> lock(timeMutex_);
+    std::unique_lock<ffrt::mutex> lock(timeMutex_);
 
     if (status_ != TimerStatus::TIMER_STATUS_STARTED) {
         INTELL_VOICE_LOG_ERROR("timer mgr not started");
@@ -163,7 +163,7 @@ int TimerMgr::SetTimer(int type, int64_t delayUs, int cookie, ITimerObserver *cu
 int TimerMgr::ResetTimer(int timerId, int type, int64_t delayUs, int cookie, ITimerObserver *currObserver)
 {
     {
-        unique_lock<mutex> lock(timeMutex_);
+        std::unique_lock<ffrt::mutex> lock(timeMutex_);
         if (itemQueue_.size() == 1) {
             auto it = itemQueue_.begin();
             if ((*it)->timerId != timerId) {
@@ -182,7 +182,7 @@ int TimerMgr::ResetTimer(int timerId, int type, int64_t delayUs, int cookie, ITi
 
 void TimerMgr::KillTimer(int &timerId)
 {
-    unique_lock<mutex> lock(timeMutex_);
+    std::unique_lock<ffrt::mutex> lock(timeMutex_);
     INTELL_VOICE_LOG_INFO("kill timer %d", timerId);
     for (auto it = itemQueue_.begin(); it != itemQueue_.end(); it++) {
         shared_ptr<TimerItem> curItem = *it;
@@ -204,7 +204,7 @@ void TimerMgr::KillTimer(int &timerId)
 
 void TimerMgr::Clear()
 {
-    lock_guard<mutex> lock(timeMutex_);
+    std::lock_guard<ffrt::mutex> lock(timeMutex_);
 
     itemQueue_.clear();
     IdAllocator::ClearId();
@@ -213,12 +213,12 @@ void TimerMgr::Clear()
     timerObserver_ = nullptr;
 }
 
-void TimerMgr::WorkThread()
+void TimerMgr::Run()
 {
     while (true) {
         TimerItem item;
         {
-            unique_lock<mutex> lock(timeMutex_);
+            std::unique_lock<ffrt::mutex> lock(timeMutex_);
 
             if (status_ != TimerStatus::TIMER_STATUS_STARTED) {
                 break;

@@ -47,6 +47,7 @@ private:
     static void CloneForResultCompleteCallback(napi_env env, napi_status status, void *data);
     static bool WakeupFilesForResultParser(std::shared_ptr<UpdateAsyncContext> context,
         napi_env env, size_t argc, napi_value *argv);
+    static napi_value ClearUserData(napi_env env, napi_callback_info info);
 
 private:
     napi_env env_ = nullptr;

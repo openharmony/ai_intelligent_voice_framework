@@ -81,10 +81,12 @@ std::shared_ptr<IIntellVoiceTriggerConnectorModule> TriggerConnector::GetModule(
         }
         INTELL_VOICE_LOG_INFO("start to load hdi adapter");
         if (!LoadHdiAdapter()) {
+            getModuleFail_ = true;
             return nullptr;
         }
     } while (0);
 
+    getModuleFail_ = false;
     std::shared_ptr<TriggerSession> session = std::make_shared<TriggerSession>(this, callback, activeSessions_.size());
     if (session == nullptr) {
         INTELL_VOICE_LOG_ERROR("failed to malloc session");
@@ -115,8 +117,9 @@ void TriggerConnector::OnReceive(const ServiceStatus &serviceStatus)
     }
 
     serviceState_ = serviceStatus.status;
-    if ((serviceState_ != SERVIE_STATUS_START) || (TriggerHostManager::GetAdapter() != nullptr)) {
-        INTELL_VOICE_LOG_INFO("no need to notify mgr");
+    if ((!getModuleFail_) || (serviceState_ != SERVIE_STATUS_START) || (TriggerHostManager::GetAdapter() != nullptr)) {
+        INTELL_VOICE_LOG_INFO("no need to notify mgr, getModuleFail:%{public}d, service state:%{public}d",
+            getModuleFail_, serviceState_);
         return;
     }
 

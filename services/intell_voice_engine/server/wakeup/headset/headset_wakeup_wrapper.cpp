@@ -74,7 +74,7 @@ HeadsetWakeupWrapper::~HeadsetWakeupWrapper()
     inst_ = nullptr;
 }
 
-int32_t HeadsetWakeupWrapper::ReadHeadsetStream(std::vector<uint8_t> &audioStream)
+int32_t HeadsetWakeupWrapper::ReadHeadsetStream(std::vector<uint8_t> &audioStream, bool &hasAwakeWord)
 {
     INTELL_VOICE_LOG_INFO("enter");
     std::lock_guard<std::mutex> lock(mutex_);
@@ -83,7 +83,7 @@ int32_t HeadsetWakeupWrapper::ReadHeadsetStream(std::vector<uint8_t> &audioStrea
         return -1;
     }
 
-    return inst_->ReadHeadsetStream(audioStream);
+    return inst_->ReadHeadsetStream(audioStream, hasAwakeWord);
 }
 
 int32_t HeadsetWakeupWrapper::NotifyVerifyResult(bool result)

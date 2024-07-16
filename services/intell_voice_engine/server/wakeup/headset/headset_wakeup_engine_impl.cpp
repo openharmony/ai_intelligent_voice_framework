@@ -264,15 +264,22 @@ int32_t HeadsetWakeupEngineImpl::HandleStart(const StateMsg & /* msg */, State &
 
 void HeadsetWakeupEngineImpl::ReadThread()
 {
+    bool isEnd = false;
     while (isReading_.load()) {
         std::vector<uint8_t> audioStream;
-        int ret = ReadHeadsetStream(audioStream);
+        bool hasAwakeWord = true;
+        int ret = ReadHeadsetStream(audioStream, hasAwakeWord);
+        if (hasAwakeWord && !isEnd) {
+            adapter_->WriteAudio(audioStream);
+        }
+        if (!hasAwakeWord && !isEnd) {
+            isEnd = true;
+            adapter_->SetParameter("end_of_pcm=true");
+        }
         if (ret == -1) {
             INTELL_VOICE_LOG_INFO("finish reading");
-            adapter_->SetParameter("end_of_pcm=true");
             break;
         }
-        adapter_->WriteAudio(audioStream);
         WakeupSourceProcess::Write({ audioStream });
     }
 }
@@ -323,8 +330,8 @@ int32_t HeadsetWakeupEngineImpl::HandleRecognizeComplete(const StateMsg &msg, St
 
     if (event->result != 0) {
         INTELL_VOICE_LOG_INFO("wakeup failed");
-        StopAudioSource();
         NotifyVerifyResult(false);
+        StopAudioSource();
         nextState = State(INITIALIZED);
     } else {
         NotifyVerifyResult(true);
@@ -370,6 +377,7 @@ int32_t HeadsetWakeupEngineImpl::HandleStopCapturer(const StateMsg & /* msg */, 
 int32_t HeadsetWakeupEngineImpl::HandleRecognizingTimeout(const StateMsg & /* msg */, State &nextState)
 {
     INTELL_VOICE_LOG_INFO("enter");
+    NotifyVerifyResult(false);
     StopAudioSource();
     EngineUtil::Stop();
     nextState = State(INITIALIZED);

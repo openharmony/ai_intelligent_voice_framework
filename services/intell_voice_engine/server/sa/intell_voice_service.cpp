@@ -412,6 +412,7 @@ int32_t IntellVoiceService::GetUploadFiles(int numMax, std::vector<UploadHdiFile
 {
     if (!IntellVoiceUtil::VerifySystemPermission(OHOS_PERMISSION_INTELL_VOICE)) {
         INTELL_VOICE_LOG_WARN("verify permission denied");
+        return -1;
     }
 
     INTELL_VOICE_LOG_INFO("get upload files enter, numMax: %{public}d", numMax);
@@ -420,6 +421,11 @@ int32_t IntellVoiceService::GetUploadFiles(int numMax, std::vector<UploadHdiFile
 
 std::string IntellVoiceService::GetParameter(const std::string &key)
 {
+    if (!IntellVoiceUtil::VerifySystemPermission(OHOS_PERMISSION_INTELL_VOICE)) {
+        INTELL_VOICE_LOG_WARN("verify permission denied");
+        return "";
+    }
+
     const auto &manager = IntellVoiceServiceManager::GetInstance();
     if (manager == nullptr) {
         INTELL_VOICE_LOG_INFO("manager is nullptr");
@@ -430,6 +436,11 @@ std::string IntellVoiceService::GetParameter(const std::string &key)
 
 int32_t IntellVoiceService::SetParameter(const std::string &keyValueList)
 {
+    if (!IntellVoiceUtil::VerifySystemPermission(OHOS_PERMISSION_INTELL_VOICE)) {
+        INTELL_VOICE_LOG_WARN("verify permission denied");
+        return -1;
+    }
+
     const auto &manager = IntellVoiceServiceManager::GetInstance();
     if (manager == nullptr) {
         INTELL_VOICE_LOG_INFO("manager is nullptr");
@@ -442,6 +453,7 @@ int32_t IntellVoiceService::GetWakeupSourceFilesList(std::vector<std::string>& c
 {
     if (!IntellVoiceUtil::VerifySystemPermission(OHOS_PERMISSION_INTELL_VOICE)) {
         INTELL_VOICE_LOG_WARN("verify permission");
+        return -1;
     }
 
     INTELL_VOICE_LOG_INFO("get clone file list");
@@ -458,6 +470,7 @@ int32_t IntellVoiceService::GetWakeupSourceFile(const std::string &filePath, std
 {
     if (!IntellVoiceUtil::VerifySystemPermission(OHOS_PERMISSION_INTELL_VOICE)) {
         INTELL_VOICE_LOG_WARN("verify permission");
+        return -1;
     }
 
     INTELL_VOICE_LOG_INFO("get clone file");
@@ -474,6 +487,7 @@ int32_t IntellVoiceService::SendWakeupFile(const std::string &filePath, const st
 {
     if (!IntellVoiceUtil::VerifySystemPermission(OHOS_PERMISSION_INTELL_VOICE)) {
         INTELL_VOICE_LOG_WARN("verify permission");
+        return -1;
     }
 
     INTELL_VOICE_LOG_INFO("send clone file");
@@ -491,6 +505,7 @@ int32_t IntellVoiceService::EnrollWithWakeupFilesForResult(const std::string &wa
 {
     if (!IntellVoiceUtil::VerifySystemPermission(OHOS_PERMISSION_INTELL_VOICE)) {
         INTELL_VOICE_LOG_WARN("verify permission");
+        return -1;
     }
 
     INTELL_VOICE_LOG_INFO("enter");
@@ -506,6 +521,22 @@ int32_t IntellVoiceService::EnrollWithWakeupFilesForResult(const std::string &wa
     }
 
     return mgr->HandleCloneUpdate(wakeupInfo, object);
+}
+
+int32_t IntellVoiceService::ClearUserData()
+{
+    if (!IntellVoiceUtil::VerifySystemPermission(OHOS_PERMISSION_INTELL_VOICE)) {
+        INTELL_VOICE_LOG_WARN("verify permission");
+        return -1;
+    }
+
+    auto &mgr = IntellVoiceServiceManager::GetInstance();
+    if (mgr == nullptr) {
+        INTELL_VOICE_LOG_ERROR("mgr is nullptr");
+        return -1;
+    }
+
+    return mgr->ClearUserData();
 }
 }  // namespace IntellVoiceEngine
 }  // namespace OHOS

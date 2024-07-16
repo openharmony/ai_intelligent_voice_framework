@@ -72,5 +72,13 @@ std::string ServiceDbHelper::GetValue(const std::string &key)
     kvStore_->Get(key, value);
     return value.ToString();
 }
+
+void ServiceDbHelper::Delete(const std::string &key)
+{
+    if (kvStore_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("kvStore_ is nullptr");
+    }
+    kvStore_->Delete(key);
+}
 }
 }
