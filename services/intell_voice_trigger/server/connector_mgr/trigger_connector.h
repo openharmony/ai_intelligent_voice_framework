@@ -77,13 +77,6 @@ private:
         void HandleRecognitionHdiEvent(std::shared_ptr<IntellVoiceRecognitionEvent> event, int32_t modelHandle);
 
     private:
-        enum MsgType {
-            MSG_TYPE_NONE,
-            MSG_TYPE_RECOGNITION_HDI_EVENT,
-            MSG_TYPE_QUIT,
-        };
-
-    private:
         class Model : public IIntellVoiceTriggerAdapterListener, public std::enable_shared_from_this<Model> {
         public:
             static std::shared_ptr<Model> Create(TriggerSession *session);
@@ -134,6 +127,7 @@ private:
 private:
     std::mutex mutex_ {};
     uint16_t serviceState_ = HDI::ServiceManager::V1_0::SERVIE_STATUS_MAX;
+    bool getModuleFail_ = false;
     OnServiceStartCb cb_;
     IntellVoiceTriggerAdapterDsecriptor desc_;
     std::set<std::shared_ptr<TriggerSession>> activeSessions_;

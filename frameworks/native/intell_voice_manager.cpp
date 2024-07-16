@@ -296,5 +296,17 @@ int32_t IntellVoiceManager::EnrollWithWakeupFilesForResult(const std::vector<Wak
 
     return g_sProxy->EnrollWithWakeupFilesForResult(wakeupInfo, callback_->AsObject());
 }
+
+void IntellVoiceManager::ClearUserData()
+{
+    INTELL_VOICE_LOG_INFO("enter");
+
+    if (g_sProxy == nullptr) {
+        INTELL_VOICE_LOG_ERROR("IntellVoiceService proxy is nullptr");
+        return;
+    }
+
+    g_sProxy->ClearUserData();
+}
 }  // namespace IntellVoice
 }  // namespace OHOS

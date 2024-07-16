@@ -43,6 +43,7 @@ private:
     int32_t GetCloneFileInner(MessageParcel &data, MessageParcel &reply);
     int32_t SendCloneFileInner(MessageParcel &data, MessageParcel &reply);
     int32_t CloneForResultInner(MessageParcel &data, MessageParcel &reply);
+    int32_t ClearUserDataInner(MessageParcel &data, MessageParcel &reply);
 };
 }  // namespace IntellVoiceEngine
 }  // namespace OHOS

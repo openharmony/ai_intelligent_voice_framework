@@ -24,13 +24,7 @@ namespace OHOS {
 namespace IntellVoiceEngine {
 constexpr int DECIMAL_NOTATION = 10;
 const std::string KEY_ENROLL_ENGINE_UID = "EnrollEngineUid";
-const std::string KEY_WAKEUP_ENGINE_BUNDLE_NAME = "WakeupEngineBundleName";
-const std::string KEY_WAKEUP_ENGINE_ABILITY_NAME = "WakeupEngineAbilityName";
-const std::string KEY_WAKEUP_VESRION = "WakeupVersion";
-const std::string KEY_LANGUAGE = "Language";
-const std::string KEY_AREA = "Area";
 const std::string KEY_SENSIBILITY = "Sensibility";
-const std::string KEY_WAKEUP_PHRASE = "WakeupPhrase";
 const std::string KEY_WAKEUP_DSP_FEATURE = "WakeupDspFeature";
 
 HistoryInfoMgr::HistoryInfoMgr()
@@ -127,6 +121,13 @@ void HistoryInfoMgr::SetWakeupDspFeature(const std::string &wakeupDspFeature)
 std::string HistoryInfoMgr::GetWakeupDspFeature()
 {
     return GetValue(KEY_WAKEUP_DSP_FEATURE);
+}
+
+void HistoryInfoMgr::DeleteKey(const std::vector<std::string> &keyList)
+{
+    for (auto key : keyList) {
+        Delete(key);
+    }
 }
 }
 }

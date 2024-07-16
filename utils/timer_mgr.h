@@ -21,6 +21,7 @@
 #include <thread>
 #include <condition_variable>
 #include "id_allocator.h"
+#include "thread_wrapper.h"
 
 namespace OHOS {
 namespace IntellVoiceUtils {
@@ -77,7 +78,7 @@ struct TimerItem {
     ITimerObserver *observer;
 };
 
-class TimerMgr : private IdAllocator {
+class TimerMgr : public ThreadWrapper, private IdAllocator {
 public:
     explicit TimerMgr(int maxTimerNum = 10);
     ~TimerMgr() override;
@@ -88,18 +89,19 @@ public:
     int ResetTimer(int timerId, int type, int64_t delayUs, int cookie, ITimerObserver *currObserver);
     void KillTimer(int &timerId);
 
+protected:
+    void Run() override;
+
 private:
     void Clear();
-    void WorkThread();
 
 private:
     TimerStatus status_;
     ITimerObserver *timerObserver_;
     std::list<std::shared_ptr<TimerItem>> itemQueue_;
 
-    std::mutex timeMutex_;
-    std::condition_variable cv_;
-    std::thread workThread_;
+    ffrt::mutex timeMutex_;
+    ffrt::condition_variable cv_;
 };
 }
 }

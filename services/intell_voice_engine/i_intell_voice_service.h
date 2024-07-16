@@ -40,7 +40,8 @@ public:
         HDI_INTELL_VOICE_SERVICE_GET_CLONE_FILE,
         HDI_INTELL_VOICE_SERVICE_SEND_CLONE_FILE,
         HDI_INTELL_VOICE_SERVICE_CLONE_FOR_RESULT,
-        HDI_INTELL_VOICE_SERVICE_SET_PARAMETER
+        HDI_INTELL_VOICE_SERVICE_SET_PARAMETER,
+        HDI_INTELL_VOICE_SERVICE_CLEAR_USER_DATA
     };
 
     virtual int32_t CreateIntellVoiceEngine(IntellVoiceEngineType type, sptr<IIntellVoiceEngine> &inst) = 0;
@@ -53,6 +54,7 @@ public:
     virtual int32_t SendWakeupFile(const std::string &filePath, const std::vector<uint8_t> &buffer) = 0;
     virtual int32_t EnrollWithWakeupFilesForResult(const std::string &wakeupInfo,
         const sptr<IRemoteObject> object) = 0;
+    virtual int32_t ClearUserData() = 0;
 };
 }
 }

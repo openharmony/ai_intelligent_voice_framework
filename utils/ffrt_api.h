@@ -12,21 +12,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef I_HEADSET_WAKEUP_H
-#define I_HEADSET_WAKEUP_H
+#ifndef FFRT_API_H
+#define FFRT_API_H
 
-#include <cstdint>
-#include <vector>
+#ifdef USE_FFRT
+#include "ffrt_inner.h"
 
-namespace OHOS {
-namespace IntellVoiceEngine {
-class IHeadsetWakeup {
-public:
-    virtual int32_t ReadHeadsetStream(std::vector<uint8_t> &audioStream, bool &hasAwakeWord) = 0;
-    virtual int32_t NotifyVerifyResult(bool result) = 0;
-    virtual int32_t StopReadingStream() = 0;
-    virtual int32_t GetHeadsetAwakeState() = 0;
-};
-}
-}
+#else
+
+#ifndef ffrt
+#define ffrt std
+#endif
+
+#endif // USE_FFRT
+
 #endif

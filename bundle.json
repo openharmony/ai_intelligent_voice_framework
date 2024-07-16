@@ -40,7 +40,8 @@
                 "call_manager",
                 "huks",
                 "jsoncpp",
-                "power_manager"
+                "power_manager",
+                "ffrt"
             ],
             "third_party": []
         },
@@ -54,7 +55,8 @@
                 "//foundation/ai/intelligent_voice_framework/frameworks/js:intelligentvoice",
                 "//foundation/ai/intelligent_voice_framework/frameworks/js:intelligentvoice_js",
                 "//foundation/ai/intelligent_voice_framework/frameworks/native:intellvoice_native",
-                "//foundation/ai/intelligent_voice_framework/sa_profile:intell_voice_service_sa_profile"
+                "//foundation/ai/intelligent_voice_framework/sa_profile:intell_voice_service_sa_profile",
+                "//foundation/ai/intelligent_voice_framework/utils:intell_voice_utils"
             ],
             "inner_kits": [
                 {

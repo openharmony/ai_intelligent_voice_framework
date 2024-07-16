@@ -743,6 +743,22 @@ int32_t IntellVoiceServiceManager::SendWakeupFile(const std::string &filePath, c
     return EngineHostManager::GetInstance().SendWakeupFile(filePath, buffer);
 }
 
+int32_t IntellVoiceServiceManager::ClearUserData()
+{
+    INTELL_VOICE_LOG_INFO("enter");
+    auto triggerMgr = TriggerManager::GetInstance();
+    if (triggerMgr == nullptr) {
+        INTELL_VOICE_LOG_WARN("trigger manager is nullptr");
+        return -1;
+    }
+
+    triggerMgr->DeleteModel(VOICE_WAKEUP_MODEL_UUID);
+    HistoryInfoMgr::GetInstance().DeleteKey({KEY_WAKEUP_ENGINE_BUNDLE_NAME, KEY_WAKEUP_ENGINE_ABILITY_NAME,
+        KEY_WAKEUP_VESRION, KEY_LANGUAGE, KEY_AREA, KEY_WAKEUP_PHRASE});
+    HandleUnloadIntellVoiceService(false);
+    return 0;
+}
+
 sptr<IIntellVoiceEngine> IntellVoiceServiceManager::HandleCreateEngine(IntellVoiceEngineType type)
 {
     return TaskExecutor::AddSyncTask([this, type]() -> sptr<IIntellVoiceEngine> {

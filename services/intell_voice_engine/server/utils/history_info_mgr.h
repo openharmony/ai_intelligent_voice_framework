@@ -15,11 +15,19 @@
 #ifndef HISTORY_INFO_MGR_H
 #define HISTORY_INFO_MGR_H
 
+#include <vector>
 #include "service_db_helper.h"
 #include "nocopyable.h"
 
 namespace OHOS {
 namespace IntellVoiceEngine {
+const std::string KEY_WAKEUP_ENGINE_BUNDLE_NAME = "WakeupEngineBundleName";
+const std::string KEY_WAKEUP_ENGINE_ABILITY_NAME = "WakeupEngineAbilityName";
+const std::string KEY_WAKEUP_VESRION = "WakeupVersion";
+const std::string KEY_LANGUAGE = "Language";
+const std::string KEY_AREA = "Area";
+const std::string KEY_WAKEUP_PHRASE = "WakeupPhrase";
+
 class HistoryInfoMgr : private ServiceDbHelper {
 public:
     HistoryInfoMgr();
@@ -49,6 +57,7 @@ public:
     std::string GetWakeupPhrase();
     void SetWakeupDspFeature(const std::string &wakeupDspFeature);
     std::string GetWakeupDspFeature();
+    void DeleteKey(const std::vector<std::string> &keyList);
 
 private:
     DISALLOW_COPY_AND_MOVE(HistoryInfoMgr);
