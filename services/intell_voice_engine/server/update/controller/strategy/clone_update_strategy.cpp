@@ -44,9 +44,9 @@ bool CloneUpdateStrategy::UpdateRestrain()
     versionNumberSave = historyInfoMgr.GetWakeupVesion();
     if (!versionNumberSave.empty()) {
         INTELL_VOICE_LOG_ERROR("saved version number is not null");
-        return true; // only for test, return false
+        return true;
     }
-    return false;  // only for test, return true;
+    return false;
 }
 
 UpdatePriority CloneUpdateStrategy::GetUpdatePriority()
@@ -59,7 +59,7 @@ int CloneUpdateStrategy::GetRetryTimes()
     return 0;
 }
 
-std::string CloneUpdateStrategy::GetBundleOrAbilityName(const std::string key)
+std::string CloneUpdateStrategy::GetBundleOrAbilityName(const std::string &key)
 {
     std::istringstream jsonStrm(param_);
     Json::CharReaderBuilder reader;
@@ -72,8 +72,8 @@ std::string CloneUpdateStrategy::GetBundleOrAbilityName(const std::string key)
         return "";
     }
 
-    if (!root.isMember(key)) {
-        INTELL_VOICE_LOG_ERROR("key is not member of json");
+    if ((!root.isMember(key)) || (!root[key].isString())) {
+        INTELL_VOICE_LOG_ERROR("invalid key");
         return "";
     }
 
