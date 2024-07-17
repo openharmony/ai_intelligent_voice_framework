@@ -140,6 +140,11 @@ ohos_shared_library("intell_voice_server") {
     "-DUSE_FFRT",
   ]
 
+  defines = []
+  if (build_variant == "root") {
+    defines += [ "INTELL_VOICE_BUILD_VARIANT_ROOT" ]
+  }
+
   deps = [ "../utils:intell_voice_utils" ]
 
   external_deps = [

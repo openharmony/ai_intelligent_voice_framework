@@ -32,7 +32,6 @@
 namespace OHOS {
 namespace IntellVoiceUtils {
 static constexpr uint32_t VERSION_OFFSET = 8;
-static constexpr uid_t UID_ROOT = 0;
 
 uint32_t IntellVoiceUtil::GetHdiVersionId(uint32_t majorVer, uint32_t minorVer)
 {
@@ -146,10 +145,12 @@ bool IntellVoiceUtil::CheckIsSystemApp()
 
 bool IntellVoiceUtil::VerifySystemPermission(const std::string &permissionName)
 {
-    if (IPCSkeleton::GetCallingUid() == UID_ROOT) {
+#ifdef INTELL_VOICE_BUILD_VARIANT_ROOT
+    if (IPCSkeleton::GetCallingUid() == 0) { // 0 for root uid
         INTELL_VOICE_LOG_INFO("callingUid is root");
         return true;
     }
+#endif
 
     if (!CheckIsSystemApp()) {
         return false;

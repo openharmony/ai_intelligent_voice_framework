@@ -32,7 +32,7 @@ public:
 
 private:
     void SetBundleAndAbilityName();
-    std::string GetBundleOrAbilityName(const std::string key);
+    std::string GetBundleOrAbilityName(const std::string &key);
 private:
     sptr<IIntelligentVoiceUpdateCallback> updateCallback_ = nullptr;
 };

@@ -40,6 +40,10 @@ ohos_shared_library("intell_voice_utils") {
     }
   }
 
+  if (build_variant == "root") {
+    defines += [ "INTELL_VOICE_BUILD_VARIANT_ROOT" ]
+  }
+
   external_deps = [
     "access_token:libaccesstoken_sdk",
     "access_token:libtokenid_sdk",
