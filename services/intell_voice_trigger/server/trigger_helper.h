@@ -28,6 +28,7 @@
 #include "audio_stream_manager.h"
 #include "audio_info.h"
 #include "sync_hibernate_callback_stub.h"
+#include "sync_sleep_callback_stub.h"
 
 namespace OHOS {
 namespace IntellVoiceTrigger {
@@ -175,7 +176,22 @@ private:
         std::shared_ptr<TriggerHelper> helper_ = nullptr;
     };
 
-    sptr<HibernateCallback> hibernateCallback_ = nullptr;
+    class SleepCallback : public PowerMgr::SyncSleepCallbackStub {
+    public:
+        explicit SleepCallback(const std::shared_ptr<TriggerHelper> helper)
+            : helper_(helper)
+        {}
+        ~SleepCallback()
+        {
+            helper_ = nullptr;
+        }
+
+        void OnSyncSleep(bool onForceSleep);
+        void OnSyncWakeup(bool onForceSleep);
+
+    private:
+        std::shared_ptr<TriggerHelper> helper_ = nullptr;
+    };
 
 private:
     std::mutex mutex_;
@@ -188,6 +204,8 @@ private:
     std::vector<TriggerConnectorModuleDesc> moduleDesc_;
     std::shared_ptr<AudioCapturerSourceChangeCallback> audioCapturerSourceChangeCallback_ = nullptr;
     std::shared_ptr<AudioRendererStateChangeCallbackImpl> audioRendererStateChangeCallback_ = nullptr;
+    sptr<HibernateCallback> hibernateCallback_ = nullptr;
+    sptr<SleepCallback> sleepCallback_ = nullptr;
     bool callActive_ = false;
     bool systemHibernate_ = false;
     bool audioCaptureActive_ = false;

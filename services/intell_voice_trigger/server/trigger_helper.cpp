@@ -469,6 +469,9 @@ void TriggerHelper::OnUpdateAllRecognitionState()
             StartRecognition(iter.second);
         } else {
             StopRecognition(iter.second);
+            if (systemHibernate_) {
+                UnloadModel(iter.second);
+            }
         }
     }
 }
@@ -678,6 +681,35 @@ void TriggerHelper::HibernateCallback::OnSyncWakeup()
     helper_->OnHibernateStateUpdated(false);
 }
 
+void TriggerHelper::SleepCallback::OnSyncSleep(bool onForceSleep)
+{
+    if (!onForceSleep) {
+        INTELL_VOICE_LOG_INFO("not onForceSleep");
+        return;
+    }
+
+    if (helper_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("helper is nullptr");
+        return;
+    }
+
+    helper_->OnHibernateStateUpdated(true);
+}
+
+void TriggerHelper::SleepCallback::OnSyncWakeup(bool onForceSleep)
+{
+    if (!onForceSleep) {
+        INTELL_VOICE_LOG_INFO("not onForceSleep");
+        return;
+    }
+
+    if (helper_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("helper is nullptr");
+        return;
+    }
+
+    helper_->OnHibernateStateUpdated(false);
+}
 
 void TriggerHelper::AttachAudioRendererEventListener()
 {
@@ -731,10 +763,19 @@ void TriggerHelper::AttachHibernateObserver()
         INTELL_VOICE_LOG_ERROR("hibernateCallback_ is nullptr");
         return;
     }
-
     auto res =  PowerMgrClient::GetInstance().RegisterSyncHibernateCallback(hibernateCallback_);
     if (!res) {
         INTELL_VOICE_LOG_ERROR("hibernateCallback_ register failed");
+    }
+
+    sleepCallback_ = std::make_unique<SleepCallback>(shared_from_this()).release();
+    if (sleepCallback_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("sleepCallback_ is nullptr");
+        return;
+    }
+    res =  PowerMgrClient::GetInstance().RegisterSyncSleepCallback(sleepCallback_, SleepPriority::DEFAULT);
+    if (!res) {
+        INTELL_VOICE_LOG_ERROR("sleepCallback_ register failed");
     }
 }
 
@@ -751,6 +792,15 @@ void TriggerHelper::DetachHibernateObserver()
     auto res =  PowerMgrClient::GetInstance().UnRegisterSyncHibernateCallback(hibernateCallback_);
     if (!res) {
         INTELL_VOICE_LOG_ERROR("hibernateCallback_ unregister failed");
+    }
+
+    if (sleepCallback_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("sleepCallback_ is nullptr");
+        return;
+    }
+    res =  PowerMgrClient::GetInstance().UnRegisterSyncSleepCallback(sleepCallback_);
+    if (!res) {
+        INTELL_VOICE_LOG_ERROR("sleepCallback_ unregister failed");
     }
 }
 }  // namespace IntellVoiceTrigger
