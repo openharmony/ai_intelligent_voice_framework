@@ -142,6 +142,7 @@ std::string TriggerService::GetParameter(const std::string &key)
     return triggerHelper_->GetParameter(key);
 }
 
+#ifdef SUPPORT_TELEPHONY_SERVICE
 void TriggerService::AttachTelephonyObserver()
 {
     if (triggerHelper_ == nullptr) {
@@ -159,6 +160,7 @@ void TriggerService::DetachTelephonyObserver()
     }
     triggerHelper_->DetachTelephonyObserver();
 }
+#endif
 
 void TriggerService::AttachAudioCaptureListener()
 {

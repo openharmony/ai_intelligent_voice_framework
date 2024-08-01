@@ -222,5 +222,15 @@ int32_t EngineHostManager::SendWakeupFile(const std::string &filePath, const std
 
     return engineHostProxy1_2_->SendCloneFile(filePath, buffer);
 }
+
+int32_t EngineHostManager::ClearUserWakeupData(const std::string &wakeupPhrase)
+{
+    INTELL_VOICE_LOG_INFO("enter");
+    if (engineHostProxy1_2_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("engineHostProxy1_2_ is nullptr");
+        return -1;
+    }
+    return engineHostProxy1_2_->ClearUserWakeupData(wakeupPhrase);
+}
 }
 }

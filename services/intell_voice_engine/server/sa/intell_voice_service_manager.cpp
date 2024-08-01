@@ -606,7 +606,7 @@ void IntellVoiceServiceManager::HandleUpdateRetry()
 {
     TaskExecutor::AddAsyncTask([this]() {
         if (UpdateEngineController::UpdateRetryProc()) {
-            INTELL_VOICE_LOG_INFO("retry to update");
+            INTELL_VOICE_LOG_INFO("retry to update or already force to stop");
             return;
         }
         if (IsEngineExist(INTELL_VOICE_ENROLL)) {
@@ -753,10 +753,21 @@ int32_t IntellVoiceServiceManager::ClearUserData()
     }
 
     triggerMgr->DeleteModel(VOICE_WAKEUP_MODEL_UUID);
-    HistoryInfoMgr::GetInstance().DeleteKey({KEY_WAKEUP_ENGINE_BUNDLE_NAME, KEY_WAKEUP_ENGINE_ABILITY_NAME,
-        KEY_WAKEUP_VESRION, KEY_LANGUAGE, KEY_AREA, KEY_WAKEUP_PHRASE});
-    HandleUnloadIntellVoiceService(false);
-    return 0;
+    triggerMgr->DeleteModel(PROXIMAL_WAKEUP_MODEL_UUID);
+    return TaskExecutor::AddSyncTask([this]() -> int32_t {
+        UpdateEngineController::ForceRelease();
+        auto engine = GetEngine(INTELL_VOICE_WAKEUP, engines_);
+        if (engine != nullptr) {
+            engine->Detach();
+        }
+        auto wakeupPhrase = HistoryInfoMgr::GetInstance().GetWakeupPhrase();
+        if (!wakeupPhrase.empty()) {
+            EngineHostManager::GetInstance().ClearUserWakeupData(wakeupPhrase);
+        }
+        HistoryInfoMgr::GetInstance().DeleteKey({KEY_WAKEUP_ENGINE_BUNDLE_NAME, KEY_WAKEUP_ENGINE_ABILITY_NAME,
+            KEY_WAKEUP_VESRION, KEY_LANGUAGE, KEY_AREA, KEY_WAKEUP_PHRASE});
+        return UnloadIntellVoiceService();
+    });
 }
 
 sptr<IIntellVoiceEngine> IntellVoiceServiceManager::HandleCreateEngine(IntellVoiceEngineType type)

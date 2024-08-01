@@ -23,7 +23,9 @@
 #include "i_intell_voice_trigger_connector_module.h"
 #include "i_intell_voice_trigger_connector_callback.h"
 #include "trigger_connector_common_type.h"
+#ifdef SUPPORT_TELEPHONY_SERVICE
 #include "telephony_observer.h"
+#endif
 #include "audio_system_manager.h"
 #include "audio_stream_manager.h"
 #include "audio_info.h"
@@ -84,8 +86,10 @@ public:
     void DetachAudioCaptureListener();
     void AttachAudioRendererEventListener();
     void DetachAudioRendererEventListener();
+#ifdef SUPPORT_TELEPHONY_SERVICE
     void AttachTelephonyObserver();
     void DetachTelephonyObserver();
+#endif
     void AttachHibernateObserver();
     void DetachHibernateObserver();
 
@@ -106,8 +110,9 @@ private:
     void OnRecognition(int32_t modelHandle, const IntellVoiceRecognitionEvent &event) override;
     void OnCapturerStateChange(bool isActive);
     void OnUpdateRendererState(int32_t streamUsage, bool isPlaying);
-    void OnCallStateUpdated(int32_t callState);
     void OnHibernateStateUpdated(bool isHibernate);
+#ifdef SUPPORT_TELEPHONY_SERVICE
+    void OnCallStateUpdated(int32_t callState);
     class TelephonyStateObserver : public Telephony::TelephonyObserver {
     public:
         explicit TelephonyStateObserver(const std::shared_ptr<TriggerHelper> helper) : helper_(helper)
@@ -125,6 +130,7 @@ private:
 private:
     sptr<TelephonyStateObserver> telephonyObserver0_ = nullptr;
     sptr<TelephonyStateObserver> telephonyObserver1_ = nullptr;
+#endif
 
     class AudioCapturerSourceChangeCallback : public AudioCapturerSourceCallback {
     public:
@@ -209,7 +215,9 @@ private:
     bool callActive_ = false;
     bool systemHibernate_ = false;
     bool audioCaptureActive_ = false;
+#ifdef SUPPORT_TELEPHONY_SERVICE
     bool isTelephonyDetached_ = false;
+#endif
     bool isRendererDetached_ = false;
     bool isHibernateDetached_ = false;
 };

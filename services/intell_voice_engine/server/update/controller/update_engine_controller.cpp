@@ -52,6 +52,10 @@ void UpdateEngineController::OnTimerEvent(TimerEvent &info)
 bool UpdateEngineController::UpdateRetryProc()
 {
     std::lock_guard<std::mutex> lock(updateEngineMutex_);
+    if (isForceReleased_) {
+        INTELL_VOICE_LOG_WARN("force to stop, no need to retry");
+        return true;
+    }
     if (updateStrategy_ != nullptr && !updateStrategy_->UpdateRestrain()) {
         if (CreateUpdateEngine(updateStrategy_->param_)) {
             INTELL_VOICE_LOG_INFO("retry update, times %{public}d", retryTimes_);
@@ -99,18 +103,18 @@ int UpdateEngineController::UpdateArbitration(int priority)
 int UpdateEngineController::CreateUpdateEngineUntilTime(std::shared_ptr<IUpdateStrategy> updateStrategy)
 {
     std::lock_guard<std::mutex> lock(updateEngineMutex_);
-
+    INTELL_VOICE_LOG_INFO("enter");
     if (updateStrategy == nullptr) {
         INTELL_VOICE_LOG_INFO("strategy is null");
         return -1;
     }
 
-    if (UpdateArbitration(updateStrategy->GetUpdatePriority()) != 0) {
+    if (updateStrategy->UpdateRestrain()) {
+        INTELL_VOICE_LOG_INFO("update restrain, no need to update");
         return -1;
     }
 
-    if (updateStrategy->UpdateRestrain()) {
-        INTELL_VOICE_LOG_INFO("update restrain, no need to update");
+    if (UpdateArbitration(updateStrategy->GetUpdatePriority()) != 0) {
         return -1;
     }
 
@@ -127,6 +131,7 @@ int UpdateEngineController::CreateUpdateEngineUntilTime(std::shared_ptr<IUpdateS
     updateStrategy_ = updateStrategy;
     curPriority_ = updateStrategy->GetUpdatePriority();
     SetUpdateState(true);
+    isForceReleased_ = false;
 
     INTELL_VOICE_LOG_INFO("create update engine success");
     return 0;
@@ -201,6 +206,11 @@ void UpdateEngineController::UpdateCompleteProc(UpdateState result, const std::s
 {
     std::lock_guard<std::mutex> lock(updateEngineMutex_);
     isLast = false;
+    if (isForceReleased_) {
+        HistoryInfoMgr::GetInstance().DeleteKey({ KEY_WAKEUP_VESRION });
+        INTELL_VOICE_LOG_WARN("already stop");
+        return;
+    }
     if (updateStrategy_ == nullptr || param != updateStrategy_->param_) {
         INTELL_VOICE_LOG_WARN("param is not equal");
         return;
@@ -219,6 +229,19 @@ void UpdateEngineController::UpdateCompleteProc(UpdateState result, const std::s
         TimerMgr::Stop();
     }
     ReleaseUpdateEngine();
+}
+
+void UpdateEngineController::ForceRelease()
+{
+    std::lock_guard<std::mutex> lock(updateEngineMutex_);
+    if (!GetUpdateState()) {
+        INTELL_VOICE_LOG_INFO("no need to stop update");
+        return;
+    }
+    ClearRetryState();
+    ReleaseUpdateEngine();
+    TimerMgr::Stop();
+    isForceReleased_ = true;
 }
 }
 }
