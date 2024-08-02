@@ -21,7 +21,7 @@
 
 namespace OHOS {
 namespace IntellVoiceEngine {
-static const std::string HEADSET_SO_PATH = "/system/lib64/libaam_connection_inner_client.z.so";
+static const std::string HEADSET_SO_PATH = "libaam_connection_inner_client.z.so";
 
 int32_t HeadsetWakeupWrapper::LoadHeadsetLib()
 {

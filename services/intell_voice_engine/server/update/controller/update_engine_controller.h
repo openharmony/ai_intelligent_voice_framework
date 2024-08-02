@@ -47,6 +47,7 @@ public:
 protected:
     void UpdateCompleteProc(UpdateState result, const std::string &param, bool &isLast);
     bool UpdateRetryProc();
+    void ForceRelease();
 
 private:
     virtual void HandleUpdateComplete(UpdateState result, const std::string &param) {};
@@ -61,6 +62,7 @@ private:
     }
     void ClearRetryState(void);
     int UpdateArbitration(int priority);
+
 private:
     static std::atomic<bool> isUpdating_;
     int timerId_ = OHOS::IntellVoiceUtils::INVALID_ID;
@@ -69,8 +71,9 @@ private:
     int delaySecond_ = UPDATE_DELAY_TIME_SECONDS;
     std::mutex updateEngineMutex_;
     UpdateState updateResult_ = UpdateState::UPDATE_STATE_DEFAULT;
-    std::shared_ptr<IUpdateStrategy> updateStrategy_;
+    std::shared_ptr<IUpdateStrategy> updateStrategy_ = nullptr;
     int curPriority_ = UPDATE_PRIORITY_DEFAULT;
+    bool isForceReleased_ = false;
 };
 }
 }

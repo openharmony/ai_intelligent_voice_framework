@@ -188,7 +188,7 @@ int32_t WakeupEngineImpl::AttachInner(const IntellVoiceEngineInfo &info)
 
 void WakeupEngineImpl::SetParamOnAudioStart(int32_t uuid)
 {
-    INTELL_VOICE_LOG_ERROR("enter");
+    INTELL_VOICE_LOG_INFO("enter");
     auto audioSystemManager = AudioSystemManager::GetInstance();
     if (audioSystemManager == nullptr) {
         INTELL_VOICE_LOG_ERROR("audioSystemManager is nullptr");
@@ -205,7 +205,7 @@ void WakeupEngineImpl::SetParamOnAudioStart(int32_t uuid)
 
 void WakeupEngineImpl::SetParamOnAudioStop()
 {
-    INTELL_VOICE_LOG_ERROR("enter");
+    INTELL_VOICE_LOG_INFO("enter");
     auto audioSystemManager = AudioSystemManager::GetInstance();
     if (audioSystemManager == nullptr) {
         INTELL_VOICE_LOG_ERROR("audioSystemManager is nullptr");
@@ -258,7 +258,6 @@ void WakeupEngineImpl::DestroyWakeupSourceStopCallback()
 bool WakeupEngineImpl::StartAudioSource()
 {
     capturerOptions_.streamInfo.channels = GetWakeupSourceChannel();
-    WakeupSourceProcess::Init(capturerOptions_.streamInfo.channels);
     auto listener = std::make_unique<AudioSourceListener>(
         [&](uint8_t *buffer, uint32_t size, bool isEnd) {
             std::vector<std::vector<uint8_t>> audioData;
@@ -285,16 +284,20 @@ bool WakeupEngineImpl::StartAudioSource()
         return false;
     }
 
+    WakeupSourceProcess::Init(capturerOptions_.streamInfo.channels);
+
     audioSource_ = std::make_unique<AudioSource>(MIN_BUFFER_SIZE * static_cast<uint32_t>(
         capturerOptions_.streamInfo.channels), INTERVAL, std::move(listener), capturerOptions_);
     if (audioSource_ == nullptr) {
         INTELL_VOICE_LOG_ERROR("create audio source failed");
+        WakeupSourceProcess::Release();
         return false;
     }
 
     if (!audioSource_->Start()) {
         INTELL_VOICE_LOG_ERROR("start capturer failed");
         audioSource_ = nullptr;
+        WakeupSourceProcess::Release();
         return false;
     }
 

@@ -35,6 +35,10 @@ WakeupSourceProcess::~WakeupSourceProcess()
 
 void WakeupSourceProcess::Init(uint32_t channelCnt)
 {
+    if (channelCnt_ != 0) {
+        INTELL_VOICE_LOG_WARN("need to release before init, channel cnt:%{public}u", channelCnt_);
+        Release();
+    }
     for (uint32_t i = 0; i < channelCnt; i++) {
         auto queue = std::make_unique<Uint8ArrayBufferQueue>();
         if (queue == nullptr) {
@@ -95,6 +99,7 @@ void WakeupSourceProcess::Release()
     }
     std::vector<std::unique_ptr<Uint8ArrayBufferQueue>>().swap(bufferQueue_);
     ReleaseDebugFile();
+    channelCnt_ = 0;
 }
 
 void WakeupSourceProcess::WriteChannelData(const std::vector<uint8_t> &channelData, uint32_t channelId)

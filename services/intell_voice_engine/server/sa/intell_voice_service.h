@@ -72,7 +72,9 @@ private:
     void UnloadIntellVoiceHost();
     void OnCommonEventServiceChange(bool isAdded);
     void OnDistributedKvDataServiceChange(bool isAdded);
+#ifdef SUPPORT_TELEPHONY_SERVICE
     void OnTelephonyStateRegistryServiceChange(bool isAdded);
+#endif
     void OnAudioDistributedServiceChange(bool isAdded);
     void OnAudioPolicyServiceChange(bool isAdded);
     void OnPowerManagerServiceChange(bool isAdded);
