@@ -39,7 +39,7 @@ bool HeadsetHostManager::Init()
 {
     INTELL_VOICE_LOG_INFO("enter");
     headsetHostProxy1_0_ =
-        OHOS::HDI::IntelligentVoice::Engine::V1_0::IIntellVoiceEngineManager::Get(HEADSET_SERVICE_NAME, true);
+        OHOS::HDI::IntelligentVoice::Engine::V1_0::IIntellVoiceEngineManager::Get(HEADSET_SERVICE_NAME);
     if (headsetHostProxy1_0_ == nullptr) {
         INTELL_VOICE_LOG_ERROR("headsetHostProxy1_0_ is nullptr");
         return false;
