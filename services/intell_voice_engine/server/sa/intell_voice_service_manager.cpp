@@ -35,6 +35,7 @@
 #include "silence_update_strategy.h"
 #include "update_engine_utils.h"
 #include "json/json.h"
+#include "intell_voice_sensibility.h"
 
 #define LOG_TAG "IntellVoiceServiceManager"
 
@@ -47,7 +48,6 @@ namespace IntellVoiceEngine {
 static constexpr int32_t MAX_ATTEMPT_CNT = 10;
 static constexpr uint32_t MAX_TASK_NUM = 200;
 static const std::string SERVICE_MANAGER_THREAD_NAME = "ServMgrThread";
-static const std::string SENSIBILITY_TEXT = "sensibility=";
 static const std::string WHISPER_MODEL_PATH =
     "/sys_prod/variant/region_comm/china/etc/intellvoice/wakeup/dsp/whisper_wakeup_dsp_config";
 static const std::string VAD_MODEL_PATH =
@@ -58,7 +58,6 @@ static const std::string WAKEUP_CONFIG_PATH =
     "/sys_prod/variant/region_comm/china/etc/intellvoice/wakeup/ap/wakeup_config.json";
 
 std::atomic<bool> IntellVoiceServiceManager::g_enrollResult[ENGINE_TYPE_BUT] = {false, false, false};
-std::vector<int32_t> IntellVoiceServiceManager::g_defaultDspSentenceThresholds = {101, 101, 101};
 std::unique_ptr<IntellVoiceServiceManager> IntellVoiceServiceManager::g_intellVoiceServiceMgr =
     std::unique_ptr<IntellVoiceServiceManager>(new (std::nothrow) IntellVoiceServiceManager());
 
@@ -374,13 +373,14 @@ void IntellVoiceServiceManager::SetDspSensibility(const std::string &sensibility
         return;
     }
 
-    int32_t index = std::stoi(sensibility) - 1;
-    if ((index < 0) || (index >= static_cast<int32_t>(g_defaultDspSentenceThresholds.size()))) {
-        INTELL_VOICE_LOG_WARN("invalid index:%{public}d", index);
+    auto value = IntellVoiceSensibility::GetDspSensibility(sensibility,
+        triggerMgr->GetParameter(KEY_GET_WAKEUP_FEATURE), WAKEUP_CONFIG_PATH);
+    if (value.empty()) {
+        INTELL_VOICE_LOG_ERROR("no sensibility value");
         return;
     }
 
-    triggerMgr->SetParameter("WAKEUP_SENSIBILITY", std::to_string(g_defaultDspSentenceThresholds[index]));
+    triggerMgr->SetParameter("WAKEUP_SENSIBILITY", value);
 }
 
 void IntellVoiceServiceManager::ReleaseServiceObject(int32_t uuid)
@@ -676,7 +676,14 @@ int32_t IntellVoiceServiceManager::SetParameter(const std::string &keyValueList)
                 }
                 return 0;
             });
-            break;
+        } else if (it.first == std::string("wakeup_bundle_name")) {
+            INTELL_VOICE_LOG_INFO("set wakeup bundle name:%{public}s", it.second.c_str());
+            historyInfoMgr.SetWakeupEngineBundleName(it.second);
+        } else if (it.first == std::string("wakeup_ability_name")) {
+            INTELL_VOICE_LOG_INFO("set wakeup ability name:%{public}s", it.second.c_str());
+            historyInfoMgr.SetWakeupEngineAbilityName(it.second);
+        } else {
+            INTELL_VOICE_LOG_INFO("no need to process, key:%{public}s", it.first.c_str());
         }
     }
     return 0;

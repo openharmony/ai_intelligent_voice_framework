@@ -50,6 +50,7 @@ WakeupEngineImpl::WakeupEngineImpl() : ModuleStates(State(IDLE), "WakeupEngineIm
     capturerOptions_.streamInfo.samplingRate = AudioSamplingRate::SAMPLE_RATE_16000;
     capturerOptions_.streamInfo.encoding = AudioEncodingType::ENCODING_PCM;
     capturerOptions_.streamInfo.format = AudioSampleFormat::SAMPLE_S16LE;
+    capturerOptions_.streamInfo.channels = AudioChannel::MONO;
     capturerOptions_.capturerInfo.sourceType = SourceType::SOURCE_TYPE_WAKEUP;
     capturerOptions_.capturerInfo.capturerFlags = 0;
     adapterListener_ = std::make_shared<WakeupAdapterListener>(
@@ -362,13 +363,18 @@ int32_t WakeupEngineImpl::HandleSetParam(const StateMsg &msg, State & /* nextSta
 int32_t WakeupEngineImpl::HandleGetParam(const StateMsg &msg, State & /* nextState */)
 {
     StringParam *key = reinterpret_cast<StringParam *>(msg.inMsg);
-    StringParam *value = reinterpret_cast<StringParam *>(msg.inMsg);
+    StringParam *value = reinterpret_cast<StringParam *>(msg.outMsg);
     if ((key == nullptr) || (value == nullptr)) {
         INTELL_VOICE_LOG_INFO("key or value is nullptr");
         return -1;
     }
 
-    value->strParam = EngineUtil::GetParameter(key->strParam);
+    if (key->strParam == WAKEUP_SOURCE_CHANNEL) {
+        value->strParam = std::to_string(static_cast<uint32_t>(capturerOptions_.streamInfo.channels));
+    } else {
+        value->strParam = EngineUtil::GetParameter(key->strParam);
+    }
+    INTELL_VOICE_LOG_INFO("key:%{public}s, value:%{public}s", key->strParam.c_str(), value->strParam.c_str());
     return 0;
 }
 

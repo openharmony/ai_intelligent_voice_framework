@@ -92,7 +92,7 @@ void IntellVoiceUtil::SplitStringToKVPair(const std::string &inputStr, std::map<
 {
     std::vector<std::string> paramsList;
     StringUtil::Split(inputStr, ";", paramsList);
-    for (auto &it : paramsList) {
+    for (const auto &it : paramsList) {
         std::string key;
         std::string value;
         if (StringUtil::SplitLineToPair(it, key, value)) {

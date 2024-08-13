@@ -285,21 +285,47 @@ napi_value WakeupIntellVoiceEngineNapi::GetParameter(napi_env env, napi_callback
 {
     INTELL_VOICE_LOG_INFO("enter");
     size_t cbIndex = ARG_INDEX_1;
-    shared_ptr<AsyncContext> context = make_shared<AsyncContext>(env);
+    class GetParamContext : public AsyncContext {
+    public:
+        explicit GetParamContext(napi_env env) : AsyncContext(env) {};
+        std::string key;
+        std::string value;
+    };
+
+    auto context = make_shared<GetParamContext>(env);
     if (context == nullptr) {
         INTELL_VOICE_LOG_ERROR("create AsyncContext failed, No memory");
         return nullptr;
     }
 
-    context->result_ = (context->GetCbInfo(env, info, cbIndex, nullptr) ? NAPI_INTELLIGENT_VOICE_SUCCESS :
+    CbInfoParser parser = [env, context](size_t argc, napi_value *argv) -> bool {
+        CHECK_CONDITION_RETURN_FALSE((argc < ARGC_ONE), "argc less than 1");
+        napi_status status = GetValue(env, argv[0], context->key);
+        CHECK_CONDITION_RETURN_FALSE((status != napi_ok), "Failed to get key");
+        return true;
+    };
+
+    context->result_ = (context->GetCbInfo(env, info, cbIndex, parser) ? NAPI_INTELLIGENT_VOICE_SUCCESS :
         NAPI_INTELLIGENT_VOICE_INVALID_PARAM);
 
-    AsyncExecute execute = [](napi_env env, void *data) {};
-
-    context->complete_ = [](napi_env env, AsyncContext *asyncContext, napi_value &result) {
-        INTELL_VOICE_LOG_INFO("get parameter enter");
-        result = SetValue(env, "value");
-    };
+    AsyncExecute execute;
+    if (context->result_ == NAPI_INTELLIGENT_VOICE_SUCCESS) {
+        execute = [](napi_env env, void *data) {
+            CHECK_CONDITION_RETURN_VOID((data == nullptr), "data is nullptr");
+            auto asyncContext = reinterpret_cast<GetParamContext *>(data);
+            auto engine = reinterpret_cast<WakeupIntellVoiceEngineNapi *>(asyncContext->instanceNapi_)->engine_;
+            CHECK_CONDITION_RETURN_VOID((engine == nullptr), "get engine instance failed");
+            asyncContext->value = engine->GetParameter(asyncContext->key);
+        };
+        context->complete_ = [](napi_env env, AsyncContext *asyncContext, napi_value &result) {
+            auto getParamAsynContext = reinterpret_cast<GetParamContext *>(asyncContext);
+            if (getParamAsynContext != nullptr) {
+                result = SetValue(env, getParamAsynContext->value);
+            }
+        };
+    } else {
+        execute = [](napi_env env, void *data) {};
+    }
 
     return NapiAsync::AsyncWork(env, context, "GetParameter", execute);
 }

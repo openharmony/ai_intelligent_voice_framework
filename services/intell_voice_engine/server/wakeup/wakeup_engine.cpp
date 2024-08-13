@@ -168,6 +168,11 @@ int32_t WakeupEngine::HandleHeadsetOn()
     }
 
     std::lock_guard<std::mutex> lock(headsetMutex_);
+    if (headsetImpl_ != nullptr) {
+        INTELL_VOICE_LOG_WARN("headsetImpl already exist.");
+        return 0;
+    }
+
     headsetImpl_ = UniquePtrFactory<HeadsetWakeupEngineImpl>::CreateInstance();
     if (headsetImpl_ == nullptr) {
         INTELL_VOICE_LOG_ERROR("failed to allocate headset impl");
@@ -177,6 +182,7 @@ int32_t WakeupEngine::HandleHeadsetOn()
     StateMsg msg(INIT);
     if (headsetImpl_->Handle(msg) != 0) {
         INTELL_VOICE_LOG_ERROR("init headset wakeup engine impl failed");
+        headsetImpl_ = nullptr;
         return -1;
     }
     return 0;
@@ -219,6 +225,7 @@ std::string WakeupEngine::GetParameter(const std::string &key)
     StringParam valueParam;
     StateMsg msg(GET_PARAM, &keyParam, sizeof(keyParam), &valueParam);
     if (ROLE(WakeupEngineImpl).Handle(msg) != 0) {
+        INTELL_VOICE_LOG_ERROR("failed to get parameter, key:%{public}s", key.c_str());
         return "";
     }
 
