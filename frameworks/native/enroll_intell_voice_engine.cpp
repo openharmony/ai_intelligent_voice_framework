@@ -134,6 +134,16 @@ int32_t EnrollIntellVoiceEngine::SetParameter(const string &key, const string &v
     return engine_->SetParameter(keyValueList);
 }
 
+std::string EnrollIntellVoiceEngine::GetParameter(const std::string &key)
+{
+    INTELL_VOICE_LOG_INFO("enter");
+    if (engine_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("engine is null");
+        return "";
+    }
+    return engine_->GetParameter(key);
+}
+
 int32_t EnrollIntellVoiceEngine::Evaluate(const std::string &word, EvaluationResultInfo &info)
 {
     INTELL_VOICE_LOG_INFO("enter");

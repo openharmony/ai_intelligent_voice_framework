@@ -223,7 +223,7 @@ napi_value WakeupManagerNapi::SetParameter(napi_env env, napi_callback_info info
     if (context->result_ == NAPI_INTELLIGENT_VOICE_SUCCESS) {
         execute = [](napi_env env, void *data) {
             CHECK_CONDITION_RETURN_VOID((data == nullptr), "data is nullptr");
-            auto setParamContext = static_cast<SetParameterContext *>(data);
+            auto setParamContext = reinterpret_cast<SetParameterContext *>(data);
             IntellVoiceManager *manager = IntellVoiceManager::GetInstance();
             if (manager == nullptr) {
                 INTELL_VOICE_LOG_ERROR("manager is nullptr");
@@ -273,7 +273,7 @@ napi_value WakeupManagerNapi::GetParameter(napi_env env, napi_callback_info info
     if (context->result_ == NAPI_INTELLIGENT_VOICE_SUCCESS) {
         execute = [](napi_env env, void *data) {
             CHECK_CONDITION_RETURN_VOID((data == nullptr), "data is nullptr");
-            auto asyncContext = static_cast<GetParamContext *>(data);
+            auto asyncContext = reinterpret_cast<GetParamContext *>(data);
             IntellVoiceManager *manager = IntellVoiceManager::GetInstance();
             if (manager == nullptr) {
                 INTELL_VOICE_LOG_ERROR("manager is nullptr");
@@ -284,8 +284,10 @@ napi_value WakeupManagerNapi::GetParameter(napi_env env, napi_callback_info info
         };
 
         context->complete_ = [](napi_env env, AsyncContext *asyncContext, napi_value &result) {
-            auto getParamAsynContext = static_cast<GetParamContext *>(asyncContext);
-            result = SetValue(env, getParamAsynContext->val);
+            auto getParamAsynContext = reinterpret_cast<GetParamContext *>(asyncContext);
+            if (getParamAsynContext != nullptr) {
+                result = SetValue(env, getParamAsynContext->val);
+            }
         };
     } else {
         execute = [](napi_env env, void *data) {};

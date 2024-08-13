@@ -39,7 +39,7 @@ public:
     int32_t SetSensibility(const int32_t &sensibility);
     int32_t SetWakeupHapInfo(const WakeupHapInfo &info);
     int32_t SetParameter(const std::string &key, const std::string &value);
-    int32_t GetParameter(const std::string &key);
+    std::string GetParameter(const std::string &key);
     int32_t Release();
     int32_t SetCallback(std::shared_ptr<IIntellVoiceEngineEventCallback> callback);
     int32_t StartCapturer(int32_t channels);

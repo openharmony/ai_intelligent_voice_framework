@@ -69,6 +69,7 @@ ohos_shared_library("intell_voice_server") {
     "intell_voice_engine/server/base/engine_factory.cpp",
     "intell_voice_engine/server/base/engine_util.cpp",
     "intell_voice_engine/server/base/file_source.cpp",
+    "intell_voice_engine/server/base/intell_voice_sensibility.cpp",
     "intell_voice_engine/server/enroll/enroll_adapter_listener.cpp",
     "intell_voice_engine/server/enroll/enroll_engine.cpp",
     "intell_voice_engine/server/hdi_adapter/adapter_host_manager.cpp",

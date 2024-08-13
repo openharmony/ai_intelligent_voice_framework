@@ -38,6 +38,9 @@ const std::string WAKEUP_KEY = "intell_voice_trigger_enabled";
 const std::string WHISPER_KEY = "intell_voice_trigger_whisper";
 const std::string IMPROVE_KEY = "intell_voice_improve_enabled";
 const std::string SHORTWORD_KEY = "intell_voice_trigger_shortword";
+const std::string SENSIBILITY_TEXT = "sensibility=";
+const std::string KEY_GET_WAKEUP_FEATURE = "wakeup_features";
+
 
 class IntellVoiceServiceManager : private IntellVoiceEngineArbitration,
     private UpdateEngineController,
@@ -151,7 +154,6 @@ private:
 private:
     static std::unique_ptr<IntellVoiceServiceManager> g_intellVoiceServiceMgr;
     static std::atomic<bool> g_enrollResult[ENGINE_TYPE_BUT];
-    static std::vector<int32_t> g_defaultDspSentenceThresholds;
     std::mutex deathMutex_;
     std::mutex detectorMutex_;
     std::mutex switchMutex_;

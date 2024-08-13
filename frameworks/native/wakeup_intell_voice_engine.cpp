@@ -75,6 +75,16 @@ int32_t WakeupIntellVoiceEngine::SetParameter(const string &key, const string &v
     return engine_->SetParameter(keyValueList);
 }
 
+std::string WakeupIntellVoiceEngine::GetParameter(const std::string &key)
+{
+    INTELL_VOICE_LOG_INFO("enter");
+    if (engine_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("engine is null");
+        return "";
+    }
+    return engine_->GetParameter(key);
+}
+
 int32_t WakeupIntellVoiceEngine::Release()
 {
     INTELL_VOICE_LOG_INFO("enter");

@@ -30,10 +30,8 @@ using namespace OHOS::IntellVoiceTrigger;
 
 namespace OHOS {
 namespace IntellVoiceEngine {
-static const std::string KEY_GET_WAKEUP_FEATURE = "wakeup_features";
 static const std::string LANGUAGE_TEXT = "language=";
 static const std::string AREA_TEXT = "area=";
-static const std::string SENSIBILITY_TEXT = "sensibility=";
 
 EngineUtil::EngineUtil()
 {
