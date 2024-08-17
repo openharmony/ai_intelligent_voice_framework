@@ -61,7 +61,7 @@ void EnrollEngine::OnEnrollEvent(int32_t msgId, int32_t result)
     } else if (msgId == INTELL_VOICE_ENGINE_MSG_COMMIT_ENROLL_COMPLETE) {
         std::lock_guard<std::mutex> lock(mutex_);
         enrollResult_ = result;
-        IntellVoiceServiceManager::SetEnrollResult(INTELL_VOICE_ENROLL, result == 0 ? true : false);
+        IntellVoiceServiceManager::SetEnrollResult(INTELL_VOICE_ENROLL, enrollResult_ == 0 ? true : false);
     }
 }
 
@@ -122,7 +122,7 @@ int32_t EnrollEngine::Attach(const IntellVoiceEngineInfo &info)
 
     SetDspFeatures();
     isPcmFromExternal_ = info.isPcmFromExternal;
-    HistoryInfoMgr::GetInstance().SetWakeupPhrase(info.wakeupPhrase);
+    wakeupPhrase_ = info.wakeupPhrase;
 
     IntellVoiceEngineAdapterInfo adapterInfo = {
         .wakeupPhrase = info.wakeupPhrase,
@@ -146,6 +146,7 @@ int32_t EnrollEngine::Detach(void)
 
     if (enrollResult_ == 0) {
         ProcDspModel(OHOS::HDI::IntelligentVoice::Engine::V1_0::DSP_MODLE);
+        HistoryInfoMgr::GetInstance().SetWakeupPhrase(wakeupPhrase_);
         /* save new version number */
         UpdateEngineUtils::SaveWakeupVesion();
         INTELL_VOICE_LOG_INFO("enroll save version");

@@ -75,6 +75,7 @@ void WakeupEngine::SetCallback(sptr<IRemoteObject> object)
     if (callback == nullptr) {
         INTELL_VOICE_LOG_WARN("clear callback");
     }
+    callback_ = callback;
     SetListenerMsg listenerMsg(callback);
     StateMsg msg(SET_LISTENER, &listenerMsg, sizeof(SetListenerMsg));
     ROLE(WakeupEngineImpl).Handle(msg);
@@ -177,6 +178,12 @@ int32_t WakeupEngine::HandleHeadsetOn()
     if (headsetImpl_ == nullptr) {
         INTELL_VOICE_LOG_ERROR("failed to allocate headset impl");
         return -1;
+    }
+
+    SetListenerMsg listenerMsg(callback_);
+    StateMsg msgCb(SET_LISTENER, &listenerMsg, sizeof(SetListenerMsg));
+    if (headsetImpl_ != nullptr) {
+        headsetImpl_->Handle(msgCb);
     }
 
     StateMsg msg(INIT);

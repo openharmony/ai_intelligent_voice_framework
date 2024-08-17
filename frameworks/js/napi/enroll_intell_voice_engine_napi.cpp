@@ -627,15 +627,13 @@ napi_value EnrollIntellVoiceEngineNapi::EvaluateForResult(napi_env env, napi_cal
     }
 
     context->complete_ = [](napi_env env, AsyncContext *asyncContext, napi_value &result) {
-        INTELL_VOICE_LOG_INFO("enter to evaluate");
         auto context = static_cast<EvaluateContext *>(asyncContext);
         napi_status status = napi_create_object(env, &result);
         if (status != napi_ok || result == nullptr) {
-            INTELL_VOICE_LOG_ERROR("failed to create js callbackInfo, error: %{public}d", status);
+            INTELL_VOICE_LOG_ERROR("failed to create object, status: %{public}d", status);
             context->result_ = NAPI_INTELLIGENT_VOICE_NO_MEMORY;
             return;
         }
-
         napi_set_named_property(env, result, "score", SetValue(env, context->info.score));
         napi_set_named_property(env, result, "resultCode", SetValue(env, context->info.resultCode));
     };

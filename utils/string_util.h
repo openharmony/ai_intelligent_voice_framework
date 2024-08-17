@@ -42,6 +42,7 @@ public:
     static void TrimSpecialChars(std::string &str);
     static uint32_t CalSubStrNum(const std::string &str, const std::string &subStr);
     static bool SplitLineToPair(const std::string &line, std::string &first, std::string &second);
+    static bool StringToInt(const std::string &str, int32_t &val);
 
 private:
     DISALLOW_COPY_AND_MOVE(StringUtil);

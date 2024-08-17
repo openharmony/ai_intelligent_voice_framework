@@ -115,12 +115,18 @@ bool UpdateEngineUtils::IsVersionUpdate()
         return false;
     }
 
-    if (stoi(versionNumberCur) > stoi(versionNumberSave)) {
-        INTELL_VOICE_LOG_INFO("version new %{public}d cur %{public}d",
-            stoi(versionNumberCur), stoi(versionNumberSave));
-        return true;
+    int32_t historyVersion = 0;
+    int32_t curVersion = 0;
+    if ((!StringUtil::StringToInt(versionNumberSave, historyVersion)) ||
+        (!StringUtil::StringToInt(versionNumberCur, curVersion))) {
+        INTELL_VOICE_LOG_ERROR("failed to get version");
+        return false;
     }
 
+    if (curVersion > historyVersion) {
+        INTELL_VOICE_LOG_INFO("version new %{public}d, cur %{public}d", curVersion, historyVersion);
+        return true;
+    }
     return false;
 }
 }

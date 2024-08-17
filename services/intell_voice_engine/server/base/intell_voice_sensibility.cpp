@@ -19,8 +19,12 @@
 
 #include "history_info_mgr.h"
 #include "intell_voice_log.h"
+#include "string_util.h"
 
 #define LOG_TAG "IntellVoiceSensibility"
+
+using namespace std;
+using namespace OHOS::IntellVoiceUtils;
 
 namespace OHOS {
 namespace IntellVoiceEngine {
@@ -33,7 +37,11 @@ static const std::string WAKEUP_CONF_DEFAULPHRASE = "DefaultPhrase";
 std::string IntellVoiceSensibility::GetDspSensibility(const std::string &sensibility, const std::string &dspFeature,
     const std::string &configPath)
 {
-    int32_t value = std::stoi(sensibility);
+    int32_t value = 0;
+    if (!StringUtil::StringToInt(sensibility, value)) {
+        INTELL_VOICE_LOG_ERROR("failed to get sensibility");
+        return "";
+    }
     if ((value < MIN_SENSIBILITY_VALUE) || (value > MAX_SENSIBILITY_VALUE)) {
         INTELL_VOICE_LOG_WARN("invalid sensibility:%{public}d", value);
         return "";
@@ -68,7 +76,7 @@ std::string IntellVoiceSensibility::ParseWakeupConfigDspSensibility(const std::s
         return ParseDefaultDspSensibility(wakeupJson, wakeupPhrase, index);
     }
 
-    return ParseUserDspSensibility(wakeupJson, wakeupPhrase, index);
+    return ParseUserDspSensibility(wakeupJson, index);
 }
 
 std::string IntellVoiceSensibility::ParseDefaultDspSensibility(const Json::Value &wakeupJson,
@@ -99,8 +107,7 @@ std::string IntellVoiceSensibility::ParseDefaultDspSensibility(const Json::Value
     return "";
 }
 
-std::string IntellVoiceSensibility::ParseUserDspSensibility(const Json::Value &wakeupJson,
-    const std::string &wakeupPhrase, uint32_t index)
+std::string IntellVoiceSensibility::ParseUserDspSensibility(const Json::Value &wakeupJson, uint32_t index)
 {
     if ((!wakeupJson.isMember("SensibilityParams")) ||
         (!wakeupJson["SensibilityParams"].isMember("DspSentenceThresholds"))) {
@@ -141,7 +148,12 @@ bool IntellVoiceSensibility::IsSupportNodes800(const std::string &dspFeature)
         return false;
     }
 
-    int feature = std::stoi(dspFeature);
+    int32_t feature = 0;
+    if (!StringUtil::StringToInt(dspFeature, feature)) {
+        INTELL_VOICE_LOG_ERROR("failed to get dsp feature");
+        return false;
+    }
+
     if ((feature & HAL_FEATURE_KWS_NODES_900) == HAL_FEATURE_KWS_NODES_900) {
         return true;
     }

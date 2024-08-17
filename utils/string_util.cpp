@@ -12,12 +12,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include "string_util.h"
 #include <fstream>
 #include <iterator>
 #include <ctime>
 #include <sys/time.h>
+#include <climits>
+
 #include "intell_voice_log.h"
 
 #undef LOG_TAG
@@ -136,6 +137,18 @@ bool StringUtil::SplitLineToPair(const std::string &line, std::string &first, st
         INTELL_VOICE_LOG_ERROR("line is invalid, first:%{public}s, second:%{public}s", first.c_str(), second.c_str());
         return false;
     }
+    return true;
+}
+
+bool StringUtil::StringToInt(const std::string &str, int32_t &val)
+{
+    char *endStr = nullptr;
+    long int conVal = std::strtol(str.c_str(), &endStr, 10); // decimal
+    if (conVal == LONG_MAX || conVal == LONG_MIN || endStr == nullptr || endStr == str.c_str() || *endStr != '\0') {
+        return false;
+    }
+
+    val = static_cast<int32_t>(conVal);
     return true;
 }
 }

@@ -183,7 +183,7 @@ int TimerMgr::ResetTimer(int timerId, int type, int64_t delayUs, int cookie, ITi
 void TimerMgr::KillTimer(int &timerId)
 {
     std::unique_lock<ffrt::mutex> lock(timeMutex_);
-    INTELL_VOICE_LOG_INFO("kill timer %d", timerId);
+    INTELL_VOICE_LOG_INFO("kill timer %{public}d", timerId);
     for (auto it = itemQueue_.begin(); it != itemQueue_.end(); it++) {
         shared_ptr<TimerItem> curItem = *it;
         if (curItem->timerId == timerId) {
