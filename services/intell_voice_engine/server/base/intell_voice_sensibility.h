@@ -29,8 +29,7 @@ public:
 private:
     static std::string ParseDefaultDspSensibility(const Json::Value &wakeupJson, const std::string &wakeupPhrase,
         uint32_t index);
-    static std::string ParseUserDspSensibility(const Json::Value &wakeupJson, const std::string &wakeupPhrase,
-        uint32_t index);
+    static std::string ParseUserDspSensibility(const Json::Value &wakeupJson, uint32_t index);
     static std::string ParseWakeupConfigDspSensibility(const std::string &wakeupPhrase, uint32_t index,
         const std::string &configPath);
     static bool IsDefaltPhrase(const Json::Value &wakeupJson, const std::string &wakeupPhrase);

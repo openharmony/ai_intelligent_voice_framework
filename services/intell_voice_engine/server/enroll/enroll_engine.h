@@ -54,6 +54,7 @@ private:
     int32_t enrollResult_ = -1;
     sptr<OHOS::HDI::IntelligentVoice::Engine::V1_0::IIntellVoiceEngineCallback> callback_ = nullptr;
     std::unique_ptr<AudioSource> audioSource_ = nullptr;
+    std::string wakeupPhrase_;
     std::mutex mutex_;
     OHOS::AudioStandard::AudioCapturerOptions capturerOptions_;
     friend class IntellVoiceUtils::SptrFactory<EngineBase, EnrollEngine>;

@@ -58,6 +58,7 @@ private:
     OHOS::IntellVoiceUtils::UniqueProductType<HeadsetWakeupEngineImpl> headsetImpl_ =
         OHOS::IntellVoiceUtils::UniqueProductType<HeadsetWakeupEngineImpl>(nullptr, nullptr);
     std::mutex headsetMutex_;
+    sptr<IIntelligentVoiceEngineCallback> callback_ = nullptr;
 };
 }
 }

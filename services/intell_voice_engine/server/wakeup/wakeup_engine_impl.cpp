@@ -20,6 +20,7 @@
 #include "intell_voice_log.h"
 #include "history_info_mgr.h"
 #include "intell_voice_util.h"
+#include "string_util.h"
 #include "intell_voice_service_manager.h"
 #include "trigger_manager.h"
 #include "engine_host_manager.h"
@@ -135,13 +136,19 @@ OHOS::AudioStandard::AudioChannel WakeupEngineImpl::GetWakeupSourceChannel()
         return AudioChannel::MONO;
     }
 
-    auto ret = static_cast<OHOS::AudioStandard::AudioChannel>(std::stoi(channel));
-    if (ret > AudioChannel::CHANNEL_4) {
-        INTELL_VOICE_LOG_INFO("invalid channel, ret:%{public}d", ret);
+    int32_t channelCnt = 0;
+    if (!StringUtil::StringToInt(channel, channelCnt)) {
+        INTELL_VOICE_LOG_ERROR("failed to get channel cnt");
         return AudioChannel::MONO;
     }
-    INTELL_VOICE_LOG_INFO("channle:%{public}d", static_cast<int32_t>(ret));
-    return ret;
+
+    if ((channelCnt < AudioChannel::MONO) || (channelCnt > AudioChannel::CHANNEL_4)) {
+        INTELL_VOICE_LOG_INFO("invalid channel cnt:%{public}d", channelCnt);
+        return AudioChannel::MONO;
+    }
+
+    INTELL_VOICE_LOG_INFO("channel cnt:%{public}d", static_cast<int32_t>(channelCnt));
+    return static_cast<OHOS::AudioStandard::AudioChannel>(channelCnt);
 }
 
 bool WakeupEngineImpl::SetCallbackInner()
