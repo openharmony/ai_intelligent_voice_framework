@@ -679,7 +679,7 @@ void TriggerHelper::HibernateCallback::OnSyncHibernate()
     helper_->OnHibernateStateUpdated(true);
 }
 
-void TriggerHelper::HibernateCallback::OnSyncWakeup()
+void TriggerHelper::HibernateCallback::OnSyncWakeup(bool /* hibernateResult */)
 {
     if (helper_ == nullptr) {
         INTELL_VOICE_LOG_ERROR("helper is nullptr");

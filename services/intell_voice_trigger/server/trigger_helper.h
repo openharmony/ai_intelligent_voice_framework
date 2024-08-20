@@ -175,8 +175,8 @@ private:
             helper_ = nullptr;
         }
 
-        void OnSyncHibernate();
-        void OnSyncWakeup();
+        void OnSyncHibernate() override;
+        void OnSyncWakeup(bool hibernateResult = false) override;
 
     private:
         std::shared_ptr<TriggerHelper> helper_ = nullptr;
