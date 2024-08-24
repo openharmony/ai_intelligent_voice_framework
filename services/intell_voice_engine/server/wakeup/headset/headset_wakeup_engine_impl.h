@@ -25,8 +25,6 @@
 #include "state_manager.h"
 #include "engine_util.h"
 #include "wakeup_adapter_listener.h"
-
-#include "headset_wakeup_wrapper.h"
 #include "wakeup_source_process.h"
 
 namespace OHOS {
@@ -35,13 +33,12 @@ using OHOS::IntellVoiceUtils::StateMsg;
 using OHOS::IntellVoiceUtils::State;
 
 class HeadsetWakeupEngineImpl : private OHOS::IntellVoiceUtils::ModuleStates, private EngineUtil,
-    private WakeupSourceProcess, private HeadsetWakeupWrapper {
+    private WakeupSourceProcess {
 public:
     HeadsetWakeupEngineImpl();
     ~HeadsetWakeupEngineImpl();
     bool Init();
     int32_t Handle(const StateMsg &msg);
-    using HeadsetWakeupWrapper::GetHeadsetAwakeState;
 
 private:
     enum EngineState {

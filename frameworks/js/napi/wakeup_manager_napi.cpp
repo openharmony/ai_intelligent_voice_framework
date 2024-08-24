@@ -230,10 +230,10 @@ napi_value WakeupManagerNapi::SetParameter(napi_env env, napi_callback_info info
                 setParamContext->result_ = NAPI_INTELLIGENT_VOICE_SYSTEM_ERROR;
                 return;
             }
-            auto ret = manager->SetParameter(setParamContext->key, setParamContext->value);
-            if (ret != 0) {
-                INTELL_VOICE_LOG_ERROR("set parameter failed, ret:%{public}d", ret);
-                setParamContext->result_ = NAPI_INTELLIGENT_VOICE_SYSTEM_ERROR;
+            setParamContext->result_ = IntellVoiceCommonNapi::ConvertResultCode(
+                manager->SetParameter(setParamContext->key, setParamContext->value));
+            if (setParamContext->result_ != NAPI_INTELLIGENT_VOICE_SUCCESS) {
+                INTELL_VOICE_LOG_ERROR("set parameter failed, ret:%{public}d", setParamContext->result_);
             }
         };
     } else {
@@ -298,7 +298,7 @@ napi_value WakeupManagerNapi::GetParameter(napi_env env, napi_callback_info info
 
 napi_value WakeupManagerNapi::GetUploadFiles(napi_env env, napi_callback_info info)
 {
-    INTELL_VOICE_LOG_ERROR("enter");
+    INTELL_VOICE_LOG_INFO("enter");
     auto context = std::make_shared<UploadFilesContext>(env);
     CHECK_CONDITION_RETURN_RET(context == nullptr, nullptr, "create upload files context failed");
 
@@ -325,9 +325,8 @@ napi_value WakeupManagerNapi::GetUploadFiles(napi_env env, napi_callback_info in
             }
 
             std::vector<UploadFilesInfo>().swap(context->uploadFiles);
-            if (manager->GetUploadFiles(context->numMax, context->uploadFiles) != 0) {
-                context->result_ = NAPI_INTELLIGENT_VOICE_SYSTEM_ERROR;
-            }
+            context->result_ = IntellVoiceCommonNapi::ConvertResultCode(
+                manager->GetUploadFiles(context->numMax, context->uploadFiles));
         };
     } else {
         execute = [](napi_env env, void *data) {};
@@ -407,10 +406,10 @@ napi_value WakeupManagerNapi::GetWakeupSourceFiles(napi_env env, napi_callback_i
                 return;
             }
 
-            int ret = manager->GetWakeupSourceFiles(context->cloneFile);
-            if (ret != 0) {
-                INTELL_VOICE_LOG_ERROR("get clone files error, ret:%{public}d", ret);
-                context->result_ = NAPI_INTELLIGENT_VOICE_SYSTEM_ERROR;
+            context->result_ = IntellVoiceCommonNapi::ConvertResultCode(
+                manager->GetWakeupSourceFiles(context->cloneFile));
+            if (context->result_ != 0) {
+                INTELL_VOICE_LOG_ERROR("get clone files error, ret:%{public}d", context->result_);
             }
         };
     } else {
@@ -617,7 +616,8 @@ napi_value WakeupManagerNapi::ClearUserData(napi_env env, napi_callback_info inf
                 asyncContext->result_ = NAPI_INTELLIGENT_VOICE_SYSTEM_ERROR;
                 return;
             }
-            manager->ClearUserData();
+            asyncContext->result_ = IntellVoiceCommonNapi::ConvertResultCode(
+                manager->ClearUserData());
         };
     } else {
         execute = [](napi_env env, void *data) {};

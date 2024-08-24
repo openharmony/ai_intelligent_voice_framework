@@ -48,10 +48,7 @@ public:
     int32_t GetWakeupPcm(std::vector<uint8_t> &data);
     int32_t NotifyHeadsetWakeEvent();
     int32_t NotifyHeadsetHostEvent(int32_t event);
-    sptr<IIntellVoiceEngine> GetEngine()
-    {
-        return engine_;
-    }
+    int32_t result_ = INTELLIGENT_VOICE_SUCCESS;
 
 private:
     sptr<IIntellVoiceEngine> engine_ = nullptr;

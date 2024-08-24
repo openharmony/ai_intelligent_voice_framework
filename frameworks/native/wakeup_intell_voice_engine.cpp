@@ -32,7 +32,10 @@ WakeupIntellVoiceEngine::WakeupIntellVoiceEngine(const WakeupIntelligentVoiceEng
     descriptor_ = make_unique<WakeupIntelligentVoiceEngineDescriptor>();
     descriptor_->needReconfirm = descriptor.needReconfirm;
     descriptor_->wakeupPhrase = descriptor.wakeupPhrase;
-    IntellVoiceManager::GetInstance()->CreateIntellVoiceEngine(INTELL_VOICE_WAKEUP, engine_);
+    result_ = IntellVoiceManager::GetInstance()->CreateIntellVoiceEngine(INTELL_VOICE_WAKEUP, engine_);
+    if (result_ != INTELLIGENT_VOICE_SUCCESS) {
+        INTELL_VOICE_LOG_ERROR("create wakeup engine failed, ret:%{public}d", result_);
+    }
 }
 
 WakeupIntellVoiceEngine::~WakeupIntellVoiceEngine()

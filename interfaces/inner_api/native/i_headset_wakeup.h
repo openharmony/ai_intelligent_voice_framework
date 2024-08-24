@@ -26,6 +26,7 @@ public:
     virtual int32_t NotifyVerifyResult(bool result) = 0;
     virtual int32_t StopReadingStream() = 0;
     virtual int32_t GetHeadsetAwakeState() = 0;
+    virtual void NotifyHeadsetHdfDeath() = 0;
 };
 }
 }

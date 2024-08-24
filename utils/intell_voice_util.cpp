@@ -26,8 +26,11 @@
 #include "tokenid_kit.h"
 #include "ipc_skeleton.h"
 #include "intell_voice_log.h"
+#include "intell_voice_info.h"
 
 #define LOG_TAG "IntellVoiceUtil"
+
+using namespace OHOS::IntellVoice;
 
 namespace OHOS {
 namespace IntellVoiceUtils {
@@ -143,24 +146,24 @@ bool IntellVoiceUtil::CheckIsSystemApp()
     return true;
 }
 
-bool IntellVoiceUtil::VerifySystemPermission(const std::string &permissionName)
+int32_t IntellVoiceUtil::VerifySystemPermission(const std::string &permissionName)
 {
 #ifdef INTELL_VOICE_BUILD_VARIANT_ROOT
     if (IPCSkeleton::GetCallingUid() == 0) { // 0 for root uid
         INTELL_VOICE_LOG_INFO("callingUid is root");
-        return true;
+        return INTELLIGENT_VOICE_SUCCESS;
     }
 #endif
 
     if (!CheckIsSystemApp()) {
-        return false;
+        return INTELLIGENT_VOICE_NOT_SYSTEM_APPLICATION;
     }
 
     if (!VerifyClientPermission(permissionName)) {
-        return false;
+        return INTELLIGENT_VOICE_PERMISSION_DENIED;
     }
 
-    return true;
+    return INTELLIGENT_VOICE_SUCCESS;
 }
 }
 }

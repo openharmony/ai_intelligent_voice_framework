@@ -29,10 +29,12 @@
 #include "update_state.h"
 #include "engine_host_manager.h"
 #include "intell_voice_util.h"
+#include "intell_voice_info.h"
 
 #define LOG_TAG "IntellVoiceService"
 
 using namespace std;
+using namespace OHOS::IntellVoice;
 using namespace OHOS::AppExecFwk;
 using namespace OHOS::EventFwk;
 using namespace OHOS::AudioStandard;
@@ -76,21 +78,22 @@ IntellVoiceService::~IntellVoiceService()
 int32_t IntellVoiceService::CreateIntellVoiceEngine(IntellVoiceEngineType type, sptr<IIntellVoiceEngine> &inst)
 {
     INTELL_VOICE_LOG_INFO("enter, type: %{public}d", type);
-    if (!IntellVoiceUtil::VerifySystemPermission(OHOS_PERMISSION_INTELL_VOICE)) {
+    auto ret = IntellVoiceUtil::VerifySystemPermission(OHOS_PERMISSION_INTELL_VOICE);
+    if (ret != INTELLIGENT_VOICE_SUCCESS) {
         INTELL_VOICE_LOG_WARN("verify permission denied");
-        return -1;
+        return ret;
     }
 
     auto &mgr = IntellVoiceServiceManager::GetInstance();
     if (mgr == nullptr) {
         INTELL_VOICE_LOG_ERROR("mgr is nullptr");
-        return -1;
+        return INTELLIGENT_VOICE_NO_MEMORY;
     }
 
     inst = mgr->HandleCreateEngine(type);
     if (inst == nullptr) {
         INTELL_VOICE_LOG_ERROR("engine is nullptr");
-        return -1;
+        return INTELLIGENT_VOICE_NO_MEMORY;
     }
     INTELL_VOICE_LOG_INFO("create engine ok");
     return 0;
@@ -99,14 +102,16 @@ int32_t IntellVoiceService::CreateIntellVoiceEngine(IntellVoiceEngineType type, 
 int32_t IntellVoiceService::ReleaseIntellVoiceEngine(IntellVoiceEngineType type)
 {
     INTELL_VOICE_LOG_INFO("enter, type: %{public}d", type);
-    if (!IntellVoiceUtil::VerifySystemPermission(OHOS_PERMISSION_INTELL_VOICE)) {
+    auto ret = IntellVoiceUtil::VerifySystemPermission(OHOS_PERMISSION_INTELL_VOICE);
+    if (ret != INTELLIGENT_VOICE_SUCCESS) {
         INTELL_VOICE_LOG_WARN("verify permission denied");
-        return -1;
+        return ret;
     }
+
     auto &mgr = IntellVoiceServiceManager::GetInstance();
     if (mgr == nullptr) {
         INTELL_VOICE_LOG_ERROR("mgr is nullptr");
-        return -1;
+        return INTELLIGENT_VOICE_NO_MEMORY;
     }
     return mgr->HandleReleaseEngine(type);
 }
@@ -416,9 +421,10 @@ bool IntellVoiceService::DeregisterDeathRecipient(IntellVoiceEngineType type)
 
 int32_t IntellVoiceService::GetUploadFiles(int numMax, std::vector<UploadHdiFile> &files)
 {
-    if (!IntellVoiceUtil::VerifySystemPermission(OHOS_PERMISSION_INTELL_VOICE)) {
+    auto ret = IntellVoiceUtil::VerifySystemPermission(OHOS_PERMISSION_INTELL_VOICE);
+    if (ret != INTELLIGENT_VOICE_SUCCESS) {
         INTELL_VOICE_LOG_WARN("verify permission denied");
-        return -1;
+        return ret;
     }
 
     INTELL_VOICE_LOG_INFO("get upload files enter, numMax: %{public}d", numMax);
@@ -427,7 +433,8 @@ int32_t IntellVoiceService::GetUploadFiles(int numMax, std::vector<UploadHdiFile
 
 std::string IntellVoiceService::GetParameter(const std::string &key)
 {
-    if (!IntellVoiceUtil::VerifySystemPermission(OHOS_PERMISSION_INTELL_VOICE)) {
+    auto ret = IntellVoiceUtil::VerifySystemPermission(OHOS_PERMISSION_INTELL_VOICE);
+    if (ret != INTELLIGENT_VOICE_SUCCESS) {
         INTELL_VOICE_LOG_WARN("verify permission denied");
         return "";
     }
@@ -442,31 +449,33 @@ std::string IntellVoiceService::GetParameter(const std::string &key)
 
 int32_t IntellVoiceService::SetParameter(const std::string &keyValueList)
 {
-    if (!IntellVoiceUtil::VerifySystemPermission(OHOS_PERMISSION_INTELL_VOICE)) {
+    auto ret = IntellVoiceUtil::VerifySystemPermission(OHOS_PERMISSION_INTELL_VOICE);
+    if (ret != INTELLIGENT_VOICE_SUCCESS) {
         INTELL_VOICE_LOG_WARN("verify permission denied");
-        return -1;
+        return ret;
     }
 
     const auto &manager = IntellVoiceServiceManager::GetInstance();
     if (manager == nullptr) {
         INTELL_VOICE_LOG_INFO("manager is nullptr");
-        return -1;
+        return INTELLIGENT_VOICE_NO_MEMORY;
     }
     return manager->SetParameter(keyValueList);
 }
 
 int32_t IntellVoiceService::GetWakeupSourceFilesList(std::vector<std::string>& cloneFiles)
 {
-    if (!IntellVoiceUtil::VerifySystemPermission(OHOS_PERMISSION_INTELL_VOICE)) {
-        INTELL_VOICE_LOG_WARN("verify permission");
-        return -1;
+    auto ret = IntellVoiceUtil::VerifySystemPermission(OHOS_PERMISSION_INTELL_VOICE);
+    if (ret != INTELLIGENT_VOICE_SUCCESS) {
+        INTELL_VOICE_LOG_WARN("verify permission denied");
+        return ret;
     }
 
     INTELL_VOICE_LOG_INFO("get clone file list");
     std::unique_ptr<IntellVoiceServiceManager> &mgr = IntellVoiceServiceManager::GetInstance();
     if (mgr == nullptr) {
         INTELL_VOICE_LOG_ERROR("mgr is nullptr");
-        return -1;
+        return INTELLIGENT_VOICE_NO_MEMORY;
     }
 
     return mgr->GetWakeupSourceFilesList(cloneFiles);
@@ -474,16 +483,17 @@ int32_t IntellVoiceService::GetWakeupSourceFilesList(std::vector<std::string>& c
 
 int32_t IntellVoiceService::GetWakeupSourceFile(const std::string &filePath, std::vector<uint8_t> &buffer)
 {
-    if (!IntellVoiceUtil::VerifySystemPermission(OHOS_PERMISSION_INTELL_VOICE)) {
-        INTELL_VOICE_LOG_WARN("verify permission");
-        return -1;
+    auto ret = IntellVoiceUtil::VerifySystemPermission(OHOS_PERMISSION_INTELL_VOICE);
+    if (ret != INTELLIGENT_VOICE_SUCCESS) {
+        INTELL_VOICE_LOG_WARN("verify permission denied");
+        return ret;
     }
 
     INTELL_VOICE_LOG_INFO("get clone file");
     std::unique_ptr<IntellVoiceServiceManager> &mgr = IntellVoiceServiceManager::GetInstance();
     if (mgr == nullptr) {
         INTELL_VOICE_LOG_ERROR("mgr is nullptr");
-        return -1;
+        return INTELLIGENT_VOICE_NO_MEMORY;
     }
 
     return mgr->GetWakeupSourceFile(filePath, buffer);
@@ -491,16 +501,17 @@ int32_t IntellVoiceService::GetWakeupSourceFile(const std::string &filePath, std
 
 int32_t IntellVoiceService::SendWakeupFile(const std::string &filePath, const std::vector<uint8_t> &buffer)
 {
-    if (!IntellVoiceUtil::VerifySystemPermission(OHOS_PERMISSION_INTELL_VOICE)) {
-        INTELL_VOICE_LOG_WARN("verify permission");
-        return -1;
+    auto ret = IntellVoiceUtil::VerifySystemPermission(OHOS_PERMISSION_INTELL_VOICE);
+    if (ret != INTELLIGENT_VOICE_SUCCESS) {
+        INTELL_VOICE_LOG_WARN("verify permission denied");
+        return ret;
     }
 
     INTELL_VOICE_LOG_INFO("send clone file");
     std::unique_ptr<IntellVoiceServiceManager> &mgr = IntellVoiceServiceManager::GetInstance();
     if (mgr == nullptr) {
         INTELL_VOICE_LOG_ERROR("mgr is nullptr");
-        return -1;
+        return INTELLIGENT_VOICE_NO_MEMORY;
     }
 
     return mgr->SendWakeupFile(filePath, buffer);
@@ -509,9 +520,10 @@ int32_t IntellVoiceService::SendWakeupFile(const std::string &filePath, const st
 int32_t IntellVoiceService::EnrollWithWakeupFilesForResult(const std::string &wakeupInfo,
     const sptr<IRemoteObject> object)
 {
-    if (!IntellVoiceUtil::VerifySystemPermission(OHOS_PERMISSION_INTELL_VOICE)) {
-        INTELL_VOICE_LOG_WARN("verify permission");
-        return -1;
+    auto ret = IntellVoiceUtil::VerifySystemPermission(OHOS_PERMISSION_INTELL_VOICE);
+    if (ret != INTELLIGENT_VOICE_SUCCESS) {
+        INTELL_VOICE_LOG_WARN("verify permission denied");
+        return ret;
     }
 
     INTELL_VOICE_LOG_INFO("enter");
@@ -523,7 +535,7 @@ int32_t IntellVoiceService::EnrollWithWakeupFilesForResult(const std::string &wa
     auto &mgr = IntellVoiceServiceManager::GetInstance();
     if (mgr == nullptr) {
         INTELL_VOICE_LOG_ERROR("mgr is nullptr");
-        return -1;
+        return INTELLIGENT_VOICE_NO_MEMORY;
     }
 
     return mgr->HandleCloneUpdate(wakeupInfo, object);
@@ -531,15 +543,16 @@ int32_t IntellVoiceService::EnrollWithWakeupFilesForResult(const std::string &wa
 
 int32_t IntellVoiceService::ClearUserData()
 {
-    if (!IntellVoiceUtil::VerifySystemPermission(OHOS_PERMISSION_INTELL_VOICE)) {
-        INTELL_VOICE_LOG_WARN("verify permission");
-        return -1;
+    auto ret = IntellVoiceUtil::VerifySystemPermission(OHOS_PERMISSION_INTELL_VOICE);
+    if (ret != INTELLIGENT_VOICE_SUCCESS) {
+        INTELL_VOICE_LOG_WARN("verify permission denied");
+        return ret;
     }
 
     auto &mgr = IntellVoiceServiceManager::GetInstance();
     if (mgr == nullptr) {
         INTELL_VOICE_LOG_ERROR("mgr is nullptr");
-        return -1;
+        return INTELLIGENT_VOICE_NO_MEMORY;
     }
 
     return mgr->ClearUserData();

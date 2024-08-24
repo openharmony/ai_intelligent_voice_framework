@@ -53,6 +53,8 @@ public:
     int32_t SetCallback(std::shared_ptr<IIntellVoiceEngineEventCallback> callback);
     int32_t Evaluate(const std::string &word, EvaluationResultInfo &info);
 
+    int32_t result_ = INTELLIGENT_VOICE_SUCCESS;
+
 private:
     sptr<IIntellVoiceEngine> engine_ = nullptr;
     std::unique_ptr<EnrollIntelligentVoiceEngineDescriptor> descriptor_ = nullptr;

@@ -16,6 +16,9 @@ import("//build/ohos.gni")
 ohos_shared_library("intell_voice_utils") {
   configs = [ "//build/config/compiler:exceptions" ]
 
+  include_dirs =
+      [ "../../../ai/intelligent_voice_framework/interfaces/inner_api/native" ]
+
   sources = [
     "array_buffer_util.cpp",
     "base_thread.cpp",

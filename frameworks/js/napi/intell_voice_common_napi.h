@@ -29,14 +29,15 @@ constexpr int ARG_INDEX_2 = 2;
 
 constexpr int32_t NAPI_INTELLIGENT_VOICE_SUCCESS = 0;
 
-constexpr int32_t  NAPI_INTELLIGENT_VOICE_PERMISSION_DENIED = 201;
-constexpr int32_t  NAPI_INTELLIGENT_VOICE_NO_MEMORY = 22700101;
-constexpr int32_t  NAPI_INTELLIGENT_VOICE_INVALID_PARAM = 22700102;
-constexpr int32_t  NAPI_INTELLIGENT_VOICE_INIT_FAILED = 22700103;
-constexpr int32_t  NAPI_INTELLIGENT_VOICE_COMMIT_ENROLL_FAILED = 22700104;
-constexpr int32_t  NAPI_INTELLIGENT_VOICE_START_CAPTURER_FAILED = 22700105;
-constexpr int32_t  NAPI_INTELLIGENT_VOICE_READ_FAILED = 22700106;
-constexpr int32_t  NAPI_INTELLIGENT_VOICE_SYSTEM_ERROR = 22700107;
+constexpr int32_t NAPI_INTELLIGENT_VOICE_PERMISSION_DENIED = 201;
+constexpr int32_t NAPI_INTELLIGENT_VOICE_NOT_SYSTEM_APPLICATION = 202;
+constexpr int32_t NAPI_INTELLIGENT_VOICE_NO_MEMORY = 22700101;
+constexpr int32_t NAPI_INTELLIGENT_VOICE_INVALID_PARAM = 22700102;
+constexpr int32_t NAPI_INTELLIGENT_VOICE_INIT_FAILED = 22700103;
+constexpr int32_t NAPI_INTELLIGENT_VOICE_COMMIT_ENROLL_FAILED = 22700104;
+constexpr int32_t NAPI_INTELLIGENT_VOICE_START_CAPTURER_FAILED = 22700105;
+constexpr int32_t NAPI_INTELLIGENT_VOICE_READ_FAILED = 22700106;
+constexpr int32_t NAPI_INTELLIGENT_VOICE_SYSTEM_ERROR = 22700107;
 
 class IntellVoiceCommonNapi {
 public:
@@ -45,6 +46,7 @@ public:
     static std::string GetMessageByCode(const int32_t code);
     static void ThrowError(napi_env env, int32_t code);
     static bool IsSameCallback(napi_env env, napi_value callback, napi_ref callbackRef);
+    static int32_t ConvertResultCode(int32_t result);
 };
 }
 }

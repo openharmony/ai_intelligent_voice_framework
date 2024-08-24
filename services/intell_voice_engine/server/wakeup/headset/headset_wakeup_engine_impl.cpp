@@ -20,6 +20,7 @@
 #include "intell_voice_util.h"
 #include "intell_voice_service_manager.h"
 #include "headset_host_manager.h"
+#include "headset_wakeup_wrapper.h"
 
 #define LOG_TAG "HeadsetWakeupEngineImpl"
 
@@ -197,7 +198,7 @@ int32_t HeadsetWakeupEngineImpl::HandleInit(const StateMsg & /* msg */, State &n
 
     EngineUtil::SetLanguage();
     EngineUtil::SetArea();
-    adapter_->SetParameter("model_path=/data/local/tmp/encoder.om");
+    adapter_->SetParameter("model_path=/vendor/etc/audio/encoder.om");
     IntellVoiceEngineInfo info = {
     };
 
@@ -268,7 +269,7 @@ void HeadsetWakeupEngineImpl::ReadThread()
     while (isReading_.load()) {
         std::vector<uint8_t> audioStream;
         bool hasAwakeWord = true;
-        int ret = ReadHeadsetStream(audioStream, hasAwakeWord);
+        int ret = HeadsetWakeupWrapper::GetInstance().ReadHeadsetStream(audioStream, hasAwakeWord);
         if (hasAwakeWord && !isEnd) {
             adapter_->WriteAudio(audioStream);
         }
@@ -304,7 +305,7 @@ void HeadsetWakeupEngineImpl::StopAudioSource()
     }
     isReading_.store(false);
     readThread_.join();
-    StopReadingStream();
+    HeadsetWakeupWrapper::GetInstance().StopReadingStream();
     WakeupSourceProcess::Release();
 }
 
@@ -330,11 +331,11 @@ int32_t HeadsetWakeupEngineImpl::HandleRecognizeComplete(const StateMsg &msg, St
 
     if (event->result != 0) {
         INTELL_VOICE_LOG_INFO("wakeup failed");
-        NotifyVerifyResult(false);
+        HeadsetWakeupWrapper::GetInstance().NotifyVerifyResult(false);
         StopAudioSource();
         nextState = State(INITIALIZED);
     } else {
-        NotifyVerifyResult(true);
+        HeadsetWakeupWrapper::GetInstance().NotifyVerifyResult(true);
         nextState = State(RECOGNIZED);
     }
     return 0;
@@ -377,7 +378,7 @@ int32_t HeadsetWakeupEngineImpl::HandleStopCapturer(const StateMsg & /* msg */, 
 int32_t HeadsetWakeupEngineImpl::HandleRecognizingTimeout(const StateMsg & /* msg */, State &nextState)
 {
     INTELL_VOICE_LOG_INFO("enter");
-    NotifyVerifyResult(false);
+    HeadsetWakeupWrapper::GetInstance().NotifyVerifyResult(false);
     StopAudioSource();
     EngineUtil::Stop();
     nextState = State(INITIALIZED);

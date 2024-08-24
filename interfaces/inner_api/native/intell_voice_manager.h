@@ -53,7 +53,7 @@ public:
     int32_t GetWakeupSourceFiles(std::vector<WakeupSourceFile> &cloneFileInfo);
     int32_t EnrollWithWakeupFilesForResult(const std::vector<WakeupSourceFile> &cloneFileInfo,
         const std::string &wakeupInfo, const std::shared_ptr<IIntellVoiceUpdateCallback> callback);
-    void ClearUserData();
+    int32_t ClearUserData();
 private:
     IntellVoiceManager();
     ~IntellVoiceManager();

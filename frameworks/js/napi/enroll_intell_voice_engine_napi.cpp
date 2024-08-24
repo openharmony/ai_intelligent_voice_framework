@@ -146,6 +146,12 @@ napi_value EnrollIntellVoiceEngineNapi::Construct(napi_env env, napi_callback_in
         constructResult_ = NAPI_INTELLIGENT_VOICE_NO_MEMORY;
         return undefinedResult;
     }
+
+    constructResult_ = IntellVoiceCommonNapi::ConvertResultCode(engineNapi->engine_->result_);
+    if (constructResult_ != NAPI_INTELLIGENT_VOICE_SUCCESS) {
+        return undefinedResult;
+    }
+
     engineNapi->callbackNapi_ =  std::make_shared<EnrollIntellVoiceEngineCallbackNapi>(env);
     if (engineNapi->callbackNapi_ == nullptr) {
         INTELL_VOICE_LOG_ERROR("create intell voice engine callback napi failed");
@@ -155,7 +161,7 @@ napi_value EnrollIntellVoiceEngineNapi::Construct(napi_env env, napi_callback_in
 
     if (engineNapi->engine_->SetCallback(engineNapi->callbackNapi_) != 0) {
         INTELL_VOICE_LOG_ERROR("set callback failed");
-        constructResult_ = NAPI_INTELLIGENT_VOICE_PERMISSION_DENIED;
+        constructResult_ = NAPI_INTELLIGENT_VOICE_SYSTEM_ERROR;
         return undefinedResult;
     }
 

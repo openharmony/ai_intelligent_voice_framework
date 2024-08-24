@@ -15,6 +15,7 @@
 #include "intell_voice_common_napi.h"
 
 #include <map>
+#include <set>
 #include "intell_voice_log.h"
 
 #define LOG_TAG "IntellVoiceCommonNapi"
@@ -45,7 +46,7 @@ std::string IntellVoiceCommonNapi::GetMessageByCode(int32_t code)
 
     auto iter = messageMap.find(code);
     if (iter == messageMap.end()) {
-        INTELL_VOICE_LOG_ERROR("invalid code: %{public}d", code);
+        INTELL_VOICE_LOG_WARN("can not find message, code: %{public}d", code);
         return "";
     }
 
@@ -71,6 +72,30 @@ bool IntellVoiceCommonNapi::IsSameCallback(napi_env env, napi_value callback, na
     }
 
     return isEqual;
+}
+
+int32_t IntellVoiceCommonNapi::ConvertResultCode(int32_t result)
+{
+    static const std::set<int32_t> resultCodeSet = {
+        NAPI_INTELLIGENT_VOICE_SUCCESS,
+        NAPI_INTELLIGENT_VOICE_PERMISSION_DENIED,
+        NAPI_INTELLIGENT_VOICE_NOT_SYSTEM_APPLICATION,
+        NAPI_INTELLIGENT_VOICE_NO_MEMORY,
+        NAPI_INTELLIGENT_VOICE_INVALID_PARAM,
+        NAPI_INTELLIGENT_VOICE_INIT_FAILED,
+        NAPI_INTELLIGENT_VOICE_COMMIT_ENROLL_FAILED,
+        NAPI_INTELLIGENT_VOICE_START_CAPTURER_FAILED,
+        NAPI_INTELLIGENT_VOICE_READ_FAILED,
+        NAPI_INTELLIGENT_VOICE_SYSTEM_ERROR
+    };
+
+    auto it = resultCodeSet.find(result);
+    if (it != resultCodeSet.end()) {
+        return *it;
+    }
+
+    INTELL_VOICE_LOG_WARN("can not find in set, result is %{public}d", result);
+    return NAPI_INTELLIGENT_VOICE_SYSTEM_ERROR;
 }
 }
 }

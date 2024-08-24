@@ -146,9 +146,8 @@ napi_value WakeupIntellVoiceEngineNapi::Construct(napi_env env, napi_callback_in
         return undefinedResult;
     }
 
-    if (engineNapi->engine_->GetEngine() == nullptr) {
-        INTELL_VOICE_LOG_ERROR("create wakeup engine failed");
-        constructResult_ = NAPI_INTELLIGENT_VOICE_PERMISSION_DENIED;
+    constructResult_ = IntellVoiceCommonNapi::ConvertResultCode(engineNapi->engine_->result_);
+    if (constructResult_ != NAPI_INTELLIGENT_VOICE_SUCCESS) {
         return undefinedResult;
     }
 
