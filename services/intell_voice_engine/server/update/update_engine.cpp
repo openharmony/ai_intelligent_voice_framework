@@ -61,6 +61,13 @@ void UpdateEngine::OnCommitEnrollComplete(int32_t result)
         ProcDspModel(OHOS::HDI::IntelligentVoice::Engine::V1_0::DSP_MODLE);
         /* save new version number */
         UpdateEngineUtils::SaveWakeupVesion();
+        std::string wakeupPhrase = EngineUtil::GetParameter("wakeup_phrase");
+        if (wakeupPhrase.empty()) {
+            INTELL_VOICE_LOG_ERROR("wakeup phrase is empty");
+        } else {
+            HistoryInfoMgr::GetInstance().SetWakeupPhrase(wakeupPhrase);
+        }
+
         INTELL_VOICE_LOG_INFO("update save version");
     }
 

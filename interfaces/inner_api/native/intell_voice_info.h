@@ -83,6 +83,12 @@ enum WakeupIntelligentVoiceEventType {
 };
 
 enum IntelligentVoiceErrorCode {
+    /* Success. */
+    INTELLIGENT_VOICE_SUCCESS = 0,
+    /* Permission denied. */
+    INTELLIGENT_VOICE_PERMISSION_DENIED = 201,
+    /* Not system application. */
+    INTELLIGENT_VOICE_NOT_SYSTEM_APPLICATION = 202,
     /* No memory. */
     INTELLIGENT_VOICE_NO_MEMORY = 22700101,
     /* Input parameter value error. */

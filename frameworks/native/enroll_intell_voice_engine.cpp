@@ -37,7 +37,10 @@ EnrollIntellVoiceEngine::EnrollIntellVoiceEngine(const EnrollIntelligentVoiceEng
     if (descriptor_ != nullptr) {
         descriptor_->wakeupPhrase = descriptor.wakeupPhrase;
     }
-    IntellVoiceManager::GetInstance()->CreateIntellVoiceEngine(INTELL_VOICE_ENROLL, engine_);
+    result_ = IntellVoiceManager::GetInstance()->CreateIntellVoiceEngine(INTELL_VOICE_ENROLL, engine_);
+    if (result_ != INTELLIGENT_VOICE_SUCCESS) {
+        INTELL_VOICE_LOG_ERROR("create enroll engine failed, ret:%{public}d", result_);
+    }
 }
 
 EnrollIntellVoiceEngine::~EnrollIntellVoiceEngine()

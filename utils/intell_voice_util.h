@@ -27,7 +27,7 @@ public:
     static uint32_t GetHdiVersionId(uint32_t majorVer, uint32_t minorVer);
     static bool DeinterleaveAudioData(const int16_t *buffer, uint32_t size, int32_t channelCnt,
         std::vector<std::vector<uint8_t>> &audioData);
-    static bool VerifySystemPermission(const std::string &permissionName);
+    static int32_t VerifySystemPermission(const std::string &permissionName);
     static bool ReadFile(const std::string &filePath, std::shared_ptr<uint8_t> &buffer, uint32_t &size);
     static void SplitStringToKVPair(const std::string &inputStr, std::map<std::string, std::string> &kvpairs);
     static bool IsFileExist(const std::string &filePath);

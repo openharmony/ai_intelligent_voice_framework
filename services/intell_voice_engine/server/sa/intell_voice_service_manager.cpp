@@ -36,6 +36,7 @@
 #include "update_engine_utils.h"
 #include "json/json.h"
 #include "intell_voice_sensibility.h"
+#include "headset_wakeup_wrapper.h"
 
 #define LOG_TAG "IntellVoiceServiceManager"
 
@@ -968,12 +969,14 @@ void IntellVoiceServiceManager::HandleServiceStop()
 
 void IntellVoiceServiceManager::HandleHeadsetHostDie()
 {
-    TaskExecutor::AddAsyncTask([this]() {
+    TaskExecutor::AddSyncTask([this]() -> int32_t {
         auto engine = GetEngine(INTELL_VOICE_WAKEUP, engines_);
         if (engine != nullptr) {
-            engine->NotifyHeadsetHostEvent(HEADSET_HOST_ON);
+            engine->NotifyHeadsetHostEvent(HEADSET_HOST_OFF);
         }
+        return 0;
     });
+    HeadsetWakeupWrapper::GetInstance().NotifyHeadsetHdfDeath();
 }
 
 void IntellVoiceServiceManager::OnTriggerConnectServiceStart()

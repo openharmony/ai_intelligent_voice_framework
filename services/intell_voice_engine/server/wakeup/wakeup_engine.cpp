@@ -18,6 +18,7 @@
 #include "intell_voice_service_manager.h"
 #include "intell_voice_log.h"
 #include "headset_host_manager.h"
+#include "headset_wakeup_wrapper.h"
 
 #define LOG_TAG "WakeupEngine"
 
@@ -41,7 +42,7 @@ void WakeupEngine::OnDetected(int32_t uuid)
     INTELL_VOICE_LOG_INFO("enter, uuid is %{public}d", uuid);
     {
         std::lock_guard<std::mutex> lock(headsetMutex_);
-        if ((headsetImpl_ != nullptr) && (headsetImpl_->GetHeadsetAwakeState() == 1)) {
+        if ((headsetImpl_ != nullptr) && (HeadsetWakeupWrapper::GetInstance().GetHeadsetAwakeState() == 1)) {
             INTELL_VOICE_LOG_INFO("headset wakeup is exist");
             return;
         }
@@ -167,10 +168,11 @@ int32_t WakeupEngine::HandleHeadsetOn()
         INTELL_VOICE_LOG_ERROR("init headset host failed");
         return -1;
     }
+    HeadsetHostManager::GetInstance().RegisterEngineHDIDeathRecipient();
 
     std::lock_guard<std::mutex> lock(headsetMutex_);
     if (headsetImpl_ != nullptr) {
-        INTELL_VOICE_LOG_WARN("headsetImpl already exist.");
+        INTELL_VOICE_LOG_WARN("headsetImpl already exist");
         return 0;
     }
 

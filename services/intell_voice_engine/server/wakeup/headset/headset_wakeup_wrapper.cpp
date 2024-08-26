@@ -121,5 +121,16 @@ int32_t HeadsetWakeupWrapper::GetHeadsetAwakeState()
 
     return inst_->GetHeadsetAwakeState();
 }
+
+void HeadsetWakeupWrapper::NotifyHeadsetHdfDeath()
+{
+    INTELL_VOICE_LOG_INFO("enter");
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (inst_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("inst is nullptr");
+        return;
+    }
+    inst_->NotifyHeadsetHdfDeath();
+}
 }  // namespace IntellVoice
 }  // namespace OHOS
