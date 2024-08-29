@@ -157,6 +157,12 @@ napi_value WakeupManagerNapi::GetWakeupManager(napi_env env, napi_callback_info 
 {
     INTELL_VOICE_LOG_INFO("enter");
 
+    if (!IntellVoiceCommonNapi::CheckIsSystemApp()) {
+        INTELL_VOICE_LOG_ERROR("Not system application!");
+        IntellVoiceCommonNapi::ThrowError(env, NAPI_INTELLIGENT_VOICE_NOT_SYSTEM_APPLICATION);
+        return nullptr;
+    }
+
     napi_status status;
     size_t argCount = 0;
 

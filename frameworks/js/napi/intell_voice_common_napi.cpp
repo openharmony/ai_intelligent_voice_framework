@@ -16,6 +16,10 @@
 
 #include <map>
 #include <set>
+#include <cinttypes>
+#include "accesstoken_kit.h"
+#include "tokenid_kit.h"
+#include "ipc_skeleton.h"
 #include "intell_voice_log.h"
 
 #define LOG_TAG "IntellVoiceCommonNapi"
@@ -96,6 +100,18 @@ int32_t IntellVoiceCommonNapi::ConvertResultCode(int32_t result)
 
     INTELL_VOICE_LOG_WARN("can not find in set, result is %{public}d", result);
     return NAPI_INTELLIGENT_VOICE_SYSTEM_ERROR;
+}
+
+bool IntellVoiceCommonNapi::CheckIsSystemApp()
+{
+    uint64_t fullTokenId = IPCSkeleton::GetCallingFullTokenID();
+    if (!Security::AccessToken::TokenIdKit::IsSystemAppByFullTokenID(fullTokenId)) {
+        INTELL_VOICE_LOG_WARN("Not system app, permission reject tokenid: %{public}" PRIu64 "", fullTokenId);
+        return false;
+    }
+
+    INTELL_VOICE_LOG_INFO("System app, fullTokenId:%{public}" PRIu64 "", fullTokenId);
+    return true;
 }
 }
 }

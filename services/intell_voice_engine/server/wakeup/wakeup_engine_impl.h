@@ -85,6 +85,7 @@ private:
     int32_t HandleResetAdapter(const StateMsg &msg, State &nextState);
     int32_t HandleRelease(const StateMsg &msg, State &nextState);
     std::string GetWakeupPhrase();
+    void ReadBufferCallback(uint8_t *buffer, uint32_t size, bool isEnd);
 
 private:
     using EngineUtil::adapter_;

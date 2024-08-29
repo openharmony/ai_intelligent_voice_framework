@@ -47,6 +47,7 @@ public:
     static void ThrowError(napi_env env, int32_t code);
     static bool IsSameCallback(napi_env env, napi_value callback, napi_ref callbackRef);
     static int32_t ConvertResultCode(int32_t result);
+    static bool CheckIsSystemApp();
 };
 }
 }

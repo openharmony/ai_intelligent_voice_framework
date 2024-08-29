@@ -268,18 +268,7 @@ bool WakeupEngineImpl::StartAudioSource()
     capturerOptions_.streamInfo.channels = GetWakeupSourceChannel();
     auto listener = std::make_unique<AudioSourceListener>(
         [&](uint8_t *buffer, uint32_t size, bool isEnd) {
-            std::vector<std::vector<uint8_t>> audioData;
-            auto ret = IntellVoiceUtil::DeinterleaveAudioData(reinterpret_cast<int16_t *>(buffer),
-                size / sizeof(int16_t), static_cast<int32_t>(capturerOptions_.streamInfo.channels), audioData);
-            if ((!ret) || ((audioData.size() != static_cast<uint32_t>(capturerOptions_.streamInfo.channels))) ||
-                (channelId_ >= audioData.size())) {
-                INTELL_VOICE_LOG_ERROR("failed to deinterleave, ret:%{public}d, id:%{public}d", ret, channelId_);
-                return;
-            }
-            if ((adapter_ != nullptr) && !isEnd) {
-                adapter_->WriteAudio(audioData[channelId_]);
-            }
-            WakeupSourceProcess::Write(audioData);
+            ReadBufferCallback(buffer, size, isEnd);
         },
         [&]() {
             INTELL_VOICE_LOG_INFO("end of pcm");
@@ -661,6 +650,28 @@ std::string WakeupEngineImpl::GetWakeupPhrase()
     }
 
     return wakeupPhrase;
+}
+
+void WakeupEngineImpl::ReadBufferCallback(uint8_t *buffer, uint32_t size, bool isEnd)
+{
+    std::vector<std::vector<uint8_t>> audioData;
+    auto ret = IntellVoiceUtil::DeinterleaveAudioData(reinterpret_cast<int16_t *>(buffer),
+        size / sizeof(int16_t), static_cast<int32_t>(capturerOptions_.streamInfo.channels), audioData);
+    if ((!ret) || ((audioData.size() != static_cast<uint32_t>(capturerOptions_.streamInfo.channels))) ||
+        (channelId_ >= audioData.size())) {
+        INTELL_VOICE_LOG_ERROR("failed to deinterleave, ret:%{public}d, id:%{public}d", ret, channelId_);
+        return;
+    }
+    if ((adapter_ != nullptr) && !isEnd) {
+        if (channelId_ == CHANNEL_ID_1) { // whisper wakeup, need to write channel0 and channel1 data
+            std::vector<uint8_t> data(audioData[CHANNEL_ID_0].begin(), audioData[CHANNEL_ID_0].end());
+            data.insert(data.end(), audioData[CHANNEL_ID_1].begin(), audioData[CHANNEL_ID_1].end());
+            adapter_->WriteAudio(data);
+        } else {
+            adapter_->WriteAudio(audioData[channelId_]);
+        }
+    }
+    WakeupSourceProcess::Write(audioData);
 }
 }
 }
