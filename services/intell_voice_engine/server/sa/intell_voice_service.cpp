@@ -386,8 +386,13 @@ void IntellVoiceService::OnPowerManagerServiceChange(bool isAdded)
 
 bool IntellVoiceService::RegisterDeathRecipient(IntellVoiceEngineType type, const sptr<IRemoteObject> &object)
 {
+    if (IntellVoiceUtil::VerifySystemPermission(OHOS_PERMISSION_INTELL_VOICE) != INTELLIGENT_VOICE_SUCCESS) {
+        INTELL_VOICE_LOG_WARN("verify permission denied");
+        return false;
+    }
+
     if (object == nullptr) {
-        INTELL_VOICE_LOG_ERROR("object is nullptr");
+        INTELL_VOICE_LOG_WARN("object is nullptr, no need to register");
         return false;
     }
 
@@ -406,6 +411,11 @@ bool IntellVoiceService::RegisterDeathRecipient(IntellVoiceEngineType type, cons
 
 bool IntellVoiceService::DeregisterDeathRecipient(IntellVoiceEngineType type)
 {
+    if (IntellVoiceUtil::VerifySystemPermission(OHOS_PERMISSION_INTELL_VOICE) != INTELLIGENT_VOICE_SUCCESS) {
+        INTELL_VOICE_LOG_WARN("verify permission denied");
+        return false;
+    }
+
     if ((type < INTELL_VOICE_ENROLL) || (type > INTELL_VOICE_WAKEUP)) {
         INTELL_VOICE_LOG_ERROR("invalid type:%{public}d", type);
         return false;

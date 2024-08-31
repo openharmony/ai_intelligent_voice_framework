@@ -55,7 +55,12 @@ int32_t IntellVoiceServiceStub::CreateEngineInner(MessageParcel &data, MessagePa
     sptr<IIntellVoiceEngine> engine = nullptr;
 
     IntellVoiceEngineType type = static_cast<IntellVoiceEngineType>(data.ReadInt32());
-    RegisterDeathRecipient(type, data.ReadRemoteObject());
+    auto obj = data.ReadRemoteObject();
+    if (type == INTELL_VOICE_HEADSET_WAKEUP) {
+        type = INTELL_VOICE_WAKEUP;
+    } else {
+        RegisterDeathRecipient(type, obj);
+    }
     ret = CreateIntellVoiceEngine(type, engine);
     reply.WriteInt32(ret);
     if (ret != 0) {

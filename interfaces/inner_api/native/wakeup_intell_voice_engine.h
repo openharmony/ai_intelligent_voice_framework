@@ -33,7 +33,8 @@ struct WakeupIntelligentVoiceEngineDescriptor {
 
 class WakeupIntellVoiceEngine {
 public:
-    WakeupIntellVoiceEngine(const WakeupIntelligentVoiceEngineDescriptor &descriptor);
+    WakeupIntellVoiceEngine(const WakeupIntelligentVoiceEngineDescriptor &descriptor,
+        IntellVoiceEngine::IntellVoiceEngineType type = OHOS::IntellVoiceEngine::INTELL_VOICE_WAKEUP);
     ~WakeupIntellVoiceEngine();
 
     int32_t SetSensibility(const int32_t &sensibility);
