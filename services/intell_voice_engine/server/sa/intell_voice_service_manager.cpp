@@ -642,9 +642,6 @@ std::string IntellVoiceServiceManager::GetParameter(const std::string &key)
     } else if (key == "isNeedReEnroll") {
         val = UpdateEngineUtils::IsVersionUpdate() ? "true" : "false";
         INTELL_VOICE_LOG_INFO("get nedd reenroll result %{public}s", val.c_str());
-    } else if (key == "wakeup_capability") {
-        val = GetWakeupCapability();
-        INTELL_VOICE_LOG_INFO("get wakeup capability result %{public}s", val.c_str());
     } else if (key == "isWhispering") {
         auto audioSystemManager = AudioStandard::AudioSystemManager::GetInstance();
         if (audioSystemManager == nullptr) {
@@ -690,49 +687,7 @@ int32_t IntellVoiceServiceManager::SetParameter(const std::string &keyValueList)
     return 0;
 }
 
-std::string IntellVoiceServiceManager::GetWakeupCapability()
-{
-    INTELL_VOICE_LOG_INFO("enter");
-    Json::Value root;
-    if (IntellVoiceUtil::IsFileExist(VAD_MODEL_PATH)) {
-        root["SupportWhisperWakeup"] = true;
-    } else {
-        root["SupportWhisperWakeup"] = false;
-    }
-
-    if (IntellVoiceUtil::IsFileExist(WAKEUP_CONFIG_USER_PATH)) {
-        root["SupportUserDefinedWakeupPhrase"] = true;
-    } else {
-        root["SupportUserDefinedWakeupPhrase"] = false;
-    }
-
-    auto isSupportShortWordFunc = []() -> bool {
-        std::ifstream jsonStrm(WAKEUP_CONFIG_PATH);
-        if (!jsonStrm.is_open()) {
-            INTELL_VOICE_LOG_ERROR("open file faile!");
-            return false;
-        }
-        Json::Value wakeupJson;
-        Json::CharReaderBuilder reader;
-        reader["collectComments"] = false;
-        std::string errs;
-        if (!parseFromStream(reader, jsonStrm, &wakeupJson, &errs)) {
-            INTELL_VOICE_LOG_ERROR("parseFromStream json faile!");
-            return false;
-        }
-        Json::Value features = wakeupJson["Features"];
-        for (uint32_t i = 0; i < features.size(); i++) {
-            if (features[i].asString() == "short_phrase") {
-                return true;
-            }
-        }
-        return false;
-    };
-    root["SupportShortWord"] = isSupportShortWordFunc();
-    return root.toStyledString();
-}
-
-int32_t IntellVoiceServiceManager::GetWakeupSourceFilesList(std::vector<std::string>& cloneFiles)
+int32_t IntellVoiceServiceManager::GetWakeupSourceFilesList(std::vector<std::string> &cloneFiles)
 {
     return EngineHostManager::GetInstance().GetWakeupSourceFilesList(cloneFiles);
 }

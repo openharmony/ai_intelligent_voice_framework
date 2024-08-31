@@ -25,14 +25,15 @@ using namespace OHOS::IntellVoiceEngine;
 
 namespace OHOS {
 namespace IntellVoice {
-WakeupIntellVoiceEngine::WakeupIntellVoiceEngine(const WakeupIntelligentVoiceEngineDescriptor &descriptor)
+WakeupIntellVoiceEngine::WakeupIntellVoiceEngine(const WakeupIntelligentVoiceEngineDescriptor &descriptor,
+    IntellVoiceEngineType type)
 {
     INTELL_VOICE_LOG_INFO("enter");
 
     descriptor_ = make_unique<WakeupIntelligentVoiceEngineDescriptor>();
     descriptor_->needReconfirm = descriptor.needReconfirm;
     descriptor_->wakeupPhrase = descriptor.wakeupPhrase;
-    result_ = IntellVoiceManager::GetInstance()->CreateIntellVoiceEngine(INTELL_VOICE_WAKEUP, engine_);
+    result_ = IntellVoiceManager::GetInstance()->CreateIntellVoiceEngine(type, engine_);
     if (result_ != INTELLIGENT_VOICE_SUCCESS) {
         INTELL_VOICE_LOG_ERROR("create wakeup engine failed, ret:%{public}d", result_);
     }

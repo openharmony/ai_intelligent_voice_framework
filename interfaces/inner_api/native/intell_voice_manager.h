@@ -23,6 +23,7 @@
 #include "i_intell_voice_service.h"
 #include "update_callback_inner.h"
 #include "intell_voice_info.h"
+#include "wakeup_intell_voice_engine.h"
 
 namespace OHOS {
 namespace IntellVoice {
@@ -43,6 +44,8 @@ public:
     int32_t CreateIntellVoiceEngine(IntellVoiceEngineType type, sptr<IIntellVoiceEngine> &inst);
     int32_t ReleaseIntellVoiceEngine(IntellVoiceEngineType type);
     bool Init();
+
+    std::shared_ptr<WakeupIntellVoiceEngine> CreateHeadsetWakeupEngine();
 
     int32_t RegisterServiceDeathRecipient(sptr<OHOS::IRemoteObject::DeathRecipient> callback);
     int32_t DeregisterServiceDeathRecipient(sptr<OHOS::IRemoteObject::DeathRecipient> callback);

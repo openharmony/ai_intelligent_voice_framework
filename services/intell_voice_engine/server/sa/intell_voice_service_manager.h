@@ -94,8 +94,7 @@ public:
 
     int32_t SetParameter(const std::string &keyValueList);
     std::string GetParameter(const std::string &key);
-    std::string GetWakeupCapability();
-    int32_t GetWakeupSourceFilesList(std::vector<std::string>& cloneFiles);
+    int32_t GetWakeupSourceFilesList(std::vector<std::string> &cloneFiles);
     int32_t GetWakeupSourceFile(const std::string &filePath, std::vector<uint8_t> &buffer);
     int32_t SendWakeupFile(const std::string &filePath, const std::vector<uint8_t> &buffer);
     int32_t ClearUserData();

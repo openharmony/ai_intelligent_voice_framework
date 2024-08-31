@@ -85,6 +85,13 @@ int32_t IntellVoiceManager::CreateIntellVoiceEngine(IntellVoiceEngineType type, 
     return g_sProxy->CreateIntellVoiceEngine(type, inst);
 }
 
+std::shared_ptr<WakeupIntellVoiceEngine> IntellVoiceManager::CreateHeadsetWakeupEngine()
+{
+    INTELL_VOICE_LOG_INFO("enter");
+    WakeupIntelligentVoiceEngineDescriptor descriptor = {false, "小艺小艺"};
+    return std::make_shared<WakeupIntellVoiceEngine>(descriptor, INTELL_VOICE_HEADSET_WAKEUP);
+}
+
 int32_t IntellVoiceManager::ReleaseIntellVoiceEngine(IntellVoiceEngineType type)
 {
     INTELL_VOICE_LOG_INFO("enter");
