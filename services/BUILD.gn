@@ -157,7 +157,7 @@ ohos_shared_library("intell_voice_server") {
       "core_service:tel_core_service_api",
       "state_registry:tel_state_registry_api",
     ]
-    defines += [ "SUPPORT_TELEPHONY_SERVICE" ]
+    cflags_cc += [ "-DSUPPORT_TELEPHONY_SERVICE" ]
   }
 
   subsystem_name = "ai"
