@@ -33,8 +33,10 @@ public:
     void UnloadTriggerModel(int32_t uuid);
     int32_t SetParameter(const std::string &key, const std::string &value);
     std::string GetParameter(const std::string &key);
+#ifdef SUPPORT_TELEPHONY_SERVICE
     void AttachTelephonyObserver();
     void DetachTelephonyObserver();
+#endif
     void AttachAudioCaptureListener();
     void DetachAudioCaptureListener();
     void AttachAudioRendererEventListener();

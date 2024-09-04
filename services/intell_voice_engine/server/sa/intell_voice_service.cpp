@@ -53,9 +53,11 @@ IntellVoiceService::IntellVoiceService(int32_t systemAbilityId, bool runOnCreate
     systemAbilityChangeMap_[DISTRIBUTED_KV_DATA_SERVICE_ABILITY_ID] = [this](bool isAdded) {
         this->OnDistributedKvDataServiceChange(isAdded);
     };
+#ifdef SUPPORT_TELEPHONY_SERVICE
     systemAbilityChangeMap_[TELEPHONY_STATE_REGISTRY_SYS_ABILITY_ID] = [this](bool isAdded) {
         this->OnTelephonyStateRegistryServiceChange(isAdded);
     };
+#endif
     systemAbilityChangeMap_[AUDIO_DISTRIBUTED_SERVICE_ID] = [this](bool isAdded) {
         this->OnAudioDistributedServiceChange(isAdded);
     };
@@ -140,7 +142,9 @@ void IntellVoiceService::OnStop(void)
 
     auto triggerMgr = IntellVoiceTrigger::TriggerManager::GetInstance();
     if (triggerMgr != nullptr) {
+#ifdef SUPPORT_TELEPHONY_SERVICE
         triggerMgr->DetachTelephonyObserver();
+#endif
         triggerMgr->DetachAudioCaptureListener();
         triggerMgr->DetachAudioRendererEventListener();
     }
@@ -334,6 +338,7 @@ void IntellVoiceService::OnDistributedKvDataServiceChange(bool isAdded)
     }
 }
 
+#ifdef SUPPORT_TELEPHONY_SERVICE
 void IntellVoiceService::OnTelephonyStateRegistryServiceChange(bool isAdded)
 {
     if (isAdded) {
@@ -346,6 +351,7 @@ void IntellVoiceService::OnTelephonyStateRegistryServiceChange(bool isAdded)
         INTELL_VOICE_LOG_INFO("telephony state registry service is removed");
     }
 }
+#endif
 
 void IntellVoiceService::OnAudioDistributedServiceChange(bool isAdded)
 {
