@@ -203,6 +203,7 @@ int32_t WakeupEngine::NotifyHeadsetHostEvent(HeadsetHostEventType event)
     if (event == HEADSET_HOST_OFF) {
         return HandleHeadsetOff();
     } else if (event == HEADSET_HOST_ON) {
+        HandleHeadsetOff();
         return HandleHeadsetOn();
     }
 

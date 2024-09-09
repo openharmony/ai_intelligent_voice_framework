@@ -58,6 +58,9 @@ static const std::string WAKEUP_CONFIG_USER_PATH =
 static const std::string WAKEUP_CONFIG_PATH =
     "/sys_prod/variant/region_comm/china/etc/intellvoice/wakeup/ap/wakeup_config.json";
 
+static const std::string XIAOYIXIAOYI = "\xE5\xB0\x8F\xE8\x89\xBA\xE5\xB0\x8F\xE8\x89\xBA";
+static const std::string LANGUAGE_TYPE_CHN = "zh";
+
 std::atomic<bool> IntellVoiceServiceManager::g_enrollResult[ENGINE_TYPE_BUT] = {false, false, false};
 std::unique_ptr<IntellVoiceServiceManager> IntellVoiceServiceManager::g_intellVoiceServiceMgr =
     std::unique_ptr<IntellVoiceServiceManager>(new (std::nothrow) IntellVoiceServiceManager());
@@ -725,6 +728,9 @@ int32_t IntellVoiceServiceManager::ClearUserData()
         }
         auto wakeupPhrase = HistoryInfoMgr::GetInstance().GetWakeupPhrase();
         if (!wakeupPhrase.empty()) {
+            if (HistoryInfoMgr::GetInstance().GetLanguage() == LANGUAGE_TYPE_CHN && wakeupPhrase != XIAOYIXIAOYI) {
+                wakeupPhrase = "Default";
+            }
             EngineHostManager::GetInstance().ClearUserWakeupData(wakeupPhrase);
         }
         HistoryInfoMgr::GetInstance().DeleteKey({KEY_WAKEUP_ENGINE_BUNDLE_NAME, KEY_WAKEUP_ENGINE_ABILITY_NAME,
