@@ -632,10 +632,8 @@ napi_value WakeupIntellVoiceEngineNapi::StartCapturer(napi_env env, napi_callbac
                 asyncContext->result_ = NAPI_INTELLIGENT_VOICE_START_CAPTURER_FAILED;
                 return;
             }
-            if (engine->StartCapturer(asyncContext->channels) != 0) {
-                INTELL_VOICE_LOG_ERROR("failed to start capturer");
-                asyncContext->result_ = NAPI_INTELLIGENT_VOICE_START_CAPTURER_FAILED;
-            }
+            asyncContext->result_ = IntellVoiceCommonNapi::ConvertResultCode(
+                engine->StartCapturer(asyncContext->channels));
         };
     } else {
         execute = [](napi_env env, void *data) {};

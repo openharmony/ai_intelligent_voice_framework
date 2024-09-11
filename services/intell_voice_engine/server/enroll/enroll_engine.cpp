@@ -14,7 +14,9 @@
  */
 #include "enroll_engine.h"
 #include <fstream>
+#include "ipc_skeleton.h"
 #include "securec.h"
+#include "intell_voice_info.h"
 #include "intell_voice_log.h"
 #include "intell_voice_util.h"
 #include "enroll_adapter_listener.h"
@@ -27,6 +29,7 @@
 
 #define LOG_TAG "EnrollEngine"
 
+using namespace OHOS::IntellVoice;
 using namespace OHOS::IntellVoiceTrigger;
 using namespace OHOS::HDI::IntelligentVoice::Engine::V1_0;
 using namespace OHOS::IntellVoiceUtils;
@@ -36,6 +39,7 @@ namespace OHOS {
 namespace IntellVoiceEngine {
 static constexpr uint32_t MIN_BUFFER_SIZE = 1280; // 16 * 2 * 40ms
 static constexpr uint32_t INTERVAL = 125; // 125 * 40ms = 5s
+
 EnrollEngine::EnrollEngine()
 {
     INTELL_VOICE_LOG_INFO("enter");
@@ -161,6 +165,11 @@ int32_t EnrollEngine::Start(bool isLast)
 {
     std::lock_guard<std::mutex> lock(mutex_);
     INTELL_VOICE_LOG_INFO("enter");
+    auto ret = IntellVoiceUtil::VerifySystemPermission(OHOS_MICROPHONE_PERMISSION);
+    if (ret != INTELLIGENT_VOICE_SUCCESS) {
+        return ret;
+    }
+
     if (audioSource_ != nullptr) {
         INTELL_VOICE_LOG_ERROR("audioSource_ existed, wait for last start to finish");
         return -1;
@@ -300,6 +309,9 @@ bool EnrollEngine::StartAudioSource()
         return false;
     }
 
+    callerTokenId_ = IPCSkeleton::GetCallingTokenID();
+    IntellVoiceUtil::RecordPermissionPrivacy(OHOS_MICROPHONE_PERMISSION, callerTokenId_,
+        INTELL_VOICE_PERMISSION_START);
     return true;
 }
 
@@ -310,6 +322,8 @@ void EnrollEngine::StopAudioSource()
         INTELL_VOICE_LOG_INFO("stop audio sopurce");
         audioSource_->Stop();
         audioSource_ = nullptr;
+        IntellVoiceUtil::RecordPermissionPrivacy(OHOS_MICROPHONE_PERMISSION, callerTokenId_,
+            INTELL_VOICE_PERMISSION_STOP);
     }
 }
 }
