@@ -22,6 +22,13 @@
 
 namespace OHOS {
 namespace IntellVoiceUtils {
+const std::string OHOS_MICROPHONE_PERMISSION = "ohos.permission.MICROPHONE";
+
+enum IntellVoicePermissionState {
+    INTELL_VOICE_PERMISSION_START = 0,
+    INTELL_VOICE_PERMISSION_STOP = 1,
+};
+
 class IntellVoiceUtil final {
 public:
     static uint32_t GetHdiVersionId(uint32_t majorVer, uint32_t minorVer);
@@ -31,6 +38,8 @@ public:
     static bool ReadFile(const std::string &filePath, std::shared_ptr<uint8_t> &buffer, uint32_t &size);
     static void SplitStringToKVPair(const std::string &inputStr, std::map<std::string, std::string> &kvpairs);
     static bool IsFileExist(const std::string &filePath);
+    static bool RecordPermissionPrivacy(const std::string &permissionName, uint32_t targetTokenId,
+        IntellVoicePermissionState state);
 
 private:
     static bool VerifyClientPermission(const std::string &permissionName);

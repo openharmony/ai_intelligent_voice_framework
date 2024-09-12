@@ -23,8 +23,10 @@
 #include <fstream>
 #include "string_util.h"
 #include "accesstoken_kit.h"
+#include "privacy_kit.h"
 #include "tokenid_kit.h"
 #include "ipc_skeleton.h"
+#include "privacy_error.h"
 #include "intell_voice_log.h"
 #include "intell_voice_info.h"
 
@@ -119,10 +121,11 @@ bool IntellVoiceUtil::IsFileExist(const std::string &filePath)
 bool IntellVoiceUtil::VerifyClientPermission(const std::string &permissionName)
 {
     Security::AccessToken::AccessTokenID clientTokenId = IPCSkeleton::GetCallingTokenID();
-    INTELL_VOICE_LOG_INFO("clientTokenId:%{public}d", clientTokenId);
+    INTELL_VOICE_LOG_INFO("clientTokenId:%{public}d, permission name:%{public}s", clientTokenId,
+        permissionName.c_str());
     int res = Security::AccessToken::AccessTokenKit::VerifyAccessToken(clientTokenId, permissionName);
     if (res != Security::AccessToken::PermissionState::PERMISSION_GRANTED) {
-        INTELL_VOICE_LOG_ERROR("Permission denied!");
+        INTELL_VOICE_LOG_ERROR("Permission denied");
         return false;
     }
     return true;
@@ -132,7 +135,7 @@ bool IntellVoiceUtil::CheckIsSystemApp()
 {
     uint64_t fullTokenId = IPCSkeleton::GetCallingFullTokenID();
     if (Security::AccessToken::AccessTokenKit::GetTokenTypeFlag(IPCSkeleton::GetCallingTokenID()) ==
-    Security::AccessToken::TOKEN_NATIVE) {
+        Security::AccessToken::TOKEN_NATIVE) {
         INTELL_VOICE_LOG_INFO("calling by native");
         return true;
     }
@@ -164,6 +167,39 @@ int32_t IntellVoiceUtil::VerifySystemPermission(const std::string &permissionNam
     }
 
     return INTELLIGENT_VOICE_SUCCESS;
+}
+
+bool IntellVoiceUtil::RecordPermissionPrivacy(const std::string &permissionName, uint32_t targetTokenId,
+    IntellVoicePermissionState state)
+{
+    INTELL_VOICE_LOG_INFO("permissionName:%{public}s, tokenId:%{public}u, state:%{public}d", permissionName.c_str(),
+        targetTokenId, state);
+    if (state == INTELL_VOICE_PERMISSION_START) {
+        auto ret = Security::AccessToken::PrivacyKit::StartUsingPermission(targetTokenId, permissionName);
+        if (ret != 0 && ret != Security::AccessToken::ERR_PERMISSION_ALREADY_START_USING) {
+            INTELL_VOICE_LOG_ERROR("StartUsingPermission for tokenId %{public}u, ret is %{public}d",
+                targetTokenId, ret);
+            return false;
+        }
+        ret = Security::AccessToken::PrivacyKit::AddPermissionUsedRecord(targetTokenId, permissionName, 1, 0);
+        if (ret != 0 && ret != Security::AccessToken::ERR_PERMISSION_ALREADY_START_USING) {
+            INTELL_VOICE_LOG_ERROR("AddPermissionUsedRecord for tokenId %{public}u! The PrivacyKit error code is "
+                "%{public}d", targetTokenId, ret);
+            return false;
+        }
+    } else if (state == INTELL_VOICE_PERMISSION_STOP) {
+        auto ret = Security::AccessToken::PrivacyKit::StopUsingPermission(targetTokenId, permissionName);
+        if (ret != 0) {
+            INTELL_VOICE_LOG_ERROR("StopUsingPermission for tokenId %{public}u, ret is %{public}d",
+                targetTokenId, ret);
+            return false;
+        }
+    } else {
+        INTELL_VOICE_LOG_WARN("invalid state");
+        return false;
+    }
+
+    return true;
 }
 }
 }

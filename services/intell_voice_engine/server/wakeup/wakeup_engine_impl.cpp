@@ -15,8 +15,10 @@
 #include "wakeup_engine_impl.h"
 #include "audio_asr.h"
 #include "audio_system_manager.h"
+#include "ipc_skeleton.h"
 #include "v1_2/intell_voice_engine_types.h"
 #include "adapter_callback_service.h"
+#include "intell_voice_info.h"
 #include "intell_voice_log.h"
 #include "history_info_mgr.h"
 #include "intell_voice_util.h"
@@ -27,6 +29,7 @@
 
 #define LOG_TAG "WakeupEngineImpl"
 
+using namespace OHOS::IntellVoice;
 using namespace OHOS::AudioStandard;
 using namespace OHOS::HDI::IntelligentVoice::Engine::V1_0;
 using namespace OHOS::IntellVoiceUtils;
@@ -521,12 +524,20 @@ int32_t WakeupEngineImpl::HandleRecognizeComplete(const StateMsg &msg, State &ne
 int32_t WakeupEngineImpl::HandleStartCapturer(const StateMsg &msg, State &nextState)
 {
     INTELL_VOICE_LOG_INFO("enter");
+    auto ret = IntellVoiceUtil::VerifySystemPermission(OHOS_MICROPHONE_PERMISSION);
+    if (ret != INTELLIGENT_VOICE_SUCCESS) {
+        return ret;
+    }
+
     int32_t *msgBody = reinterpret_cast<int32_t *>(msg.inMsg);
     if (msgBody == nullptr) {
         INTELL_VOICE_LOG_ERROR("msgBody is nullptr");
-        return -1;
+        return INTELLIGENT_VOICE_START_CAPTURER_FAILED;
     }
     channels_ = *msgBody;
+    callerTokenId_ = IPCSkeleton::GetCallingTokenID();
+    IntellVoiceUtil::RecordPermissionPrivacy(OHOS_MICROPHONE_PERMISSION, callerTokenId_,
+        INTELL_VOICE_PERMISSION_START);
     nextState = State(READ_CAPTURER);
     return 0;
 }
@@ -554,6 +565,10 @@ int32_t WakeupEngineImpl::HandleStopCapturer(const StateMsg & /* msg */, State &
     INTELL_VOICE_LOG_INFO("enter");
     StopAudioSource();
     EngineUtil::Stop();
+    if (CurrState() == State(READ_CAPTURER)) {
+        IntellVoiceUtil::RecordPermissionPrivacy(OHOS_MICROPHONE_PERMISSION, callerTokenId_,
+            INTELL_VOICE_PERMISSION_STOP);
+    }
     nextState = State(INITIALIZED);
     return 0;
 }
@@ -616,6 +631,10 @@ int32_t WakeupEngineImpl::HandleRelease(const StateMsg & /* msg */, State &nextS
 {
     DestroyWakeupSourceStopCallback();
     StopAudioSource();
+    if (CurrState() == State(READ_CAPTURER)) {
+        IntellVoiceUtil::RecordPermissionPrivacy(OHOS_MICROPHONE_PERMISSION, callerTokenId_,
+            INTELL_VOICE_PERMISSION_STOP);
+    }
     if (adapter_ != nullptr) {
         adapter_->Detach();
         ReleaseAdapterInner(EngineHostManager::GetInstance());

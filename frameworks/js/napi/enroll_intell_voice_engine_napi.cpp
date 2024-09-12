@@ -336,9 +336,7 @@ napi_value EnrollIntellVoiceEngineNapi::EnrollForResult(napi_env env, napi_callb
         }
 
         auto ret = engine->Start(engineNapi->isLast_);
-        if (ret != 0) {
-            asyncContext->result_ = NAPI_INTELLIGENT_VOICE_PERMISSION_DENIED;
-        }
+        asyncContext->result_ = IntellVoiceCommonNapi::ConvertResultCode(ret);
         return ret;
     };
 
