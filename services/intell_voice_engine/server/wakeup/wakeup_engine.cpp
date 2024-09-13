@@ -44,6 +44,12 @@ void WakeupEngine::OnDetected(int32_t uuid)
         std::lock_guard<std::mutex> lock(headsetMutex_);
         if ((headsetImpl_ != nullptr) && (HeadsetWakeupWrapper::GetInstance().GetHeadsetAwakeState() == 1)) {
             INTELL_VOICE_LOG_INFO("headset wakeup is exist");
+            std::thread([]() {
+                const auto &manager = IntellVoiceServiceManager::GetInstance();
+                if (manager != nullptr) {
+                    manager->HandleCloseWakeupSource();
+                }
+            }).detach();
             return;
         }
     }
