@@ -43,7 +43,7 @@ using OHOS::HDI::DeviceManager::V1_0::IDeviceManager;
 
 namespace OHOS {
 namespace IntellVoiceEngine {
-#define BETWEEN(val, min, max)   ((val) >= (min) && ((val) <= max))
+#define BETWEEN(val, min, max)   (((val) >= (min)) && ((val) <= (max)))
 
 REGISTER_SYSTEM_ABILITY_BY_ID(IntellVoiceService, INTELL_VOICE_SERVICE_ID, true);
 const std::string OHOS_PERMISSION_INTELL_VOICE = "ohos.permission.MANAGE_INTELLIGENT_VOICE";
