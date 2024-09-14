@@ -485,10 +485,6 @@ bool IntellVoiceServiceManager::RegisterProxyDeathRecipient(IntellVoiceEngineTyp
             INTELL_VOICE_LOG_INFO("receive enroll proxy death recipient, release enroll engine");
             HandleReleaseEngine(INTELL_VOICE_ENROLL);
         });
-        if (proxyDeathRecipient_[type] == nullptr) {
-            INTELL_VOICE_LOG_ERROR("create death recipient failed");
-            return false;
-        }
     } else if (type == INTELL_VOICE_WAKEUP) {
         proxyDeathRecipient_[type] = new (std::nothrow) IntellVoiceDeathRecipient([&]() {
             INTELL_VOICE_LOG_INFO("receive wakeup proxy death recipient, clear wakeup engine callback");
@@ -501,12 +497,25 @@ bool IntellVoiceServiceManager::RegisterProxyDeathRecipient(IntellVoiceEngineTyp
                 return 0;
             });
         });
-        if (proxyDeathRecipient_[type] == nullptr) {
-            INTELL_VOICE_LOG_ERROR("create death recipient failed");
-            return false;
-        }
+    } else if (type == INTELL_VOICE_HEADSET_WAKEUP) {
+        proxyDeathRecipient_[type] = new (std::nothrow) IntellVoiceDeathRecipient([&]() {
+            INTELL_VOICE_LOG_INFO("receive headset wakeup proxy death recipient, notify headset host off");
+            TaskExecutor::AddSyncTask([&]() -> int32_t {
+                sptr<EngineBase> engine = GetEngine(INTELL_VOICE_WAKEUP, engines_);
+                if (engine != nullptr) {
+                    INTELL_VOICE_LOG_INFO("notify headset host off");
+                    engine->NotifyHeadsetHostEvent(HEADSET_HOST_OFF);
+                }
+                return 0;
+            });
+        });
     } else {
         INTELL_VOICE_LOG_ERROR("invalid type:%{public}d", type);
+        return false;
+    }
+
+    if (proxyDeathRecipient_[type] == nullptr) {
+        INTELL_VOICE_LOG_ERROR("create death recipient failed");
         return false;
     }
 
