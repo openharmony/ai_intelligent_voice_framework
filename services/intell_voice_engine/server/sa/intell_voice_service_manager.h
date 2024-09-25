@@ -76,6 +76,7 @@ public:
     bool HandleOnIdle();
     void HandleServiceStop();
     void HandleHeadsetHostDie();
+    void HandlePowerSaveModeChange();
 
     void ProcBreathModel();
     void CreateSwitchProvider();
@@ -149,10 +150,14 @@ private:
     int32_t SwitchOffProc(int32_t uuid);
     bool IsNeedToUnloadService();
     int32_t UnloadIntellVoiceService();
+    void NoiftySwitchOnToPowerChange();
 
 private:
     static std::unique_ptr<IntellVoiceServiceManager> g_intellVoiceServiceMgr;
     static std::atomic<bool> g_enrollResult[ENGINE_TYPE_BUT];
+    bool notifyPowerModeChange_ = false;
+    std::mutex powerModeChangeMutex_;
+    std::condition_variable powerModeChangeCv_;
     std::mutex deathMutex_;
     std::mutex detectorMutex_;
     std::mutex switchMutex_;

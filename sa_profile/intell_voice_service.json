@@ -8,10 +8,14 @@
             "auto-restart": true,
             "distributed": false,
             "dump_level": 1,
-            "start-on-demand":{
-                "commonevent":[
+            "start-on-demand": {
+                "commonevent": [
                     {
-                        "name":"usual.event.BOOT_COMPLETED"
+                        "name": "usual.event.BOOT_COMPLETED"
+                    },
+                    {
+                        "name": "usual.event.POWER_SAVE_MODE_CHANGED",
+                        "value": "600"
                     }
                 ]
             }
