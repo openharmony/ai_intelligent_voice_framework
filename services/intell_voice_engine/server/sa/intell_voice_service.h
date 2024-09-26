@@ -81,6 +81,8 @@ private:
 
 private:
     int32_t reasonId_ = -1;
+    std::string reasonName_;
+    std::string reasonValue_;
     std::shared_ptr<SystemEventObserver> systemEventObserver_ = nullptr;
     std::map<int32_t, std::function<void(bool)>> systemAbilityChangeMap_;
 };

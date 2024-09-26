@@ -48,6 +48,7 @@ namespace OHOS {
 namespace IntellVoiceEngine {
 static constexpr int32_t MAX_ATTEMPT_CNT = 10;
 static constexpr uint32_t MAX_TASK_NUM = 200;
+static constexpr uint32_t WAIT_SWICTH_ON_TIME = 2000;  // 2000ms
 static const std::string SERVICE_MANAGER_THREAD_NAME = "ServMgrThread";
 static const std::string WHISPER_MODEL_PATH =
     "/sys_prod/variant/region_comm/china/etc/intellvoice/wakeup/dsp/whisper_wakeup_dsp_config";
@@ -436,6 +437,7 @@ void IntellVoiceServiceManager::OnSwitchChange(const std::string &switchKey)
 {
     if (switchKey == WAKEUP_KEY) {
         if (QuerySwitchStatus(switchKey)) {
+            NoiftySwitchOnToPowerChange();
             HandleSwitchOn(false, VOICE_WAKEUP_MODEL_UUID, false);
         } else {
             HandleSwitchOff(false, VOICE_WAKEUP_MODEL_UUID);
@@ -444,6 +446,7 @@ void IntellVoiceServiceManager::OnSwitchChange(const std::string &switchKey)
         }
     } else if (switchKey == WHISPER_KEY) {
         if (QuerySwitchStatus(switchKey)) {
+            NoiftySwitchOnToPowerChange();
             HandleSwitchOn(false, PROXIMAL_WAKEUP_MODEL_UUID, false);
         } else {
             HandleSwitchOff(false, PROXIMAL_WAKEUP_MODEL_UUID);
@@ -947,6 +950,45 @@ void IntellVoiceServiceManager::HandleHeadsetHostDie()
         return 0;
     });
     HeadsetWakeupWrapper::GetInstance().NotifyHeadsetHdfDeath();
+}
+
+void IntellVoiceServiceManager::NoiftySwitchOnToPowerChange()
+{
+    {
+        std::unique_lock<std::mutex> lock(powerModeChangeMutex_);
+        if (!notifyPowerModeChange_) {
+            INTELL_VOICE_LOG_INFO("no need to notify");
+            return;
+        }
+    }
+
+    powerModeChangeCv_.notify_all();
+}
+
+void IntellVoiceServiceManager::HandlePowerSaveModeChange()
+{
+    if ((QuerySwitchStatus(WAKEUP_KEY)) || (QuerySwitchStatus(WHISPER_KEY))) {
+        INTELL_VOICE_LOG_INFO("switch is on, no need to process");
+        return;
+    }
+
+    std::thread([&]() {
+        std::unique_lock<std::mutex> lock(powerModeChangeMutex_);
+        if ((QuerySwitchStatus(WAKEUP_KEY)) || (QuerySwitchStatus(WHISPER_KEY))) {
+            INTELL_VOICE_LOG_INFO("switch is on, no need to process");
+            return;
+        }
+        notifyPowerModeChange_ = true;
+        if (powerModeChangeCv_.wait_for(lock, std::chrono::milliseconds(WAIT_SWICTH_ON_TIME),
+            [this] { return ((this->QuerySwitchStatus(WAKEUP_KEY)) || (this->QuerySwitchStatus(WHISPER_KEY))); })) {
+            INTELL_VOICE_LOG_INFO("switch is on, do nothing");
+            notifyPowerModeChange_ = false;
+            return;
+        }
+        INTELL_VOICE_LOG_WARN("wait time out, switch is off, need to unload service");
+        notifyPowerModeChange_ = false;
+        HandleUnloadIntellVoiceService(true);
+    }).detach();
 }
 
 void IntellVoiceServiceManager::OnTriggerConnectServiceStart()

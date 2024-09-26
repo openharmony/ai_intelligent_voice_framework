@@ -120,8 +120,11 @@ int32_t IntellVoiceService::ReleaseIntellVoiceEngine(IntellVoiceEngineType type)
 
 void IntellVoiceService::OnStart(const SystemAbilityOnDemandReason &startReason)
 {
-    INTELL_VOICE_LOG_INFO("enter, reason id:%{public}d", startReason.GetId());
     reasonId_ = static_cast<int32_t>(startReason.GetId());
+    reasonName_ = startReason.GetName();
+    reasonValue_ = startReason.GetValue();
+    INTELL_VOICE_LOG_INFO("enter, reason id:%{public}d, reasonName:%{public}s, reasonValue:%{public}s",
+        reasonId_, reasonName_.c_str(), reasonValue_.c_str());
     LoadIntellVoiceHost();
 
     bool ret = Publish(this);
@@ -148,7 +151,6 @@ void IntellVoiceService::OnStop(void)
     const auto &manager = IntellVoiceServiceManager::GetInstance();
     if (manager != nullptr) {
         manager->HandleServiceStop();
-        manager->StopThread();
         manager->ReleaseSwitchProvider();
     }
 
@@ -315,10 +317,16 @@ void IntellVoiceService::OnDistributedKvDataServiceChange(bool isAdded)
         manager->HandleSilenceUpdate();
 
         if (reasonId_ == static_cast<int32_t>(OHOS::OnDemandReasonId::COMMON_EVENT)) {
-            INTELL_VOICE_LOG_INFO("power on start");
+            INTELL_VOICE_LOG_INFO("common event start");
             manager->HandleSwitchOn(true, VOICE_WAKEUP_MODEL_UUID, false);
             manager->HandleSwitchOn(true, PROXIMAL_WAKEUP_MODEL_UUID, false);
-            manager->HandleUnloadIntellVoiceService(true);
+            if (reasonName_ == std::string("usual.event.POWER_SAVE_MODE_CHANGED")) {
+                INTELL_VOICE_LOG_INFO("power save mode change");
+                manager->HandlePowerSaveModeChange();
+            } else {
+                INTELL_VOICE_LOG_INFO("power on");
+                manager->HandleUnloadIntellVoiceService(true);
+            }
         } else if (reasonId_ == static_cast<int32_t>(OHOS::OnDemandReasonId::INTERFACE_CALL)) {
             INTELL_VOICE_LOG_INFO("interface call start");
             manager->HandleSwitchOn(true, VOICE_WAKEUP_MODEL_UUID, false);
