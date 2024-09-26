@@ -213,7 +213,7 @@ int32_t IntellVoiceEngineStub::EvaluateInner(MessageParcel &data, MessageParcel 
 
 int32_t IntellVoiceEngineStub::NotifyHeadSetWakeEventInner(MessageParcel &data, MessageParcel &reply)
 {
-    INTELL_VOICE_LOG_ERROR("enter");
+    INTELL_VOICE_LOG_INFO("enter");
     int32_t ret = NotifyHeadsetWakeEvent();
     reply.WriteInt32(ret);
     return ret;
@@ -221,7 +221,7 @@ int32_t IntellVoiceEngineStub::NotifyHeadSetWakeEventInner(MessageParcel &data, 
 
 int32_t IntellVoiceEngineStub::NotifyHeadSetHostEventInner(MessageParcel &data, MessageParcel &reply)
 {
-    INTELL_VOICE_LOG_ERROR("enter");
+    INTELL_VOICE_LOG_INFO("enter");
     int event = data.ReadInt32();
     int32_t ret = NotifyHeadsetHostEvent(static_cast<OHOS::IntellVoiceEngine::HeadsetHostEventType>(event));
     reply.WriteInt32(ret);

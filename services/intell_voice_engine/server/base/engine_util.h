@@ -23,6 +23,7 @@
 #include <i_intell_voice_engine_callback.h>
 #include "v1_0/iintell_voice_engine_adapter.h"
 #include "v1_0/iintell_voice_engine_callback.h"
+#include "audio_system_manager.h"
 
 namespace OHOS {
 namespace IntellVoiceEngine {
@@ -94,6 +95,7 @@ public:
     void SetLanguage();
     void SetArea();
     void SetSensibility();
+    void SelectInputDevice(AudioStandard::DeviceType type);
 
 protected:
     std::shared_ptr<IAdapterHostManager> adapter_ = nullptr;
