@@ -193,6 +193,8 @@ int32_t EnrollEngine::Start(bool isLast)
         return 0;
     }
 
+    SelectInputDevice(DeviceType::DEVICE_TYPE_MIC);
+
     if (!StartAudioSource()) {
         INTELL_VOICE_LOG_ERROR("start audio source failed");
         adapter_->Stop();

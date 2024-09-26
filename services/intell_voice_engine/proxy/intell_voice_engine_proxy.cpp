@@ -232,7 +232,7 @@ int32_t IntellVoiceEngineProxy::Evaluate(const std::string &word, EvaluationResu
 
 int32_t IntellVoiceEngineProxy::NotifyHeadsetWakeEvent()
 {
-    INTELL_VOICE_LOG_ERROR("enter");
+    INTELL_VOICE_LOG_INFO("enter");
     MessageParcel data;
     MessageParcel reply;
     MessageOption option;
@@ -244,7 +244,7 @@ int32_t IntellVoiceEngineProxy::NotifyHeadsetWakeEvent()
 
 int32_t IntellVoiceEngineProxy::NotifyHeadsetHostEvent(HeadsetHostEventType event)
 {
-    INTELL_VOICE_LOG_ERROR("enter");
+    INTELL_VOICE_LOG_INFO("enter");
     MessageParcel data;
     MessageParcel reply;
     MessageOption option;

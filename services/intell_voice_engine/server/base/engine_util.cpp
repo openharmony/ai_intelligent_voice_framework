@@ -27,11 +27,13 @@
 using namespace OHOS::IntellVoiceUtils;
 using namespace OHOS::HDI::IntelligentVoice::Engine::V1_0;
 using namespace OHOS::IntellVoiceTrigger;
+using namespace OHOS::AudioStandard;
 
 namespace OHOS {
 namespace IntellVoiceEngine {
 static const std::string LANGUAGE_TEXT = "language=";
 static const std::string AREA_TEXT = "area=";
+static const int32_t INTELL_VOICE_SERVICR_UID = 1042;
 
 EngineUtil::EngineUtil()
 {
@@ -261,6 +263,31 @@ void EngineUtil::SetSensibility()
     }
 
     adapter_->SetParameter(SENSIBILITY_TEXT + sensibility);
+}
+
+void EngineUtil::SelectInputDevice(DeviceType type)
+{
+    INTELL_VOICE_LOG_INFO("enter");
+    sptr<AudioCapturerFilter> audioCapturerFilter = new (std::nothrow) AudioCapturerFilter();
+    if (audioCapturerFilter == nullptr) {
+        INTELL_VOICE_LOG_ERROR("audioCapturerFilter is nullptr");
+        return;
+    }
+    audioCapturerFilter->uid = INTELL_VOICE_SERVICR_UID;
+    audioCapturerFilter->capturerInfo.sourceType = SourceType::SOURCE_TYPE_VOICE_RECOGNITION;
+    std::vector<sptr<AudioDeviceDescriptor>> deviceDescriptorVector;
+    auto audioSystemManager = AudioSystemManager::GetInstance();
+    if (audioSystemManager == nullptr) {
+        INTELL_VOICE_LOG_ERROR("audioSystemManager is nullptr");
+        return;
+    }
+    auto audioDeviceDescriptors = audioSystemManager->GetDevices(DeviceFlag::INPUT_DEVICES_FLAG);
+    for (int i = 0; i < audioDeviceDescriptors.size(); i++) {
+        if (audioDeviceDescriptors[i]->deviceType_ == type) {
+            deviceDescriptorVector.push_back(audioDeviceDescriptors[i]);
+        }
+    }
+    audioSystemManager->SelectInputDevice(audioCapturerFilter, deviceDescriptorVector);
 }
 }
 }

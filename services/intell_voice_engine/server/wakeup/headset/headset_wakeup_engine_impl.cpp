@@ -199,8 +199,7 @@ int32_t HeadsetWakeupEngineImpl::HandleInit(const StateMsg & /* msg */, State &n
     EngineUtil::SetLanguage();
     EngineUtil::SetArea();
     adapter_->SetParameter("model_path=/vendor/etc/audio/encoder.om");
-    IntellVoiceEngineInfo info = {
-    };
+    IntellVoiceEngineInfo info = {};
 
     if (AttachInner(info) != 0) {
         INTELL_VOICE_LOG_ERROR("failed to attach");
