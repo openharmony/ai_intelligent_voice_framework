@@ -262,7 +262,12 @@ bool TriggerHelper::GetModule()
         INTELL_VOICE_LOG_ERROR("moduleDesc_ is empty");
         return false;
     }
-    module_ = TriggerConnectorMgr::GetInstance()->GetConnectorModule(moduleDesc_[0].adapterName, shared_from_this());
+    const auto &connectMgr = TriggerConnectorMgr::GetInstance();
+    if (connectMgr == nullptr) {
+        INTELL_VOICE_LOG_ERROR("connectMgr is nullptr");
+        return false;
+    }
+    module_ = connectMgr->GetConnectorModule(moduleDesc_[0].adapterName, shared_from_this());
     if (module_ == nullptr) {
         INTELL_VOICE_LOG_ERROR("failed to get connector module");
         return false;
@@ -733,7 +738,12 @@ void TriggerHelper::AttachAudioRendererEventListener()
         return;
     }
 
-    int32_t ret = AudioStreamManager::GetInstance()->RegisterAudioRendererEventListener(getpid(),
+    auto audioStreamManager = AudioStreamManager::GetInstance();
+    if (audioStreamManager == nullptr) {
+        INTELL_VOICE_LOG_ERROR("audioStreamManager is nullptr");
+        return;
+    }
+    int32_t ret = audioStreamManager->RegisterAudioRendererEventListener(getpid(),
         audioRendererStateChangeCallback_);
     if (ret != 0) {
         INTELL_VOICE_LOG_ERROR("RegisterAudioRendererEventListener failed");
@@ -742,7 +752,7 @@ void TriggerHelper::AttachAudioRendererEventListener()
     INTELL_VOICE_LOG_INFO("RegisterAudioRendererEventListener success");
 
     std::vector<std::unique_ptr<AudioRendererChangeInfo>> audioRendererChangeInfos;
-    AudioStreamManager::GetInstance()->GetCurrentRendererChangeInfos(audioRendererChangeInfos);
+    audioStreamManager->GetCurrentRendererChangeInfos(audioRendererChangeInfos);
     audioRendererStateChangeCallback_->OnRendererStateChange(audioRendererChangeInfos);
 }
 
@@ -751,7 +761,12 @@ void TriggerHelper::DetachAudioRendererEventListener()
     INTELL_VOICE_LOG_INFO("enter");
     std::lock_guard<std::mutex> lock(rendererMutex_);
     isRendererDetached_ = true;
-    int32_t ret = AudioStreamManager::GetInstance()->UnregisterAudioRendererEventListener(getpid());
+    auto audioStreamManager = AudioStreamManager::GetInstance();
+    if (audioStreamManager == nullptr) {
+        INTELL_VOICE_LOG_ERROR("audioStreamManager is nullptr");
+        return;
+    }
+    int32_t ret = audioStreamManager->UnregisterAudioRendererEventListener(getpid());
     if (ret != 0) {
         INTELL_VOICE_LOG_ERROR("UnregisterAudioRendererEventListener failed");
     }

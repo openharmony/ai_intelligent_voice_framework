@@ -37,16 +37,25 @@ EnrollIntellVoiceEngine::EnrollIntellVoiceEngine(const EnrollIntelligentVoiceEng
     if (descriptor_ != nullptr) {
         descriptor_->wakeupPhrase = descriptor.wakeupPhrase;
     }
-    result_ = IntellVoiceManager::GetInstance()->CreateIntellVoiceEngine(INTELL_VOICE_ENROLL, engine_);
-    if (result_ != INTELLIGENT_VOICE_SUCCESS) {
-        INTELL_VOICE_LOG_ERROR("create enroll engine failed, ret:%{public}d", result_);
+    auto mgr = IntellVoiceManager::GetInstance();
+    if (mgr != nullptr) {
+        result_ = mgr->CreateIntellVoiceEngine(INTELL_VOICE_ENROLL, engine_);
+        if (result_ != INTELLIGENT_VOICE_SUCCESS) {
+            INTELL_VOICE_LOG_ERROR("create enroll engine failed, ret:%{public}d", result_);
+        }
+    } else {
+        INTELL_VOICE_LOG_ERROR("mgr is nullptr");
+        result_ = INTELLIGENT_VOICE_SYSTEM_ERROR;
     }
 }
 
 EnrollIntellVoiceEngine::~EnrollIntellVoiceEngine()
 {
     INTELL_VOICE_LOG_INFO("enter");
-    IntellVoiceManager::GetInstance()->ReleaseIntellVoiceEngine(INTELL_VOICE_ENROLL);
+    auto mgr = IntellVoiceManager::GetInstance();
+    if (mgr != nullptr) {
+        mgr->ReleaseIntellVoiceEngine(INTELL_VOICE_ENROLL);
+    }
 }
 
 int32_t EnrollIntellVoiceEngine::Init(const EngineConfig &config)

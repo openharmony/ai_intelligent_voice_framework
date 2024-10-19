@@ -388,6 +388,16 @@ void IntellVoiceServiceManager::SetDspSensibility(const std::string &sensibility
     triggerMgr->SetParameter("WAKEUP_SENSIBILITY", value);
 }
 
+void IntellVoiceServiceManager::SetScreenOff(bool value)
+{
+    screenoff_.store(value);
+}
+
+bool IntellVoiceServiceManager::GetScreenOff()
+{
+    return screenoff_.load();
+}
+
 void IntellVoiceServiceManager::ReleaseServiceObject(int32_t uuid)
 {
     std::lock_guard<std::mutex> lock(detectorMutex_);

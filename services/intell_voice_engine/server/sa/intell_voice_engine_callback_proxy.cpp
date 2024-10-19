@@ -53,6 +53,7 @@ void IntellVoiceEngineCallbackProxy::OnIntellVoiceEngineEvent(const IntellVoiceE
         data, reply, option);
     if (error != 0) {
         INTELL_VOICE_LOG_ERROR("send request error: %{public}d", error);
+        return;
     }
     reply.ReadInt32();
 }

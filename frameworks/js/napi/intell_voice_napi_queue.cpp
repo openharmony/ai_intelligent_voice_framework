@@ -56,7 +56,7 @@ bool AsyncContext::GetCbInfo(napi_env env, napi_callback_info info, size_t callB
     CHECK_CONDITION_RETURN_FALSE((status != napi_ok), "Failed to get cb info");
 
     status = napi_unwrap(env, jsThis, &instanceNapi_);
-    CHECK_CONDITION_RETURN_FALSE((status != napi_ok), "Failed to get engine napi instance");
+    CHECK_CONDITION_RETURN_FALSE((status != napi_ok), "Failed to get napi instance");
 
     if (argc > callBackIndex) {
         napi_valuetype valueType = napi_undefined;

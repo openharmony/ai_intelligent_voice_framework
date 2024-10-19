@@ -455,6 +455,7 @@ int32_t WakeupEngineImpl::HandleStart(const StateMsg &msg, State &nextState)
     INTELL_VOICE_LOG_INFO("enter, channel id is %{public}d", channelId_);
 
     EngineUtil::SetParameter("VprTrdType=0;WakeupScene=0");
+    EngineUtil::SetScreenStatus();
 
     if (adapter_ == nullptr) {
         INTELL_VOICE_LOG_ERROR("adapter is nullptr");
