@@ -36,7 +36,11 @@ int32_t IntellVoiceServiceProxy::CreateIntellVoiceEngine(IntellVoiceEngineType t
     auto stub = sptr<IntellVoiceDeathRecipientStub>(new (std::nothrow) IntellVoiceDeathRecipientStub());
     data.WriteRemoteObject(stub);
 
-    Remote()->SendRequest(HDI_INTELL_VOICE_SERVICE_CREATE_ENGINE, data, reply, option);
+    int32_t error = Remote()->SendRequest(HDI_INTELL_VOICE_SERVICE_CREATE_ENGINE, data, reply, option);
+    if (error != 0) {
+        INTELL_VOICE_LOG_ERROR("create intell voice engine error: %{public}d", error);
+        return -1;
+    }
     int32_t ret = reply.ReadInt32();
     if (ret != 0) {
         INTELL_VOICE_LOG_ERROR("failed to create intell voice engine, type:%{public}d", type);
@@ -61,7 +65,11 @@ int32_t IntellVoiceServiceProxy::ReleaseIntellVoiceEngine(IntellVoiceEngineType 
     data.WriteInterfaceToken(IIntellVoiceService::GetDescriptor());
     data.WriteInt32(type);
 
-    Remote()->SendRequest(HDI_INTELL_VOICE_SERVICE_RELEASE_ENGINE, data, reply, option);
+    int32_t error = Remote()->SendRequest(HDI_INTELL_VOICE_SERVICE_RELEASE_ENGINE, data, reply, option);
+    if (error != 0) {
+        INTELL_VOICE_LOG_ERROR("release intell voice engine error: %{public}d", error);
+        return -1;
+    }
     return reply.ReadInt32();
 }
 
@@ -74,7 +82,11 @@ int32_t IntellVoiceServiceProxy::GetUploadFiles(int numMax, std::vector<UploadHd
     data.WriteInterfaceToken(IIntellVoiceService::GetDescriptor());
 
     data.WriteInt32(numMax);
-    Remote()->SendRequest(HDI_INTELL_VOICE_SERVICE_GET_REPORTED_FILES, data, reply, option);
+    int32_t error = Remote()->SendRequest(HDI_INTELL_VOICE_SERVICE_GET_REPORTED_FILES, data, reply, option);
+    if (error != 0) {
+        INTELL_VOICE_LOG_ERROR("get upload files error: %{public}d", error);
+        return -1;
+    }
     int32_t ret = reply.ReadInt32();
     if (ret != 0) {
         INTELL_VOICE_LOG_ERROR("failed to get reported files, ret:%{public}d", ret);
@@ -108,7 +120,11 @@ std::string IntellVoiceServiceProxy::GetParameter(const std::string &key)
 
     data.WriteInterfaceToken(IIntellVoiceService::GetDescriptor());
     data.WriteString(key);
-    Remote()->SendRequest(HDI_INTELL_VOICE_SERVICE_GET_PARAMETER, data, reply, option);
+    int32_t error = Remote()->SendRequest(HDI_INTELL_VOICE_SERVICE_GET_PARAMETER, data, reply, option);
+    if (error != 0) {
+        INTELL_VOICE_LOG_ERROR("get parameter error: %{public}d", error);
+        return "";
+    }
     return reply.ReadString();
 }
 
@@ -120,7 +136,11 @@ int32_t IntellVoiceServiceProxy::SetParameter(const std::string &keyValueList)
 
     data.WriteInterfaceToken(IIntellVoiceService::GetDescriptor());
     data.WriteString(keyValueList);
-    Remote()->SendRequest(HDI_INTELL_VOICE_SERVICE_SET_PARAMETER, data, reply, option);
+    int32_t error = Remote()->SendRequest(HDI_INTELL_VOICE_SERVICE_SET_PARAMETER, data, reply, option);
+    if (error != 0) {
+        INTELL_VOICE_LOG_ERROR("set parameter error: %{public}d", error);
+        return -1;
+    }
     return reply.ReadInt32();
 }
 
@@ -131,7 +151,11 @@ int32_t IntellVoiceServiceProxy::GetWakeupSourceFilesList(std::vector<std::strin
     MessageOption option;
 
     data.WriteInterfaceToken(IIntellVoiceService::GetDescriptor());
-    Remote()->SendRequest(HDI_INTELL_VOICE_SERVICE_GET_CLONE_FILES_LIST, data, reply, option);
+    int32_t error = Remote()->SendRequest(HDI_INTELL_VOICE_SERVICE_GET_CLONE_FILES_LIST, data, reply, option);
+    if (error != 0) {
+        INTELL_VOICE_LOG_ERROR("get wakeup source files list error: %{public}d", error);
+        return -1;
+    }
     int32_t ret = reply.ReadInt32();
     if (ret != 0) {
         INTELL_VOICE_LOG_ERROR("get wakeup source files list failed, ret:%{public}d", ret);
@@ -155,7 +179,11 @@ int32_t IntellVoiceServiceProxy::GetWakeupSourceFile(const std::string &filePath
 
     data.WriteInterfaceToken(IIntellVoiceService::GetDescriptor());
     data.WriteString(filePath);
-    Remote()->SendRequest(HDI_INTELL_VOICE_SERVICE_GET_CLONE_FILE, data, reply, option);
+    int32_t error = Remote()->SendRequest(HDI_INTELL_VOICE_SERVICE_GET_CLONE_FILE, data, reply, option);
+    if (error != 0) {
+        INTELL_VOICE_LOG_ERROR("get wakeup source file error: %{public}d", error);
+        return -1;
+    }
     int32_t ret = reply.ReadInt32();
     if (ret != 0) {
         INTELL_VOICE_LOG_ERROR("get wakeup source file failed, ret:%{public}d", ret);
@@ -200,7 +228,11 @@ int32_t IntellVoiceServiceProxy::SendWakeupFile(const std::string &filePath, con
     data.WriteString(filePath);
     data.WriteUint32(buffer.size());
     data.WriteBuffer(buffer.data(), buffer.size());
-    Remote()->SendRequest(HDI_INTELL_VOICE_SERVICE_SEND_CLONE_FILE, data, reply, option);
+    int32_t error = Remote()->SendRequest(HDI_INTELL_VOICE_SERVICE_SEND_CLONE_FILE, data, reply, option);
+    if (error != 0) {
+        INTELL_VOICE_LOG_ERROR("send wakeup file error: %{public}d", error);
+        return -1;
+    }
     return reply.ReadInt32();
 }
 
@@ -214,7 +246,11 @@ int32_t IntellVoiceServiceProxy::EnrollWithWakeupFilesForResult(const std::strin
     data.WriteInterfaceToken(IIntellVoiceService::GetDescriptor());
     data.WriteString(wakeupInfo);
     data.WriteRemoteObject(object);
-    Remote()->SendRequest(HDI_INTELL_VOICE_SERVICE_CLONE_FOR_RESULT, data, reply, option);
+    int32_t error = Remote()->SendRequest(HDI_INTELL_VOICE_SERVICE_CLONE_FOR_RESULT, data, reply, option);
+    if (error != 0) {
+        INTELL_VOICE_LOG_ERROR("enroll with wakeup files for result error: %{public}d", error);
+        return -1;
+    }
     return reply.ReadInt32();
 }
 
@@ -225,7 +261,11 @@ int32_t IntellVoiceServiceProxy::ClearUserData()
     MessageOption option;
 
     data.WriteInterfaceToken(IIntellVoiceService::GetDescriptor());
-    Remote()->SendRequest(HDI_INTELL_VOICE_SERVICE_CLEAR_USER_DATA, data, reply, option);
+    int32_t error = Remote()->SendRequest(HDI_INTELL_VOICE_SERVICE_CLEAR_USER_DATA, data, reply, option);
+    if (error != 0) {
+        INTELL_VOICE_LOG_ERROR("clear user data error: %{public}d", error);
+        return -1;
+    }
     return reply.ReadInt32();
 }
 }  // namespace IntellVoiceEngine

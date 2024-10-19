@@ -644,7 +644,6 @@ napi_value WakeupIntellVoiceEngineNapi::StartCapturer(napi_env env, napi_callbac
 
 napi_value WakeupIntellVoiceEngineNapi::Read(napi_env env, napi_callback_info info)
 {
-    INTELL_VOICE_LOG_INFO("enter");
     napi_value undefined = nullptr;
     napi_get_undefined(env, &undefined);
 

@@ -17,6 +17,7 @@
 #include "common_event_manager.h"
 #include "common_event_support.h"
 #include "intell_voice_log.h"
+#include "intell_voice_service_manager.h"
 
 #define LOG_TAG "SystemEventObserver"
 
@@ -84,8 +85,16 @@ void SystemEventObserver::OnReceiveEvent(const OHOS::EventFwk::CommonEventData &
     INTELL_VOICE_LOG_INFO("action:%{public}s.", action.c_str());
     if (action == OHOS::EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_ON) {
         INTELL_VOICE_LOG_INFO("COMMON_EVENT_SCREEN_ON");
+        auto &mgr = IntellVoiceServiceManager::GetInstance();
+        if (mgr != nullptr) {
+            mgr->SetScreenOff(false);
+        }
     } else if (action == OHOS::EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_OFF) {
         INTELL_VOICE_LOG_INFO("COMMON_EVENT_SCREEN_OFF");
+        auto &mgr = IntellVoiceServiceManager::GetInstance();
+        if (mgr != nullptr) {
+            mgr->SetScreenOff(true);
+        }
     } else if (action == OHOS::EventFwk::CommonEventSupport::COMMON_EVENT_PACKAGE_REMOVED) {
         INTELL_VOICE_LOG_INFO("COMMON_EVENT_PACKAGE_REMOVED");
     } else if (action == OHOS::EventFwk::CommonEventSupport::COMMON_EVENT_PACKAGE_REPLACED) {

@@ -101,6 +101,8 @@ public:
     int32_t ClearUserData();
     void SetDspSensibility(const std::string &sensibility);
     void OnTriggerConnectServiceStart();
+    void SetScreenOff(bool value);
+    bool GetScreenOff();
 
 private:
     IntellVoiceServiceManager();
@@ -155,6 +157,7 @@ private:
 private:
     static std::unique_ptr<IntellVoiceServiceManager> g_intellVoiceServiceMgr;
     static std::atomic<bool> g_enrollResult[ENGINE_TYPE_BUT];
+    std::atomic<bool> screenoff_ = false;
     bool notifyPowerModeChange_ = false;
     std::mutex powerModeChangeMutex_;
     std::condition_variable powerModeChangeCv_;

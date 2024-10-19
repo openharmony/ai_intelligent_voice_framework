@@ -307,7 +307,11 @@ napi_value IntellVoiceManagerNapi::RegisterCallback(napi_env env, napi_value jsT
     }
 
     managerNapi->serviceChangeCb_->SaveCallbackReference(args[ARG_INDEX_1]);
-    IntellVoiceManager::GetInstance()->RegisterServiceDeathRecipient(managerNapi->serviceChangeCb_);
+    auto mgr = IntellVoiceManager::GetInstance();
+    if (mgr != nullptr) {
+        mgr->RegisterServiceDeathRecipient(managerNapi->serviceChangeCb_);
+    }
+
     return result;
 }
 
@@ -366,7 +370,11 @@ napi_value IntellVoiceManagerNapi::DeregisterCallback(napi_env env, napi_value j
         return result;
     }
 
-    IntellVoiceManager::GetInstance()->DeregisterServiceDeathRecipient(managerNapi->serviceChangeCb_);
+    auto mgr = IntellVoiceManager::GetInstance();
+    if (mgr != nullptr) {
+        mgr->DeregisterServiceDeathRecipient(managerNapi->serviceChangeCb_);
+    }
+
     managerNapi->serviceChangeCb_ = nullptr;
     return result;
 }

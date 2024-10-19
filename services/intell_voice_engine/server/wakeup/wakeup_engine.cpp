@@ -293,7 +293,12 @@ void WakeupEngine::StartAbility(const std::string &event)
     want.SetParam("serviceName", std::string("intell_voice"));
     want.SetParam("servicePid", getpid());
     want.SetParam("eventType", event);
-    AAFwk::AbilityManagerClient::GetInstance()->StartAbility(want);
+    auto abilityManagerClient = AAFwk::AbilityManagerClient::GetInstance();
+    if (abilityManagerClient == nullptr) {
+        INTELL_VOICE_LOG_ERROR("abilityManagerClient is nullptr");
+        return;
+    }
+    abilityManagerClient->StartAbility(want);
 }
 
 bool WakeupEngine::ResetAdapter()

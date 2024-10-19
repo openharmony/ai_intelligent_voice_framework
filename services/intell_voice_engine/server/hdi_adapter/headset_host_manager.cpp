@@ -128,7 +128,12 @@ void HeadsetHostManager::ReleaseEngineAdapter(const IntellVoiceEngineAdapterDesc
 void HeadsetHostManager::OnEngineHDIDiedCallback()
 {
     INTELL_VOICE_LOG_INFO("enter");
-    IntellVoiceServiceManager::GetInstance()->HandleHeadsetHostDie();
+    auto &mgr = IntellVoiceServiceManager::GetInstance();
+    if (mgr == nullptr) {
+        INTELL_VOICE_LOG_ERROR("mgr is nullptr");
+        return;
+    }
+    mgr->HandleHeadsetHostDie();
 }
 }
 }

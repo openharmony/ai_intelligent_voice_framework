@@ -32,7 +32,10 @@ void IntellVoiceEngineProxy::SetCallback(sptr<IRemoteObject> object)
 
     data.WriteInterfaceToken(IIntellVoiceEngine::GetDescriptor());
     data.WriteRemoteObject(object);
-    Remote()->SendRequest(INTELL_VOICE_ENGINE_SET_CALLBACK, data, reply, option);
+    int32_t error = Remote()->SendRequest(INTELL_VOICE_ENGINE_SET_CALLBACK, data, reply, option);
+    if (error != 0) {
+        INTELL_VOICE_LOG_ERROR("send request error: %{public}d", error);
+    }
 }
 
 int32_t IntellVoiceEngineProxy::Attach(const IntellVoiceEngineInfo &info)
@@ -49,7 +52,11 @@ int32_t IntellVoiceEngineProxy::Attach(const IntellVoiceEngineInfo &info)
     data.WriteInt32(info.bitsPerSample);
     data.WriteInt32(info.sampleRate);
 
-    Remote()->SendRequest(INTELL_VOICE_ENGINE_ATTACH, data, reply, option);
+    int32_t error = Remote()->SendRequest(INTELL_VOICE_ENGINE_ATTACH, data, reply, option);
+    if (error != 0) {
+        INTELL_VOICE_LOG_ERROR("attach error: %{public}d", error);
+        return -1;
+    }
 
     INTELL_VOICE_LOG_INFO("Attach call");
     return reply.ReadInt32();
@@ -62,7 +69,11 @@ int32_t IntellVoiceEngineProxy::Detach(void)
     MessageOption option;
 
     data.WriteInterfaceToken(IIntellVoiceEngine::GetDescriptor());
-    Remote()->SendRequest(INTELL_VOICE_ENGINE_DETACH, data, reply, option);
+    int32_t error = Remote()->SendRequest(INTELL_VOICE_ENGINE_DETACH, data, reply, option);
+    if (error != 0) {
+        INTELL_VOICE_LOG_ERROR("detach error: %{public}d", error);
+        return -1;
+    }
     return reply.ReadInt32();
 }
 
@@ -74,7 +85,11 @@ int32_t IntellVoiceEngineProxy::SetParameter(const std::string &keyValueList)
 
     data.WriteInterfaceToken(IIntellVoiceEngine::GetDescriptor());
     data.WriteString(keyValueList);
-    Remote()->SendRequest(INTELL_VOICE_ENGINE_SET_PARAMETER, data, reply, option);
+    int32_t error = Remote()->SendRequest(INTELL_VOICE_ENGINE_SET_PARAMETER, data, reply, option);
+    if (error != 0) {
+        INTELL_VOICE_LOG_ERROR("set parameter error: %{public}d", error);
+        return -1;
+    }
     return reply.ReadInt32();
 }
 
@@ -87,7 +102,11 @@ std::string IntellVoiceEngineProxy::GetParameter(const std::string &key)
     data.WriteInterfaceToken(IIntellVoiceEngine::GetDescriptor());
     data.WriteString(key);
 
-    Remote()->SendRequest(INTELL_VOICE_ENGINE_GET_PARAMETER, data, reply, option);
+    int32_t error = Remote()->SendRequest(INTELL_VOICE_ENGINE_GET_PARAMETER, data, reply, option);
+    if (error != 0) {
+        INTELL_VOICE_LOG_ERROR("get parameter error: %{public}d", error);
+        return "";
+    }
     return reply.ReadString();
 }
 
@@ -100,7 +119,11 @@ int32_t IntellVoiceEngineProxy::Start(bool isLast)
     data.WriteInterfaceToken(IIntellVoiceEngine::GetDescriptor());
     data.WriteBool(isLast);
 
-    Remote()->SendRequest(INTELL_VOICE_ENGINE_START, data, reply, option);
+    int32_t error = Remote()->SendRequest(INTELL_VOICE_ENGINE_START, data, reply, option);
+    if (error != 0) {
+        INTELL_VOICE_LOG_ERROR("start error: %{public}d", error);
+        return -1;
+    }
     return reply.ReadInt32();
 }
 
@@ -112,7 +135,11 @@ int32_t IntellVoiceEngineProxy::Stop(void)
 
     data.WriteInterfaceToken(IIntellVoiceEngine::GetDescriptor());
 
-    Remote()->SendRequest(INTELL_VOICE_ENGINE_STOP, data, reply, option);
+    int32_t error = Remote()->SendRequest(INTELL_VOICE_ENGINE_STOP, data, reply, option);
+    if (error != 0) {
+        INTELL_VOICE_LOG_ERROR("stop error: %{public}d", error);
+        return -1;
+    }
     return reply.ReadInt32();
 }
 
@@ -126,7 +153,11 @@ int32_t IntellVoiceEngineProxy::WriteAudio(const uint8_t *buffer, uint32_t size)
     data.WriteUint32(size);
     data.WriteBuffer(buffer, size);
 
-    Remote()->SendRequest(INTELL_VOICE_ENGINE_WRITE_AUDIO, data, reply, option);
+    int32_t error = Remote()->SendRequest(INTELL_VOICE_ENGINE_WRITE_AUDIO, data, reply, option);
+    if (error != 0) {
+        INTELL_VOICE_LOG_ERROR("write audio error: %{public}d", error);
+        return -1;
+    }
     return reply.ReadInt32();
 }
 
@@ -138,7 +169,11 @@ int32_t IntellVoiceEngineProxy::StartCapturer(int32_t channels)
 
     data.WriteInterfaceToken(IIntellVoiceEngine::GetDescriptor());
     data.WriteInt32(channels);
-    Remote()->SendRequest(INTELL_VOICE_ENGINE_STAET_CAPTURER, data, reply, option);
+    int32_t error = Remote()->SendRequest(INTELL_VOICE_ENGINE_STAET_CAPTURER, data, reply, option);
+    if (error != 0) {
+        INTELL_VOICE_LOG_ERROR("start capturer error: %{public}d", error);
+        return -1;
+    }
     return reply.ReadInt32();
 }
 
@@ -149,7 +184,11 @@ int32_t IntellVoiceEngineProxy::Read(std::vector<uint8_t> &data)
     MessageOption option;
 
     parcelData.WriteInterfaceToken(IIntellVoiceEngine::GetDescriptor());
-    Remote()->SendRequest(INTELL_VOICE_ENGINE_READ, parcelData, reply, option);
+    int32_t error = Remote()->SendRequest(INTELL_VOICE_ENGINE_READ, parcelData, reply, option);
+    if (error != 0) {
+        INTELL_VOICE_LOG_ERROR("read error: %{public}d", error);
+        return -1;
+    }
 
     int ret = reply.ReadInt32();
     if (ret != 0) {
@@ -178,7 +217,11 @@ int32_t IntellVoiceEngineProxy::StopCapturer()
     MessageOption option;
 
     data.WriteInterfaceToken(IIntellVoiceEngine::GetDescriptor());
-    Remote()->SendRequest(INTELL_VOICE_ENGINE_STOP_CAPTURER, data, reply, option);
+    int32_t error = Remote()->SendRequest(INTELL_VOICE_ENGINE_STOP_CAPTURER, data, reply, option);
+    if (error != 0) {
+        INTELL_VOICE_LOG_ERROR("stop capturer error: %{public}d", error);
+        return -1;
+    }
     return reply.ReadInt32();
 }
 
@@ -189,7 +232,11 @@ int32_t IntellVoiceEngineProxy::GetWakeupPcm(std::vector<uint8_t> &data)
     MessageOption option;
 
     parcelData.WriteInterfaceToken(IIntellVoiceEngine::GetDescriptor());
-    Remote()->SendRequest(INTELL_VOICE_ENGINE_GET_WAKEUP_PCM, parcelData, reply, option);
+    int32_t error = Remote()->SendRequest(INTELL_VOICE_ENGINE_GET_WAKEUP_PCM, parcelData, reply, option);
+    if (error != 0) {
+        INTELL_VOICE_LOG_ERROR("get wakeup pcm error: %{public}d", error);
+        return -1;
+    }
     int ret = reply.ReadInt32();
     if (ret != 0) {
         INTELL_VOICE_LOG_ERROR("failed to get wakeup pcm, ret:%{public}d", ret);
@@ -218,7 +265,11 @@ int32_t IntellVoiceEngineProxy::Evaluate(const std::string &word, EvaluationResu
 
     data.WriteInterfaceToken(IIntellVoiceEngine::GetDescriptor());
     data.WriteString(word);
-    Remote()->SendRequest(INTELL_VOICE_ENGINE_EVALUATE, data, reply, option);
+    int32_t error = Remote()->SendRequest(INTELL_VOICE_ENGINE_EVALUATE, data, reply, option);
+    if (error != 0) {
+        INTELL_VOICE_LOG_ERROR("evaluate error: %{public}d", error);
+        return -1;
+    }
     int32_t ret = reply.ReadInt32();
     if (ret != 0) {
         INTELL_VOICE_LOG_ERROR("failed to evaluate");
@@ -238,7 +289,11 @@ int32_t IntellVoiceEngineProxy::NotifyHeadsetWakeEvent()
     MessageOption option;
 
     data.WriteInterfaceToken(IIntellVoiceEngine::GetDescriptor());
-    Remote()->SendRequest(INTELL_VOICE_ENGINE_NOTIFY_HEADSET_WAKE_EVENT, data, reply, option);
+    int32_t error = Remote()->SendRequest(INTELL_VOICE_ENGINE_NOTIFY_HEADSET_WAKE_EVENT, data, reply, option);
+    if (error != 0) {
+        INTELL_VOICE_LOG_ERROR("notify headset wakeup event error: %{public}d", error);
+        return -1;
+    }
     return reply.ReadInt32();
 }
 
@@ -251,7 +306,11 @@ int32_t IntellVoiceEngineProxy::NotifyHeadsetHostEvent(HeadsetHostEventType even
 
     data.WriteInterfaceToken(IIntellVoiceEngine::GetDescriptor());
     data.WriteInt32(event);
-    Remote()->SendRequest(INTELL_VOICE_ENGINE_NOTIFY_HEADSET_HOSTEVENT, data, reply, option);
+    int32_t error = Remote()->SendRequest(INTELL_VOICE_ENGINE_NOTIFY_HEADSET_HOSTEVENT, data, reply, option);
+    if (error != 0) {
+        INTELL_VOICE_LOG_ERROR("notify headset host event error: %{public}d", error);
+        return -1;
+    }
     return reply.ReadInt32();
 }
 }

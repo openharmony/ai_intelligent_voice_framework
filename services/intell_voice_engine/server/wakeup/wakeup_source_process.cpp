@@ -75,7 +75,7 @@ void WakeupSourceProcess::Write(const std::vector<std::vector<uint8_t>> &audioDa
 
 int32_t WakeupSourceProcess::Read(std::vector<uint8_t> &data, int32_t readChannel)
 {
-    INTELL_VOICE_LOG_INFO("enter, read channel:%{public}d", readChannel);
+    INTELL_VOICE_LOG_DEBUG("enter, read channel:%{public}d", readChannel);
     if ((readChannel == 0) || (readChannel >= (0x1 << MAX_CHANNEL_CNT))) {
         return -1;
     }
@@ -115,7 +115,6 @@ void WakeupSourceProcess::WriteChannelData(const std::vector<uint8_t> &channelDa
         return;
     }
     if (!bufferQueue_[channelId]->Push(std::move(arrayBuffer), false)) {
-        INTELL_VOICE_LOG_ERROR("failed to push array buffer");
         return;
     }
 

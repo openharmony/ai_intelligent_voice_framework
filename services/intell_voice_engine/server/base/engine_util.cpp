@@ -289,5 +289,19 @@ void EngineUtil::SelectInputDevice(DeviceType type)
     }
     audioSystemManager->SelectInputDevice(audioCapturerFilter, deviceDescriptorVector);
 }
+
+void EngineUtil::SetScreenStatus()
+{
+    auto &mgr = IntellVoiceServiceManager::GetInstance();
+    if (mgr == nullptr) {
+        INTELL_VOICE_LOG_ERROR("mgr is nullptr");
+        return;
+    }
+    if (mgr->GetScreenOff()) {
+        SetParameter("screenoff=true");
+    } else {
+        SetParameter("screenoff=false");
+    }
+}
 }
 }

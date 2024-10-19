@@ -64,7 +64,12 @@ void SilenceUpdateStrategy::NotifyUpdateFail()
     want.SetParam("serviceName", std::string("intell_voice"));
     want.SetParam("servicePid", getpid());
     want.SetParam("eventType", std::string("update_event"));
-    AAFwk::AbilityManagerClient::GetInstance()->StartAbility(want);
+    auto abilityManagerClient = AAFwk::AbilityManagerClient::GetInstance();
+    if (abilityManagerClient == nullptr) {
+        INTELL_VOICE_LOG_ERROR("abilityManagerClient is nullptr");
+        return;
+    }
+    abilityManagerClient->StartAbility(want);
 }
 
 int SilenceUpdateStrategy::OnUpdateCompleteCallback(const int result, bool isLast)

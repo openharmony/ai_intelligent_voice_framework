@@ -96,6 +96,7 @@ public:
     void SetArea();
     void SetSensibility();
     void SelectInputDevice(AudioStandard::DeviceType type);
+    void SetScreenStatus();
 
 protected:
     std::shared_ptr<IAdapterHostManager> adapter_ = nullptr;
