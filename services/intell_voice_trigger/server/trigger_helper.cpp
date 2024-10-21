@@ -751,7 +751,7 @@ void TriggerHelper::AttachAudioRendererEventListener()
     }
     INTELL_VOICE_LOG_INFO("RegisterAudioRendererEventListener success");
 
-    std::vector<std::unique_ptr<AudioRendererChangeInfo>> audioRendererChangeInfos;
+    std::vector<std::shared_ptr<AudioRendererChangeInfo>> audioRendererChangeInfos;
     audioStreamManager->GetCurrentRendererChangeInfos(audioRendererChangeInfos);
     audioRendererStateChangeCallback_->OnRendererStateChange(audioRendererChangeInfos);
 }

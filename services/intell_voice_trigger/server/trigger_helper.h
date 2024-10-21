@@ -158,7 +158,7 @@ private:
         }
 
         void OnRendererStateChange(
-           const std::vector<std::unique_ptr<AudioRendererChangeInfo>> &audioRendererChangeInfos) override;
+           const std::vector<std::shared_ptr<AudioRendererChangeInfo>> &audioRendererChangeInfos) override;
     private:
         std::mutex mutex_;
         std::shared_ptr<TriggerHelper> helper_ = nullptr;
