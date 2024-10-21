@@ -633,7 +633,7 @@ void TriggerHelper::AudioCapturerSourceChangeCallback::OnCapturerState(bool isAc
 }
 
 void TriggerHelper::AudioRendererStateChangeCallbackImpl::OnRendererStateChange(
-    const std::vector<std::unique_ptr<AudioStandard::AudioRendererChangeInfo>> &audioRendererChangeInfos)
+    const std::vector<std::shared_ptr<AudioStandard::AudioRendererChangeInfo>> &audioRendererChangeInfos)
 {
     std::lock_guard<std::mutex> lock(mutex_);
     if (helper_ == nullptr) {
