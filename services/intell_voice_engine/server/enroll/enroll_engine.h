@@ -51,7 +51,7 @@ private:
     using EngineUtil::adapter_;
     std::string name_ = "lp enroll engine instance";
     bool isPcmFromExternal_ = false;
-    int32_t enrollResult_ = -1;
+    std::atomic<int32_t> enrollResult_ = -1;
     uint32_t callerTokenId_ = 0;
     sptr<OHOS::HDI::IntelligentVoice::Engine::V1_0::IIntellVoiceEngineCallback> callback_ = nullptr;
     std::unique_ptr<AudioSource> audioSource_ = nullptr;

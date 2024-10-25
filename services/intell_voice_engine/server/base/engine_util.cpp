@@ -160,16 +160,21 @@ void EngineUtil::WriteBufferFromAshmem(uint8_t *&buffer, uint32_t size, sptr<OHO
     }
 }
 
-void EngineUtil::ProcDspModel(OHOS::HDI::IntelligentVoice::Engine::V1_0::ContentType type)
+std::shared_ptr<GenericTriggerModel> EngineUtil::ReadDspModel(
+    OHOS::HDI::IntelligentVoice::Engine::V1_0::ContentType type)
 {
     INTELL_VOICE_LOG_INFO("enter");
     uint8_t *buffer = nullptr;
     uint32_t size = 0;
-    sptr<Ashmem> ashmem;
+    sptr<Ashmem> ashmem = nullptr;
+    if (adapter_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("adapter is nullptr");
+        return nullptr;
+    }
     adapter_->Read(type, ashmem);
     if (ashmem == nullptr) {
         INTELL_VOICE_LOG_ERROR("ashmem is nullptr");
-        return;
+        return nullptr;
     }
 
     ON_SCOPE_EXIT_WITH_NAME(ashmemExit)
@@ -182,13 +187,13 @@ void EngineUtil::ProcDspModel(OHOS::HDI::IntelligentVoice::Engine::V1_0::Content
     size = static_cast<uint32_t>(ashmem->GetAshmemSize());
     if (size == 0) {
         INTELL_VOICE_LOG_ERROR("size is zero");
-        return;
+        return nullptr;
     }
 
     WriteBufferFromAshmem(buffer, size, ashmem);
     if (buffer == nullptr) {
         INTELL_VOICE_LOG_ERROR("buffer is nullptr");
-        return;
+        return nullptr;
     }
 
     ON_SCOPE_EXIT_WITH_NAME(bufferExit)
@@ -202,9 +207,19 @@ void EngineUtil::ProcDspModel(OHOS::HDI::IntelligentVoice::Engine::V1_0::Content
         TriggerModel::TriggerModelVersion::MODLE_VERSION_2, TriggerModel::TriggerModelType::VOICE_WAKEUP_TYPE);
     if (model == nullptr) {
         INTELL_VOICE_LOG_ERROR("model is null");
-        return;
+        return nullptr;
     }
     model->SetData(buffer, size);
+    return model;
+}
+
+void EngineUtil::ProcDspModel(std::shared_ptr<GenericTriggerModel> model)
+{
+    if (model == nullptr) {
+        INTELL_VOICE_LOG_ERROR("model is nullptr");
+        return;
+    }
+
     auto triggerMgr = TriggerManager::GetInstance();
     if (triggerMgr == nullptr) {
         INTELL_VOICE_LOG_ERROR("trigger manager is nullptr");
