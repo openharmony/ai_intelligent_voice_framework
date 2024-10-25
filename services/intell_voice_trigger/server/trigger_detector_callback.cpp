@@ -37,7 +37,7 @@ void TriggerDetectorCallback::OnDetected(const std::shared_ptr<DetectorEvent> &e
             "receive DetectorEvent dataSize_: %{public}zu, data_[0]: %{public}d", event->data_.size(), event->data_[0]);
     }
 
-    std::thread([&]() { cb_(); }).detach();
+    cb_();
 }
 }  // namespace IntellVoiceTrigger
 }  // namespace OHOS
