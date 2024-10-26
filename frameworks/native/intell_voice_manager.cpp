@@ -54,7 +54,6 @@ bool IntellVoiceManager::Init()
 {
     INTELL_VOICE_LOG_INFO("enter");
     std::unique_lock<std::mutex> lock(mutex_);
-
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     if (samgr == nullptr) {
         INTELL_VOICE_LOG_ERROR("get sa manager failed");
@@ -78,6 +77,7 @@ bool IntellVoiceManager::Init()
 int32_t IntellVoiceManager::CreateIntellVoiceEngine(IntellVoiceEngineType type, sptr<IIntellVoiceEngine> &inst)
 {
     INTELL_VOICE_LOG_INFO("enter");
+    std::unique_lock<std::mutex> lock(mutex_);
     if (g_sProxy == nullptr) {
         INTELL_VOICE_LOG_ERROR("IntellVoiceService Proxy is null");
         return -1;
@@ -95,6 +95,7 @@ std::shared_ptr<WakeupIntellVoiceEngine> IntellVoiceManager::CreateHeadsetWakeup
 int32_t IntellVoiceManager::ReleaseIntellVoiceEngine(IntellVoiceEngineType type)
 {
     INTELL_VOICE_LOG_INFO("enter");
+    std::unique_lock<std::mutex> lock(mutex_);
     if (g_sProxy == nullptr) {
         INTELL_VOICE_LOG_ERROR("IntellVoiceService Proxy is null");
         return -1;
@@ -105,6 +106,7 @@ int32_t IntellVoiceManager::ReleaseIntellVoiceEngine(IntellVoiceEngineType type)
 int32_t IntellVoiceManager::RegisterServiceDeathRecipient(sptr<OHOS::IRemoteObject::DeathRecipient> callback)
 {
     INTELL_VOICE_LOG_INFO("enter");
+    std::unique_lock<std::mutex> lock(mutex_);
     if (g_sProxy == nullptr) {
         INTELL_VOICE_LOG_ERROR("IntellVoiceService Proxy is null");
         return -1;
@@ -126,6 +128,7 @@ int32_t IntellVoiceManager::RegisterServiceDeathRecipient(sptr<OHOS::IRemoteObje
 int32_t IntellVoiceManager::DeregisterServiceDeathRecipient(sptr<OHOS::IRemoteObject::DeathRecipient> callback)
 {
     INTELL_VOICE_LOG_INFO("enter");
+    std::unique_lock<std::mutex> lock(mutex_);
     if (g_sProxy == nullptr) {
         INTELL_VOICE_LOG_ERROR("IntellVoiceService Proxy is null");
         return -1;
@@ -147,12 +150,15 @@ int32_t IntellVoiceManager::DeregisterServiceDeathRecipient(sptr<OHOS::IRemoteOb
 int32_t IntellVoiceManager::GetUploadFiles(int numMax, std::vector<UploadFilesInfo> &files)
 {
     INTELL_VOICE_LOG_INFO("enter, numMax: %{public}d", numMax);
-    CHECK_CONDITION_RETURN_RET(g_sProxy == nullptr, -1, "IntellVoiceService Proxy is null");
     std::vector<UploadHdiFile> hdiFiles;
-    int32_t ret = g_sProxy->GetUploadFiles(numMax, hdiFiles);
-    if (ret != 0) {
-        INTELL_VOICE_LOG_ERROR("Get upload files failed, ret:%{public}d", ret);
-        return ret;
+    {
+        std::unique_lock<std::mutex> lock(mutex_);
+        CHECK_CONDITION_RETURN_RET(g_sProxy == nullptr, -1, "IntellVoiceService Proxy is null");
+        int32_t ret = g_sProxy->GetUploadFiles(numMax, hdiFiles);
+        if (ret != 0) {
+            INTELL_VOICE_LOG_ERROR("Get upload files failed, ret:%{public}d", ret);
+            return ret;
+        }
     }
 
     if (hdiFiles.empty()) {
@@ -218,6 +224,7 @@ int32_t IntellVoiceManager::GetFileDataFromAshmem(sptr<Ashmem> ashmem, std::vect
 int32_t IntellVoiceManager::SetParameter(const std::string &key, const std::string &value)
 {
     INTELL_VOICE_LOG_INFO("enter, key:%{public}s, value:%{public}s", key.c_str(), value.c_str());
+    std::unique_lock<std::mutex> lock(mutex_);
     if (g_sProxy == nullptr) {
         INTELL_VOICE_LOG_ERROR("IntellVoiceService Proxy is null");
         return -1;
@@ -229,6 +236,7 @@ int32_t IntellVoiceManager::SetParameter(const std::string &key, const std::stri
 std::string IntellVoiceManager::GetParameter(const std::string &key)
 {
     INTELL_VOICE_LOG_INFO("enter");
+    std::unique_lock<std::mutex> lock(mutex_);
     if (g_sProxy == nullptr) {
         INTELL_VOICE_LOG_ERROR("IntellVoiceService Proxy is null");
         return "";
@@ -245,6 +253,7 @@ std::string IntellVoiceManager::GetParameter(const std::string &key)
 int32_t IntellVoiceManager::GetWakeupSourceFiles(std::vector<WakeupSourceFile> &cloneFileInfo)
 {
     INTELL_VOICE_LOG_INFO("enter");
+    std::unique_lock<std::mutex> lock(mutex_);
     if (g_sProxy == nullptr) {
         INTELL_VOICE_LOG_ERROR("IntellVoiceService Proxy is null");
         return -1;
@@ -278,7 +287,7 @@ int32_t IntellVoiceManager::EnrollWithWakeupFilesForResult(const std::vector<Wak
     const std::string &wakeupInfo, const shared_ptr<IIntellVoiceUpdateCallback> callback)
 {
     INTELL_VOICE_LOG_INFO("enter");
-
+    std::unique_lock<std::mutex> lock(mutex_);
     if (g_sProxy == nullptr) {
         INTELL_VOICE_LOG_ERROR("IntellVoiceService proxy is null");
         return -1;
@@ -307,7 +316,7 @@ int32_t IntellVoiceManager::EnrollWithWakeupFilesForResult(const std::vector<Wak
 int32_t IntellVoiceManager::ClearUserData()
 {
     INTELL_VOICE_LOG_INFO("enter");
-
+    std::unique_lock<std::mutex> lock(mutex_);
     if (g_sProxy == nullptr) {
         INTELL_VOICE_LOG_ERROR("IntellVoiceService proxy is nullptr");
         return -1;
