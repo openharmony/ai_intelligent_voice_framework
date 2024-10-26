@@ -653,11 +653,11 @@ void WakeupEngineImpl::UpdateDspModel()
     }
     if (mgr->QuerySwitchStatus(SHORTWORD_KEY)) {
         adapter_->SetParameter("WakeupMode=1");
-        ProcDspModel(static_cast<OHOS::HDI::IntelligentVoice::Engine::V1_0::ContentType>(
-            OHOS::HDI::IntelligentVoice::Engine::V1_2::SHORT_WORD_DSP_MODEL));
+        ProcDspModel(ReadDspModel(static_cast<OHOS::HDI::IntelligentVoice::Engine::V1_0::ContentType>(
+            OHOS::HDI::IntelligentVoice::Engine::V1_2::SHORT_WORD_DSP_MODEL)));
     } else {
         adapter_->SetParameter("WakeupMode=0");
-        ProcDspModel(OHOS::HDI::IntelligentVoice::Engine::V1_0::DSP_MODLE);
+        ProcDspModel(ReadDspModel(OHOS::HDI::IntelligentVoice::Engine::V1_0::DSP_MODLE));
     }
 }
 

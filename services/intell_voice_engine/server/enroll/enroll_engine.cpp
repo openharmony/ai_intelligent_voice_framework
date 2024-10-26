@@ -63,9 +63,8 @@ void EnrollEngine::OnEnrollEvent(int32_t msgId, int32_t result)
     if (msgId == INTELL_VOICE_ENGINE_MSG_ENROLL_COMPLETE) {
         std::thread(&EnrollEngine::OnEnrollComplete, this).detach();
     } else if (msgId == INTELL_VOICE_ENGINE_MSG_COMMIT_ENROLL_COMPLETE) {
-        std::lock_guard<std::mutex> lock(mutex_);
-        enrollResult_ = result;
-        IntellVoiceServiceManager::SetEnrollResult(INTELL_VOICE_ENROLL, enrollResult_ == 0 ? true : false);
+        enrollResult_.store(result);
+        IntellVoiceServiceManager::SetEnrollResult(INTELL_VOICE_ENROLL, result == 0 ? true : false);
     }
 }
 
@@ -141,23 +140,28 @@ int32_t EnrollEngine::Attach(const IntellVoiceEngineInfo &info)
 int32_t EnrollEngine::Detach(void)
 {
     INTELL_VOICE_LOG_INFO("enter");
-    std::lock_guard<std::mutex> lock(mutex_);
-    StopAudioSource();
-    if (adapter_ == nullptr) {
-        INTELL_VOICE_LOG_WARN("already detach");
-        return 0;
+    int32_t ret = 0;
+    std::shared_ptr<GenericTriggerModel> model = nullptr;
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        StopAudioSource();
+        if (adapter_ == nullptr) {
+            INTELL_VOICE_LOG_WARN("already detach");
+            return 0;
+        }
+        model = ReadDspModel(OHOS::HDI::IntelligentVoice::Engine::V1_0::DSP_MODLE);
+        ret = adapter_->Detach();
+        ReleaseAdapterInner(EngineHostManager::GetInstance());
     }
 
-    if (enrollResult_ == 0) {
-        ProcDspModel(OHOS::HDI::IntelligentVoice::Engine::V1_0::DSP_MODLE);
+    if (enrollResult_.load() == 0) {
+        EngineUtil::ProcDspModel(model);
         HistoryInfoMgr::GetInstance().SetWakeupPhrase(wakeupPhrase_);
         /* save new version number */
         UpdateEngineUtils::SaveWakeupVesion();
         INTELL_VOICE_LOG_INFO("enroll save version");
     }
 
-    int32_t ret = adapter_->Detach();
-    ReleaseAdapterInner(EngineHostManager::GetInstance());
     return ret;
 }
 

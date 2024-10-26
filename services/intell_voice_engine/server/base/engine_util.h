@@ -24,6 +24,7 @@
 #include "v1_0/iintell_voice_engine_adapter.h"
 #include "v1_0/iintell_voice_engine_callback.h"
 #include "audio_system_manager.h"
+#include "trigger_base_type.h"
 
 namespace OHOS {
 namespace IntellVoiceEngine {
@@ -91,7 +92,9 @@ public:
     int32_t GetWakeupPcm(std::vector<uint8_t> &data);
     int32_t Evaluate(const std::string &word, EvaluationResultInfo &info);
     bool SetDspFeatures();
-    void ProcDspModel(OHOS::HDI::IntelligentVoice::Engine::V1_0::ContentType type);
+    std::shared_ptr<OHOS::IntellVoiceTrigger::GenericTriggerModel> ReadDspModel(
+        OHOS::HDI::IntelligentVoice::Engine::V1_0::ContentType type);
+    void ProcDspModel(std::shared_ptr<OHOS::IntellVoiceTrigger::GenericTriggerModel> model);
     void SetLanguage();
     void SetArea();
     void SetSensibility();

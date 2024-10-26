@@ -58,7 +58,7 @@ void UpdateEngine::OnCommitEnrollComplete(int32_t result)
     updateResult_ = (result == 0 ? UpdateState::UPDATE_STATE_COMPLETE_SUCCESS :
         UpdateState::UPDATE_STATE_COMPLETE_FAIL);
     if (updateResult_ == UpdateState::UPDATE_STATE_COMPLETE_SUCCESS) {
-        ProcDspModel(OHOS::HDI::IntelligentVoice::Engine::V1_0::DSP_MODLE);
+        ProcDspModel(ReadDspModel(OHOS::HDI::IntelligentVoice::Engine::V1_0::DSP_MODLE));
         /* save new version number */
         UpdateEngineUtils::SaveWakeupVesion();
         std::string wakeupPhrase = EngineUtil::GetParameter("wakeup_phrase");
