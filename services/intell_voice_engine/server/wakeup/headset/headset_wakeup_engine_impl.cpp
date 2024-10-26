@@ -269,16 +269,20 @@ void HeadsetWakeupEngineImpl::ReadThread()
         std::vector<uint8_t> audioStream;
         bool hasAwakeWord = true;
         int ret = HeadsetWakeupWrapper::GetInstance().ReadHeadsetStream(audioStream, hasAwakeWord);
+        if (ret != 1) {
+            INTELL_VOICE_LOG_INFO("finish reading, ret:%{public}d, isEnd:%{public}d, hasAwakeWord:%{public}d",
+                ret, isEnd, hasAwakeWord);
+            if (!isEnd) {
+                adapter_->SetParameter("end_of_pcm=true");
+            }
+            break;
+        }
         if (hasAwakeWord && !isEnd) {
             adapter_->WriteAudio(audioStream);
         }
         if (!hasAwakeWord && !isEnd) {
             isEnd = true;
             adapter_->SetParameter("end_of_pcm=true");
-        }
-        if (ret == -1) {
-            INTELL_VOICE_LOG_INFO("finish reading");
-            break;
         }
         WakeupSourceProcess::Write({ audioStream });
     }
