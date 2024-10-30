@@ -290,7 +290,7 @@ void EngineUtil::SelectInputDevice(DeviceType type)
     }
     audioCapturerFilter->uid = INTELL_VOICE_SERVICE_UID;
     audioCapturerFilter->capturerInfo.sourceType = SourceType::SOURCE_TYPE_VOICE_RECOGNITION;
-    std::vector<sptr<AudioDeviceDescriptor>> deviceDescriptorVector;
+    std::vector<std::shared_ptr<AudioDeviceDescriptor>> deviceDescriptorVector;
     auto audioSystemManager = AudioSystemManager::GetInstance();
     if (audioSystemManager == nullptr) {
         INTELL_VOICE_LOG_ERROR("audioSystemManager is nullptr");
