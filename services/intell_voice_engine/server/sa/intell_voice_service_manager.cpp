@@ -46,7 +46,7 @@ using namespace OHOS::HDI::IntelligentVoice::Engine::V1_0;
 
 namespace OHOS {
 namespace IntellVoiceEngine {
-static constexpr int32_t MAX_ATTEMPT_CNT = 10;
+static constexpr int32_t WAIT_AUDIO_HAL_INTERVAL = 500; //500ms
 static constexpr uint32_t MAX_TASK_NUM = 200;
 static constexpr uint32_t WAIT_SWICTH_ON_TIME = 2000;  // 2000ms
 static const std::string SERVICE_MANAGER_THREAD_NAME = "ServMgrThread";
@@ -69,11 +69,19 @@ std::unique_ptr<IntellVoiceServiceManager> IntellVoiceServiceManager::g_intellVo
 IntellVoiceServiceManager::IntellVoiceServiceManager() : TaskExecutor(SERVICE_MANAGER_THREAD_NAME, MAX_TASK_NUM)
 {
     TaskExecutor::StartThread();
+#ifdef USE_FFRT
+    taskQueue_ = std::make_shared<ffrt::queue>("ServMgrQueue");
+#endif
 }
 
 IntellVoiceServiceManager::~IntellVoiceServiceManager()
 {
-    engines_.clear();
+    INTELL_VOICE_LOG_INFO("enter");
+#ifdef USE_FFRT
+    if (taskQueue_ != nullptr) {
+        taskQueue_.reset();
+    }
+#endif
     TaskExecutor::StopThread();
 }
 
@@ -282,37 +290,31 @@ bool IntellVoiceServiceManager::StartDetection(int32_t uuid)
         return false;
     }
 
-    for (uint32_t cnt = 1; cnt <= MAX_ATTEMPT_CNT; ++cnt) {
-        {
-            std::lock_guard<std::mutex> lock(detectorMutex_);
-            if ((detector_.count(uuid) == 0) || (detector_[uuid] == nullptr)) {
-                INTELL_VOICE_LOG_INFO("detector is not existed, uuid:%{public}d", uuid);
-                return false;
-            }
-
-            if (!QuerySwitchByUuid(uuid)) {
-                INTELL_VOICE_LOG_INFO("switch is off, uuid is %{public}d", uuid);
-                return false;
-            }
-
-            auto triggerMgr = TriggerManager::GetInstance();
-            if (triggerMgr == nullptr) {
-                INTELL_VOICE_LOG_ERROR("trigger manager is nullptr");
-                return false;
-            }
-
-            if (triggerMgr->GetParameter("audio_hal_status") == "true") {
-                INTELL_VOICE_LOG_INFO("audio hal is ready");
-                detector_[uuid]->StartRecognition();
-                return true;
-            }
-        }
-        INTELL_VOICE_LOG_INFO("begin to wait");
-        std::this_thread::sleep_for(std::chrono::seconds(cnt));
-        INTELL_VOICE_LOG_INFO("end to wait");
+    if (!QuerySwitchByUuid(uuid)) {
+        INTELL_VOICE_LOG_INFO("switch is off, uuid is %{public}d", uuid);
+        return false;
     }
-    INTELL_VOICE_LOG_ERROR("failed to start recognition");
-    return false;
+
+    std::lock_guard<std::mutex> lock(detectorMutex_);
+    if ((detector_.count(uuid) == 0) || (detector_[uuid] == nullptr)) {
+        INTELL_VOICE_LOG_INFO("detector is not existed, uuid:%{public}d", uuid);
+        return false;
+    }
+
+    auto triggerMgr = TriggerManager::GetInstance();
+    if (triggerMgr == nullptr) {
+        INTELL_VOICE_LOG_ERROR("trigger manager is nullptr");
+        return false;
+    }
+
+    if (triggerMgr->GetParameter("audio_hal_status") == "true") {
+        INTELL_VOICE_LOG_INFO("audio hal is ready");
+        detector_[uuid]->StartRecognition();
+        isStarted_[uuid] = true;
+        return true;
+    }
+
+    return AddStartDetectionTask(uuid);
 }
 
 void IntellVoiceServiceManager::StopDetection(int32_t uuid)
@@ -357,16 +359,15 @@ void IntellVoiceServiceManager::CreateAndStartServiceObject(int32_t uuid, bool n
         return;
     }
 
-    CreateDetector(uuid);
-    if (!StartDetection(uuid)) {
-        INTELL_VOICE_LOG_ERROR("failed to start detection");
-        return;
-    }
-
     if (!needResetAdapter) {
         CreateEngine(INTELL_VOICE_WAKEUP);
     } else {
         CreateOrResetWakeupEngine();
+    }
+
+    CreateDetector(uuid);
+    if (!StartDetection(uuid)) {
+        INTELL_VOICE_LOG_ERROR("failed to start detection");
     }
 }
 
@@ -868,6 +869,7 @@ int32_t IntellVoiceServiceManager::SwitchOffProc(int32_t uuid)
         return 0;
     }
 
+    DelStartDetectionTask(uuid);
     ReleaseServiceObject(uuid);
     INTELL_VOICE_LOG_INFO("exit, uuid:%{public}d", uuid);
     return 0;
@@ -999,6 +1001,73 @@ void IntellVoiceServiceManager::HandlePowerSaveModeChange()
         notifyPowerModeChange_ = false;
         HandleUnloadIntellVoiceService(true);
     }).detach();
+}
+
+bool IntellVoiceServiceManager::AddStartDetectionTask(int32_t uuid)
+{
+#ifdef USE_FFRT
+    INTELL_VOICE_LOG_INFO("enter");
+    if (taskQueue_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("task queue is nullptr");
+        return false;
+    }
+
+    if ((taskHandle_.count(uuid) != 0) && (taskHandle_[uuid] != nullptr)) {
+        INTELL_VOICE_LOG_INFO("task handle is exist, uuid is %{public}d", uuid);
+        return true;
+    }
+
+    taskHandle_[uuid] = taskQueue_->submit_h(std::bind([uuid, this]() {
+        if (!QuerySwitchByUuid(uuid)) {
+            INTELL_VOICE_LOG_INFO("switch is off, uuid is %{public}d", uuid);
+            return;
+        }
+
+        auto triggerMgr = TriggerManager::GetInstance();
+        if (triggerMgr == nullptr) {
+            INTELL_VOICE_LOG_ERROR("trigger manager is nullptr");
+            return;
+        }
+        INTELL_VOICE_LOG_INFO("begin to wait");
+        while (triggerMgr->GetParameter("audio_hal_status") != "true") {
+            ffrt::this_task::sleep_for(std::chrono::milliseconds(WAIT_AUDIO_HAL_INTERVAL));
+            if (!QuerySwitchByUuid(uuid)) {
+                INTELL_VOICE_LOG_INFO("switch is off, uuid is %{public}d", uuid);
+                return;
+            }
+        }
+        INTELL_VOICE_LOG_INFO("end to wait");
+        TaskExecutor::AddAsyncTask([uuid, this]() {
+            if (isStarted_.count(uuid) != 0 && isStarted_[uuid]) {
+                INTELL_VOICE_LOG_INFO("already start, uuid is %{public}d", uuid);
+                return;
+            }
+            StartDetection(uuid);
+        });
+    }));
+#endif
+    return true;
+}
+
+void IntellVoiceServiceManager::DelStartDetectionTask(int32_t uuid)
+{
+#ifdef USE_FFRT
+    INTELL_VOICE_LOG_INFO("enter");
+    if (taskQueue_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("task queue is nullptr");
+        return;
+    }
+
+    if ((taskHandle_.count(uuid) != 0) && (taskHandle_[uuid] != nullptr)) {
+        taskQueue_->cancel(taskHandle_[uuid]);
+        taskHandle_.erase(uuid);
+        INTELL_VOICE_LOG_INFO("task is canceled");
+    }
+#endif
+
+    if (isStarted_.count(uuid)) {
+        isStarted_.erase(uuid);
+    }
 }
 
 void IntellVoiceServiceManager::OnTriggerConnectServiceStart()

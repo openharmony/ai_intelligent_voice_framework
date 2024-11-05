@@ -153,6 +153,8 @@ private:
     bool IsNeedToUnloadService();
     int32_t UnloadIntellVoiceService();
     void NoiftySwitchOnToPowerChange();
+    bool AddStartDetectionTask(int32_t uuid);
+    void DelStartDetectionTask(int32_t uuid);
 
 private:
     static std::unique_ptr<IntellVoiceServiceManager> g_intellVoiceServiceMgr;
@@ -171,6 +173,11 @@ private:
         IntellVoiceUtils::UniqueProductType<SwitchProvider> {nullptr, nullptr};
     std::map<IntellVoiceEngineType, sptr<IntellVoiceUtils::IntellVoiceDeathRecipient>> proxyDeathRecipient_;
     std::map<IntellVoiceEngineType, sptr<IRemoteObject>> deathRecipientObj_;
+    std::map<int32_t, bool> isStarted_;
+#ifdef USE_FFRT
+    std::shared_ptr<ffrt::queue> taskQueue_ = nullptr;
+    std::map<int32_t, ffrt::task_handle> taskHandle_;
+#endif
 };
 }  // namespace IntellVoice
 }  // namespace OHOS
