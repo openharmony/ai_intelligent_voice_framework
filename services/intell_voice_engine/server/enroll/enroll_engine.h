@@ -22,10 +22,12 @@
 #include "intell_voice_generic_factory.h"
 #include "engine_base.h"
 #include "engine_util.h"
+#include "enroll_adapter_listener.h"
+#include "task_executor.h"
 
 namespace OHOS {
 namespace IntellVoiceEngine {
-class EnrollEngine : public EngineBase, private EngineUtil {
+class EnrollEngine : public EngineBase, private EngineUtil, private OHOS::IntellVoiceUtils::TaskExecutor {
 public:
     ~EnrollEngine();
     bool Init(const std::string &param) override;
@@ -44,8 +46,8 @@ private:
     bool SetParameterInner(const std::string &keyValueList);
     bool StartAudioSource();
     void StopAudioSource();
-    void OnEnrollEvent(int32_t msgId, int32_t result);
-    void OnEnrollComplete();
+    void OnEnrollEvent(const OHOS::HDI::IntelligentVoice::Engine::V1_0::IntellVoiceEngineCallBackEvent &event);
+    void OnEnrollComplete(int32_t result, const std::string &info);
 
 private:
     using EngineUtil::adapter_;
@@ -53,6 +55,7 @@ private:
     bool isPcmFromExternal_ = false;
     std::atomic<int32_t> enrollResult_ = -1;
     uint32_t callerTokenId_ = 0;
+    std::shared_ptr<EnrollAdapterListener> adapterListener_ = nullptr;
     sptr<OHOS::HDI::IntelligentVoice::Engine::V1_0::IIntellVoiceEngineCallback> callback_ = nullptr;
     std::unique_ptr<AudioSource> audioSource_ = nullptr;
     std::string wakeupPhrase_;

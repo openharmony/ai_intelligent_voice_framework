@@ -39,8 +39,10 @@ namespace OHOS {
 namespace IntellVoiceEngine {
 static constexpr uint32_t MIN_BUFFER_SIZE = 1280; // 16 * 2 * 40ms
 static constexpr uint32_t INTERVAL = 125; // 125 * 40ms = 5s
+static constexpr uint32_t MAX_ENROLL_TASK_NUM = 5;
+static const std::string ENROLL_THREAD_NAME = "EnrollEngThread";
 
-EnrollEngine::EnrollEngine()
+EnrollEngine::EnrollEngine() : TaskExecutor(ENROLL_THREAD_NAME, MAX_ENROLL_TASK_NUM)
 {
     INTELL_VOICE_LOG_INFO("enter");
 
@@ -50,6 +52,7 @@ EnrollEngine::EnrollEngine()
     capturerOptions_.streamInfo.channels = AudioChannel::MONO;
     capturerOptions_.capturerInfo.sourceType = SourceType::SOURCE_TYPE_VOICE_RECOGNITION;
     capturerOptions_.capturerInfo.capturerFlags = 0;
+    TaskExecutor::StartThread();
 }
 
 EnrollEngine::~EnrollEngine()
@@ -58,19 +61,30 @@ EnrollEngine::~EnrollEngine()
     callback_ = nullptr;
 }
 
-void EnrollEngine::OnEnrollEvent(int32_t msgId, int32_t result)
+void EnrollEngine::OnEnrollEvent(
+    const OHOS::HDI::IntelligentVoice::Engine::V1_0::IntellVoiceEngineCallBackEvent &event)
 {
-    if (msgId == INTELL_VOICE_ENGINE_MSG_ENROLL_COMPLETE) {
-        std::thread(&EnrollEngine::OnEnrollComplete, this).detach();
-    } else if (msgId == INTELL_VOICE_ENGINE_MSG_COMMIT_ENROLL_COMPLETE) {
-        enrollResult_.store(result);
-        IntellVoiceServiceManager::SetEnrollResult(INTELL_VOICE_ENROLL, result == 0 ? true : false);
+    if (event.msgId == INTELL_VOICE_ENGINE_MSG_ENROLL_COMPLETE) {
+        TaskExecutor::AddAsyncTask([this, result = event.result, info = event.info]() {
+            OnEnrollComplete(result, info);
+        });
+    } else if (event.msgId == INTELL_VOICE_ENGINE_MSG_COMMIT_ENROLL_COMPLETE) {
+        enrollResult_.store(static_cast<int32_t>(event.result));
+        IntellVoiceServiceManager::SetEnrollResult(INTELL_VOICE_ENROLL,
+            (static_cast<int32_t>(event.result) == 0 ? true : false));
     }
 }
 
-void EnrollEngine::OnEnrollComplete()
+void EnrollEngine::OnEnrollComplete(int32_t result, const std::string &info)
 {
     std::lock_guard<std::mutex> lock(mutex_);
+    OHOS::HDI::IntelligentVoice::Engine::V1_0::IntellVoiceEngineCallBackEvent event;
+    event.msgId = INTELL_VOICE_ENGINE_MSG_ENROLL_COMPLETE;
+    event.result = static_cast<OHOS::HDI::IntelligentVoice::Engine::V1_0::IntellVoiceEngineErrors>(result);
+    event.info = info;
+    if (adapterListener_ != nullptr) {
+        adapterListener_->Notify(event);
+    }
     StopAudioSource();
 }
 
@@ -98,14 +112,14 @@ void EnrollEngine::SetCallback(sptr<IRemoteObject> object)
         return;
     }
 
-    std::shared_ptr<IntellVoiceAdapterListener> listener = std::make_shared<EnrollAdapterListener>(callback,
-        std::bind(&EnrollEngine::OnEnrollEvent, this, std::placeholders::_1, std::placeholders::_2));
-    if (listener == nullptr) {
-        INTELL_VOICE_LOG_ERROR("listener is nullptr");
+    adapterListener_ = std::make_shared<EnrollAdapterListener>(callback,
+        std::bind(&EnrollEngine::OnEnrollEvent, this, std::placeholders::_1));
+    if (adapterListener_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("adapter listener is nullptr");
         return;
     }
 
-    callback_ = sptr<IIntellVoiceEngineCallback>(new (std::nothrow) AdapterCallbackService(listener));
+    callback_ = sptr<IIntellVoiceEngineCallback>(new (std::nothrow) AdapterCallbackService(adapterListener_));
     if (callback_ == nullptr) {
         INTELL_VOICE_LOG_ERROR("callback_ is nullptr");
         return;
@@ -140,28 +154,23 @@ int32_t EnrollEngine::Attach(const IntellVoiceEngineInfo &info)
 int32_t EnrollEngine::Detach(void)
 {
     INTELL_VOICE_LOG_INFO("enter");
-    int32_t ret = 0;
-    std::shared_ptr<GenericTriggerModel> model = nullptr;
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        StopAudioSource();
-        if (adapter_ == nullptr) {
-            INTELL_VOICE_LOG_WARN("already detach");
-            return 0;
-        }
-        model = ReadDspModel(OHOS::HDI::IntelligentVoice::Engine::V1_0::DSP_MODLE);
-        ret = adapter_->Detach();
-        ReleaseAdapterInner(EngineHostManager::GetInstance());
+    std::lock_guard<std::mutex> lock(mutex_);
+    StopAudioSource();
+    if (adapter_ == nullptr) {
+        INTELL_VOICE_LOG_WARN("already detach");
+        return 0;
     }
 
     if (enrollResult_.load() == 0) {
-        EngineUtil::ProcDspModel(model);
+        EngineUtil::ProcDspModel(ReadDspModel(OHOS::HDI::IntelligentVoice::Engine::V1_0::DSP_MODLE));
         HistoryInfoMgr::GetInstance().SetWakeupPhrase(wakeupPhrase_);
         /* save new version number */
         UpdateEngineUtils::SaveWakeupVesion();
         INTELL_VOICE_LOG_INFO("enroll save version");
     }
 
+    int32_t ret = adapter_->Detach();
+    ReleaseAdapterInner(EngineHostManager::GetInstance());
     return ret;
 }
 

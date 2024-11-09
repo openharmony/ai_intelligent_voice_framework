@@ -327,7 +327,7 @@ napi_value IntellVoiceManagerNapi::Off(napi_env env, napi_callback_info info)
     napi_value jsThis = nullptr;
 
     napi_status status = napi_get_cb_info(env, info, &argCount, args, &jsThis, nullptr);
-    if (status != napi_ok || argCount != expectArgCount) {
+    if (status != napi_ok || argCount < ARGC_ONE || argCount > ARGC_TWO) {
         INTELL_VOICE_LOG_ERROR("failed to get parameters");
         return undefinedResult;
     }
