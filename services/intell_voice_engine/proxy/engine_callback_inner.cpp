@@ -28,21 +28,12 @@ EngineCallbackInner::EngineCallbackInner(std::shared_ptr<IIntellVoiceEngineEvent
 
 void EngineCallbackInner::OnIntellVoiceEngineEvent(const IntellVoiceEngineCallBackEvent &event)
 {
-    INTELL_VOICE_LOG_INFO("receive event");
+    INTELL_VOICE_LOG_INFO("receive event, id:%{public}d", event.msgId);
     if (cb_ == nullptr) {
         INTELL_VOICE_LOG_INFO("cb is null");
         return;
     }
-    auto msgId = event.msgId;
-    auto result = event.result;
-    auto info = event.info;
-    std::thread([this, msgId, result, info]() {
-        IntellVoiceEngineCallBackEvent tmpEvent;
-        tmpEvent.msgId = msgId;
-        tmpEvent.result = result;
-        tmpEvent.info = info;
-        cb_->OnEvent(tmpEvent);
-    }).detach();
+    cb_->OnEvent(event);
 }
 }
 }

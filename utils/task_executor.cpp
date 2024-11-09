@@ -22,16 +22,19 @@ namespace OHOS {
 namespace IntellVoiceUtils {
 TaskExecutor::TaskExecutor(const std::string &threadName, uint32_t capacity) : threadName_(threadName)
 {
+    INTELL_VOICE_LOG_INFO("constructor, thread name:%{public}s, capacity:%{public}u", threadName_.c_str(), capacity);
     Init(capacity);
 }
 
 TaskExecutor::~TaskExecutor()
 {
     StopThread();
+    INTELL_VOICE_LOG_INFO("destructor, thread name:%{public}s", threadName_.c_str());
 }
 
 void TaskExecutor::StartThread()
 {
+    INTELL_VOICE_LOG_INFO("enter");
     std::lock_guard<std::mutex> lock(mutex_);
     int ret = pthread_create(&tid_, nullptr, TaskExecutor::ExecuteInThread, this);
     if (ret != 0) {
@@ -44,14 +47,17 @@ void TaskExecutor::StartThread()
 
 void TaskExecutor::StopThread()
 {
+    INTELL_VOICE_LOG_INFO("enter");
     Uninit();
     std::lock_guard<std::mutex> lock(mutex_);
     if (!isRuning_) {
+        INTELL_VOICE_LOG_INFO("not running");
         return;
     }
 
     pthread_join(tid_, nullptr);
     isRuning_ = false;
+    INTELL_VOICE_LOG_INFO("exit");
 }
 
 void *TaskExecutor::ExecuteInThread(void *arg)

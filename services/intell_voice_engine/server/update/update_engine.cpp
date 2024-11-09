@@ -71,18 +71,24 @@ void UpdateEngine::OnCommitEnrollComplete(int32_t result)
         INTELL_VOICE_LOG_INFO("update save version");
     }
 
-    std::thread([=]() {
-        const auto &manager = IntellVoiceServiceManager::GetInstance();
-        if (manager != nullptr) {
-            manager->OnUpdateComplete(updateResult_, param_);
-        }
-    }).detach();
+    const auto &manager = IntellVoiceServiceManager::GetInstance();
+    if (manager != nullptr) {
+        manager->OnUpdateComplete(updateResult_, param_);
+    }
 }
 
 void UpdateEngine::OnUpdateEvent(int32_t msgId, int32_t result)
 {
     if (msgId == INTELL_VOICE_ENGINE_MSG_COMMIT_ENROLL_COMPLETE) {
-        std::thread([this, result]() { this->OnCommitEnrollComplete(result); }).detach();
+        wptr<UpdateEngine> thisWptr(this);
+        std::thread([thisWptr, result]() {
+            sptr<UpdateEngine> thisSptr = thisWptr.promote();
+            if (thisSptr != nullptr) {
+                thisSptr->OnCommitEnrollComplete(result);
+            } else {
+                INTELL_VOICE_LOG_WARN("updateEngine is null");
+            }
+        }).detach();
     }
 }
 
@@ -167,13 +173,10 @@ int32_t UpdateEngine::Detach(void)
 
     if (updateResult_ == UpdateState::UPDATE_STATE_DEFAULT) {
         INTELL_VOICE_LOG_WARN("detach defore receive commit enroll msg");
-        std::string param = param_;
-        std::thread([param]() {
-            const auto &manager = IntellVoiceServiceManager::GetInstance();
-            if (manager != nullptr) {
-                manager->OnUpdateComplete(UpdateState::UPDATE_STATE_DEFAULT, param);
-            }
-        }).detach();
+        const auto &manager = IntellVoiceServiceManager::GetInstance();
+        if (manager != nullptr) {
+            manager->OnUpdateComplete(UpdateState::UPDATE_STATE_DEFAULT, param_);
+        }
     }
     return ret;
 }

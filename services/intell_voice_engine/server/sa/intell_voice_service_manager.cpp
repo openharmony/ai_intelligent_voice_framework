@@ -49,7 +49,6 @@ namespace IntellVoiceEngine {
 static constexpr int32_t WAIT_AUDIO_HAL_INTERVAL = 500; //500ms
 static constexpr uint32_t MAX_TASK_NUM = 200;
 static constexpr uint32_t WAIT_SWICTH_ON_TIME = 2000;  // 2000ms
-static const std::string SERVICE_MANAGER_THREAD_NAME = "ServMgrThread";
 static const std::string WHISPER_MODEL_PATH =
     "/sys_prod/variant/region_comm/china/etc/intellvoice/wakeup/dsp/whisper_wakeup_dsp_config";
 static const std::string VAD_MODEL_PATH =
@@ -66,7 +65,7 @@ std::atomic<bool> IntellVoiceServiceManager::g_enrollResult[ENGINE_TYPE_BUT] = {
 std::unique_ptr<IntellVoiceServiceManager> IntellVoiceServiceManager::g_intellVoiceServiceMgr =
     std::unique_ptr<IntellVoiceServiceManager>(new (std::nothrow) IntellVoiceServiceManager());
 
-IntellVoiceServiceManager::IntellVoiceServiceManager() : TaskExecutor(SERVICE_MANAGER_THREAD_NAME, MAX_TASK_NUM)
+IntellVoiceServiceManager::IntellVoiceServiceManager() : TaskExecutor("ServMgrThread", MAX_TASK_NUM)
 {
     TaskExecutor::StartThread();
 #ifdef USE_FFRT
@@ -426,6 +425,7 @@ int32_t IntellVoiceServiceManager::ServiceStopProc()
         return -1;
     }
     wakeupEngine->Detach();
+    wakeupEngine->NotifyHeadsetHostEvent(HEADSET_HOST_OFF);
     return 0;
 }
 

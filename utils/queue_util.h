@@ -65,7 +65,9 @@ public:
         CHECK_CONDITION_RETURN_FALSE(!IsAvailable(), "queue is not available");
 
         while (queue_.size() >= capacity_) {
-            CHECK_CONDITION_RETURN_FALSE((!isWait), "queue is full, no need to wait");
+            if (!isWait) {
+                return false;
+            }
             notFullCv_.wait(lock, [&]() { return ((queue_.size() < capacity_) || (!IsAvailable())); });
             CHECK_CONDITION_RETURN_FALSE(!IsAvailable(), "queue is not available");
         }

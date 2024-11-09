@@ -34,8 +34,11 @@ namespace IntellVoiceEngine {
 static constexpr int64_t RECOGNIZING_TIMEOUT_US = 10 * 1000 * 1000; //10s
 static constexpr int64_t RECOGNIZE_COMPLETE_TIMEOUT_US = 1 * 1000; //1ms
 static constexpr int64_t READ_CAPTURER_TIMEOUT_US = 10 * 1000 * 1000; //10s
+static constexpr uint32_t MAX_HEADSET_TASK_NUM = 20;
+static const std::string HEADSET_THREAD_NAME = "HeadsetThread";
 
-HeadsetWakeupEngineImpl::HeadsetWakeupEngineImpl() : ModuleStates(State(IDLE), "HeadsetWakeupEngineImpl")
+HeadsetWakeupEngineImpl::HeadsetWakeupEngineImpl()
+    : ModuleStates(State(IDLE), "HeadsetWakeupEngineImpl"), TaskExecutor(HEADSET_THREAD_NAME, MAX_HEADSET_TASK_NUM)
 {
 }
 
@@ -57,6 +60,7 @@ bool HeadsetWakeupEngineImpl::Init()
         return false;
     }
 
+    TaskExecutor::StartThread();
     return true;
 }
 
@@ -154,11 +158,13 @@ void HeadsetWakeupEngineImpl::OnWakeupEvent(
 {
     INTELL_VOICE_LOG_INFO("enter, msgId:%{public}d, result:%{public}d", event.msgId, event.result);
     if (event.msgId == INTELL_VOICE_ENGINE_MSG_INIT_DONE) {
-        std::thread(&HeadsetWakeupEngineImpl::OnInitDone, this, event.result).detach();
+        TaskExecutor::AddAsyncTask([this, result = event.result]() { OnInitDone(result); });
     } else if (
         event.msgId == static_cast<OHOS::HDI::IntelligentVoice::Engine::V1_0::IntellVoiceEngineMessageType>(
             OHOS::HDI::IntelligentVoice::Engine::V1_2::INTELL_VOICE_ENGINE_MSG_HEADSET_RECOGNIZE_COMPLETE)) {
-        std::thread(&HeadsetWakeupEngineImpl::OnWakeupRecognition, this, event.result, event.info).detach();
+        TaskExecutor::AddAsyncTask([this, result = event.result, info = event.info]() {
+            OnWakeupRecognition(result, info);
+        });
     } else {
     }
 }
