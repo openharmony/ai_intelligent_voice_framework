@@ -47,8 +47,11 @@ static constexpr std::string_view DEFAULT_WAKEUP_PHRASE = "\xE5\xB0\x8F\xE8\x89\
 static constexpr int64_t RECOGNIZING_TIMEOUT_US = 10 * 1000 * 1000; //10s
 static constexpr int64_t RECOGNIZE_COMPLETE_TIMEOUT_US = 2 * 1000 * 1000; //2s
 static constexpr int64_t READ_CAPTURER_TIMEOUT_US = 10 * 1000 * 1000; //10s
+static constexpr uint32_t MAX_WAKEUP_TASK_NUM = 20;
+static const std::string WAKEUP_THREAD_NAME = "WakeupEngThread";
 
-WakeupEngineImpl::WakeupEngineImpl() : ModuleStates(State(IDLE), "WakeupEngineImpl", "WakeupThread")
+WakeupEngineImpl::WakeupEngineImpl() : ModuleStates(State(IDLE), "WakeupEngineImpl", "WakeupThread"),
+    TaskExecutor(WAKEUP_THREAD_NAME, MAX_WAKEUP_TASK_NUM)
 {
     InitStates();
     capturerOptions_.streamInfo.samplingRate = AudioSamplingRate::SAMPLE_RATE_16000;
@@ -62,6 +65,7 @@ WakeupEngineImpl::WakeupEngineImpl() : ModuleStates(State(IDLE), "WakeupEngineIm
     if (adapterListener_ == nullptr) {
         INTELL_VOICE_LOG_ERROR("adapterListener_ is nullptr");
     }
+    TaskExecutor::StartThread();
 }
 
 WakeupEngineImpl::~WakeupEngineImpl()
@@ -321,9 +325,11 @@ void WakeupEngineImpl::OnWakeupEvent(
     const OHOS::HDI::IntelligentVoice::Engine::V1_0::IntellVoiceEngineCallBackEvent &event)
 {
     if (event.msgId == INTELL_VOICE_ENGINE_MSG_INIT_DONE) {
-        std::thread(&WakeupEngineImpl::OnInitDone, this, event.result).detach();
+        TaskExecutor::AddAsyncTask([this, result = event.result]() { OnInitDone(result); });
     } else if (event.msgId == INTELL_VOICE_ENGINE_MSG_RECOGNIZE_COMPLETE) {
-        std::thread(&WakeupEngineImpl::OnWakeupRecognition, this, event.result, event.info).detach();
+        TaskExecutor::AddAsyncTask([this, result = event.result, info = event.info]() {
+            OnWakeupRecognition(result, info);
+        });
     } else {
         INTELL_VOICE_LOG_WARN("invalid msg id:%{public}d", event.msgId);
     }

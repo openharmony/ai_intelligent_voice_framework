@@ -26,6 +26,7 @@
 #include "engine_util.h"
 #include "wakeup_adapter_listener.h"
 #include "wakeup_source_process.h"
+#include "task_executor.h"
 
 namespace OHOS {
 namespace IntellVoiceEngine {
@@ -33,7 +34,7 @@ using OHOS::IntellVoiceUtils::StateMsg;
 using OHOS::IntellVoiceUtils::State;
 
 class HeadsetWakeupEngineImpl : private OHOS::IntellVoiceUtils::ModuleStates, private EngineUtil,
-    private WakeupSourceProcess {
+    private WakeupSourceProcess, private OHOS::IntellVoiceUtils::TaskExecutor {
 public:
     HeadsetWakeupEngineImpl();
     ~HeadsetWakeupEngineImpl();

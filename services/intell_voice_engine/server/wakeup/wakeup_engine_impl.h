@@ -27,6 +27,7 @@
 
 #include "audio_source.h"
 #include "wakeup_source_process.h"
+#include "task_executor.h"
 
 namespace OHOS {
 namespace IntellVoiceEngine {
@@ -34,7 +35,7 @@ using OHOS::IntellVoiceUtils::StateMsg;
 using OHOS::IntellVoiceUtils::State;
 
 class WakeupEngineImpl : private OHOS::IntellVoiceUtils::ModuleStates, private EngineUtil,
-    private WakeupSourceProcess {
+    private WakeupSourceProcess, private OHOS::IntellVoiceUtils::TaskExecutor {
 public:
     WakeupEngineImpl();
     ~WakeupEngineImpl();
@@ -62,7 +63,6 @@ private:
     void OnWakeupEvent(const OHOS::HDI::IntelligentVoice::Engine::V1_0::IntellVoiceEngineCallBackEvent &event);
     void OnInitDone(int32_t result);
     void OnWakeupRecognition(int32_t result, const std::string &info);
-    void OnWakeupKws3Recognition(int32_t result, const std::string &info);
     void UpdateDspModel();
     OHOS::AudioStandard::AudioChannel GetWakeupSourceChannel();
 
