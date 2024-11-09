@@ -21,7 +21,8 @@
 
 namespace OHOS {
 namespace IntellVoiceEngine {
-using OnEnrollEventCb = std::function<void(int32_t, int32_t)>;
+using OnEnrollEventCb = std::function<void(
+    const OHOS::HDI::IntelligentVoice::Engine::V1_0::IntellVoiceEngineCallBackEvent &event)>;
 
 class EnrollAdapterListener : public IntellVoiceAdapterListener {
 public:
@@ -29,7 +30,9 @@ public:
     ~EnrollAdapterListener();
 
     void OnIntellVoiceHdiEvent(
-        const OHOS::HDI::IntelligentVoice::Engine::V1_0::IntellVoiceEngineCallBackEvent& event) override;
+        const OHOS::HDI::IntelligentVoice::Engine::V1_0::IntellVoiceEngineCallBackEvent &event) override;
+    void Notify(
+        const OHOS::HDI::IntelligentVoice::Engine::V1_0::IntellVoiceEngineCallBackEvent &event);
 
 private:
     sptr<IIntelligentVoiceEngineCallback> cb_ = nullptr;

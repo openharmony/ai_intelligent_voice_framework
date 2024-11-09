@@ -34,12 +34,20 @@ EnrollAdapterListener::~EnrollAdapterListener()
     INTELL_VOICE_LOG_INFO("destructor");
 }
 
-void EnrollAdapterListener::OnIntellVoiceHdiEvent(const IntellVoiceEngineCallBackEvent& event)
+void EnrollAdapterListener::OnIntellVoiceHdiEvent(const IntellVoiceEngineCallBackEvent &event)
 {
     INTELL_VOICE_LOG_INFO("OnIntellVoiceHdiEvent");
+    if (enrollEventCb_ != nullptr) {
+        enrollEventCb_(event);
+    }
 
-    enrollEventCb_(event.msgId, event.result);
+    if ((event.msgId != INTELL_VOICE_ENGINE_MSG_ENROLL_COMPLETE) && (cb_ != nullptr)) {
+        cb_->OnIntellVoiceEngineEvent(event);
+    }
+}
 
+void EnrollAdapterListener::Notify(const IntellVoiceEngineCallBackEvent &event)
+{
     if (cb_ != nullptr) {
         cb_->OnIntellVoiceEngineEvent(event);
     }
