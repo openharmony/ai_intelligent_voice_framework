@@ -120,3 +120,89 @@ ohos_unittest("trigger_manager_test") {
     "state_registry:tel_state_registry_api",
   ]
 }
+
+ohos_unittest("update_engine_test") {
+  testonly = true
+  module_out_path = module_output_path
+  include_dirs = [
+    "../../../services/intell_voice_engine/server/wakeup",
+    "../../../services/intell_voice_engine/server/enroll",
+    "../../../services/intell_voice_engine/server/update",
+    "../../../services/intell_voice_engine/server/update/controller",
+    "../../../services/intell_voice_engine/server/update/controller/strategy",
+    "../../../services/intell_voice_engine/server/wakeup/headset",
+    "../../../services/intell_voice_engine/server/sa",
+    "../../../services/intell_voice_engine/server/utils",
+    "../../../services/intell_voice_engine/server/base",
+    "../../../services/intell_voice_engine/server/hdi_adapter",
+    "../../../utils",
+    "../../../services/intell_voice_engine",
+    "../../../services/intell_voice_trigger/server/",
+    "../../../services/intell_voice_trigger/server/connector_mgr",
+    "../../../services/intell_voice_engine/proxy",
+    "../../../interfaces/inner_api/native",
+  ]
+
+  use_exceptions = true
+
+  cflags = [
+    "-Wall",
+    "-Werror",
+    "-Wno-macro-redefined",
+  ]
+
+  cflags_cc = [
+    "-Wno-error=unused-parameter",
+    "-DHILOG_ENABLE",
+    "-DENABLE_DEBUG",
+    "-DINTELL_VOICE_BUILD_VARIANT_ROOT",
+    "-fno-access-control",
+  ]
+
+  deps = [
+    "../../../frameworks/native:intellvoice_native",
+    "../../../services:intell_voice_proxy",
+    "../../../services:intell_voice_server",
+    "../../../utils:intell_voice_utils",
+    "//third_party/googletest:gmock_main",
+  ]
+
+  external_deps = [
+    "ability_base:want",
+    "ability_base:zuri",
+    "ability_runtime:ability_manager",
+    "ability_runtime:app_context",
+    "ability_runtime:dataobs_manager",
+    "access_token:libaccesstoken_sdk",
+    "audio_framework:audio_capturer",
+    "audio_framework:audio_client",
+    "c_utils:utils",
+    "common_event_service:cesfwk_innerkits",
+    "data_share:datashare_consumer",
+    "drivers_interface_intelligent_voice:intell_voice_engine_idl_headers",
+    "drivers_interface_intelligent_voice:intell_voice_trigger_idl_headers",
+    "drivers_interface_intelligent_voice:libintell_voice_engine_proxy_1.0",
+    "drivers_interface_intelligent_voice:libintell_voice_engine_proxy_1.1",
+    "drivers_interface_intelligent_voice:libintell_voice_engine_proxy_1.2",
+    "drivers_interface_intelligent_voice:libintell_voice_trigger_proxy_1.0",
+    "drivers_interface_intelligent_voice:libintell_voice_trigger_proxy_1.1",
+    "eventhandler:libeventhandler",
+    "ffrt:libffrt",
+    "hdf_core:libhdf_host",
+    "hdf_core:libhdi",
+    "hilog:libhilog",
+    "huks:libhukssdk",
+    "ipc:ipc_core",
+    "jsoncpp:jsoncpp",
+    "kv_store:distributeddata_inner",
+    "power_manager:powermgr_client",
+    "relational_store:native_rdb",
+    "safwk:system_ability_fwk",
+    "samgr:samgr_proxy",
+  ]
+
+  sources = [
+    "src/intell_voice_update_callback.cpp",
+    "src/update_engine_test.cpp",
+  ]
+}
