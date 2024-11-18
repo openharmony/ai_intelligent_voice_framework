@@ -121,8 +121,7 @@ void EnrollIntellVoiceEngineCallbackNapi::ClearAsyncWork(bool error, const std::
 
 void EnrollIntellVoiceEngineCallbackNapi::OnEvent(const IntellVoiceEngineCallBackEvent &event)
 {
-    INTELL_VOICE_LOG_INFO("OnEvent: msgId: %{public}d, errCode: %{public}d, context: %{public}s",
-        event.msgId, event.result, event.info.c_str());
+    INTELL_VOICE_LOG_INFO("OnEvent: msgId: %{public}d, errCode: %{public}d", event.msgId, event.result);
     EnrollAsyncWorkType asyncType = ASYNC_WORK_INVALID;
     switch (event.msgId) {
         case HDI::IntelligentVoice::Engine::V1_0::INTELL_VOICE_ENGINE_MSG_INIT_DONE:

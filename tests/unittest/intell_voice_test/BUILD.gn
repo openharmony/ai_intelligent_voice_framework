@@ -164,7 +164,6 @@ ohos_unittest("update_engine_test") {
     "../../../services:intell_voice_proxy",
     "../../../services:intell_voice_server",
     "../../../utils:intell_voice_utils",
-    "//third_party/googletest:gmock_main",
   ]
 
   external_deps = [

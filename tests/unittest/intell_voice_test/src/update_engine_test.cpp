@@ -18,7 +18,6 @@
 #include <iostream>
 
 #include "json/json.h"
-#include "gmock/gmock.h"
 #include "update_engine.h"
 #include "intell_voice_manager.h"
 #include "engine_host_manager.h"
@@ -31,7 +30,6 @@
 
 #define INTELL_VOICE_BUILD_VARIANT_ROOT
 
-using ::testing::Mock;
 using namespace testing;
 using namespace testing::ext;
 using namespace OHOS;
