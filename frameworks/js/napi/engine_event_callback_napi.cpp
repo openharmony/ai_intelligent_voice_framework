@@ -97,8 +97,8 @@ void EngineEventCallbackNapi::OnEvent(const IntellVoiceEngineCallBackEvent &even
         return;
     }
     EngineCallBackInfo cbInfo = {eventId, event.result == 0 ? true : false, event.info};
-    INTELL_VOICE_LOG_INFO("OnEvent EngineCallBackInfo: eventId: %{public}d, isSuccess: %{public}u, context: %{public}s",
-        cbInfo.eventId, cbInfo.isSuccess, cbInfo.context.c_str());
+    INTELL_VOICE_LOG_INFO("OnEvent EngineCallBackInfo: eventId: %{public}d, isSuccess: %{public}u",
+        cbInfo.eventId, cbInfo.isSuccess);
 
     for (auto it : callbackRefSet_) {
         OnJsCallbackEngineEvent(cbInfo, it);

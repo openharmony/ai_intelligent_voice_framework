@@ -187,7 +187,7 @@ napi_value WakeupIntellVoiceEngineNapi::CreateWakeupIntelligentVoiceEngine(napi_
         status = GetValue(env, temp, g_wakeupEngineDesc_.wakeupPhrase);
         CHECK_CONDITION_RETURN_FALSE((status != napi_ok), "get wakeup phrase failed");
         INTELL_VOICE_LOG_INFO("needReconfirm: %{public}d", g_wakeupEngineDesc_.needReconfirm);
-        INTELL_VOICE_LOG_INFO("wakeupPhrase: %{public}s", g_wakeupEngineDesc_.wakeupPhrase.c_str());
+        INTELL_VOICE_LOG_DEBUG("wakeupPhrase: %{public}s", g_wakeupEngineDesc_.wakeupPhrase.c_str());
         return true;
     };
 

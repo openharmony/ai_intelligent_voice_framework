@@ -257,12 +257,12 @@ bool EnrollEngine::SetParameterInner(const std::string &keyValueList)
             return true;
         }
         if (it.first == std::string("language")) {
-            INTELL_VOICE_LOG_INFO("set language:%{public}s", it.second.c_str());
+            INTELL_VOICE_LOG_DEBUG("set language:%{public}s", it.second.c_str());
             historyInfoMgr.SetLanguage(it.second);
             continue;
         }
         if (it.first == std::string("area")) {
-            INTELL_VOICE_LOG_INFO("set area:%{public}s", it.second.c_str());
+            INTELL_VOICE_LOG_DEBUG("set area:%{public}s", it.second.c_str());
             historyInfoMgr.SetArea(it.second);
             continue;
         }
