@@ -47,7 +47,7 @@ static constexpr std::string_view DEFAULT_WAKEUP_PHRASE = "\xE5\xB0\x8F\xE8\x89\
 static constexpr int64_t RECOGNIZING_TIMEOUT_US = 10 * 1000 * 1000; //10s
 static constexpr int64_t RECOGNIZE_COMPLETE_TIMEOUT_US = 2 * 1000 * 1000; //2s
 static constexpr int64_t READ_CAPTURER_TIMEOUT_US = 10 * 1000 * 1000; //10s
-static constexpr uint32_t MAX_WAKEUP_TASK_NUM = 20;
+static constexpr uint32_t MAX_WAKEUP_TASK_NUM = 200;
 static const std::string WAKEUP_THREAD_NAME = "WakeupEngThread";
 
 WakeupEngineImpl::WakeupEngineImpl() : ModuleStates(State(IDLE), "WakeupEngineImpl", "WakeupThread"),
@@ -325,11 +325,12 @@ void WakeupEngineImpl::OnWakeupEvent(
     const OHOS::HDI::IntelligentVoice::Engine::V1_0::IntellVoiceEngineCallBackEvent &event)
 {
     if (event.msgId == INTELL_VOICE_ENGINE_MSG_INIT_DONE) {
-        TaskExecutor::AddAsyncTask([this, result = event.result]() { OnInitDone(result); });
+        TaskExecutor::AddAsyncTask([this, result = event.result]() { OnInitDone(result); },
+            "WakeupEngineImpl::InitDone", false);
     } else if (event.msgId == INTELL_VOICE_ENGINE_MSG_RECOGNIZE_COMPLETE) {
         TaskExecutor::AddAsyncTask([this, result = event.result, info = event.info]() {
             OnWakeupRecognition(result, info);
-        });
+            }, "WakeupEngineImpl::RecognizeComplete", false);
     } else {
         INTELL_VOICE_LOG_WARN("invalid msg id:%{public}d", event.msgId);
     }

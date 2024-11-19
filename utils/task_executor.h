@@ -21,7 +21,10 @@
 #include <future>
 #include <pthread.h>
 #include <sys/types.h>
+#include <string>
 #include "queue_util.h"
+
+#define LOG_TAG "TaskExecutor"
 
 namespace OHOS {
 namespace IntellVoiceUtils {
@@ -32,10 +35,12 @@ public:
     void StartThread();
     void StopThread();
     template <typename F>
-    void AddAsyncTask(F &&func)
+    void AddAsyncTask(F &&func, const std::string &desc = "", bool isWait = true)
     {
         auto task = std::make_shared<std::packaged_task<void()>>(std::forward<F>(func));
-        Push([task]() { (*task)(); });
+        if (!Push([task]() { (*task)(); }, isWait)) {
+            INTELL_VOICE_LOG_ERROR("failed to push task, desc:%{public}s, isWait:%{public}d", desc.c_str(), isWait);
+        }
     }
     template <typename F, typename... Args>
     auto AddSyncTask(F &&func, Args &&...args) -> decltype(func(args...))
@@ -60,4 +65,7 @@ private:
 };
 }
 }
+
+#undef LOG_TAG
+
 #endif

@@ -39,7 +39,7 @@ namespace OHOS {
 namespace IntellVoiceEngine {
 static constexpr uint32_t MIN_BUFFER_SIZE = 1280; // 16 * 2 * 40ms
 static constexpr uint32_t INTERVAL = 125; // 125 * 40ms = 5s
-static constexpr uint32_t MAX_ENROLL_TASK_NUM = 5;
+static constexpr uint32_t MAX_ENROLL_TASK_NUM = 100;
 static const std::string ENROLL_THREAD_NAME = "EnrollEngThread";
 
 EnrollEngine::EnrollEngine() : TaskExecutor(ENROLL_THREAD_NAME, MAX_ENROLL_TASK_NUM)
@@ -67,7 +67,7 @@ void EnrollEngine::OnEnrollEvent(
     if (event.msgId == INTELL_VOICE_ENGINE_MSG_ENROLL_COMPLETE) {
         TaskExecutor::AddAsyncTask([this, result = event.result, info = event.info]() {
             OnEnrollComplete(result, info);
-        });
+            }, "EnrollEngine::OnEnrollEvent", false);
     } else if (event.msgId == INTELL_VOICE_ENGINE_MSG_COMMIT_ENROLL_COMPLETE) {
         enrollResult_.store(static_cast<int32_t>(event.result));
         IntellVoiceServiceManager::SetEnrollResult(INTELL_VOICE_ENROLL,

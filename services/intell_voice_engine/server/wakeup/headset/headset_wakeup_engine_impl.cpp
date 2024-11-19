@@ -34,7 +34,7 @@ namespace IntellVoiceEngine {
 static constexpr int64_t RECOGNIZING_TIMEOUT_US = 10 * 1000 * 1000; //10s
 static constexpr int64_t RECOGNIZE_COMPLETE_TIMEOUT_US = 1 * 1000; //1ms
 static constexpr int64_t READ_CAPTURER_TIMEOUT_US = 10 * 1000 * 1000; //10s
-static constexpr uint32_t MAX_HEADSET_TASK_NUM = 20;
+static constexpr uint32_t MAX_HEADSET_TASK_NUM = 200;
 static const std::string HEADSET_THREAD_NAME = "HeadsetThread";
 
 HeadsetWakeupEngineImpl::HeadsetWakeupEngineImpl()
@@ -158,13 +158,14 @@ void HeadsetWakeupEngineImpl::OnWakeupEvent(
 {
     INTELL_VOICE_LOG_INFO("enter, msgId:%{public}d, result:%{public}d", event.msgId, event.result);
     if (event.msgId == INTELL_VOICE_ENGINE_MSG_INIT_DONE) {
-        TaskExecutor::AddAsyncTask([this, result = event.result]() { OnInitDone(result); });
+        TaskExecutor::AddAsyncTask([this, result = event.result]() { OnInitDone(result); },
+            "HeadsetWakeupEngineImpl::InitDone", false);
     } else if (
         event.msgId == static_cast<OHOS::HDI::IntelligentVoice::Engine::V1_0::IntellVoiceEngineMessageType>(
             OHOS::HDI::IntelligentVoice::Engine::V1_2::INTELL_VOICE_ENGINE_MSG_HEADSET_RECOGNIZE_COMPLETE)) {
         TaskExecutor::AddAsyncTask([this, result = event.result, info = event.info]() {
             OnWakeupRecognition(result, info);
-        });
+            }, "HeadsetWakeupEngineImpl::RecgonizeComplete", false);
     } else {
     }
 }
