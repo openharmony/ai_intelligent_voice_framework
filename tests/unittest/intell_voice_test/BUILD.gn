@@ -37,6 +37,7 @@ ohos_unittest("client_unit_test") {
     "-Wno-error=unused-parameter",
     "-DHILOG_ENABLE",
     "-DENABLE_DEBUG",
+    "-DINTELL_VOICE_BUILD_VARIANT_ROOT",
   ]
 
   deps = [

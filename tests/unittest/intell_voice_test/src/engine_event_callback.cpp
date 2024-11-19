@@ -27,7 +27,7 @@ using namespace std;
 namespace {
 constexpr int32_t ENROLL_CNT = 3;
 static constexpr uint32_t BUFFER_SIZE = 1280;
-static constexpr uint32_t WAIT_TIME = 1000;
+static constexpr uint32_t WAIT_TIME = 1000 * 100;
 }
 
 namespace OHOS {
@@ -46,18 +46,24 @@ void EngineEventCallback::OnEvent(
         EXPECT_EQ(event.result, HDI::IntelligentVoice::Engine::V1_0::INTELL_VOICE_ENGINE_OK);
         startCnt_ = 1;
         engine_->Start(false);
-        EngineEventCallback::ReadFile(TEST_RESOURCE_PATH + "one.pcm");
+        std::thread([this]() {
+            usleep(WAIT_TIME);
+            EngineEventCallback::ReadFile(TEST_RESOURCE_PATH + "one.pcm");
+        }).detach();
     }
-
     if (event.msgId == HDI::IntelligentVoice::Engine::V1_0::INTELL_VOICE_ENGINE_MSG_ENROLL_COMPLETE) {
         EXPECT_EQ(event.result, HDI::IntelligentVoice::Engine::V1_0::INTELL_VOICE_ENGINE_OK);
         if (startCnt_ < ENROLL_CNT) {
             ++startCnt_;
-            engine_->Start(startCnt_ == ENROLL_CNT ? true : false);
-            usleep(WAIT_TIME);
-            EngineEventCallback::ReadFile(TEST_RESOURCE_PATH + "one.pcm");
+            std::thread([this]() {
+                engine_->Start(startCnt_ == ENROLL_CNT ? true : false);
+                usleep(WAIT_TIME);
+                EngineEventCallback::ReadFile(TEST_RESOURCE_PATH + "one.pcm");
+            }).detach();
         } else if (startCnt_ == ENROLL_CNT) {
-            engine_->SetParameter("CommitEnrollment=true");
+            std::thread([this]() {
+                engine_->SetParameter("CommitEnrollment=true");
+            }).detach();
         }
     }
 
