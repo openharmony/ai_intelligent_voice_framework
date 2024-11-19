@@ -47,7 +47,7 @@ using namespace OHOS::HDI::IntelligentVoice::Engine::V1_0;
 namespace OHOS {
 namespace IntellVoiceEngine {
 static constexpr int32_t WAIT_AUDIO_HAL_INTERVAL = 500; //500ms
-static constexpr uint32_t MAX_TASK_NUM = 200;
+static constexpr uint32_t MAX_TASK_NUM = 2048;
 static constexpr uint32_t WAIT_SWICTH_ON_TIME = 2000;  // 2000ms
 static const std::string WHISPER_MODEL_PATH =
     "/sys_prod/variant/region_comm/china/etc/intellvoice/wakeup/dsp/whisper_wakeup_dsp_config";
@@ -337,7 +337,7 @@ void IntellVoiceServiceManager::OnDetected(int32_t uuid)
             return;
         }
         engine->OnDetected(uuid);
-    });
+        }, "IntellVoiceServiceManager::OnDetected", false);
 }
 
 void IntellVoiceServiceManager::CreateAndStartServiceObject(int32_t uuid, bool needResetAdapter)
@@ -626,7 +626,7 @@ void IntellVoiceServiceManager::HandleUpdateComplete(UpdateState result, const s
         SwitchOnProc(VOICE_WAKEUP_MODEL_UUID, true);
         SwitchOnProc(PROXIMAL_WAKEUP_MODEL_UUID, true);
         UnloadIntellVoiceService();
-    });
+        }, "IntellVoiceServiceManager::HandleUpdateComplete", false);
 }
 
 void IntellVoiceServiceManager::HandleUpdateRetry()
@@ -643,7 +643,7 @@ void IntellVoiceServiceManager::HandleUpdateRetry()
         SwitchOnProc(VOICE_WAKEUP_MODEL_UUID, true);
         SwitchOnProc(PROXIMAL_WAKEUP_MODEL_UUID, true);
         UnloadIntellVoiceService();
-    });
+        }, "IntellVoiceServiceManager::HandleUpdateRetry", false);
 }
 
 void IntellVoiceServiceManager::SetImproveParam(sptr<EngineBase> engine)
@@ -888,8 +888,10 @@ void IntellVoiceServiceManager::HandleSwitchOff(bool isAsync, int32_t uuid)
 void IntellVoiceServiceManager::HandleCloseWakeupSource()
 {
     INTELL_VOICE_LOG_INFO("enter");
-    TaskExecutor::AddAsyncTask([this]() { StartDetection(VOICE_WAKEUP_MODEL_UUID); });
-    TaskExecutor::AddAsyncTask([this]() { StartDetection(PROXIMAL_WAKEUP_MODEL_UUID); });
+    TaskExecutor::AddAsyncTask([this]() { StartDetection(VOICE_WAKEUP_MODEL_UUID); },
+        "IntellVoiceServiceManager::start wakeup", false);
+    TaskExecutor::AddAsyncTask([this]() { StartDetection(PROXIMAL_WAKEUP_MODEL_UUID); },
+        "IntellVoiceServiceManager::start proximal", false);
 }
 
 bool IntellVoiceServiceManager::IsNeedToUnloadService()
@@ -1072,8 +1074,11 @@ void IntellVoiceServiceManager::DelStartDetectionTask(int32_t uuid)
 
 void IntellVoiceServiceManager::OnTriggerConnectServiceStart()
 {
-    HandleSwitchOn(true, VOICE_WAKEUP_MODEL_UUID, false);
-    HandleSwitchOn(true, PROXIMAL_WAKEUP_MODEL_UUID, false);
+    INTELL_VOICE_LOG_INFO("enter");
+    TaskExecutor::AddAsyncTask([this]() { SwitchOnProc(VOICE_WAKEUP_MODEL_UUID, false); },
+        "IntellVoiceServiceManager::OnTriggerConnectServiceStart::start wakeup", false);
+    TaskExecutor::AddAsyncTask([this]() { SwitchOnProc(PROXIMAL_WAKEUP_MODEL_UUID, false); },
+        "IntellVoiceServiceManager::OnTriggerConnectServiceStart::start proximal", false);
 }
 }  // namespace IntellVoiceEngine
 }  // namespace OHOS

@@ -33,7 +33,7 @@ using namespace OHOS::HDI::IntelligentVoice::Trigger::V1_1;
 
 namespace OHOS {
 namespace IntellVoiceTrigger {
-static constexpr uint32_t MAX_RECOGNITION_EVENT_NUM = 100;
+static constexpr uint32_t MAX_RECOGNITION_EVENT_NUM = 200;
 static const std::string INTELL_VOICE_TRIGGER_SERVICE = "intell_voice_trigger_manager_service";
 static const std::string THREAD_NAME = "TriggerThread_";
 
@@ -244,7 +244,7 @@ void TriggerConnector::TriggerSession::HandleRecognitionHdiEvent(
 {
     std::function<void()> func = std::bind(
         &TriggerConnector::TriggerSession::ProcessRecognitionHdiEvent, this, event, modelHandle);
-    TaskExecutor::AddAsyncTask(func);
+    TaskExecutor::AddAsyncTask(func, "TriggerSession::HandleRecognitionHdiEvent", false);
 }
 
 void TriggerConnector::TriggerSession::ProcessRecognitionHdiEvent(
