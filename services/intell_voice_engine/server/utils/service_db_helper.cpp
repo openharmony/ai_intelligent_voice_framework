@@ -77,6 +77,7 @@ void ServiceDbHelper::Delete(const std::string &key)
 {
     if (kvStore_ == nullptr) {
         INTELL_VOICE_LOG_ERROR("kvStore_ is nullptr");
+        return;
     }
     kvStore_->Delete(key);
 }
