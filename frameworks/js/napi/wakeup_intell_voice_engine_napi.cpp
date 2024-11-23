@@ -450,12 +450,14 @@ napi_value WakeupIntellVoiceEngineNapi::On(napi_env env, napi_callback_info info
     napi_status status = napi_get_cb_info(env, info, &argCount, args, &jsThis, nullptr);
     if (status != napi_ok || argCount != ARGC_TWO) {
         INTELL_VOICE_LOG_ERROR("failed to get parameters");
+        IntellVoiceCommonNapi::ThrowError(env, NAPI_INTELLIGENT_VOICE_INVALID_PARAM);
         return undefinedResult;
     }
 
     napi_valuetype eventType = napi_undefined;
     if (napi_typeof(env, args[ARG_INDEX_0], &eventType) != napi_ok || eventType != napi_string) {
         INTELL_VOICE_LOG_ERROR("callback event name type mismatch");
+        IntellVoiceCommonNapi::ThrowError(env, NAPI_INTELLIGENT_VOICE_INVALID_PARAM);
         return undefinedResult;
     }
 
@@ -463,18 +465,21 @@ napi_value WakeupIntellVoiceEngineNapi::On(napi_env env, napi_callback_info info
     status = GetValue(env, args[ARG_INDEX_0], callbackName);
     if (status != napi_ok) {
         INTELL_VOICE_LOG_ERROR("failed to get callbackName");
+        IntellVoiceCommonNapi::ThrowError(env, NAPI_INTELLIGENT_VOICE_INVALID_PARAM);
         return undefinedResult;
     }
     INTELL_VOICE_LOG_INFO("callbackName: %{public}s", callbackName.c_str());
 
     if (callbackName != INTELL_VOICE_EVENT_CALLBACK_NAME) {
         INTELL_VOICE_LOG_ERROR("no such supported event");
+        IntellVoiceCommonNapi::ThrowError(env, NAPI_INTELLIGENT_VOICE_INVALID_PARAM);
         return undefinedResult;
     }
 
     napi_valuetype handler = napi_undefined;
     if (napi_typeof(env, args[ARG_INDEX_1], &handler) != napi_ok || handler != napi_function) {
         INTELL_VOICE_LOG_ERROR("callback handler type mismatch");
+        IntellVoiceCommonNapi::ThrowError(env, NAPI_INTELLIGENT_VOICE_INVALID_PARAM);
         return undefinedResult;
     }
 
@@ -491,6 +496,7 @@ napi_value WakeupIntellVoiceEngineNapi::RegisterCallback(napi_env env, napi_valu
     napi_status status = napi_unwrap(env, jsThis, reinterpret_cast<void **>(&engineNapi));
     if (status != napi_ok || engineNapi == nullptr) {
         INTELL_VOICE_LOG_ERROR("Failed to get engine napi instance");
+        IntellVoiceCommonNapi::ThrowError(env, NAPI_INTELLIGENT_VOICE_SYSTEM_ERROR);
         return result;
     }
 
@@ -503,6 +509,7 @@ napi_value WakeupIntellVoiceEngineNapi::RegisterCallback(napi_env env, napi_valu
     engineNapi->callbackNapi_ = std::make_shared<EngineEventCallbackNapi>(env);
     if (engineNapi->callbackNapi_ == nullptr) {
         INTELL_VOICE_LOG_ERROR("allocate callback napi failed");
+        IntellVoiceCommonNapi::ThrowError(env, NAPI_INTELLIGENT_VOICE_NO_MEMORY);
         return result;
     }
     engineNapi->callbackNapi_->SaveCallbackReference(args[ARG_INDEX_1]);

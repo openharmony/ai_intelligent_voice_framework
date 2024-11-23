@@ -50,6 +50,17 @@ void WakeupAdapterListener::SetCallback(const sptr<IIntelligentVoiceEngineCallba
     }
 }
 
+std::string WakeupAdapterListener::GetCallbackStatus()
+{
+    INTELL_VOICE_LOG_INFO("enter");
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (cb_ == nullptr) {
+        INTELL_VOICE_LOG_WARN("cb_ is nullptr");
+        return "false";
+    }
+    return "true";
+}
+
 void WakeupAdapterListener::OnIntellVoiceHdiEvent(const IntellVoiceEngineCallBackEvent &event)
 {
     INTELL_VOICE_LOG_INFO("enter");
