@@ -32,6 +32,7 @@ public:
     ~WakeupAdapterListener();
 
     void SetCallback(const sptr<IIntelligentVoiceEngineCallback> &cb);
+    std::string GetCallbackStatus();
     void OnIntellVoiceHdiEvent(
         const OHOS::HDI::IntelligentVoice::Engine::V1_0::IntellVoiceEngineCallBackEvent &event) override;
     void Notify(const OHOS::HDI::IntelligentVoice::Engine::V1_0::IntellVoiceEngineCallBackEvent &event);

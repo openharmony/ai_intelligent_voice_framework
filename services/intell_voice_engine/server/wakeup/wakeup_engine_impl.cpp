@@ -43,6 +43,7 @@ static constexpr int32_t CHANNEL_CNT = 1;
 static constexpr int32_t BITS_PER_SAMPLE = 16;
 static constexpr int32_t SAMPLE_RATE = 16000;
 static const std::string WAKEUP_SOURCE_CHANNEL = "wakeup_source_channel";
+static const std::string IS_CALLBACK_EXIST = "is_callback_exist";
 static constexpr std::string_view DEFAULT_WAKEUP_PHRASE = "\xE5\xB0\x8F\xE8\x89\xBA\xE5\xB0\x8F\xE8\x89\xBA";
 static constexpr int64_t RECOGNIZING_TIMEOUT_US = 10 * 1000 * 1000; //10s
 static constexpr int64_t RECOGNIZE_COMPLETE_TIMEOUT_US = 2 * 1000 * 1000; //2s
@@ -377,6 +378,13 @@ int32_t WakeupEngineImpl::HandleGetParam(const StateMsg &msg, State & /* nextSta
 
     if (key->strParam == WAKEUP_SOURCE_CHANNEL) {
         value->strParam = std::to_string(static_cast<uint32_t>(capturerOptions_.streamInfo.channels));
+    } else if (key->strParam == IS_CALLBACK_EXIST) {
+        if (adapterListener_ == nullptr) {
+            INTELL_VOICE_LOG_ERROR("adapterListener_ is nullptr");
+            value->strParam = "false";
+        } else {
+            value->strParam = adapterListener_->GetCallbackStatus();
+        }
     } else {
         value->strParam = EngineUtil::GetParameter(key->strParam);
     }
