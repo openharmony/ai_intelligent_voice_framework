@@ -108,5 +108,28 @@ bool SwitchProvider::QuerySwitchStatus(const std::string &key)
         return false;
     }
 }
+
+bool SwitchProvider::IsSwitchError(const std::string &key)
+{
+    std::vector<std::string> columns = {"VALUE"};
+    DataShare::DataSharePredicates predicates;
+    predicates.EqualTo("KEYWORD", key);
+    auto uri = AssembleUri(key);
+    auto resultSet = helper_->Query(uri, predicates, columns);
+    if (resultSet == nullptr) {
+        INTELL_VOICE_LOG_ERROR("resultSet is nullptr");
+        return true;
+    }
+
+    int32_t count;
+    resultSet->GetRowCount(count);
+    if (count == 0) {
+        INTELL_VOICE_LOG_ERROR("not found value, key is %{public}s", key.c_str());
+        resultSet->Close();
+        return true;
+    }
+
+    return false;
+}
 }  // namespace IntellVoice
 }  // namespace OHOS

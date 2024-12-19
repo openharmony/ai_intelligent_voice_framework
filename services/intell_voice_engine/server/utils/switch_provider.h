@@ -28,6 +28,7 @@ public:
     void RegisterObserver(const sptr<SwitchObserver> &observer, const std::string &key);
     void UnregisterObserver(const sptr<SwitchObserver> &observer, const std::string &key);
     bool QuerySwitchStatus(const std::string &key);
+    bool IsSwitchError(const std::string &key);
 
 private:
     SwitchProvider();

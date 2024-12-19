@@ -129,7 +129,6 @@ private:
 
 private:
     sptr<TelephonyStateObserver> telephonyObserver0_ = nullptr;
-    sptr<TelephonyStateObserver> telephonyObserver1_ = nullptr;
 #endif
 
     class AudioCapturerSourceChangeCallback : public AudioCapturerSourceCallback {

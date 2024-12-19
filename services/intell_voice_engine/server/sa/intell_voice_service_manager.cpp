@@ -37,6 +37,7 @@
 #include "json/json.h"
 #include "intell_voice_sensibility.h"
 #include "headset_wakeup_wrapper.h"
+#include "ability_manager_client.h"
 
 #define LOG_TAG "IntellVoiceServiceManager"
 
@@ -57,6 +58,7 @@ static const std::string WAKEUP_CONFIG_USER_PATH =
     "/sys_prod/variant/region_comm/china/etc/intellvoice/wakeup/ap/wakeup_config_user.json";
 static const std::string WAKEUP_CONFIG_PATH =
     "/sys_prod/variant/region_comm/china/etc/intellvoice/wakeup/ap/wakeup_config.json";
+static const std::string STOP_ALL_RECOGNITION = "stop_all_recognition";
 
 static const std::string XIAOYIXIAOYI = "\xE5\xB0\x8F\xE8\x89\xBA\xE5\xB0\x8F\xE8\x89\xBA";
 static const std::string LANGUAGE_TYPE_CHN = "zh";
@@ -332,8 +334,7 @@ void IntellVoiceServiceManager::OnDetected(int32_t uuid)
         auto engine = GetEngine(INTELL_VOICE_WAKEUP, engines_);
         if (engine == nullptr) {
             INTELL_VOICE_LOG_WARN("wakeup engine is nullptr");
-            StartDetection(VOICE_WAKEUP_MODEL_UUID);
-            StartDetection(PROXIMAL_WAKEUP_MODEL_UUID);
+            HandleCloseWakeupSource(true);
             return;
         }
         engine->OnDetected(uuid);
@@ -442,6 +443,41 @@ bool IntellVoiceServiceManager::QuerySwitchStatus(const std::string &key)
         return false;
     }
     return switchProvider_->QuerySwitchStatus(key);
+}
+
+bool IntellVoiceServiceManager::IsSwitchError(const std::string &key)
+{
+    std::lock_guard<std::mutex> lock(switchMutex_);
+    if (switchProvider_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("switchProvider_ is nullptr");
+        return true;
+    }
+
+    return switchProvider_->IsSwitchError(key);
+}
+
+void IntellVoiceServiceManager::NotifyDatabaseError()
+{
+    AAFwk::Want want;
+    HistoryInfoMgr &historyInfoMgr = HistoryInfoMgr::GetInstance();
+
+    std::string bundleName = historyInfoMgr.GetWakeupEngineBundleName();
+    std::string abilityName = historyInfoMgr.GetWakeupEngineAbilityName();
+    INTELL_VOICE_LOG_INFO("bundleName:%{public}s, abilityName:%{public}s", bundleName.c_str(), abilityName.c_str());
+    if (bundleName.empty() || abilityName.empty()) {
+        INTELL_VOICE_LOG_ERROR("bundle name is empty or ability name is empty");
+        return;
+    }
+    want.SetElementName(bundleName, abilityName);
+    want.SetParam("serviceName", std::string("intell_voice"));
+    want.SetParam("servicePid", getpid());
+    want.SetParam("eventType", std::string("db_error"));
+    auto abilityManagerClient = AAFwk::AbilityManagerClient::GetInstance();
+    if (abilityManagerClient == nullptr) {
+        INTELL_VOICE_LOG_ERROR("abilityManagerClient is nullptr");
+        return;
+    }
+    abilityManagerClient->StartAbility(want);
 }
 
 void IntellVoiceServiceManager::OnSwitchChange(const std::string &switchKey)
@@ -885,13 +921,19 @@ void IntellVoiceServiceManager::HandleSwitchOff(bool isAsync, int32_t uuid)
     }
 }
 
-void IntellVoiceServiceManager::HandleCloseWakeupSource()
+void IntellVoiceServiceManager::HandleCloseWakeupSource(bool isNeedStop)
 {
-    INTELL_VOICE_LOG_INFO("enter");
-    TaskExecutor::AddAsyncTask([this]() { StartDetection(VOICE_WAKEUP_MODEL_UUID); },
-        "IntellVoiceServiceManager::start wakeup", false);
-    TaskExecutor::AddAsyncTask([this]() { StartDetection(PROXIMAL_WAKEUP_MODEL_UUID); },
-        "IntellVoiceServiceManager::start proximal", false);
+    INTELL_VOICE_LOG_INFO("enter, isNeedStop:%{public}d", isNeedStop);
+    TaskExecutor::AddAsyncTask([this, isNeedStop]() {
+        if (isNeedStop) {
+            auto triggerMgr = TriggerManager::GetInstance();
+            if (triggerMgr != nullptr) {
+                triggerMgr->SetParameter(STOP_ALL_RECOGNITION, "true");
+            }
+        }
+        StartDetection(VOICE_WAKEUP_MODEL_UUID);
+        StartDetection(PROXIMAL_WAKEUP_MODEL_UUID);
+        }, "IntellVoiceServiceManager::HandleCloseWakeupSource", false);
 }
 
 bool IntellVoiceServiceManager::IsNeedToUnloadService()
@@ -952,6 +994,10 @@ bool IntellVoiceServiceManager::HandleOnIdle()
 void IntellVoiceServiceManager::HandleServiceStop()
 {
     TaskExecutor::AddSyncTask([this]() -> int32_t { return ServiceStopProc(); });
+    if (IsSwitchError(WAKEUP_KEY)) {
+        INTELL_VOICE_LOG_WARN("db is abnormal, can not find wakeup switch, notify db error");
+        NotifyDatabaseError();
+    }
 }
 
 void IntellVoiceServiceManager::HandleHeadsetHostDie()
