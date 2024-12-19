@@ -502,20 +502,9 @@ void TriggerHelper::AttachTelephonyObserver()
         return;
     }
     auto res = TelephonyObserverClient::GetInstance().AddStateObserver(
-        telephonyObserver0_, DEFAULT_SIM_SLOT_ID, TelephonyObserverBroker::OBSERVER_MASK_CALL_STATE, false);
+        telephonyObserver0_, -1, TelephonyObserverBroker::OBSERVER_MASK_CALL_STATE, true);
     if (res != TELEPHONY_SUCCESS) {
         INTELL_VOICE_LOG_ERROR("telephonyObserver0_ add failed");
-    }
-
-    telephonyObserver1_ = std::make_unique<TelephonyStateObserver>(shared_from_this()).release();
-    if (telephonyObserver1_ == nullptr) {
-        INTELL_VOICE_LOG_ERROR("telephonyObserver1_ is nullptr");
-        return;
-    }
-    res = TelephonyObserverClient::GetInstance().AddStateObserver(
-        telephonyObserver1_, SIM_SLOT_ID_1, TelephonyObserverBroker::OBSERVER_MASK_CALL_STATE, false);
-    if (res != TELEPHONY_SUCCESS) {
-        INTELL_VOICE_LOG_ERROR("telephonyObserver1_ add failed");
     }
 }
 
@@ -527,14 +516,8 @@ void TriggerHelper::DetachTelephonyObserver()
 
     if (telephonyObserver0_ != nullptr) {
         Telephony::TelephonyObserverClient::GetInstance().RemoveStateObserver(
-            DEFAULT_SIM_SLOT_ID, Telephony::TelephonyObserverBroker::OBSERVER_MASK_CALL_STATE);
+            -1, Telephony::TelephonyObserverBroker::OBSERVER_MASK_CALL_STATE);
         telephonyObserver0_ = nullptr;
-    }
-
-    if (telephonyObserver1_ != nullptr) {
-        Telephony::TelephonyObserverClient::GetInstance().RemoveStateObserver(
-            SIM_SLOT_ID_1, Telephony::TelephonyObserverBroker::OBSERVER_MASK_CALL_STATE);
-        telephonyObserver1_ = nullptr;
     }
 }
 

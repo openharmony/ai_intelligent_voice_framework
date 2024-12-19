@@ -46,7 +46,7 @@ void WakeupEngine::OnDetected(int32_t uuid)
             INTELL_VOICE_LOG_INFO("headset wakeup is exist");
             const auto &manager = IntellVoiceServiceManager::GetInstance();
             if (manager != nullptr) {
-                manager->HandleCloseWakeupSource();
+                manager->HandleCloseWakeupSource(true);
             }
             return;
         }
@@ -58,7 +58,7 @@ void WakeupEngine::OnDetected(int32_t uuid)
         INTELL_VOICE_LOG_WARN("start failed");
         const auto &manager = IntellVoiceServiceManager::GetInstance();
         if (manager != nullptr) {
-            manager->HandleCloseWakeupSource();
+            manager->HandleCloseWakeupSource(true);
         }
     }
 }

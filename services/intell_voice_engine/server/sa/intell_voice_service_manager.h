@@ -71,7 +71,7 @@ public:
     int32_t HandleCloneUpdate(const std::string &wakeupInfo, const sptr<IRemoteObject> &object);
     void HandleSwitchOn(bool isAsync, int32_t uuid, bool needUpdateAdapter);
     void HandleSwitchOff(bool isAsync, int32_t uuid);
-    void HandleCloseWakeupSource();
+    void HandleCloseWakeupSource(bool isNeedStop = false);
     void HandleUnloadIntellVoiceService(bool isAsync);
     bool HandleOnIdle();
     void HandleServiceStop();
@@ -155,6 +155,8 @@ private:
     void NoiftySwitchOnToPowerChange();
     bool AddStartDetectionTask(int32_t uuid);
     void DelStartDetectionTask(int32_t uuid);
+    bool IsSwitchError(const std::string &key);
+    void NotifyDatabaseError();
 
 private:
     static std::unique_ptr<IntellVoiceServiceManager> g_intellVoiceServiceMgr;
