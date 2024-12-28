@@ -210,31 +210,20 @@ void IntellVoiceService::OnRemoveSystemAbility(int32_t systemAbilityId, const st
 
 void IntellVoiceService::CreateSystemEventObserver()
 {
-    std::shared_ptr<EventRunner> runner = EventRunner::Create("service");
-    if (runner == nullptr) {
-        INTELL_VOICE_LOG_ERROR("runner is null");
-        return;
-    }
-
-    std::shared_ptr<EventHandler> handler = std::make_shared<EventHandler>(runner);
-    if (handler == nullptr) {
-        INTELL_VOICE_LOG_ERROR("handler is null");
-        return;
-    }
-
     OHOS::EventFwk::MatchingSkills matchingSkills;
     matchingSkills.AddEvent(OHOS::EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_ON);
     matchingSkills.AddEvent(OHOS::EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_OFF);
     matchingSkills.AddEvent(OHOS::EventFwk::CommonEventSupport::COMMON_EVENT_PACKAGE_DATA_CLEARED);
     matchingSkills.AddEvent(OHOS::EventFwk::CommonEventSupport::COMMON_EVENT_PACKAGE_REPLACED);
     matchingSkills.AddEvent(OHOS::EventFwk::CommonEventSupport::COMMON_EVENT_PACKAGE_REMOVED);
+    matchingSkills.AddEvent(OHOS::EventFwk::CommonEventSupport::COMMON_EVENT_DATA_SHARE_READY);
     OHOS::EventFwk::CommonEventSubscribeInfo subscribeInfo(matchingSkills);
-    systemEventObserver_ = SystemEventObserver::Create(subscribeInfo);
+    systemEventObserver_ = SystemEventObserver::Create(subscribeInfo,
+        std::bind(&IntellVoiceService::OnReceiveCes, this, std::placeholders::_1));
     if (systemEventObserver_ == nullptr) {
         INTELL_VOICE_LOG_ERROR("systemEventObserver_ is nullptr");
         return;
     }
-    systemEventObserver_->SetEventHandler(handler);
     INTELL_VOICE_LOG_INFO("create system event observer successfully");
 }
 
@@ -291,6 +280,53 @@ void IntellVoiceService::PerStateChangeCbCustomizeCallback::PermStateChangeCallb
     }
 }
 
+void IntellVoiceService::InitIntellVoiceService()
+{
+    INTELL_VOICE_LOG_INFO("enter");
+    const auto &manager = IntellVoiceServiceManager::GetInstance();
+    if (manager == nullptr) {
+        INTELL_VOICE_LOG_ERROR("manager is nullptr");
+        return;
+    }
+    manager->CreateSwitchProvider();
+    manager->ProcBreathModel();
+    manager->HandleSilenceUpdate();
+
+    if (reasonId_ == static_cast<int32_t>(OHOS::OnDemandReasonId::COMMON_EVENT)) {
+        INTELL_VOICE_LOG_INFO("common event start");
+        manager->HandleSwitchOn(true, VOICE_WAKEUP_MODEL_UUID, false);
+        manager->HandleSwitchOn(true, PROXIMAL_WAKEUP_MODEL_UUID, false);
+        if (reasonName_ == std::string("usual.event.POWER_SAVE_MODE_CHANGED")) {
+            INTELL_VOICE_LOG_INFO("power save mode change");
+            manager->HandlePowerSaveModeChange();
+        } else {
+            INTELL_VOICE_LOG_INFO("power on");
+            manager->HandleUnloadIntellVoiceService(true);
+        }
+    } else if (reasonId_ == static_cast<int32_t>(OHOS::OnDemandReasonId::INTERFACE_CALL)) {
+        INTELL_VOICE_LOG_INFO("interface call start");
+        manager->HandleSwitchOn(true, VOICE_WAKEUP_MODEL_UUID, false);
+        manager->HandleSwitchOn(true, PROXIMAL_WAKEUP_MODEL_UUID, false);
+    } else {
+        INTELL_VOICE_LOG_INFO("no need to process, reason id:%{public}d", reasonId_);
+    }
+    reasonId_ = -1;
+}
+
+void IntellVoiceService::OnReceiveCes(const OHOS::EventFwk::CommonEventData &data)
+{
+    const OHOS::AAFwk::Want &want = data.GetWant();
+    std::string action = want.GetAction();
+    if (action == EventFwk::CommonEventSupport::COMMON_EVENT_DATA_SHARE_READY) {
+        std::lock_guard<std::mutex> lock(initServiceMutex_);
+        if (!isServiceInit_) {
+            INTELL_VOICE_LOG_INFO("receive COMMON_EVENT_DATA_SHARE_READY, init intell voice service");
+            isServiceInit_ = true;
+            InitIntellVoiceService();
+        }
+    }
+}
+
 void IntellVoiceService::OnCommonEventServiceChange(bool isAdded)
 {
     if (isAdded) {
@@ -307,34 +343,18 @@ void IntellVoiceService::OnDistributedKvDataServiceChange(bool isAdded)
 {
     if (isAdded) {
         INTELL_VOICE_LOG_INFO("distributed kv data service is added");
-        const auto &manager = IntellVoiceServiceManager::GetInstance();
-        if (manager == nullptr) {
-            INTELL_VOICE_LOG_INFO("manager is nullptr");
+        std::lock_guard<std::mutex> lock(initServiceMutex_);
+        if (isServiceInit_) {
+            INTELL_VOICE_LOG_INFO("already init intell voice service");
             return;
         }
-        manager->CreateSwitchProvider();
-        manager->ProcBreathModel();
-        manager->HandleSilenceUpdate();
-
-        if (reasonId_ == static_cast<int32_t>(OHOS::OnDemandReasonId::COMMON_EVENT)) {
-            INTELL_VOICE_LOG_INFO("common event start");
-            manager->HandleSwitchOn(true, VOICE_WAKEUP_MODEL_UUID, false);
-            manager->HandleSwitchOn(true, PROXIMAL_WAKEUP_MODEL_UUID, false);
-            if (reasonName_ == std::string("usual.event.POWER_SAVE_MODE_CHANGED")) {
-                INTELL_VOICE_LOG_INFO("power save mode change");
-                manager->HandlePowerSaveModeChange();
-            } else {
-                INTELL_VOICE_LOG_INFO("power on");
-                manager->HandleUnloadIntellVoiceService(true);
-            }
-        } else if (reasonId_ == static_cast<int32_t>(OHOS::OnDemandReasonId::INTERFACE_CALL)) {
-            INTELL_VOICE_LOG_INFO("interface call start");
-            manager->HandleSwitchOn(true, VOICE_WAKEUP_MODEL_UUID, false);
-            manager->HandleSwitchOn(true, PROXIMAL_WAKEUP_MODEL_UUID, false);
-        } else {
-            INTELL_VOICE_LOG_INFO("no need to process, reason id:%{public}d", reasonId_);
+        if (!SwitchProvider::CheckIfDataShareReady()) {
+            INTELL_VOICE_LOG_WARN("data share is not ready");
+            return;
         }
-        reasonId_ = -1;
+        INTELL_VOICE_LOG_INFO("data service change, init intell voice service");
+        isServiceInit_ = true;
+        InitIntellVoiceService();
     } else {
         INTELL_VOICE_LOG_INFO("distributed kv data service is removed");
     }

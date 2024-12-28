@@ -21,7 +21,6 @@
 
 namespace OHOS {
 namespace IntellVoiceEngine {
-
 class SwitchProvider {
 public:
     bool Init();
@@ -29,6 +28,7 @@ public:
     void UnregisterObserver(const sptr<SwitchObserver> &observer, const std::string &key);
     bool QuerySwitchStatus(const std::string &key);
     bool IsSwitchError(const std::string &key);
+    static bool CheckIfDataShareReady();
 
 private:
     SwitchProvider();

@@ -70,6 +70,7 @@ private:
     void RegisterPermissionCallback(const std::string &permissionName);
     void LoadIntellVoiceHost();
     void UnloadIntellVoiceHost();
+    void InitIntellVoiceService();
     void OnCommonEventServiceChange(bool isAdded);
     void OnDistributedKvDataServiceChange(bool isAdded);
 #ifdef SUPPORT_TELEPHONY_SERVICE
@@ -78,11 +79,14 @@ private:
     void OnAudioDistributedServiceChange(bool isAdded);
     void OnAudioPolicyServiceChange(bool isAdded);
     void OnPowerManagerServiceChange(bool isAdded);
+    void OnReceiveCes(const OHOS::EventFwk::CommonEventData &data);
 
 private:
     int32_t reasonId_ = -1;
+    bool isServiceInit_ = false;
     std::string reasonName_;
     std::string reasonValue_;
+    std::mutex initServiceMutex_;
     std::shared_ptr<SystemEventObserver> systemEventObserver_ = nullptr;
     std::map<int32_t, std::function<void(bool)>> systemAbilityChangeMap_;
 };

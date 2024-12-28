@@ -24,6 +24,7 @@ using namespace OHOS::IntellVoiceUtils;
 namespace OHOS {
 namespace IntellVoiceEngine {
 const std::string SWITCH_URI_PROXY = "datashare:///com.ohos.settingsdata/entry/settingsdata/SETTINGSDATA?Proxy=true";
+const std::string SWITCH_DATA_EXT_URI = "datashare:///com.ohos.settingsdata.DataAbility";
 
 namespace {
 Uri AssembleUri(const std::string& key)
@@ -130,6 +131,35 @@ bool SwitchProvider::IsSwitchError(const std::string &key)
     }
 
     return false;
+}
+
+bool SwitchProvider::CheckIfDataShareReady()
+{
+    auto saManager = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    if (saManager == nullptr) {
+        INTELL_VOICE_LOG_ERROR("saManager is nullptr");
+        return false;
+    }
+    auto remoteObj = saManager->GetSystemAbility(INTELL_VOICE_SERVICE_ID);
+    if (remoteObj == nullptr) {
+        INTELL_VOICE_LOG_ERROR("remoteObj is nullptr");
+        return false;
+    }
+
+    auto ret = DataShare::DataShareHelper::Create(remoteObj, SWITCH_URI_PROXY, SWITCH_DATA_EXT_URI);
+    if (ret.first == OHOS::DataShare::E_OK) {
+        INTELL_VOICE_LOG_INFO("create data share helper success");
+        if (ret.second != nullptr) {
+            ret.second->Release();
+        }
+        return true;
+    }
+    if (ret.first == OHOS::DataShare::E_DATA_SHARE_NOT_READY) {
+        INTELL_VOICE_LOG_INFO("create data share helper failed");
+        return false;
+    }
+    INTELL_VOICE_LOG_INFO("data share ret:%{public}d is unknown", ret.first);
+    return true;
 }
 }  // namespace IntellVoice
 }  // namespace OHOS
