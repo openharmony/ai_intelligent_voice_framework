@@ -16,29 +16,41 @@
 #define SYSTEM_EVENT_OBSERVER_H
 
 #include <memory>
+#include <mutex>
+#include <functional>
 #include "common_event_subscriber.h"
 #include "event_handler.h"
 
 namespace OHOS {
 namespace IntellVoiceEngine {
+using SystemEventReceiver = std::function<void(const OHOS::EventFwk::CommonEventData&)>;
 class SystemEventObserver : public OHOS::EventFwk::CommonEventSubscriber,
     public std::enable_shared_from_this<SystemEventObserver> {
 public:
     ~SystemEventObserver();
-    static std::shared_ptr<SystemEventObserver> Create(const OHOS::EventFwk::CommonEventSubscribeInfo &subscribeInfo);
+    static std::shared_ptr<SystemEventObserver> Create(const OHOS::EventFwk::CommonEventSubscribeInfo &subscribeInfo,
+        SystemEventReceiver receiver);
     std::shared_ptr<SystemEventObserver> GetPtr()
     {
         return shared_from_this();
     }
     void OnReceiveEvent(const OHOS::EventFwk::CommonEventData &eventData) override;
-    void SetEventHandler(const std::shared_ptr<OHOS::AppExecFwk::EventHandler> &handler);
     bool Subscribe();
     bool Unsubscribe();
 
 private:
-    explicit SystemEventObserver(const OHOS::EventFwk::CommonEventSubscribeInfo &subscribeInfo);
+    enum SubscribeState {
+        IDLE = 0,
+        SUBSCRIBED = 1,
+        UNSUBSCRIBED = 2,
+    };
 
-    std::shared_ptr<OHOS::AppExecFwk::EventHandler> handler_ = nullptr;
+private:
+    SystemEventObserver(const OHOS::EventFwk::CommonEventSubscribeInfo &subscribeInfo,
+        SystemEventReceiver receiver);
+    SubscribeState state_ = IDLE;
+    std::mutex mutex_;
+    SystemEventReceiver receiver_;
 };
 }
 }
