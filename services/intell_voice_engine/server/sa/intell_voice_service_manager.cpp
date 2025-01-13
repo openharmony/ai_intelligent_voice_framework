@@ -37,6 +37,7 @@
 #include "json/json.h"
 #include "intell_voice_sensibility.h"
 #include "headset_wakeup_wrapper.h"
+#include "intell_voice_service_config_parser.h"
 #include "ability_manager_client.h"
 
 #define LOG_TAG "IntellVoiceServiceManager"
@@ -58,6 +59,8 @@ static const std::string WAKEUP_CONFIG_USER_PATH =
     "/sys_prod/variant/region_comm/china/etc/intellvoice/wakeup/ap/wakeup_config_user.json";
 static const std::string WAKEUP_CONFIG_PATH =
     "/sys_prod/variant/region_comm/china/etc/intellvoice/wakeup/ap/wakeup_config.json";
+static const std::string SINGLE_LEVEL_MODEL_PATH =
+    "/sys_prod/variant/region_comm/china/etc/intellvoice/wakeup/dsp/wakeup_dsp_config";
 static const std::string STOP_ALL_RECOGNITION = "stop_all_recognition";
 
 static const std::string XIAOYIXIAOYI = "\xE5\xB0\x8F\xE8\x89\xBA\xE5\xB0\x8F\xE8\x89\xBA";
@@ -73,6 +76,7 @@ IntellVoiceServiceManager::IntellVoiceServiceManager() : TaskExecutor("ServMgrTh
 #ifdef USE_FFRT
     taskQueue_ = std::make_shared<ffrt::queue>("ServMgrQueue");
 #endif
+    LoadWakeupConfig();
 }
 
 IntellVoiceServiceManager::~IntellVoiceServiceManager()
@@ -263,7 +267,13 @@ void IntellVoiceServiceManager::CreateDetector(int32_t uuid)
         return;
     }
 
-    auto cb = std::make_shared<TriggerDetectorCallback>([&, uuid]() { OnDetected(uuid); });
+    auto cb = std::make_shared<TriggerDetectorCallback>([&, uuid]() {
+        if (!IsSinglelevel()) {
+            OnDetected(uuid);
+        } else {
+            OnSingleLevelDetected(uuid);
+        }
+    });
     if (cb == nullptr) {
         INTELL_VOICE_LOG_ERROR("cb is nullptr");
         return;
@@ -328,6 +338,41 @@ void IntellVoiceServiceManager::StopDetection(int32_t uuid)
     detector_[uuid]->StopRecognition();
 }
 
+void IntellVoiceServiceManager::LoadWakeupConfig()
+{
+    std::unique_ptr<AudioWakeupConfigParser> wakeupConfigParser = std::make_unique<AudioWakeupConfigParser>();
+    wakeupLevel_ = wakeupConfigParser->GetWakeupLevel();
+}
+
+bool IntellVoiceServiceManager::IsSinglelevel()
+{
+    return wakeupLevel_ == WAKEUP_LEVEL_SINGLE;
+}
+
+void IntellVoiceServiceManager::NotifyEvent(const std::string &eventType)
+{
+    AAFwk::Want want;
+    HistoryInfoMgr &historyInfoMgr = HistoryInfoMgr::GetInstance();
+
+    std::string bundleName = historyInfoMgr.GetWakeupEngineBundleName();
+    std::string abilityName = historyInfoMgr.GetWakeupEngineAbilityName();
+    INTELL_VOICE_LOG_INFO("bundleName:%{public}s, abilityName:%{public}s", bundleName.c_str(), abilityName.c_str());
+    if (bundleName.empty() || abilityName.empty()) {
+        INTELL_VOICE_LOG_ERROR("bundle name is empty or ability name is empty");
+        return;
+    }
+    want.SetElementName(bundleName, abilityName);
+    want.SetParam("serviceName", std::string("intell_voice"));
+    want.SetParam("servicePid", getpid());
+    want.SetParam("eventType", std::string(eventType));
+    auto abilityManagerClient = AAFwk::AbilityManagerClient::GetInstance();
+    if (abilityManagerClient == nullptr) {
+        INTELL_VOICE_LOG_ERROR("abilityManagerClient is nullptr");
+        return;
+    }
+    abilityManagerClient->StartAbility(want);
+}
+
 void IntellVoiceServiceManager::OnDetected(int32_t uuid)
 {
     TaskExecutor::AddAsyncTask([uuid, this]() {
@@ -339,6 +384,17 @@ void IntellVoiceServiceManager::OnDetected(int32_t uuid)
         }
         engine->OnDetected(uuid);
         }, "IntellVoiceServiceManager::OnDetected", false);
+}
+
+void IntellVoiceServiceManager::OnSingleLevelDetected(int32_t uuid)
+{
+    INTELL_VOICE_LOG_INFO("single level detected");
+    auto triggerMgr = TriggerManager::GetInstance();
+    if (triggerMgr != nullptr) {
+        triggerMgr->SetParameter(STOP_ALL_RECOGNITION, "true");
+    }
+    NotifyEvent("single_level_event");
+    return;
 }
 
 void IntellVoiceServiceManager::CreateAndStartServiceObject(int32_t uuid, bool needResetAdapter)
@@ -359,10 +415,13 @@ void IntellVoiceServiceManager::CreateAndStartServiceObject(int32_t uuid, bool n
         return;
     }
 
-    if (!needResetAdapter) {
-        CreateEngine(INTELL_VOICE_WAKEUP);
-    } else {
-        CreateOrResetWakeupEngine();
+    if (!IsSinglelevel()) {
+        INTELL_VOICE_LOG_INFO("is not single wakeup level");
+        if (!needResetAdapter) {
+            CreateEngine(INTELL_VOICE_WAKEUP);
+        } else {
+            CreateOrResetWakeupEngine();
+        }
     }
 
     CreateDetector(uuid);
@@ -454,30 +513,6 @@ bool IntellVoiceServiceManager::IsSwitchError(const std::string &key)
     }
 
     return switchProvider_->IsSwitchError(key);
-}
-
-void IntellVoiceServiceManager::NotifyDatabaseError()
-{
-    AAFwk::Want want;
-    HistoryInfoMgr &historyInfoMgr = HistoryInfoMgr::GetInstance();
-
-    std::string bundleName = historyInfoMgr.GetWakeupEngineBundleName();
-    std::string abilityName = historyInfoMgr.GetWakeupEngineAbilityName();
-    INTELL_VOICE_LOG_INFO("bundleName:%{public}s, abilityName:%{public}s", bundleName.c_str(), abilityName.c_str());
-    if (bundleName.empty() || abilityName.empty()) {
-        INTELL_VOICE_LOG_ERROR("bundle name is empty or ability name is empty");
-        return;
-    }
-    want.SetElementName(bundleName, abilityName);
-    want.SetParam("serviceName", std::string("intell_voice"));
-    want.SetParam("servicePid", getpid());
-    want.SetParam("eventType", std::string("db_error"));
-    auto abilityManagerClient = AAFwk::AbilityManagerClient::GetInstance();
-    if (abilityManagerClient == nullptr) {
-        INTELL_VOICE_LOG_ERROR("abilityManagerClient is nullptr");
-        return;
-    }
-    abilityManagerClient->StartAbility(want);
 }
 
 void IntellVoiceServiceManager::OnSwitchChange(const std::string &switchKey)
@@ -625,6 +660,38 @@ void IntellVoiceServiceManager::ProcBreathModel()
 
     auto model = std::make_shared<GenericTriggerModel>(PROXIMAL_WAKEUP_MODEL_UUID,
         TriggerModel::TriggerModelVersion::MODLE_VERSION_2, TriggerModel::TriggerModelType::PROXIMAL_WAKEUP_TYPE);
+    if (model == nullptr) {
+        INTELL_VOICE_LOG_ERROR("model is nullptr");
+        return;
+    }
+
+    model->SetData(buffer.get(), size);
+    triggerMgr->UpdateModel(model);
+}
+
+void IntellVoiceServiceManager::ProcSingleLevelModel()
+{
+    INTELL_VOICE_LOG_INFO("enter");
+    if (!IsSinglelevel()) {
+        INTELL_VOICE_LOG_INFO("is not single level");
+        return;
+    }
+
+    auto triggerMgr = TriggerManager::GetInstance();
+    if (triggerMgr == nullptr) {
+        INTELL_VOICE_LOG_WARN("trigger manager is nullptr");
+        return;
+    }
+
+    std::shared_ptr<uint8_t> buffer = nullptr;
+    uint32_t size = 0;
+    if (!IntellVoiceUtil::ReadFile(SINGLE_LEVEL_MODEL_PATH, buffer, size)) {
+        INTELL_VOICE_LOG_ERROR("read model failed!");
+        return;
+    }
+
+    auto model = std::make_shared<GenericTriggerModel>(VOICE_WAKEUP_MODEL_UUID,
+        TriggerModel::TriggerModelVersion::MODLE_VERSION_2, TriggerModel::TriggerModelType::VOICE_WAKEUP_TYPE);
     if (model == nullptr) {
         INTELL_VOICE_LOG_ERROR("model is nullptr");
         return;
@@ -996,7 +1063,7 @@ void IntellVoiceServiceManager::HandleServiceStop()
     TaskExecutor::AddSyncTask([this]() -> int32_t { return ServiceStopProc(); });
     if (IsSwitchError(WAKEUP_KEY)) {
         INTELL_VOICE_LOG_WARN("db is abnormal, can not find wakeup switch, notify db error");
-        NotifyDatabaseError();
+        NotifyEvent("db_error");
     }
 }
 

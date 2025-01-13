@@ -79,6 +79,7 @@ public:
     void HandlePowerSaveModeChange();
 
     void ProcBreathModel();
+    void ProcSingleLevelModel();
     void CreateSwitchProvider();
     void ReleaseSwitchProvider();
     bool StartDetection(int32_t uuid);
@@ -130,6 +131,7 @@ private:
     int32_t ReleaseEngine(IntellVoiceEngineType type);
     void OnSwitchChange(const std::string &switchKey);
     void OnDetected(int32_t uuid);
+    void OnSingleLevelDetected(int32_t uuid);
     void CreateDetector(int32_t uuid);
 
     sptr<IIntellVoiceEngine> CreateEngineInner(IntellVoiceEngineType type, const std::string &param = "");
@@ -156,9 +158,12 @@ private:
     bool AddStartDetectionTask(int32_t uuid);
     void DelStartDetectionTask(int32_t uuid);
     bool IsSwitchError(const std::string &key);
-    void NotifyDatabaseError();
+    void LoadWakeupConfig();
+    bool IsSinglelevel();
+    void NotifyEvent(const std::string &eventType);
 
 private:
+    int32_t wakeupLevel_ = 0;
     static std::unique_ptr<IntellVoiceServiceManager> g_intellVoiceServiceMgr;
     static std::atomic<bool> g_enrollResult[ENGINE_TYPE_BUT];
     std::atomic<bool> screenoff_ = false;
