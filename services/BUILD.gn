@@ -80,6 +80,7 @@ ohos_shared_library("intell_voice_server") {
     "intell_voice_engine/server/sa/intell_voice_engine_callback_proxy.cpp",
     "intell_voice_engine/server/sa/intell_voice_engine_stub.cpp",
     "intell_voice_engine/server/sa/intell_voice_service.cpp",
+    "intell_voice_engine/server/sa/intell_voice_service_config_parser.cpp",
     "intell_voice_engine/server/sa/intell_voice_service_manager.cpp",
     "intell_voice_engine/server/sa/intell_voice_service_stub.cpp",
     "intell_voice_engine/server/sa/intell_voice_update_callback_proxy.cpp",
@@ -182,6 +183,8 @@ ohos_shared_library("intell_voice_server") {
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
   ]
+
+  public_external_deps = [ "libxml2:libxml2" ]
 
   sanitize = {
     cfi = true

@@ -290,6 +290,7 @@ void IntellVoiceService::InitIntellVoiceService()
     }
     manager->CreateSwitchProvider();
     manager->ProcBreathModel();
+    manager->ProcSingleLevelModel();
     manager->HandleSilenceUpdate();
 
     if (reasonId_ == static_cast<int32_t>(OHOS::OnDemandReasonId::COMMON_EVENT)) {

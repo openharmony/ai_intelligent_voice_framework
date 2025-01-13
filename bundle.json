@@ -43,7 +43,9 @@
                 "power_manager",
                 "ffrt"
             ],
-            "third_party": []
+            "third_party": [
+              "libxml2"
+            ]
         },
         "features": [
         ],
