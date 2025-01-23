@@ -21,7 +21,7 @@
 
 using namespace OHOS::IntellVoice;
 using namespace OHOS::IntellVoiceEngine;
-using OHOS::HDI::IntelligentVoice::Engine::V1_2::EvaluationResultInfo;
+using OHOS::IntellVoiceEngine::EvaluationResult;
 namespace OHOS {
 namespace IntellVoiceFuzzTest {
 
@@ -116,7 +116,7 @@ static void TestSetCallback(const uint8_t *data, size_t sizeIn)
 static void TestEvaluate(const uint8_t *data, size_t sizeIn)
 {
     INTELL_VOICE_LOG_INFO("EnrollEngine test Evaluate start");
-    EvaluationResultInfo infos;
+    EvaluationResult infos;
     int32_t ret = g_enrollEngine->Evaluate(std::to_string(sizeIn), infos);
     INTELL_VOICE_LOG_INFO("EnrollEngine test Evaluate end, result:%{public}d", ret);
 }

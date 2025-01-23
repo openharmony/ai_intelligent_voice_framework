@@ -22,7 +22,7 @@
 using namespace OHOS;
 using namespace OHOS::IntellVoice;
 using namespace OHOS::IntellVoiceEngine;
-using OHOS::HDI::IntelligentVoice::Engine::V1_2::EvaluationResultInfo;
+using OHOS::IntellVoiceEngine::EvaluationResult;
 
 namespace OHOS {
 namespace IntellVoiceFuzzTest {

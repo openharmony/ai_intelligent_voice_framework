@@ -150,7 +150,7 @@ int32_t IntellVoiceManager::DeregisterServiceDeathRecipient(sptr<OHOS::IRemoteOb
 int32_t IntellVoiceManager::GetUploadFiles(int numMax, std::vector<UploadFilesInfo> &files)
 {
     INTELL_VOICE_LOG_INFO("enter, numMax: %{public}d", numMax);
-    std::vector<UploadHdiFile> hdiFiles;
+    std::vector<UploadFilesFromHdi> hdiFiles;
     {
         std::unique_lock<std::mutex> lock(mutex_);
         CHECK_CONDITION_RETURN_RET(g_sProxy == nullptr, -1, "IntellVoiceService Proxy is null");
@@ -184,7 +184,7 @@ int32_t IntellVoiceManager::GetUploadFiles(int numMax, std::vector<UploadFilesIn
         }
         files.push_back(filesInfo);
     }
-    std::vector<UploadHdiFile>().swap(hdiFiles);
+    std::vector<UploadFilesFromHdi>().swap(hdiFiles);
     return 0;
 }
 

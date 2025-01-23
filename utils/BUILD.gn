@@ -12,6 +12,7 @@
 # limitations under the License.
 
 import("//build/ohos.gni")
+import("../intell_voice_service.gni")
 
 ohos_shared_library("intell_voice_utils") {
   configs = [ "//build/config/compiler:exceptions" ]
@@ -22,12 +23,13 @@ ohos_shared_library("intell_voice_utils") {
   sources = [
     "array_buffer_util.cpp",
     "base_thread.cpp",
-    "huks_aes_adapter.cpp",
+    "history_info_mgr.cpp",
     "id_allocator.cpp",
     "intell_voice_util.cpp",
     "memory_guard.cpp",
     "message_queue.cpp",
     "msg_handle_thread.cpp",
+    "service_db_helper.cpp",
     "state_manager.cpp",
     "string_util.cpp",
     "task_executor.cpp",
@@ -54,11 +56,16 @@ ohos_shared_library("intell_voice_utils") {
     "c_utils:utils",
     "ffrt:libffrt",
     "hilog:libhilog",
-    "huks:libhukssdk",
     "ipc:ipc_core",
+    "kv_store:distributeddata_inner",
     "safwk:system_ability_fwk",
   ]
 
   subsystem_name = "ai"
   part_name = "intelligent_voice_framework"
+
+  if (intelligent_voice_framework_engine_enable) {
+    sources += [ "huks_aes_adapter.cpp" ]
+    external_deps += [ "huks:libhukssdk" ]
+  }
 }

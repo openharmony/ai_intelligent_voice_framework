@@ -44,7 +44,7 @@ ohos_shared_library("intelligentvoice") {
   include_dirs = [
     "../../../../arkui/napi/interfaces/kits",
     "../../interfaces/inner_api/native",
-    "../../services/intell_voice_engine",
+    "../../services/intell_voice_service/inc",
     "../../services/intell_voice_engine/proxy",
     "../../utils",
     "napi",

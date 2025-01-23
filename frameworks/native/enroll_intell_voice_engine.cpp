@@ -156,7 +156,7 @@ std::string EnrollIntellVoiceEngine::GetParameter(const std::string &key)
     return engine_->GetParameter(key);
 }
 
-int32_t EnrollIntellVoiceEngine::Evaluate(const std::string &word, EvaluationResultInfo &info)
+int32_t EnrollIntellVoiceEngine::Evaluate(const std::string &word, EvaluationResult &result)
 {
     INTELL_VOICE_LOG_INFO("enter");
     if (descriptor_ != nullptr) {
@@ -166,7 +166,7 @@ int32_t EnrollIntellVoiceEngine::Evaluate(const std::string &word, EvaluationRes
         INTELL_VOICE_LOG_ERROR("engine_ is nullptr");
         return -1;
     }
-    return engine_->Evaluate(word, info);
+    return engine_->Evaluate(word, result);
 }
 
 int32_t EnrollIntellVoiceEngine::Release()

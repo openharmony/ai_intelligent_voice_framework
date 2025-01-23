@@ -19,6 +19,7 @@
 #include "intell_voice_log.h"
 #include "string_util.h"
 #include "history_info_mgr.h"
+#include "intell_voice_definitions.h"
 
 #define LOG_TAG "UpdateEngineUtils"
 
@@ -94,7 +95,7 @@ void UpdateEngineUtils::SaveWakeupVesion()
         return;
     }
 
-    historyInfoMgr.SetWakeupVesion(versionNumber);
+    historyInfoMgr.SetStringKVPair(KEY_WAKEUP_VESRION, versionNumber);
 }
 
 bool UpdateEngineUtils::IsVersionUpdate()
@@ -103,7 +104,7 @@ bool UpdateEngineUtils::IsVersionUpdate()
     std::string versionNumberCur;
     HistoryInfoMgr &historyInfoMgr = HistoryInfoMgr::GetInstance();
 
-    versionNumberSave = historyInfoMgr.GetWakeupVesion();
+    versionNumberSave = historyInfoMgr.GetStringKVPair(KEY_WAKEUP_VESRION);
     if (versionNumberSave.empty()) {
         INTELL_VOICE_LOG_ERROR("versionNumberSave is null");
         return false;

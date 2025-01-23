@@ -20,6 +20,7 @@
 #include "rdb_errno.h"
 #include "rdb_helper.h"
 #include "rdb_open_callback.h"
+#include "nocopyable.h"
 #include "trigger_base_type.h"
 
 namespace OHOS {
@@ -28,6 +29,11 @@ class TriggerDbHelper {
 public:
     TriggerDbHelper();
     ~TriggerDbHelper();
+    static TriggerDbHelper& GetInstance()
+    {
+        static TriggerDbHelper dbHelper;
+        return dbHelper;
+    }
     bool UpdateGenericTriggerModel(std::shared_ptr<GenericTriggerModel> model);
     std::shared_ptr<GenericTriggerModel> GetGenericTriggerModel(const int32_t modelUuid);
     void DeleteGenericTriggerModel(const int32_t modelUuid);

@@ -79,16 +79,10 @@ void SystemEventObserver::OnReceiveEvent(const OHOS::EventFwk::CommonEventData &
     std::string action = want.GetAction();
     if (action == OHOS::EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_ON) {
         INTELL_VOICE_LOG_INFO("COMMON_EVENT_SCREEN_ON");
-        auto &mgr = IntellVoiceServiceManager::GetInstance();
-        if (mgr != nullptr) {
-            mgr->SetScreenOff(false);
-        }
+        ServiceManagerType::GetInstance().SetScreenOff(false);
     } else if (action == OHOS::EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_OFF) {
         INTELL_VOICE_LOG_INFO("COMMON_EVENT_SCREEN_OFF");
-        auto &mgr = IntellVoiceServiceManager::GetInstance();
-        if (mgr != nullptr) {
-            mgr->SetScreenOff(true);
-        }
+        ServiceManagerType::GetInstance().SetScreenOff(true);
     } else if (action == OHOS::EventFwk::CommonEventSupport::COMMON_EVENT_PACKAGE_REMOVED) {
         INTELL_VOICE_LOG_INFO("COMMON_EVENT_PACKAGE_REMOVED");
     } else if (action == OHOS::EventFwk::CommonEventSupport::COMMON_EVENT_PACKAGE_REPLACED) {

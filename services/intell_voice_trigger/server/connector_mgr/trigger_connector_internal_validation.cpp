@@ -92,8 +92,8 @@ bool TriggerConnectorInternalValidation::TriggerConnectorModuleValidation::Valid
         return false;
     }
 
-    if ((model->GetType() != TriggerModel::TriggerModelType::VOICE_WAKEUP_TYPE) &&
-        (model->GetType() != TriggerModel::TriggerModelType::PROXIMAL_WAKEUP_TYPE)) {
+    if ((model->GetType() != TriggerModelType::VOICE_WAKEUP_TYPE) &&
+        (model->GetType() != TriggerModelType::PROXIMAL_WAKEUP_TYPE)) {
         INTELL_VOICE_LOG_ERROR("generic model type:%{public}d is invalid", model->GetType());
         return false;
     }

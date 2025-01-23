@@ -14,19 +14,19 @@
  */
 #include "engine_util.h"
 #include <ashmem.h>
-
 #include "intell_voice_log.h"
 #include "string_util.h"
 #include "scope_guard.h"
 #include "engine_host_manager.h"
-#include "trigger_manager.h"
-#include "intell_voice_service_manager.h"
+#include "engine_callback_message.h"
+#include "intell_voice_engine_manager.h"
+#include "history_info_mgr.h"
+#include "intell_voice_definitions.h"
 
 #define LOG_TAG "EngineUtils"
 
 using namespace OHOS::IntellVoiceUtils;
 using namespace OHOS::HDI::IntelligentVoice::Engine::V1_0;
-using namespace OHOS::IntellVoiceTrigger;
 using namespace OHOS::AudioStandard;
 
 namespace OHOS {
@@ -112,22 +112,29 @@ bool EngineUtil::SetDspFeatures()
         return false;
     }
 
-    auto triggerMgr = TriggerManager::GetInstance();
-    if (triggerMgr == nullptr) {
-        INTELL_VOICE_LOG_ERROR("trigger manager is nullptr");
+    auto ret = EngineCallbackMessage::CallFunc(TRIGGERMGR_GET_PARAMETER, KEY_GET_WAKEUP_FEATURE);
+    std::string features = "";
+    if (ret.has_value()) {
+        try {
+            features = std::any_cast<std::string>(*ret);
+        } catch (const std::bad_any_cast&) {
+            INTELL_VOICE_LOG_ERROR("msg bus bad any cast");
+            return false;
+        }
+    } else {
+        INTELL_VOICE_LOG_ERROR("msg bus return no value");
         return false;
     }
 
-    std::string features = triggerMgr->GetParameter(KEY_GET_WAKEUP_FEATURE);
     if (features == "") {
         INTELL_VOICE_LOG_WARN("failed to get wakeup dsp feature");
-        features = HistoryInfoMgr::GetInstance().GetWakeupDspFeature();
+        features = HistoryInfoMgr::GetInstance().GetStringKVPair(KEY_WAKEUP_DSP_FEATURE);
         if (features == "") {
             INTELL_VOICE_LOG_WARN("no historical wakeup dsp feature");
             return false;
         }
     } else {
-        HistoryInfoMgr::GetInstance().SetWakeupDspFeature(features);
+        HistoryInfoMgr::GetInstance().SetStringKVPair(KEY_WAKEUP_DSP_FEATURE, features);
     }
 
     std::string kvPair = KEY_GET_WAKEUP_FEATURE + "=" + features;
@@ -160,21 +167,23 @@ void EngineUtil::WriteBufferFromAshmem(uint8_t *&buffer, uint32_t size, sptr<OHO
     }
 }
 
-std::shared_ptr<GenericTriggerModel> EngineUtil::ReadDspModel(
+std::vector<uint8_t> EngineUtil::ReadDspModel(
     OHOS::HDI::IntelligentVoice::Engine::V1_0::ContentType type)
 {
     INTELL_VOICE_LOG_INFO("enter");
     uint8_t *buffer = nullptr;
     uint32_t size = 0;
     sptr<Ashmem> ashmem = nullptr;
+    std::vector<uint8_t> ret;
+
     if (adapter_ == nullptr) {
         INTELL_VOICE_LOG_ERROR("adapter is nullptr");
-        return nullptr;
+        return ret;
     }
     adapter_->Read(type, ashmem);
     if (ashmem == nullptr) {
         INTELL_VOICE_LOG_ERROR("ashmem is nullptr");
-        return nullptr;
+        return ret;
     }
 
     ON_SCOPE_EXIT_WITH_NAME(ashmemExit)
@@ -187,13 +196,13 @@ std::shared_ptr<GenericTriggerModel> EngineUtil::ReadDspModel(
     size = static_cast<uint32_t>(ashmem->GetAshmemSize());
     if (size == 0) {
         INTELL_VOICE_LOG_ERROR("size is zero");
-        return nullptr;
+        return ret;
     }
 
     WriteBufferFromAshmem(buffer, size, ashmem);
     if (buffer == nullptr) {
         INTELL_VOICE_LOG_ERROR("buffer is nullptr");
-        return nullptr;
+        return ret;
     }
 
     ON_SCOPE_EXIT_WITH_NAME(bufferExit)
@@ -202,30 +211,18 @@ std::shared_ptr<GenericTriggerModel> EngineUtil::ReadDspModel(
         delete[] buffer;
         buffer = nullptr;
     };
-
-    std::shared_ptr<GenericTriggerModel> model = std::make_shared<GenericTriggerModel>(VOICE_WAKEUP_MODEL_UUID,
-        TriggerModel::TriggerModelVersion::MODLE_VERSION_2, TriggerModel::TriggerModelType::VOICE_WAKEUP_TYPE);
-    if (model == nullptr) {
-        INTELL_VOICE_LOG_ERROR("model is null");
-        return nullptr;
-    }
-    model->SetData(buffer, size);
-    return model;
+    ret.insert(ret.end(), buffer, buffer + size);
+    return ret;
 }
 
-void EngineUtil::ProcDspModel(std::shared_ptr<GenericTriggerModel> model)
+void EngineUtil::ProcDspModel(const std::vector<uint8_t> &buffer)
 {
-    if (model == nullptr) {
-        INTELL_VOICE_LOG_ERROR("model is nullptr");
+    if (buffer.empty()) {
+        INTELL_VOICE_LOG_ERROR("vector is empty");
         return;
     }
-
-    auto triggerMgr = TriggerManager::GetInstance();
-    if (triggerMgr == nullptr) {
-        INTELL_VOICE_LOG_ERROR("trigger manager is nullptr");
-        return;
-    }
-    triggerMgr->UpdateModel(model);
+    EngineCallbackMessage::CallFunc(TRIGGERMGR_UPDATE_MODEL, buffer, VOICE_WAKEUP_MODEL_UUID,
+        IntellVoiceTrigger::TriggerModelType::VOICE_WAKEUP_TYPE);
 }
 
 void EngineUtil::SetLanguage()
@@ -235,7 +232,7 @@ void EngineUtil::SetLanguage()
         return;
     }
 
-    std::string language = HistoryInfoMgr::GetInstance().GetLanguage();
+    std::string language = HistoryInfoMgr::GetInstance().GetStringKVPair(KEY_LANGUAGE);
     if (language.empty()) {
         INTELL_VOICE_LOG_WARN("language is empty");
         return;
@@ -250,7 +247,7 @@ void EngineUtil::SetArea()
         return;
     }
 
-    std::string area = HistoryInfoMgr::GetInstance().GetArea();
+    std::string area = HistoryInfoMgr::GetInstance().GetStringKVPair(KEY_AREA);
     if (area.empty()) {
         INTELL_VOICE_LOG_WARN("area is empty");
         return;
@@ -266,17 +263,16 @@ void EngineUtil::SetSensibility()
         return;
     }
 
-    std::string sensibility = HistoryInfoMgr::GetInstance().GetSensibility();
+    std::string sensibility = HistoryInfoMgr::GetInstance().GetStringKVPair(KEY_SENSIBILITY);
     if (sensibility.empty()) {
         INTELL_VOICE_LOG_WARN("sensibility is empty");
         return;
     }
 
-    auto &mgr = IntellVoiceServiceManager::GetInstance();
-    if (mgr != nullptr) {
-        mgr->SetDspSensibility(sensibility);
+    auto engineMgr = IntellVoiceEngineManager::GetInstance();
+    if (engineMgr != nullptr) {
+        engineMgr->SetDspSensibility(sensibility);
     }
-
     adapter_->SetParameter(SENSIBILITY_TEXT + sensibility);
 }
 
@@ -307,12 +303,7 @@ void EngineUtil::SelectInputDevice(DeviceType type)
 
 void EngineUtil::SetScreenStatus()
 {
-    auto &mgr = IntellVoiceServiceManager::GetInstance();
-    if (mgr == nullptr) {
-        INTELL_VOICE_LOG_ERROR("mgr is nullptr");
-        return;
-    }
-    if (mgr->GetScreenOff()) {
+    if (IntellVoiceEngineManager::GetScreenOff()) {
         SetParameter("screenoff=true");
     } else {
         SetParameter("screenoff=false");

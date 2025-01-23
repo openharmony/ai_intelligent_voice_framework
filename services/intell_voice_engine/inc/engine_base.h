@@ -39,7 +39,7 @@ public:
     int32_t Read(std::vector<uint8_t> &data) override;
     int32_t StopCapturer() override;
     int32_t GetWakeupPcm(std::vector<uint8_t> &data) override;
-    int32_t Evaluate(const std::string &word, EvaluationResultInfo &info) override;
+    int32_t Evaluate(const std::string &word, EvaluationResult &result) override;
     int32_t NotifyHeadsetWakeEvent() override;
     int32_t NotifyHeadsetHostEvent(HeadsetHostEventType event) override;
 protected:

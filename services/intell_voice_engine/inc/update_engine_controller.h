@@ -17,7 +17,6 @@
 #include <memory>
 #include <string>
 #include <atomic>
-#include "engine_base.h"
 #include "intell_voice_generic_factory.h"
 #include "timer_mgr.h"
 #include "update_state.h"
@@ -36,7 +35,6 @@ public:
         return false;
     }
     virtual void ReleaseUpdateEngine() {};
-    void OnUpdateComplete(UpdateState result, const std::string &param);
     int CreateUpdateEngineUntilTime(std::shared_ptr<IUpdateStrategy> updateStrategy);
 
     static bool GetUpdateState()
@@ -50,8 +48,7 @@ protected:
     void ForceRelease();
 
 private:
-    virtual void HandleUpdateComplete(UpdateState result, const std::string &param) {};
-    virtual void HandleUpdateRetry() {};
+
     void OnTimerEvent(OHOS::IntellVoiceUtils::TimerEvent &info) override;
     bool StartUpdateTimer();
     void StopUpdateTimer();

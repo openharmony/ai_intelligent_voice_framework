@@ -16,6 +16,7 @@
 #ifndef INTELL_VOICE_GENERIC_FACTORY_H
 #define INTELL_VOICE_GENERIC_FACTORY_H
 #include <memory>
+#include "refbase.h"
 
 namespace OHOS {
 namespace IntellVoiceUtils {

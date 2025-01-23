@@ -20,11 +20,7 @@
 #include "ipc_skeleton.h"
 #include "system_ability.h"
 #include "intell_voice_service_stub.h"
-#include "i_intell_voice_engine.h"
 #include "system_event_observer.h"
-#include "i_intell_voice_service.h"
-
-#include "trigger_manager.h"
 
 namespace OHOS {
 namespace IntellVoiceEngine {
@@ -39,7 +35,7 @@ public:
     bool RegisterDeathRecipient(IntellVoiceEngineType type, const sptr<IRemoteObject> &object) override;
     bool DeregisterDeathRecipient(IntellVoiceEngineType type) override;
 
-    int32_t GetUploadFiles(int numMax, std::vector<UploadHdiFile> &files) override;
+    int32_t GetUploadFiles(int numMax, std::vector<UploadFilesFromHdi> &files) override;
 
     int32_t SetParameter(const std::string &keyValueList) override;
     std::string GetParameter(const std::string &key) override;
@@ -68,17 +64,9 @@ protected:
 private:
     void CreateSystemEventObserver();
     void RegisterPermissionCallback(const std::string &permissionName);
-    void LoadIntellVoiceHost();
-    void UnloadIntellVoiceHost();
-    void InitIntellVoiceService();
     void OnCommonEventServiceChange(bool isAdded);
     void OnDistributedKvDataServiceChange(bool isAdded);
-#ifdef SUPPORT_TELEPHONY_SERVICE
-    void OnTelephonyStateRegistryServiceChange(bool isAdded);
-#endif
-    void OnAudioDistributedServiceChange(bool isAdded);
-    void OnAudioPolicyServiceChange(bool isAdded);
-    void OnPowerManagerServiceChange(bool isAdded);
+    void InitIntellVoiceService();
     void OnReceiveCes(const OHOS::EventFwk::CommonEventData &data);
 
 private:

@@ -64,7 +64,10 @@ private:
     void OnInitDone(int32_t result);
     void OnWakeupRecognition(int32_t result, const std::string &info);
     void UpdateDspModel();
+    void SetWakeupModel();
     OHOS::AudioStandard::AudioChannel GetWakeupSourceChannel();
+    void SubscribeSwingEvent();
+    void UnSubscribeSwingEvent();
 
 private:
     bool InitStates();
@@ -93,6 +96,7 @@ private:
     int32_t channels_ = 0;
     uint32_t channelId_ = 0;
     uint32_t callerTokenId_ = 0;
+    std::atomic<bool> isSubscribeSwingEvent_ = false;
     sptr<OHOS::HDI::IntelligentVoice::Engine::V1_0::IIntellVoiceEngineCallback> callback_ = nullptr;
     std::shared_ptr<WakeupAdapterListener> adapterListener_ = nullptr;
     std::shared_ptr<WakeupSourceStopCallback> wakeupSourceStopCallback_ = nullptr;

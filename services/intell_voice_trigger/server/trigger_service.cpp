@@ -26,11 +26,6 @@ namespace OHOS {
 namespace IntellVoiceTrigger {
 TriggerService::TriggerService()
 {
-    dbHelper_ = std::make_shared<TriggerDbHelper>();
-    if (dbHelper_ == nullptr) {
-        INTELL_VOICE_LOG_ERROR("dbHelper_ is nullptr");
-    }
-
     triggerHelper_ = TriggerHelper::Create();
     if (triggerHelper_ == nullptr) {
         INTELL_VOICE_LOG_ERROR("triggerHelper_ is nullptr");
@@ -43,17 +38,12 @@ TriggerService::~TriggerService()
 void TriggerService::UpdateGenericTriggerModel(std::shared_ptr<GenericTriggerModel> model)
 {
     INTELL_VOICE_LOG_INFO("enter");
-    if (dbHelper_ == nullptr) {
-        INTELL_VOICE_LOG_ERROR("dbHelper_ is nullptr");
-        return;
-    }
-
     if (model == nullptr) {
         INTELL_VOICE_LOG_ERROR("trigger model is null");
         return;
     }
 
-    if (!dbHelper_->UpdateGenericTriggerModel(model)) {
+    if (!TriggerDbHelper::GetInstance().UpdateGenericTriggerModel(model)) {
         INTELL_VOICE_LOG_ERROR("failed to update generic model");
     }
 }
@@ -61,23 +51,13 @@ void TriggerService::UpdateGenericTriggerModel(std::shared_ptr<GenericTriggerMod
 void TriggerService::DeleteGenericTriggerModel(int32_t uuid)
 {
     INTELL_VOICE_LOG_INFO("enter");
-    if (dbHelper_ == nullptr) {
-        INTELL_VOICE_LOG_ERROR("dbHelper_ is nullptr");
-        return;
-    }
-    dbHelper_->DeleteGenericTriggerModel(uuid);
+    TriggerDbHelper::GetInstance().DeleteGenericTriggerModel(uuid);
 }
 
 std::shared_ptr<GenericTriggerModel> TriggerService::GetGenericTriggerModel(int32_t uuid)
 {
     INTELL_VOICE_LOG_INFO("enter");
-
-    if (dbHelper_ == nullptr) {
-        INTELL_VOICE_LOG_ERROR("dbHelper_ is nullptr");
-        return nullptr;
-    }
-
-    auto model = dbHelper_->GetGenericTriggerModel(uuid);
+    auto model = TriggerDbHelper::GetInstance().GetGenericTriggerModel(uuid);
     if (model == nullptr) {
         INTELL_VOICE_LOG_ERROR("failed to get generic trigger model");
         return nullptr;

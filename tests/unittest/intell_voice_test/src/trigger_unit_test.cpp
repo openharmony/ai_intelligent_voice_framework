@@ -45,7 +45,7 @@ void TriggerTest::TearDownTestCase(void)
 
 void TriggerTest::SetUp(void)
 {
-    triggerManager = TriggerManager::GetInstance();
+    triggerManager = std::shared_ptr<TriggerManager>(new (std::nothrow) TriggerManager());
     ASSERT_NE(triggerManager, nullptr);
 }
 
@@ -58,24 +58,19 @@ HWTEST_F(TriggerTest, trigger_db_helper_001, TestSize.Level1)
 {
     // insert model
     int32_t uuid = 11;
-    auto model = std::make_shared<GenericTriggerModel>(uuid, TriggerModel::TriggerModelVersion::MODLE_VERSION_2,
-        TriggerModel::TriggerModelType::VOICE_WAKEUP_TYPE);
     uint8_t data[4] = {0, 1, 2, 3};
-    model->SetData(data, sizeof(data));
     std::vector<uint8_t> expect(data, data + (sizeof(data) / sizeof(uint8_t)));
 
-    triggerManager->UpdateModel(model);
+    triggerManager->UpdateModel(expect, uuid, TriggerModelType::VOICE_WAKEUP_TYPE);
     auto result = triggerManager->GetModel(uuid);
     EXPECT_EQ(expect, result->GetData());
 
     // update model
     uint8_t newdata[4] = {0, 1, 2, 5};
-    model->SetData(newdata, sizeof(newdata));
-
     std::vector<uint8_t>().swap(expect);
     expect.insert(expect.begin(), newdata, newdata + (sizeof(newdata) / sizeof(uint8_t)));
 
-    triggerManager->UpdateModel(model);
+    triggerManager->UpdateModel(expect, uuid, TriggerModelType::VOICE_WAKEUP_TYPE);
     result = triggerManager->GetModel(uuid);
     EXPECT_EQ(expect, result->GetData());
 

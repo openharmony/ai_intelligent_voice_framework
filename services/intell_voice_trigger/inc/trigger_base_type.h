@@ -18,18 +18,12 @@
 #include <cstdint>
 #include <memory>
 #include <vector>
+#include "intell_voice_definitions.h"
 
 namespace OHOS {
 namespace IntellVoiceTrigger {
 class TriggerModel {
 public:
-    enum TriggerModelType {
-        UNKNOWN_TYPE = -1,
-        GENERIC_TYPE = 1,
-        VOICE_WAKEUP_TYPE = 1,
-        PROXIMAL_WAKEUP_TYPE = 2,
-    };
-
     enum TriggerModelVersion {
         MODLE_VERSION_1 = 1,
         MODLE_VERSION_2 = 2,
@@ -79,7 +73,7 @@ private:
 
 class GenericTriggerModel : public TriggerModel {
 public:
-    GenericTriggerModel(int32_t uuid, int32_t version, TriggerModel::TriggerModelType type)
+    GenericTriggerModel(int32_t uuid, int32_t version, TriggerModelType type)
         : TriggerModel(uuid, version, type)
     {}
     ~GenericTriggerModel() override

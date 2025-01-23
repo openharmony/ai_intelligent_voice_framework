@@ -45,7 +45,6 @@ public:
     void DetachHibernateObserver();
 
 private:
-    std::shared_ptr<TriggerDbHelper> dbHelper_ = nullptr;
     std::shared_ptr<TriggerHelper> triggerHelper_ = nullptr;
 };
 }  // namespace IntellVoiceTrigger

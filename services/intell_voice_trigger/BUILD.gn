@@ -1,0 +1,113 @@
+# Copyright (c) 2023 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+import("../../intell_voice_service.gni")
+
+ohos_shared_library("intelligentvoice_trigger") {
+  configs = [ "//build/config/compiler:exceptions" ]
+  if (intelligent_voice_framework_trigger_enable) {
+    sources = [
+      "server/connector_mgr/trigger_callback_impl.cpp",
+      "server/connector_mgr/trigger_connector.cpp",
+      "server/connector_mgr/trigger_connector_internal_impl.cpp",
+      "server/connector_mgr/trigger_connector_internal_validation.cpp",
+      "server/connector_mgr/trigger_connector_mgr.cpp",
+      "server/connector_mgr/trigger_host_manager.cpp",
+      "server/trigger_base_type.cpp",
+      "server/trigger_callback_message.cpp",
+      "server/trigger_db_helper.cpp",
+      "server/trigger_detector.cpp",
+      "server/trigger_detector_callback.cpp",
+      "server/trigger_detector_recognition_callback.cpp",
+      "server/trigger_helper.cpp",
+      "server/trigger_manager.cpp",
+      "server/trigger_service.cpp",
+    ]
+
+    include_dirs = [
+      "inc",
+      "../../../../ai/intelligent_voice_framework/utils",
+      "../../../../ai/intelligent_voice_framework/interfaces/inner_api/native",
+      "server",
+      "server/connector_mgr",
+      "../intell_voice_service/inc",
+    ]
+
+    external_deps = [
+      "ability_runtime:ability_manager",
+      "audio_framework:audio_client",
+      "c_utils:utils",
+      "drivers_interface_intelligent_voice:intell_voice_trigger_idl_headers",
+      "drivers_interface_intelligent_voice:libintell_voice_trigger_proxy_1.0",
+      "drivers_interface_intelligent_voice:libintell_voice_trigger_proxy_1.1",
+      "ffrt:libffrt",
+      "hdf_core:libhdf_host",
+      "hdf_core:libhdi",
+      "hilog:libhilog",
+      "huks:libhukssdk",
+      "ipc:ipc_core",
+      "kv_store:distributeddata_inner",
+      "power_manager:powermgr_client",
+      "relational_store:native_rdb",
+      "safwk:system_ability_fwk",
+      "samgr:samgr_proxy",
+    ]
+  } else {
+    sources = [
+      "server/dummy_trigger_manager.cpp",
+      "server/trigger_callback_message.cpp",
+    ]
+    include_dirs = [
+      "inc",
+      "../../../../ai/intelligent_voice_framework/utils",
+      "../intell_voice_service/inc",
+    ]
+    external_deps = [ "hilog:libhilog" ]
+  }
+
+  cflags_cc = [
+    "-Wno-error=unused-parameter",
+    "-DHILOG_ENABLE",
+    "-DENABLE_DEBUG",
+    "-DUSE_FFRT",
+  ]
+
+  defines = []
+  if (build_variant == "root") {
+    defines += [ "INTELL_VOICE_BUILD_VARIANT_ROOT" ]
+  }
+
+  deps = [ "../../utils:intell_voice_utils" ]
+
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    cfi_vcall_icall_only = true
+    debug = false
+  }
+
+  branch_protector_ret = "pac_ret"
+
+  if (telephony_service_enable) {
+    external_deps += [
+      "call_manager:tel_call_manager_api",
+      "core_service:tel_core_service_api",
+      "state_registry:tel_state_registry_api",
+    ]
+    defines += [ "SUPPORT_TELEPHONY_SERVICE" ]
+  }
+
+  subsystem_name = "ai"
+  part_name = "intelligent_voice_framework"
+}

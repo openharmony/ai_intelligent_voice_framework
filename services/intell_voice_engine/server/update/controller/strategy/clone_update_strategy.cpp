@@ -20,6 +20,7 @@
 #include "update_engine_utils.h"
 #include "history_info_mgr.h"
 #include "json/json.h"
+#include "intell_voice_definitions.h"
 
 #define LOG_TAG "CloneUpdateStrategy"
 
@@ -41,7 +42,7 @@ bool CloneUpdateStrategy::UpdateRestrain()
     std::string versionNumberSave;
     HistoryInfoMgr &historyInfoMgr = HistoryInfoMgr::GetInstance();
 
-    versionNumberSave = historyInfoMgr.GetWakeupVesion();
+    versionNumberSave = historyInfoMgr.GetStringKVPair(KEY_WAKEUP_VESRION);
     if (!versionNumberSave.empty()) {
         INTELL_VOICE_LOG_ERROR("saved version number is not null");
         return true;
@@ -87,13 +88,13 @@ void CloneUpdateStrategy::SetBundleAndAbilityName()
     std::string bundleName = GetBundleOrAbilityName("bundle_name");
     if (!bundleName.empty()) {
         INTELL_VOICE_LOG_INFO("set bundle");
-        historyInfoMgr.SetWakeupEngineBundleName(bundleName);
+        historyInfoMgr.SetStringKVPair(KEY_WAKEUP_ENGINE_BUNDLE_NAME, bundleName);
     }
 
     std::string abilityName = GetBundleOrAbilityName("ability_name");
     if (!abilityName.empty()) {
         INTELL_VOICE_LOG_INFO("set ability");
-        historyInfoMgr.SetWakeupEngineAbilityName(abilityName);
+        historyInfoMgr.SetStringKVPair(KEY_WAKEUP_ENGINE_ABILITY_NAME, abilityName);
     }
 }
 

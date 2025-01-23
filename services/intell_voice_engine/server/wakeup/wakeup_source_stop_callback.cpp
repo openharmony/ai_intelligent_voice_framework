@@ -14,7 +14,8 @@
  */
 #include "wakeup_source_stop_callback.h"
 #include "intell_voice_log.h"
-#include "intell_voice_service_manager.h"
+#include "intell_voice_engine_manager.h"
+#include "engine_callback_message.h"
 
 #define LOG_TAG "WakeupSourceStopCallback"
 
@@ -23,10 +24,7 @@ namespace IntellVoiceEngine {
 void WakeupSourceStopCallback::OnWakeupClose()
 {
     INTELL_VOICE_LOG_INFO("enter");
-    const auto &manager = IntellVoiceServiceManager::GetInstance();
-    if (manager != nullptr) {
-        manager->HandleCloseWakeupSource();
-    }
+    EngineCallbackMessage::CallFunc(HANDLE_CLOSE_WAKEUP_SOURCE, false);
 }
 }
 }

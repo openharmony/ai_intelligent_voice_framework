@@ -19,8 +19,9 @@
 
 #include <cstdio>
 #include "intell_voice_log.h"
-
+#define private public
 #include "trigger_manager.h"
+#include "trigger_detector.h"
 #include "trigger_base_type.h"
 #include "trigger_detector_callback.h"
 
@@ -53,7 +54,7 @@ void TriggerManagerTest::TearDownTestCase(void)
 
 void TriggerManagerTest::SetUp(void)
 {
-    triggerManager = TriggerManager::GetInstance();
+    triggerManager = std::shared_ptr<TriggerManager>(new (std::nothrow) TriggerManager());
     ASSERT_NE(triggerManager, nullptr);
     ReadFile("/data/test/resource/model_one.txt");
 }
@@ -63,7 +64,7 @@ void TriggerManagerTest::TearDown(void)
     triggerManager = nullptr;
 }
 
-void TriggerManagerTest::TriggerManagerTestCallBack(void)
+void TriggerManagerTest::TriggerManagerTestCallBack()
 {
     INTELL_VOICE_LOG_INFO("enter");
     testResult = true;
@@ -92,16 +93,11 @@ void TriggerManagerTest::ReadFile(const std::string &path)
 HWTEST_F(TriggerManagerTest, start_recognition_001, TestSize.Level1)
 {
     int32_t uuid = 11;
-    auto model = std::make_shared<GenericTriggerModel>(uuid, TriggerModel::TriggerModelVersion::MODLE_VERSION_2,
-        TriggerModel::TriggerModelType::VOICE_WAKEUP_TYPE);
-    model->SetData(modelData);
-    triggerManager->UpdateModel(model);
-
-    std::shared_ptr<TriggerDetectorCallback> cb = std::make_shared<TriggerDetectorCallback>(
+    triggerManager->UpdateModel(modelData, uuid, TriggerModelType::VOICE_WAKEUP_TYPE);
+    triggerManager->CreateDetector(uuid,
         std::bind(&TriggerManagerTest::TriggerManagerTestCallBack, this));
-    auto detector = triggerManager->CreateTriggerDetector(uuid, cb);
     sleep(1);
-    detector->StartRecognition();
+    triggerManager->detectors_[uuid]->StartRecognition();
     triggerManager->DeleteModel(uuid);
 
     EXPECT_EQ(true, testResult);

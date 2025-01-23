@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 #include "wakeup_engine_impl.h"
+
 #include "audio_asr.h"
 #include "audio_system_manager.h"
 #include "ipc_skeleton.h"
@@ -23,9 +24,10 @@
 #include "history_info_mgr.h"
 #include "intell_voice_util.h"
 #include "string_util.h"
-#include "intell_voice_service_manager.h"
-#include "trigger_manager.h"
+#include "intell_voice_engine_manager.h"
+#include "engine_callback_message.h"
 #include "engine_host_manager.h"
+#include "swing_service_wrapper.h"
 
 #define LOG_TAG "WakeupEngineImpl"
 
@@ -33,7 +35,6 @@ using namespace OHOS::IntellVoice;
 using namespace OHOS::AudioStandard;
 using namespace OHOS::HDI::IntelligentVoice::Engine::V1_0;
 using namespace OHOS::IntellVoiceUtils;
-using namespace OHOS::IntellVoiceTrigger;
 
 namespace OHOS {
 namespace IntellVoiceEngine {
@@ -50,6 +51,8 @@ static constexpr int64_t RECOGNIZE_COMPLETE_TIMEOUT_US = 2 * 1000 * 1000; //2s
 static constexpr int64_t READ_CAPTURER_TIMEOUT_US = 10 * 1000 * 1000; //10s
 static constexpr uint32_t MAX_WAKEUP_TASK_NUM = 200;
 static const std::string WAKEUP_THREAD_NAME = "WakeupEngThread";
+static const std::string WAKEUP_CONFORMER_EVENT_TYPE = "AUDIO_WAKEUP_1_5";
+static const std::string WAKEUP_CONFORMER_DOMAIN_ID = "7";
 
 WakeupEngineImpl::WakeupEngineImpl() : ModuleStates(State(IDLE), "WakeupEngineImpl", "WakeupThread"),
     TaskExecutor(WAKEUP_THREAD_NAME, MAX_WAKEUP_TASK_NUM)
@@ -132,13 +135,20 @@ int32_t WakeupEngineImpl::Handle(const StateMsg &msg)
 
 OHOS::AudioStandard::AudioChannel WakeupEngineImpl::GetWakeupSourceChannel()
 {
-    auto triggerMgr = TriggerManager::GetInstance();
-    if (triggerMgr == nullptr) {
-        INTELL_VOICE_LOG_ERROR("trigger manager is nullptr");
+    auto ret = EngineCallbackMessage::CallFunc(TRIGGERMGR_GET_PARAMETER, WAKEUP_SOURCE_CHANNEL);
+    std::string channel = "";
+    if (ret.has_value()) {
+        try {
+            channel = std::any_cast<std::string>(*ret);
+        } catch (const std::bad_any_cast&) {
+            INTELL_VOICE_LOG_ERROR("msg bus bad any cast");
+            return AudioChannel::MONO;
+        }
+    } else {
+        INTELL_VOICE_LOG_ERROR("msg bus return no value");
         return AudioChannel::MONO;
     }
 
-    std::string channel = triggerMgr->GetParameter(WAKEUP_SOURCE_CHANNEL);
     if (channel == "") {
         INTELL_VOICE_LOG_INFO("no channle info");
         return AudioChannel::MONO;
@@ -404,7 +414,7 @@ int32_t WakeupEngineImpl::HandleInit(const StateMsg & /* msg */, State &nextStat
         INTELL_VOICE_LOG_ERROR("failed to set callback");
         return -1;
     }
-    UpdateDspModel();
+    SetWakeupModel();
     EngineUtil::SetLanguage();
     EngineUtil::SetArea();
     EngineUtil::SetSensibility();
@@ -422,6 +432,8 @@ int32_t WakeupEngineImpl::HandleInit(const StateMsg & /* msg */, State &nextStat
         INTELL_VOICE_LOG_ERROR("failed to attach");
         return -1;
     }
+
+    UpdateDspModel();
 
     nextState = State(INITIALIZING);
     return 0;
@@ -620,8 +632,8 @@ int32_t WakeupEngineImpl::HandleResetAdapter(const StateMsg & /* msg */, State &
         INTELL_VOICE_LOG_ERROR("failed to create adapter");
         return -1;
     }
+    SetWakeupModel();
     adapter_->SetCallback(callback_);
-    UpdateDspModel();
     EngineUtil::SetLanguage();
     EngineUtil::SetArea();
     SetDspFeatures();
@@ -638,6 +650,8 @@ int32_t WakeupEngineImpl::HandleResetAdapter(const StateMsg & /* msg */, State &
         EngineUtil::ReleaseAdapterInner(EngineHostManager::GetInstance());
         return -1;
     }
+
+    UpdateDspModel();
 
     nextState = State(INITIALIZING);
     return 0;
@@ -659,26 +673,87 @@ int32_t WakeupEngineImpl::HandleRelease(const StateMsg & /* msg */, State &nextS
     return 0;
 }
 
-void WakeupEngineImpl::UpdateDspModel()
+void WakeupEngineImpl::SetWakeupModel()
 {
-    auto &mgr = IntellVoiceServiceManager::GetInstance();
-    if (mgr == nullptr) {
-        INTELL_VOICE_LOG_ERROR("mgr is nullptr");
+    auto ret = EngineCallbackMessage::CallFunc(QUERY_SWITCH_STATUS, SHORTWORD_KEY);
+    bool switchstatus = false;
+    if (ret.has_value()) {
+        try {
+            switchstatus = std::any_cast<bool>(*ret);
+        } catch (const std::bad_any_cast&) {
+            INTELL_VOICE_LOG_ERROR("msg bus bad any cast");
+            return;
+        }
+    } else {
+        INTELL_VOICE_LOG_ERROR("msg bus return no value");
         return;
     }
-    if (mgr->QuerySwitchStatus(SHORTWORD_KEY)) {
+    if (switchstatus) {
         adapter_->SetParameter("WakeupMode=1");
+    } else {
+        adapter_->SetParameter("WakeupMode=0");
+    }
+}
+
+void WakeupEngineImpl::UpdateDspModel()
+{
+    auto ret = EngineCallbackMessage::CallFunc(QUERY_SWITCH_STATUS, SHORTWORD_KEY);
+    bool switchstatus = false;
+    if (ret.has_value()) {
+        try {
+            switchstatus = std::any_cast<bool>(*ret);
+        } catch (const std::bad_any_cast&) {
+            INTELL_VOICE_LOG_ERROR("msg bus bad any cast");
+            return;
+        }
+    } else {
+        INTELL_VOICE_LOG_ERROR("msg bus return no value");
+        return;
+    }
+
+    if (switchstatus) {
+        SubscribeSwingEvent();
         ProcDspModel(ReadDspModel(static_cast<OHOS::HDI::IntelligentVoice::Engine::V1_0::ContentType>(
             OHOS::HDI::IntelligentVoice::Engine::V1_2::SHORT_WORD_DSP_MODEL)));
     } else {
-        adapter_->SetParameter("WakeupMode=0");
+        UnSubscribeSwingEvent();
         ProcDspModel(ReadDspModel(OHOS::HDI::IntelligentVoice::Engine::V1_0::DSP_MODLE));
     }
 }
 
+void WakeupEngineImpl::SubscribeSwingEvent()
+{
+    INTELL_VOICE_LOG_INFO("enter");
+    isSubscribeSwingEvent_.store(true);
+    int32_t ret = SwingServiceWrapper::GetInstance().SubscribeSwingEvent(WAKEUP_CONFORMER_EVENT_TYPE,
+        {{"domainId", WAKEUP_CONFORMER_DOMAIN_ID}});
+    if (ret != 1) {
+        INTELL_VOICE_LOG_ERROR("load tiny model failed: %{public}d", ret);
+        return;
+    }
+    INTELL_VOICE_LOG_INFO("load tiny model");
+}
+
+void WakeupEngineImpl::UnSubscribeSwingEvent()
+{
+    INTELL_VOICE_LOG_INFO("enter");
+    if (!isSubscribeSwingEvent_.load()) {
+        INTELL_VOICE_LOG_INFO("no need to UnSubscribeSwingEvent.");
+        return;
+    }
+    isSubscribeSwingEvent_.store(false);
+    int32_t ret = SwingServiceWrapper::GetInstance().UnSubscribeSwingEvent(WAKEUP_CONFORMER_EVENT_TYPE,
+        {{"domainId", WAKEUP_CONFORMER_DOMAIN_ID}});
+    if (ret != 1) {
+        INTELL_VOICE_LOG_ERROR("unload tiny model failed: %{public}d", ret);
+        return;
+    }
+    INTELL_VOICE_LOG_INFO("unload tiny model");
+}
+
 std::string WakeupEngineImpl::GetWakeupPhrase()
 {
-    std::string wakeupPhrase = HistoryInfoMgr::GetInstance().GetWakeupPhrase();
+    std::string wakeupPhrase = HistoryInfoMgr::GetInstance().GetStringKVPair(KEY_WAKEUP_PHRASE);
     if (wakeupPhrase.empty()) {
         INTELL_VOICE_LOG_WARN("no phrase, use default phrase");
         return std::string(DEFAULT_WAKEUP_PHRASE);
