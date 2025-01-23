@@ -14,7 +14,7 @@
  */
 #include <cstddef>
 #include <cstdint>
-
+#define private public
 #include "intell_voice_service_manager.h"
 #include "intell_voice_manager.h"
 #include "intell_voice_log.h"
@@ -27,10 +27,11 @@
 #include "engine_host_manager.h"
 #include "intell_voice_util.h"
 #include "wakeup_engine_impl.h"
+#include "history_info_mgr.h"
 #include "headset_wakeup_engine_impl.h"
+#include "intell_voice_definitions.h"
 
 #define LOG_TAG "ServiceManagerFuzzer"
-
 const int32_t LIMITSIZE = 4;
 
 using namespace std;
@@ -47,35 +48,32 @@ void IntellVoiceServiceManagerFuzzTest(const uint8_t* data, size_t size)
     }
     IntellVoiceManager::GetInstance();
     INTELL_VOICE_LOG_ERROR("enter");
-    const auto &manager = IntellVoiceServiceManager::GetInstance();
+    auto &manager = ServiceManagerType::GetInstance();
     IntellVoiceEngineType type = *reinterpret_cast<const IntellVoiceEngineType *>(data);
-    manager->HandleCreateEngine(type);
-    manager->HandleReleaseEngine(type);
-    manager->SetEnrollResult(type, data);
-    manager->GetEnrollResult(type);
+    manager.HandleCreateEngine(type);
+    manager.HandleReleaseEngine(type);
     const sptr<IRemoteObject> object;
-    manager->HandleSilenceUpdate();
-    manager->HandleCloneUpdate(std::to_string(size), object);
-    manager->HandleSwitchOn(data, size, size);
-    manager->HandleSwitchOff(data, size);
-    manager->HandleCloseWakeupSource();
-    manager->HandleUnloadIntellVoiceService(data);
-    manager->HandleOnIdle();
-    manager->HandleServiceStop();
-    manager->HandleHeadsetHostDie();
-    manager->ProcBreathModel();
-    manager->CreateSwitchProvider();
-    manager->ReleaseSwitchProvider();
-    manager->StartDetection(size);
-    manager->StopDetection(size);
-    manager->QuerySwitchStatus(std::to_string(size));
-    manager->DeregisterProxyDeathRecipient(type);
-    manager->GetParameter(std::to_string(size));
+    manager.HandleSilenceUpdate();
+    manager.HandleCloneUpdate(std::to_string(size), object);
+    manager.HandleSwitchOn(data, size, size);
+    manager.HandleSwitchOff(data, size);
+    manager.HandleCloseWakeupSource();
+    manager.HandleUnloadIntellVoiceService(data);
+    manager.HandleOnIdle();
+    manager.HandleServiceStop();
+    manager.HandleHeadsetHostDie();
+    manager.ProcBreathModel();
+    manager.CreateSwitchProvider();
+    manager.ReleaseSwitchProvider();
+    manager.StartDetection(size);
+    manager.StopDetection(size);
+    manager.QuerySwitchStatus(std::to_string(size));
+    manager.DeregisterProxyDeathRecipient(type);
     std::vector<std::string> cloneFiles;
-    manager->GetWakeupSourceFilesList(cloneFiles);
+    manager.GetWakeupSourceFilesList(cloneFiles);
     std::vector<uint8_t> buffer;
-    manager->GetWakeupSourceFile(std::to_string(size), buffer);
-    manager->SendWakeupFile(std::to_string(size), buffer);
+    manager.GetWakeupSourceFile(std::to_string(size), buffer);
+    manager.SendWakeupFile(std::to_string(size), buffer);
 }
 
 void EnrollEngineFuzzTest(const uint8_t* data, size_t size)
@@ -85,7 +83,7 @@ void EnrollEngineFuzzTest(const uint8_t* data, size_t size)
     }
     INTELL_VOICE_LOG_ERROR("enter");
     EngineHostManager::GetInstance().Init();
-    auto enrollEngine = IntellVoiceServiceManager::GetInstance()->HandleCreateEngine(INTELL_VOICE_ENROLL);
+    auto enrollEngine = ServiceManagerType::GetInstance().HandleCreateEngine(INTELL_VOICE_ENROLL);
     if (enrollEngine == nullptr) {
         INTELL_VOICE_LOG_ERROR("enrollEngine is nullptr");
         return;
@@ -105,11 +103,11 @@ void EnrollEngineFuzzTest(const uint8_t* data, size_t size)
     enrollEngine->SetCallback(object);
     enrollEngine->GetParameter(std::to_string(size));
     enrollEngine->WriteAudio(data, size);
-    EvaluationResultInfo infos;
+    EvaluationResult infos;
     enrollEngine->Evaluate(std::to_string(size), infos);
     enrollEngine->Stop();
     enrollEngine->Detach();
-    IntellVoiceServiceManager::GetInstance()->HandleReleaseEngine(INTELL_VOICE_ENROLL);
+    ServiceManagerType::GetInstance().HandleReleaseEngine(INTELL_VOICE_ENROLL);
 }
 
 void WakeupEngineFuzzTest(const uint8_t* data, size_t size)
@@ -119,7 +117,7 @@ void WakeupEngineFuzzTest(const uint8_t* data, size_t size)
     }
     INTELL_VOICE_LOG_ERROR("enter");
     EngineHostManager::GetInstance().Init();
-    auto wakeEngine = IntellVoiceServiceManager::GetInstance()->HandleCreateEngine(INTELL_VOICE_WAKEUP);
+    auto wakeEngine = ServiceManagerType::GetInstance().HandleCreateEngine(INTELL_VOICE_WAKEUP);
     if (wakeEngine == nullptr) {
         INTELL_VOICE_LOG_ERROR("wakeEngine is nullptr");
         return;
@@ -149,7 +147,7 @@ void WakeupEngineFuzzTest(const uint8_t* data, size_t size)
     std::vector<uint8_t> capturerData;
     wakeupSourceProcess->Read(capturerData, size);
     wakeupSourceProcess->Release();
-    IntellVoiceServiceManager::GetInstance()->HandleReleaseEngine(INTELL_VOICE_WAKEUP);
+    ServiceManagerType::GetInstance().HandleReleaseEngine(INTELL_VOICE_WAKEUP);
 }
 
 void UpdataEngineFuzzTest(const uint8_t* data, size_t size)
@@ -159,7 +157,7 @@ void UpdataEngineFuzzTest(const uint8_t* data, size_t size)
     }
     EngineHostManager::GetInstance().Init();
     INTELL_VOICE_LOG_ERROR("enter");
-    auto updateEngine = IntellVoiceServiceManager::GetInstance()->HandleCreateEngine(INTELL_VOICE_UPDATE);
+    auto updateEngine = ServiceManagerType::GetInstance().HandleCreateEngine(INTELL_VOICE_UPDATE);
     if (updateEngine == nullptr) {
         INTELL_VOICE_LOG_ERROR("updateEngine is nullptr");
         return;
@@ -179,22 +177,22 @@ void ServiceUtilsFuzzTest(const uint8_t* data, size_t size)
     IntellVoiceUtil::GetHdiVersionId(size, size);
     std::vector<std::vector<uint8_t>> audioData;
     HistoryInfoMgr &historyInfoMgr = HistoryInfoMgr::GetInstance();
-    historyInfoMgr.SetEnrollEngineUid(size);
-    historyInfoMgr.GetEnrollEngineUid();
-    historyInfoMgr.SetWakeupEngineBundleName(std::to_string(size));
-    historyInfoMgr.GetWakeupEngineBundleName();
-    historyInfoMgr.SetWakeupEngineAbilityName(std::to_string(size));
-    historyInfoMgr.GetWakeupEngineAbilityName();
-    historyInfoMgr.SetWakeupVesion(std::to_string(size));
-    historyInfoMgr.GetWakeupVesion();
-    historyInfoMgr.SetLanguage(std::to_string(size));
-    historyInfoMgr.GetLanguage();
-    historyInfoMgr.SetArea(std::to_string(size));
-    historyInfoMgr.GetArea();
-    historyInfoMgr.SetWakeupPhrase(std::to_string(size));
-    historyInfoMgr.GetWakeupPhrase();
-    historyInfoMgr.SetWakeupDspFeature(std::to_string(size));
-    historyInfoMgr.GetWakeupDspFeature();
+    historyInfoMgr.SetIntKVPair(KEY_ENROLL_ENGINE_UID, size);
+    historyInfoMgr.GetIntKVPair(KEY_ENROLL_ENGINE_UID);
+    historyInfoMgr.SetStringKVPair(KEY_WAKEUP_ENGINE_BUNDLE_NAME, std::to_string(size));
+    historyInfoMgr.GetStringKVPair(KEY_WAKEUP_ENGINE_BUNDLE_NAME);
+    historyInfoMgr.SetStringKVPair(KEY_WAKEUP_ENGINE_ABILITY_NAME, std::to_string(size));
+    historyInfoMgr.GetStringKVPair(KEY_WAKEUP_ENGINE_ABILITY_NAME);
+    historyInfoMgr.SetStringKVPair(KEY_WAKEUP_VESRION, std::to_string(size));
+    historyInfoMgr.GetStringKVPair(KEY_WAKEUP_VESRION);
+    historyInfoMgr.SetStringKVPair(KEY_LANGUAGE, std::to_string(size));
+    historyInfoMgr.GetStringKVPair(KEY_LANGUAGE);
+    historyInfoMgr.SetStringKVPair(KEY_AREA, std::to_string(size));
+    historyInfoMgr.GetStringKVPair(KEY_AREA);
+    historyInfoMgr.SetStringKVPair(KEY_WAKEUP_PHRASE, std::to_string(size));
+    historyInfoMgr.GetStringKVPair(KEY_WAKEUP_PHRASE);
+    historyInfoMgr.SetStringKVPair(KEY_WAKEUP_DSP_FEATURE, std::to_string(size));
+    historyInfoMgr.GetStringKVPair(KEY_WAKEUP_DSP_FEATURE);
 }
 
 void HdiAdapterFuzzTest(const uint8_t* data, size_t size)

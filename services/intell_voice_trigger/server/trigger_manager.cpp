@@ -14,16 +14,15 @@
  */
 #include "trigger_manager.h"
 #include "trigger_service.h"
+#include "trigger_detector.h"
 #include "intell_voice_log.h"
 #include "memory_guard.h"
+#include "trigger_detector_callback.h"
 
 #define LOG_TAG "TriggerManager"
 
 namespace OHOS {
 namespace IntellVoiceTrigger {
-std::mutex TriggerManager::instanceMutex_;
-std::shared_ptr<TriggerManager> TriggerManager::instance_ = nullptr;
-
 TriggerManager::TriggerManager()
 {
     OHOS::IntellVoiceUtils::MemoryGuard memoryGuard;
@@ -38,23 +37,19 @@ TriggerManager::~TriggerManager()
     service_ = nullptr;
 }
 
-std::shared_ptr<TriggerManager> TriggerManager::GetInstance()
-{
-    if (instance_ == nullptr) {
-        std::lock_guard<std::mutex> autoLock(instanceMutex_);
-        if (instance_ == nullptr) {
-            instance_ = std::shared_ptr<TriggerManager>(new (std::nothrow) TriggerManager());
-        }
-    }
-    return instance_;
-}
-
-void TriggerManager::UpdateModel(std::shared_ptr<GenericTriggerModel> model)
+void TriggerManager::UpdateModel(std::vector<uint8_t> buffer, int32_t uuid, TriggerModelType type)
 {
     if (service_ == nullptr) {
         INTELL_VOICE_LOG_ERROR("service_ is nullptr");
         return;
     }
+    std::shared_ptr<GenericTriggerModel> model = std::make_shared<GenericTriggerModel>(uuid,
+        TriggerModel::TriggerModelVersion::MODLE_VERSION_2, type);
+    if (model == nullptr) {
+        INTELL_VOICE_LOG_ERROR("model is null");
+        return;
+    }
+    model->SetData(buffer);
     service_->UpdateGenericTriggerModel(model);
 }
 
@@ -67,6 +62,18 @@ void TriggerManager::DeleteModel(int32_t uuid)
     service_->DeleteGenericTriggerModel(uuid);
 }
 
+bool TriggerManager::IsModelExist(int32_t uuid)
+{
+    if (service_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("service_ is nullptr");
+        return false;
+    }
+    if (service_->GetGenericTriggerModel(uuid) == nullptr) {
+        return false;
+    }
+    return true;
+}
+
 std::shared_ptr<GenericTriggerModel> TriggerManager::GetModel(int32_t uuid)
 {
     if (service_ == nullptr) {
@@ -76,29 +83,17 @@ std::shared_ptr<GenericTriggerModel> TriggerManager::GetModel(int32_t uuid)
     return service_->GetGenericTriggerModel(uuid);
 }
 
-std::shared_ptr<TriggerDetector> TriggerManager::CreateTriggerDetector(
-    int32_t uuid, std::shared_ptr<IIntellVoiceTriggerDetectorCallback> callback)
-{
-    OHOS::IntellVoiceUtils::MemoryGuard memoryGuard;
-    std::shared_ptr<TriggerDetector> detector = std::make_shared<TriggerDetector>(uuid, service_, callback);
-    if (detector == nullptr) {
-        INTELL_VOICE_LOG_ERROR("detector is nullptr");
-        return nullptr;
-    }
-
-    detectors_[uuid] = detector;
-    return detector;
-}
-
 void TriggerManager::ReleaseTriggerDetector(int32_t uuid)
 {
+    std::lock_guard<std::mutex> lock(detectorMutex_);
     OHOS::IntellVoiceUtils::MemoryGuard memoryGuard;
     auto it = detectors_.find(uuid);
-    if (it == detectors_.end()) {
-        return;
+    if (it != detectors_.end()) {
+        if (it->second != nullptr) {
+            it->second->UnloadTriggerModel();
+        }
+        detectors_.erase(it);
     }
-
-    detectors_.erase(it);
 }
 
 int32_t TriggerManager::SetParameter(const std::string &key, const std::string &value)
@@ -119,25 +114,30 @@ std::string TriggerManager::GetParameter(const std::string &key)
     return service_->GetParameter(key);
 }
 
-#ifdef SUPPORT_TELEPHONY_SERVICE
+
 void TriggerManager::AttachTelephonyObserver()
 {
+#ifdef SUPPORT_TELEPHONY_SERVICE
     if (service_ == nullptr) {
         INTELL_VOICE_LOG_ERROR("service_ is nullptr");
         return;
     }
     return service_->AttachTelephonyObserver();
+#endif
 }
 
 void TriggerManager::DetachTelephonyObserver()
 {
+#ifdef SUPPORT_TELEPHONY_SERVICE
+
     if (service_ == nullptr) {
         INTELL_VOICE_LOG_ERROR("service_ is nullptr");
         return;
     }
     return service_->DetachTelephonyObserver();
-}
 #endif
+}
+
 
 void TriggerManager::AttachAudioCaptureListener()
 {
@@ -193,5 +193,109 @@ void TriggerManager::DetachHibernateObserver()
     return service_->DetachHibernateObserver();
 }
 
+int32_t TriggerManager::StartDetection(int32_t uuid)
+{
+    std::lock_guard<std::mutex> lock(detectorMutex_);
+    if ((detectors_.count(uuid) == 0) || (detectors_[uuid] == nullptr)) {
+        INTELL_VOICE_LOG_INFO("detector is not existed, uuid:%{public}d", uuid);
+        return -1;
+    }
+
+    if (service_->GetParameter("audio_hal_status") == "true") {
+        INTELL_VOICE_LOG_INFO("audio hal is ready");
+        detectors_[uuid]->StartRecognition();
+        return 1;
+    }
+    return 0;
+}
+
+void TriggerManager::StopDetection(int32_t uuid)
+{
+    std::lock_guard<std::mutex> lock(detectorMutex_);
+    if ((detectors_.count(uuid) == 0) || (detectors_[uuid] == nullptr)) {
+        INTELL_VOICE_LOG_INFO("detector is not existed, uuid:%{public}d", uuid);
+        return;
+    }
+    detectors_[uuid]->StopRecognition();
+}
+
+void TriggerManager::CreateDetector(int32_t uuid, std::function<void()> onDetected)
+{
+    std::lock_guard<std::mutex> lock(detectorMutex_);
+    if (detectors_.count(uuid) != 0 && detectors_[uuid] != nullptr) {
+        INTELL_VOICE_LOG_INFO("detector is already existed, no need to create, uuid:%{public}d", uuid);
+        return;
+    }
+
+    auto cb = std::make_shared<TriggerDetectorCallback>(onDetected);
+    if (cb == nullptr) {
+        INTELL_VOICE_LOG_ERROR("cb is nullptr");
+        return;
+    }
+
+    OHOS::IntellVoiceUtils::MemoryGuard memoryGuard;
+    std::shared_ptr<TriggerDetector> detector = std::make_shared<TriggerDetector>(uuid, service_, cb);
+    if (detector == nullptr) {
+        INTELL_VOICE_LOG_ERROR("detector is nullptr");
+        return;
+    }
+
+    detectors_[uuid] = detector;
+}
+
+void TriggerManager::OnServiceStart()
+{
+}
+
+void TriggerManager::OnServiceStop()
+{
+    DetachTelephonyObserver();
+    DetachAudioCaptureListener();
+    DetachAudioRendererEventListener();
+    DetachHibernateObserver();
+}
+
+
+void TriggerManager::OnTelephonyStateRegistryServiceChange(bool isAdded)
+{
+#ifdef SUPPORT_TELEPHONY_SERVICE
+    if (isAdded) {
+        INTELL_VOICE_LOG_INFO("telephony state registry service is added");
+        AttachTelephonyObserver();
+    } else {
+        INTELL_VOICE_LOG_INFO("telephony state registry service is removed");
+    }
+#endif
+}
+
+void TriggerManager::OnAudioDistributedServiceChange(bool isAdded)
+{
+    if (isAdded) {
+        INTELL_VOICE_LOG_INFO("audio distributed service is added");
+        AttachAudioCaptureListener();
+    } else {
+        INTELL_VOICE_LOG_INFO("audio distributed service is removed");
+    }
+}
+
+void TriggerManager::OnAudioPolicyServiceChange(bool isAdded)
+{
+    if (isAdded) {
+        INTELL_VOICE_LOG_INFO("audio policy service is added");
+        AttachAudioRendererEventListener();
+    } else {
+        INTELL_VOICE_LOG_INFO("audio policy service is removed");
+    }
+}
+
+void TriggerManager::OnPowerManagerServiceChange(bool isAdded)
+{
+    if (isAdded) {
+        INTELL_VOICE_LOG_INFO("power manager service is added");
+        AttachHibernateObserver();
+    } else {
+        INTELL_VOICE_LOG_INFO("power manager service is removed");
+    }
+}
 }  // namespace IntellVoiceTrigger
 }  // namespace OHOS

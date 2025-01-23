@@ -21,9 +21,10 @@
 #include "history_info_mgr.h"
 #include "time_util.h"
 #include "scope_guard.h"
-#include "trigger_manager.h"
+#include "engine_callback_message.h"
 #include "adapter_callback_service.h"
 #include "string_util.h"
+#include "intell_voice_definitions.h"
 
 #define LOG_TAG "UpdateEngineController"
 
@@ -46,7 +47,7 @@ UpdateEngineController::~UpdateEngineController()
 void UpdateEngineController::OnTimerEvent(TimerEvent &info)
 {
     INTELL_VOICE_LOG_INFO("TimerEvent %{public}d", timerId_);
-    HandleUpdateRetry();
+    EngineCallbackMessage::CallFunc(HANDLE_UPDATE_RETRY);
 }
 
 bool UpdateEngineController::UpdateRetryProc()
@@ -195,11 +196,6 @@ void UpdateEngineController::ClearRetryState()
     retryTimesLimit_ = 0;
     curPriority_ = 0;
     SetUpdateState(false);
-}
-
-void UpdateEngineController::OnUpdateComplete(UpdateState result, const std::string &param)
-{
-    HandleUpdateComplete(result, param);
 }
 
 void UpdateEngineController::UpdateCompleteProc(UpdateState result, const std::string &param, bool &isLast)

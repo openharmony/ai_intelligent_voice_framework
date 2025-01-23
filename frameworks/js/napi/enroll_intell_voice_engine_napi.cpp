@@ -27,6 +27,7 @@
 #define LOG_TAG "EnrollEngineNapi"
 
 using namespace OHOS::IntellVoice;
+using namespace OHOS::IntellVoiceEngine;
 using namespace std;
 
 namespace OHOS {
@@ -35,7 +36,7 @@ class EvaluateContext : public AsyncContext {
 public:
     explicit EvaluateContext(napi_env env) : AsyncContext(env) {};
     string word;
-    EvaluationResultInfo info;
+    EvaluationResult info;
 };
 
 static __thread napi_ref g_enrollEngineConstructor = nullptr;

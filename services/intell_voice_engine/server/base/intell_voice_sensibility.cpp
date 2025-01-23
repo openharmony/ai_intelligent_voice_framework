@@ -20,6 +20,7 @@
 #include "history_info_mgr.h"
 #include "intell_voice_log.h"
 #include "string_util.h"
+#include "intell_voice_definitions.h"
 
 #define LOG_TAG "IntellVoiceSensibility"
 
@@ -46,7 +47,7 @@ std::string IntellVoiceSensibility::GetDspSensibility(const std::string &sensibi
         INTELL_VOICE_LOG_WARN("invalid sensibility:%{public}d", value);
         return "";
     }
-    std::string wakeupPhrase = HistoryInfoMgr::GetInstance().GetWakeupPhrase();
+    std::string wakeupPhrase = HistoryInfoMgr::GetInstance().GetStringKVPair(KEY_WAKEUP_PHRASE);
     if (wakeupPhrase.empty()) {
         INTELL_VOICE_LOG_WARN("wakeup phrase is empty");
         return "";

@@ -18,6 +18,7 @@
 
 #include <iremote_proxy.h>
 #include "i_intell_voice_engine.h"
+#include "v1_2/intell_voice_engine_types.h"
 
 namespace OHOS {
 namespace IntellVoiceEngine {
@@ -39,7 +40,7 @@ public:
     int32_t Read(std::vector<uint8_t> &data) override;
     int32_t StopCapturer() override;
     int32_t GetWakeupPcm(std::vector<uint8_t> &data) override;
-    int32_t Evaluate(const std::string &word, EvaluationResultInfo &info) override;
+    int32_t Evaluate(const std::string &word, EvaluationResult &result) override;
     int32_t NotifyHeadsetWakeEvent() override;
     int32_t NotifyHeadsetHostEvent(HeadsetHostEventType event) override;
 

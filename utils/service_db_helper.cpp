@@ -20,7 +20,7 @@ using namespace OHOS::DistributedKv;
 #define LOG_TAG "ServiceDbHelper"
 
 namespace OHOS {
-namespace IntellVoiceEngine {
+namespace IntellVoiceUtils {
 ServiceDbHelper::ServiceDbHelper(const std::string &inAppId, const std::string &inStoreId)
 {
     AppId appId = { inAppId };

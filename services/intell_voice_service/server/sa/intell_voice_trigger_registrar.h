@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd. 2023-2023.
+ * Copyright (c) 2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -12,28 +12,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef UPDATE_STATE_H
-#define UPDATE_STATE_H
+#ifndef TRIGGER_REGISTRAR_H
+#define TRIGGER_REGISTRAR_H
 
 namespace OHOS {
 namespace IntellVoiceEngine {
-#define UPDATE_DELAY_TIME_SECONDS  30
+class IntellVoiceTriggerRegistrar {
+public:
+    virtual ~IntellVoiceTriggerRegistrar() = default;
+    void RegisterTriggerCallbacks();
 
-enum UpdateState {
-    UPDATE_STATE_DEFAULT = -1,
-    UPDATE_STATE_COMPLETE_SUCCESS,
-    UPDATE_STATE_COMPLETE_FAIL,
-    UPDATE_STATE_BUTT,
+private:
+    virtual void OnTriggerConnectServiceStart() = 0;
+    void RegisterOnTriggerConnectServiceStart();
 };
-
-enum UpdatePriority {
-    UPDATE_PRIORITY_DEFAULT = 0,
-    CLOUD_UPDATE_PRIORITY = 1,
-    CLONE_UPDATE_PRIORITY,
-    SILENCE_UPDATE_PRIORITY,
-    UPDATE_PRIORITY_BUTT,
-};
-
-}
-}
+}  // namespace IntellVoice
+}  // namespace OHOS
 #endif

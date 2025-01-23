@@ -15,15 +15,19 @@
 
 #ifndef IINTELL_VOICE_SERVICE_H
 #define IINTELL_VOICE_SERVICE_H
+#include <string>
+#include <vector>
 #include "iremote_broker.h"
-#include "v1_2/intell_voice_engine_types.h"
+#include <ashmem.h>
 #include "i_intell_voice_engine.h"
-
-#include "i_intell_voice_update_callback.h"
 
 namespace OHOS {
 namespace IntellVoiceEngine {
-using OHOS::HDI::IntelligentVoice::Engine::V1_2::UploadHdiFile;
+struct UploadFilesFromHdi {
+    int32_t type;
+    std::string filesDescription;
+    std::vector<sptr<Ashmem>> filesContent;
+};
 
 class IIntellVoiceService : public IRemoteBroker {
 public:
@@ -46,7 +50,7 @@ public:
 
     virtual int32_t CreateIntellVoiceEngine(IntellVoiceEngineType type, sptr<IIntellVoiceEngine> &inst) = 0;
     virtual int32_t ReleaseIntellVoiceEngine(IntellVoiceEngineType type) = 0;
-    virtual int32_t GetUploadFiles(int numMax, std::vector<UploadHdiFile> &files) = 0;
+    virtual int32_t GetUploadFiles(int numMax, std::vector<UploadFilesFromHdi> &files) = 0;
     virtual int32_t SetParameter(const std::string &keyValueList) = 0;
     virtual std::string GetParameter(const std::string &key) = 0;
     virtual int32_t GetWakeupSourceFilesList(std::vector<std::string>& cloneFiles) = 0;

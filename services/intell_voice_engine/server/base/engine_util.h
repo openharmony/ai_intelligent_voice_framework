@@ -18,13 +18,13 @@
 #include <mutex>
 #include <string>
 #include <map>
+#include <vector>
 #include <ashmem.h>
 #include "i_adapter_host_manager.h"
 #include <i_intell_voice_engine_callback.h>
 #include "v1_0/iintell_voice_engine_adapter.h"
 #include "v1_0/iintell_voice_engine_callback.h"
 #include "audio_system_manager.h"
-#include "trigger_base_type.h"
 
 namespace OHOS {
 namespace IntellVoiceEngine {
@@ -92,9 +92,8 @@ public:
     int32_t GetWakeupPcm(std::vector<uint8_t> &data);
     int32_t Evaluate(const std::string &word, EvaluationResultInfo &info);
     bool SetDspFeatures();
-    std::shared_ptr<OHOS::IntellVoiceTrigger::GenericTriggerModel> ReadDspModel(
-        OHOS::HDI::IntelligentVoice::Engine::V1_0::ContentType type);
-    void ProcDspModel(std::shared_ptr<OHOS::IntellVoiceTrigger::GenericTriggerModel> model);
+    std::vector<uint8_t> ReadDspModel(OHOS::HDI::IntelligentVoice::Engine::V1_0::ContentType type);
+    void ProcDspModel(const std::vector<uint8_t> &buffer);
     void SetLanguage();
     void SetArea();
     void SetSensibility();

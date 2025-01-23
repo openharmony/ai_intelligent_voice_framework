@@ -23,14 +23,14 @@
 #include "time_util.h"
 #include "scope_guard.h"
 #include "adapter_callback_service.h"
-#include "intell_voice_service_manager.h"
+#include "intell_voice_engine_manager.h"
 #include "update_engine_utils.h"
 #include "engine_host_manager.h"
+#include "history_info_mgr.h"
 
 #define LOG_TAG "EnrollEngine"
 
 using namespace OHOS::IntellVoice;
-using namespace OHOS::IntellVoiceTrigger;
 using namespace OHOS::HDI::IntelligentVoice::Engine::V1_0;
 using namespace OHOS::IntellVoiceUtils;
 using namespace OHOS::AudioStandard;
@@ -70,7 +70,7 @@ void EnrollEngine::OnEnrollEvent(
             }, "EnrollEngine::OnEnrollEvent", false);
     } else if (event.msgId == INTELL_VOICE_ENGINE_MSG_COMMIT_ENROLL_COMPLETE) {
         enrollResult_.store(static_cast<int32_t>(event.result));
-        IntellVoiceServiceManager::SetEnrollResult(INTELL_VOICE_ENROLL,
+        IntellVoiceEngineManager::SetEnrollResult(INTELL_VOICE_ENROLL,
             (static_cast<int32_t>(event.result) == 0 ? true : false));
     }
 }
@@ -163,7 +163,7 @@ int32_t EnrollEngine::Detach(void)
 
     if (enrollResult_.load() == 0) {
         EngineUtil::ProcDspModel(ReadDspModel(OHOS::HDI::IntelligentVoice::Engine::V1_0::DSP_MODLE));
-        HistoryInfoMgr::GetInstance().SetWakeupPhrase(wakeupPhrase_);
+        HistoryInfoMgr::GetInstance().SetStringKVPair(KEY_WAKEUP_PHRASE, wakeupPhrase_);
         /* save new version number */
         UpdateEngineUtils::SaveWakeupVesion();
         INTELL_VOICE_LOG_INFO("enroll save version");
@@ -248,27 +248,27 @@ bool EnrollEngine::SetParameterInner(const std::string &keyValueList)
     for (auto it : kvpairs) {
         if (it.first == std::string("wakeup_bundle_name")) {
             INTELL_VOICE_LOG_INFO("set wakeup bundle name:%{public}s", it.second.c_str());
-            historyInfoMgr.SetWakeupEngineBundleName(it.second);
+            historyInfoMgr.SetStringKVPair(KEY_WAKEUP_ENGINE_BUNDLE_NAME, it.second);
             return true;
         }
         if (it.first == std::string("wakeup_ability_name")) {
             INTELL_VOICE_LOG_INFO("set wakeup ability name:%{public}s", it.second.c_str());
-            historyInfoMgr.SetWakeupEngineAbilityName(it.second);
+            historyInfoMgr.SetStringKVPair(KEY_WAKEUP_ENGINE_ABILITY_NAME, it.second);
             return true;
         }
         if (it.first == std::string("language")) {
             INTELL_VOICE_LOG_DEBUG("set language:%{public}s", it.second.c_str());
-            historyInfoMgr.SetLanguage(it.second);
+            historyInfoMgr.SetStringKVPair(KEY_LANGUAGE, it.second);
             continue;
         }
         if (it.first == std::string("area")) {
             INTELL_VOICE_LOG_DEBUG("set area:%{public}s", it.second.c_str());
-            historyInfoMgr.SetArea(it.second);
+            historyInfoMgr.SetStringKVPair(KEY_AREA, it.second);
             continue;
         }
         if (it.first == std::string("Sensibility")) {
             INTELL_VOICE_LOG_INFO("set Sensibility:%{public}s", it.second.c_str());
-            historyInfoMgr.SetSensibility(it.second);
+            historyInfoMgr.SetStringKVPair(KEY_SENSIBILITY, it.second);
             continue;
         }
     }
@@ -288,10 +288,17 @@ int32_t EnrollEngine::WriteAudio(const uint8_t *buffer, uint32_t size)
     return EngineUtil::WriteAudio(buffer, size);
 }
 
-int32_t EnrollEngine::Evaluate(const std::string &word, EvaluationResultInfo &info)
+int32_t EnrollEngine::Evaluate(const std::string &word, EvaluationResult &result)
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    return EngineUtil::Evaluate(word, info);
+    OHOS::HDI::IntelligentVoice::Engine::V1_2::EvaluationResultInfo info;
+    int32_t ret = EngineUtil::Evaluate(word, info);
+    if (ret == 0) {
+        result.score = info.score;
+        result.resultCode = info.resultCode;
+    }
+
+    return ret;
 }
 
 bool EnrollEngine::StartAudioSource()

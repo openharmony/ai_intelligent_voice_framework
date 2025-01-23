@@ -15,10 +15,12 @@
 #include "wakeup_engine.h"
 #include "ability_manager_client.h"
 #include "idevmgr_hdi.h"
-#include "intell_voice_service_manager.h"
+#include "intell_voice_engine_manager.h"
 #include "intell_voice_log.h"
 #include "headset_host_manager.h"
 #include "headset_wakeup_wrapper.h"
+#include "engine_callback_message.h"
+#include "history_info_mgr.h"
 
 #define LOG_TAG "WakeupEngine"
 
@@ -44,11 +46,7 @@ void WakeupEngine::OnDetected(int32_t uuid)
         std::lock_guard<std::mutex> lock(headsetMutex_);
         if ((headsetImpl_ != nullptr) && (HeadsetWakeupWrapper::GetInstance().GetHeadsetAwakeState() == 1)) {
             INTELL_VOICE_LOG_INFO("headset wakeup is exist");
-            const auto &manager = IntellVoiceServiceManager::GetInstance();
-            if (manager != nullptr) {
-                manager->HandleCloseWakeupSource(true);
-            }
-            return;
+            EngineCallbackMessage::CallFunc(HANDLE_CLOSE_WAKEUP_SOURCE, true);
         }
     }
 
@@ -56,10 +54,7 @@ void WakeupEngine::OnDetected(int32_t uuid)
     StateMsg msg(START_RECOGNIZE, &uuid, sizeof(int32_t));
     if (ROLE(WakeupEngineImpl).Handle(msg) != 0) {
         INTELL_VOICE_LOG_WARN("start failed");
-        const auto &manager = IntellVoiceServiceManager::GetInstance();
-        if (manager != nullptr) {
-            manager->HandleCloseWakeupSource(true);
-        }
+        EngineCallbackMessage::CallFunc(HANDLE_CLOSE_WAKEUP_SOURCE, true);
     }
 }
 
@@ -278,8 +273,8 @@ void WakeupEngine::StartAbility(const std::string &event)
     AAFwk::Want want;
     HistoryInfoMgr &historyInfoMgr = HistoryInfoMgr::GetInstance();
 
-    std::string bundleName = historyInfoMgr.GetWakeupEngineBundleName();
-    std::string abilityName = historyInfoMgr.GetWakeupEngineAbilityName();
+    std::string bundleName = historyInfoMgr.GetStringKVPair(KEY_WAKEUP_ENGINE_BUNDLE_NAME);
+    std::string abilityName = historyInfoMgr.GetStringKVPair(KEY_WAKEUP_ENGINE_ABILITY_NAME);
     INTELL_VOICE_LOG_INFO("bundleName:%{public}s, abilityName:%{public}s", bundleName.c_str(), abilityName.c_str());
     if (bundleName.empty() || abilityName.empty()) {
         INTELL_VOICE_LOG_ERROR("bundle name is empty or ability name is empty");

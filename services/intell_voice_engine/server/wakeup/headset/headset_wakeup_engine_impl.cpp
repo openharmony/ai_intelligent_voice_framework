@@ -18,7 +18,7 @@
 #include "intell_voice_log.h"
 #include "history_info_mgr.h"
 #include "intell_voice_util.h"
-#include "intell_voice_service_manager.h"
+#include "intell_voice_engine_manager.h"
 #include "headset_host_manager.h"
 #include "headset_wakeup_wrapper.h"
 

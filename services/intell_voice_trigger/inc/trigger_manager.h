@@ -17,30 +17,39 @@
 
 #include <map>
 #include <memory>
+#include <mutex>
 #include "trigger_base_type.h"
-#include "trigger_service.h"
-#include "trigger_detector.h"
-#include "i_intell_voice_trigger_detector_callback.h"
 
 namespace OHOS {
 namespace IntellVoiceTrigger {
+class TriggerService;
+class TriggerDetector;
+
 class TriggerManager {
 public:
+    TriggerManager();
     ~TriggerManager();
-    static std::shared_ptr<TriggerManager> GetInstance();
 
-    void UpdateModel(std::shared_ptr<GenericTriggerModel> model);
+    void UpdateModel(std::vector<uint8_t> buffer, int32_t uuid, TriggerModelType type);
     void DeleteModel(int32_t uuid);
+    bool IsModelExist(int32_t uuid);
     std::shared_ptr<GenericTriggerModel> GetModel(int32_t uuid);
-    std::shared_ptr<TriggerDetector> CreateTriggerDetector(
-        int32_t uuid, std::shared_ptr<IIntellVoiceTriggerDetectorCallback> callback);
+    void CreateDetector(int32_t uuid, std::function<void()> onDetected);
     void ReleaseTriggerDetector(int32_t uuid);
+    int32_t StartDetection(int32_t uuid);
+    void StopDetection(int32_t uuid);
     int32_t SetParameter(const std::string &key, const std::string &value);
     std::string GetParameter(const std::string &key);
-#ifdef SUPPORT_TELEPHONY_SERVICE
+    void OnServiceStart();
+    void OnServiceStop();
+    void OnTelephonyStateRegistryServiceChange(bool isAdded);
+    void OnAudioDistributedServiceChange(bool isAdded);
+    void OnAudioPolicyServiceChange(bool isAdded);
+    void OnPowerManagerServiceChange(bool isAdded);
+
+private:
     void AttachTelephonyObserver();
     void DetachTelephonyObserver();
-#endif
     void AttachAudioCaptureListener();
     void DetachAudioCaptureListener();
     void AttachAudioRendererEventListener();
@@ -49,14 +58,9 @@ public:
     void DetachHibernateObserver();
 
 private:
-    explicit TriggerManager();
-
-private:
+    std::mutex detectorMutex_; //这个锁回头看看有没有必要删掉
     std::map<int32_t, std::shared_ptr<TriggerDetector>> detectors_;
-    std::shared_ptr<TriggerService> service_;
-
-    static std::mutex instanceMutex_;
-    static std::shared_ptr<TriggerManager> instance_;
+    std::shared_ptr<TriggerService> service_ = nullptr;
 };
 }  // namespace IntellVoiceTrigger
 }  // namespace OHOS

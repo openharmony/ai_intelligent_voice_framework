@@ -199,15 +199,15 @@ int32_t IntellVoiceEngineStub::GetWakeupPcmInner(MessageParcel &data, MessagePar
 
 int32_t IntellVoiceEngineStub::EvaluateInner(MessageParcel &data, MessageParcel &reply)
 {
-    HDI::IntelligentVoice::Engine::V1_2::EvaluationResultInfo info;
-    int32_t ret = Evaluate(data.ReadString(), info);
+    EvaluationResult result;
+    int32_t ret = Evaluate(data.ReadString(), result);
     reply.WriteInt32(ret);
     if (ret != 0) {
         INTELL_VOICE_LOG_ERROR("failed to evaluate");
         return ret;
     }
-    reply.WriteInt32(info.score);
-    reply.WriteInt32(info.resultCode);
+    reply.WriteInt32(result.score);
+    reply.WriteInt32(result.resultCode);
     return ret;
 }
 

@@ -24,6 +24,7 @@
 #include "trigger_detector_callback.h"
 
 #define LOG_TAG "TriggerManager"
+#define private public
 
 using namespace std;
 
@@ -32,7 +33,7 @@ namespace IntellVoiceTrigger {
 
 TriggerManagerTest::TriggerManagerTest()
 {
-    triggerManager_ = TriggerManager::GetInstance();
+    triggerManager_ = std::shared_ptr<TriggerManager>(new (std::nothrow) TriggerManager());
     if (triggerManager_ == nullptr) {
         return;
     }
@@ -41,7 +42,6 @@ TriggerManagerTest::TriggerManagerTest()
         return;
     }
     triggerHelper_ = triggerService_->triggerHelper_;
-    dbHelper_ = triggerService_->dbHelper_;
 }
 
 TriggerManagerTest::~TriggerManagerTest()
@@ -49,7 +49,6 @@ TriggerManagerTest::~TriggerManagerTest()
     triggerManager_ = nullptr;
     triggerService_ = nullptr;
     triggerHelper_ = nullptr;
-    dbHelper_ = nullptr;
     triggerDetector_ = nullptr;
 }
 
@@ -58,21 +57,12 @@ bool TriggerManagerTest::InitRecognition(int32_t uuid)
     if (triggerManager_ == nullptr) {
         return false;
     }
-    auto model = std::make_shared<GenericTriggerModel>(
-        uuid, TriggerModel::TriggerModelVersion::MODLE_VERSION_2, TriggerModel::TriggerModelType::VOICE_WAKEUP_TYPE);
 
-    if (model == nullptr) {
-        return false;
-    }
     auto data = ReadFile("/data/test/resource/model_one.txt");
-    ;
-    model->SetData(data);
-    triggerManager_->UpdateModel(model);
-    auto cb = std::make_shared<TriggerDetectorCallback>([&, uuid]() { OnDetected(uuid); });
-    if (cb == nullptr) {
-        return false;
-    }
-    triggerDetector_ = triggerManager_->CreateTriggerDetector(uuid, cb);
+
+    triggerManager_->UpdateModel(data, uuid, TriggerModelType::VOICE_WAKEUP_TYPE);
+    triggerManager_->CreateDetector(uuid, [this, uuid]() { OnDetected(uuid); });
+    triggerDetector_ = triggerManager_->detectors_[uuid];
     if (triggerDetector_ == nullptr) {
         return false;
     }

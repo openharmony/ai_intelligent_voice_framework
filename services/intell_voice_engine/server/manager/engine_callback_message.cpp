@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -12,25 +12,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef INTELL_VOICE_SERVICE_DB_HELPER_H
-#define INTELL_VOICE_SERVICE_DB_HELPER_H
 
-#include "distributed_kv_data_manager.h"
-
+#include "engine_callback_message.h"
+ 
 namespace OHOS {
 namespace IntellVoiceEngine {
-class ServiceDbHelper {
-public:
-    ServiceDbHelper(const std::string &inAppId, const std::string &inStoreId);
-    ~ServiceDbHelper();
-
-    void SetValue(const std::string &key, const std::string &value);
-    std::string GetValue(const std::string &key);
-    void Delete(const std::string &key);
-
-private:
-    std::shared_ptr<DistributedKv::SingleKvStore> kvStore_ = nullptr;
-};
-}
-}
-#endif
+std::map<EngineCbMessageId, EngineCallbackMessage::Func> EngineCallbackMessage::EngineFuncMap;
+}  // namespace IntellVoiceEngine
+}  // namespace OHOS

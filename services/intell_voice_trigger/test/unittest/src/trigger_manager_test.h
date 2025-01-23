@@ -41,7 +41,6 @@ public:
     std::vector<uint8_t> ReadFile(const std::string &path);
 
 public:
-    std::shared_ptr<TriggerDbHelper> dbHelper_ = nullptr;
     std::shared_ptr<TriggerHelper> triggerHelper_ = nullptr;
     std::shared_ptr<TriggerService> triggerService_ = nullptr;
     std::shared_ptr<TriggerDetector> triggerDetector_ = nullptr;

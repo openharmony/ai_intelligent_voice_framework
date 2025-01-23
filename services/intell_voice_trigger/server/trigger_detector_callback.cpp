@@ -15,9 +15,7 @@
 #include "trigger_detector_callback.h"
 #include <thread>
 #include "intell_voice_log.h"
-#include "wakeup_engine.h"
 
-using namespace OHOS::IntellVoiceEngine;
 #define LOG_TAG "TriggerDetectorCallback"
 
 namespace OHOS {

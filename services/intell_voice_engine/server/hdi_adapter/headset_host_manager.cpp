@@ -18,8 +18,10 @@
 #include "intell_voice_log.h"
 #include "data_operation_callback.h"
 #include "intell_voice_util.h"
-#include "intell_voice_service_manager.h"
+#include "intell_voice_engine_manager.h"
 #include "headset_adapter_host_manager.h"
+#include "headset_wakeup_wrapper.h"
+#include "engine_callback_message.h"
 
 #define LOG_TAG "HeadsetHostManager"
 
@@ -128,12 +130,8 @@ void HeadsetHostManager::ReleaseEngineAdapter(const IntellVoiceEngineAdapterDesc
 void HeadsetHostManager::OnEngineHDIDiedCallback()
 {
     INTELL_VOICE_LOG_INFO("enter");
-    auto &mgr = IntellVoiceServiceManager::GetInstance();
-    if (mgr == nullptr) {
-        INTELL_VOICE_LOG_ERROR("mgr is nullptr");
-        return;
-    }
-    mgr->HandleHeadsetHostDie();
+    EngineCallbackMessage::CallFunc(HANDLE_HEADSET_HOST_DIE);
+    HeadsetWakeupWrapper::GetInstance().NotifyHeadsetHdfDeath();
 }
 }
 }

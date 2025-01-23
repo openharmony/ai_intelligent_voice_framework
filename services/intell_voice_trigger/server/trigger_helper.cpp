@@ -13,9 +13,7 @@
  * limitations under the License.
  */
 #include "trigger_helper.h"
-#include "intell_voice_log.h"
 
-#include "trigger_connector_mgr.h"
 #ifdef SUPPORT_TELEPHONY_SERVICE
 #include "telephony_observer_client.h"
 #include "state_registry_errors.h"
@@ -24,6 +22,9 @@
 #endif
 #include "audio_policy_manager.h"
 #include "power_mgr_client.h"
+
+#include "intell_voice_log.h"
+#include "trigger_connector_mgr.h"
 
 #undef LOG_TAG
 #define LOG_TAG "TriggerHelper"
@@ -132,10 +133,6 @@ void TriggerModelData::ClearCallback()
 
 TriggerHelper::TriggerHelper()
 {
-    const auto &connectMgr = TriggerConnectorMgr::GetInstance();
-    if (connectMgr != nullptr) {
-        moduleDesc_ = connectMgr->ListConnectorModuleDescriptors();
-    }
 }
 
 TriggerHelper::~TriggerHelper()
@@ -258,15 +255,17 @@ bool TriggerHelper::GetModule()
     if (module_ != nullptr) {
         return true;
     }
-    if (moduleDesc_.size() == 0) {
-        INTELL_VOICE_LOG_ERROR("moduleDesc_ is empty");
-        return false;
-    }
     const auto &connectMgr = TriggerConnectorMgr::GetInstance();
     if (connectMgr == nullptr) {
         INTELL_VOICE_LOG_ERROR("connectMgr is nullptr");
         return false;
     }
+    moduleDesc_ = connectMgr->ListConnectorModuleDescriptors();
+    if (moduleDesc_.size() == 0) {
+        INTELL_VOICE_LOG_ERROR("moduleDesc_ is empty");
+        return false;
+    }
+
     module_ = connectMgr->GetConnectorModule(moduleDesc_[0].adapterName, shared_from_this());
     if (module_ == nullptr) {
         INTELL_VOICE_LOG_ERROR("failed to get connector module");

@@ -257,7 +257,7 @@ int32_t IntellVoiceEngineProxy::GetWakeupPcm(std::vector<uint8_t> &data)
     return ret;
 }
 
-int32_t IntellVoiceEngineProxy::Evaluate(const std::string &word, EvaluationResultInfo &info)
+int32_t IntellVoiceEngineProxy::Evaluate(const std::string &word, EvaluationResult &result)
 {
     MessageParcel data;
     MessageParcel reply;
@@ -276,8 +276,8 @@ int32_t IntellVoiceEngineProxy::Evaluate(const std::string &word, EvaluationResu
         return ret;
     }
 
-    info.score = reply.ReadInt32();
-    info.resultCode = static_cast<OHOS::HDI::IntelligentVoice::Engine::V1_2::EvaluationResultCode>(reply.ReadInt32());
+    result.score = reply.ReadInt32();
+    result.resultCode = reply.ReadInt32();
     return ret;
 }
 

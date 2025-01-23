@@ -88,7 +88,7 @@ int32_t IntellVoiceServiceStub::GetReportedFilesInner(MessageParcel &data, Messa
 {
     int32_t ret = 0;
     int numMax =  data.ReadInt32();
-    std::vector<UploadHdiFile> Files;
+    std::vector<UploadFilesFromHdi> Files;
     ret = GetUploadFiles(numMax, Files);
     reply.WriteInt32(ret);
     if (ret != 0) {

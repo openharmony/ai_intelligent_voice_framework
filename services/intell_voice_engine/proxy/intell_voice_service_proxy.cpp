@@ -73,7 +73,7 @@ int32_t IntellVoiceServiceProxy::ReleaseIntellVoiceEngine(IntellVoiceEngineType 
     return reply.ReadInt32();
 }
 
-int32_t IntellVoiceServiceProxy::GetUploadFiles(int numMax, std::vector<UploadHdiFile> &files)
+int32_t IntellVoiceServiceProxy::GetUploadFiles(int numMax, std::vector<UploadFilesFromHdi> &files)
 {
     MessageParcel data;
     MessageParcel reply;
@@ -99,8 +99,8 @@ int32_t IntellVoiceServiceProxy::GetUploadFiles(int numMax, std::vector<UploadHd
     }
 
     for (int32_t i = 0; i < size; i++) {
-        UploadHdiFile file;
-        file.type = static_cast<OHOS::HDI::IntelligentVoice::Engine::V1_2::UploadHdiFileType>(reply.ReadInt32());
+        UploadFilesFromHdi file;
+        file.type = reply.ReadInt32();
         file.filesDescription = reply.ReadString();
         int32_t filesContentSize = reply.ReadInt32();
         INTELL_VOICE_LOG_INFO("filesContentSize:%{public}d", filesContentSize);

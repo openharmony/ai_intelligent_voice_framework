@@ -25,6 +25,7 @@
 #include "intell_voice_service_manager.h"
 #include "silence_update_strategy.h"
 #include "i_intell_voice_engine.h"
+#include "history_info_mgr.h"
 
 #define LOG_TAG "UpdateEngineTest"
 
@@ -37,6 +38,7 @@ using namespace std;
 using namespace OHOS::IntellVoiceTests;
 using namespace OHOS::IntellVoice;
 using namespace OHOS::IntellVoiceEngine;
+using namespace OHOS::IntellVoiceUtils;
 using namespace OHOS::HDI::IntelligentVoice::Engine::V1_0;
 
 #define private public
@@ -85,15 +87,15 @@ HWTEST_F(UpdateEngineTest, UpdateEngineTest_001, TestSize.Level1)
         INTELL_VOICE_LOG_ERROR("init engine host failed");
     }
     HistoryInfoMgr &historyInfoMgr = HistoryInfoMgr::GetInstance();
-    historyInfoMgr.SetWakeupVesion("0");
-    auto &mgr = IntellVoiceServiceManager::GetInstance();
-    mgr->HandleReleaseEngine(INTELL_VOICE_WAKEUP);
+    historyInfoMgr.SetStringKVPair(KEY_WAKEUP_VESRION, "0");
+    auto &mgr = ServiceManagerType::GetInstance();
+    mgr.HandleReleaseEngine(INTELL_VOICE_WAKEUP);
     std::shared_ptr<SilenceUpdateStrategy> silenceStrategy = std::make_shared<SilenceUpdateStrategy>("");
     if (silenceStrategy == nullptr) {
         INTELL_VOICE_LOG_ERROR("silence strategy is nullptr");
     }
     std::shared_ptr<IUpdateStrategy> strategy = std::dynamic_pointer_cast<IUpdateStrategy>(silenceStrategy);
-    int ret = mgr->CreateUpdateEngineUntilTime(strategy);
+    int ret = mgr.CreateUpdateEngineUntilTime(strategy);
     sleep(5);
     EXPECT_EQ(0, ret);
     INTELL_VOICE_LOG_INFO("end");

@@ -42,7 +42,7 @@ int32_t EngineBase::NotifyHeadsetWakeEvent()
     return 0;
 }
 
-int32_t EngineBase::Evaluate(const std::string & /* word */, EvaluationResultInfo & /* info */)
+int32_t EngineBase::Evaluate(const std::string & /* word */, EvaluationResult & /* result */)
 {
     return 0;
 }

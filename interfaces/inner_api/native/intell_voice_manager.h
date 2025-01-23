@@ -29,10 +29,9 @@ namespace OHOS {
 namespace IntellVoice {
 using OHOS::IntellVoiceEngine::IntellVoiceEngineType;
 using OHOS::IntellVoiceEngine::IIntellVoiceEngine;
-using OHOS::HDI::IntelligentVoice::Engine::V1_2::UploadHdiFileType;
 
 struct UploadFilesInfo {
-    UploadHdiFileType type;
+    int32_t type;
     std::string filesDescription;
     std::vector<std::vector<uint8_t>> filesContent;
 };

@@ -165,7 +165,6 @@ int32_t IntellVoiceUtil::VerifySystemPermission(const std::string &permissionNam
     if (!VerifyClientPermission(permissionName)) {
         return INTELLIGENT_VOICE_PERMISSION_DENIED;
     }
-
     return INTELLIGENT_VOICE_SUCCESS;
 }
 

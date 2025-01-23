@@ -20,15 +20,16 @@
 #include "update_adapter_listener.h"
 #include "time_util.h"
 #include "scope_guard.h"
-#include "trigger_manager.h"
 #include "adapter_callback_service.h"
-#include "intell_voice_service_manager.h"
+#include "engine_callback_message.h"
+#include "history_info_mgr.h"
+#include <thread>
 #include "update_engine_utils.h"
 #include "engine_host_manager.h"
+#include "intell_voice_definitions.h"
 
 #define LOG_TAG "UpdateEngine"
 
-using namespace OHOS::IntellVoiceTrigger;
 using namespace OHOS::HDI::IntelligentVoice::Engine::V1_0;
 using namespace OHOS::IntellVoiceUtils;
 using namespace OHOS::AudioStandard;
@@ -65,16 +66,13 @@ void UpdateEngine::OnCommitEnrollComplete(int32_t result)
         if (wakeupPhrase.empty()) {
             INTELL_VOICE_LOG_ERROR("wakeup phrase is empty");
         } else {
-            HistoryInfoMgr::GetInstance().SetWakeupPhrase(wakeupPhrase);
+            HistoryInfoMgr::GetInstance().SetStringKVPair(KEY_WAKEUP_PHRASE, wakeupPhrase);
         }
 
         INTELL_VOICE_LOG_INFO("update save version");
     }
 
-    const auto &manager = IntellVoiceServiceManager::GetInstance();
-    if (manager != nullptr) {
-        manager->OnUpdateComplete(updateResult_, param_);
-    }
+    EngineCallbackMessage::CallFunc(HANDLE_UPDATE_COMPLETE, static_cast<int32_t>(updateResult_), param_);
 }
 
 void UpdateEngine::OnUpdateEvent(int32_t msgId, int32_t result)
@@ -109,7 +107,7 @@ bool UpdateEngine::Init(const std::string &param)
     }
 
     IntellVoiceEngineInfo info = {
-        .wakeupPhrase = HistoryInfoMgr::GetInstance().GetWakeupPhrase(),
+        .wakeupPhrase = HistoryInfoMgr::GetInstance().GetStringKVPair(KEY_WAKEUP_PHRASE),
         .minBufSize = 1280,
         .sampleChannels = 1,
         .bitsPerSample = 16,
@@ -173,10 +171,8 @@ int32_t UpdateEngine::Detach(void)
 
     if (updateResult_ == UpdateState::UPDATE_STATE_DEFAULT) {
         INTELL_VOICE_LOG_WARN("detach defore receive commit enroll msg");
-        const auto &manager = IntellVoiceServiceManager::GetInstance();
-        if (manager != nullptr) {
-            manager->OnUpdateComplete(UpdateState::UPDATE_STATE_DEFAULT, param_);
-        }
+        EngineCallbackMessage::CallFunc(HANDLE_UPDATE_COMPLETE,
+            static_cast<int32_t>(UpdateState::UPDATE_STATE_DEFAULT), param_);
     }
     return ret;
 }

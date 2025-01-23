@@ -1,0 +1,94 @@
+# Copyright (c) 2023 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+import("../../intell_voice_service.gni")
+
+ohos_shared_library("intell_voice_server") {
+  configs = [ "//build/config/compiler:exceptions" ]
+
+  sources = [
+    "server/sa/intell_voice_engine_registrar.cpp",
+    "server/sa/intell_voice_service.cpp",
+    "server/sa/intell_voice_service_config_parser.cpp",
+    "server/sa/intell_voice_service_manager.cpp",
+    "server/sa/intell_voice_service_stub.cpp",
+    "server/sa/intell_voice_trigger_registrar.cpp",
+    "server/utils/switch_observer.cpp",
+    "server/utils/switch_provider.cpp",
+    "server/utils/system_event_observer.cpp",
+  ]
+
+  include_dirs = [
+    "inc",
+    "../../../../ai/intelligent_voice_framework/utils",
+    "../../../../ai/intelligent_voice_framework/interfaces/inner_api/native",
+    "server/sa",
+    "server/utils",
+    "../intell_voice_engine/inc",
+    "../intell_voice_trigger/inc",
+  ]
+
+  cflags_cc = [
+    "-Wno-error=unused-parameter",
+    "-DHILOG_ENABLE",
+    "-DENABLE_DEBUG",
+    "-DUSE_FFRT",
+  ]
+
+  defines = []
+  if (build_variant == "root") {
+    defines += [ "INTELL_VOICE_BUILD_VARIANT_ROOT" ]
+  }
+
+  deps = [
+    "../../utils:intell_voice_utils",
+    "../intell_voice_engine:intelligentvoice_engine",
+    "../intell_voice_trigger:intelligentvoice_trigger",
+  ]
+
+  external_deps = [
+    "ability_runtime:ability_manager",
+    "access_token:libaccesstoken_sdk",
+    "c_utils:utils",
+    "common_event_service:cesfwk_innerkits",
+    "data_share:datashare_consumer",
+    "ffrt:libffrt",
+    "hilog:libhilog",
+    "ipc:ipc_core",
+    "kv_store:distributeddata_inner",
+    "safwk:system_ability_fwk",
+    "samgr:samgr_proxy",
+  ]
+
+  public_external_deps = [ "libxml2:libxml2" ]
+
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    cfi_vcall_icall_only = true
+    debug = false
+  }
+
+  branch_protector_ret = "pac_ret"
+
+  if (intelligent_voice_framework_trigger_enable) {
+    cflags_cc += [ "-DTRIGGER_ENABLE" ]
+  }
+
+  if (intelligent_voice_framework_engine_enable) {
+    cflags_cc += [ "-DENGINE_ENABLE" ]
+  }
+  subsystem_name = "ai"
+  part_name = "intelligent_voice_framework"
+}

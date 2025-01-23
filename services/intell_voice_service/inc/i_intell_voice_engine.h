@@ -16,13 +16,9 @@
 #ifndef IINTELL_VOICE_ENGINE_H
 #define IINTELL_VOICE_ENGINE_H
 #include "iremote_broker.h"
-#include "i_intell_voice_engine_callback.h"
-#include "v1_2/intell_voice_engine_types.h"
 
 namespace OHOS {
 namespace IntellVoiceEngine {
-using OHOS::HDI::IntelligentVoice::Engine::V1_2::EvaluationResultInfo;
-
 enum IntellVoiceEngineType {
     INTELL_VOICE_ENROLL = 0,
     INTELL_VOICE_WAKEUP,
@@ -43,6 +39,11 @@ enum IntellVoiceUpdateSceneType {
 enum HeadsetHostEventType {
     HEADSET_HOST_OFF = 0,
     HEADSET_HOST_ON = 1,
+};
+
+struct EvaluationResult {
+    int32_t score;
+    int32_t resultCode;
 };
 
 struct IntellVoiceEngineInfo {
@@ -88,7 +89,7 @@ public:
     virtual int32_t Read(std::vector<uint8_t> &data) = 0;
     virtual int32_t StopCapturer() = 0;
     virtual int32_t GetWakeupPcm(std::vector<uint8_t> &data) = 0;
-    virtual int32_t Evaluate(const std::string &word, EvaluationResultInfo &info) = 0;
+    virtual int32_t Evaluate(const std::string &word, EvaluationResult &result) = 0;
     virtual int32_t NotifyHeadsetWakeEvent() = 0;
     virtual int32_t NotifyHeadsetHostEvent(HeadsetHostEventType event) = 0;
 };

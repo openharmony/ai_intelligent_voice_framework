@@ -29,7 +29,7 @@ public:
 
     int32_t CreateIntellVoiceEngine(IntellVoiceEngineType type, sptr<IIntellVoiceEngine> &inst) override;
     int32_t ReleaseIntellVoiceEngine(IntellVoiceEngineType type) override;
-    int32_t GetUploadFiles(int numMax, std::vector<UploadHdiFile> &files) override;
+    int32_t GetUploadFiles(int numMax, std::vector<UploadFilesFromHdi> &files) override;
     int32_t SetParameter(const std::string &keyValueList) override;
     std::string GetParameter(const std::string &key) override;
     int32_t GetWakeupSourceFilesList(std::vector<std::string> &cloneFiles) override;

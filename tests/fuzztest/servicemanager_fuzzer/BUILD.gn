@@ -13,6 +13,7 @@
 
 import("//build/config/features.gni")
 import("//build/test.gni")
+import("//foundation/ai/intelligent_voice_framework/intell_voice_service.gni")
 
 module_output_path = "intelligent_voice_framework/intelligent_voice_framework"
 
@@ -21,21 +22,25 @@ ohos_fuzztest("ServiceManagerFuzzTest") {
   fuzz_config_file = "../servicemanager_fuzzer"
 
   include_dirs = [
-    "../../../services/intell_voice_engine/proxy",
-    "../../../services/intell_voice_engine/server/base",
-    "../../../services/intell_voice_engine/server/sa",
+    "../../../services/intell_voice_engine/inc",
+    "../../../services/intell_voice_engine/server/wakeup",
     "../../../services/intell_voice_engine/server/enroll",
-    "../../../services/intell_voice_engine/server/hdi_adapter",
     "../../../services/intell_voice_engine/server/update",
     "../../../services/intell_voice_engine/server/update/controller",
     "../../../services/intell_voice_engine/server/update/controller/strategy",
-    "../../../services/intell_voice_engine/server/utils",
-    "../../../services/intell_voice_engine/server/wakeup",
     "../../../services/intell_voice_engine/server/wakeup/headset",
-    "../../../services/intell_voice_engine",
-    "../../../services/intell_voice_trigger/server",
-    "../../../services/intell_voice_trigger/server/connector_mgr",
+    "../../../services/intell_voice_engine/server/manager",
+    "../../../services/intell_voice_engine/server/utils",
+    "../../../services/intell_voice_engine/server/base",
+    "../../../services/intell_voice_engine/server/hdi_adapter",
     "../../../utils",
+    "../../../services/intell_voice_service/inc",
+    "../../../services/intell_voice_service/server/sa",
+    "../../../services/intell_voice_service/server/utils",
+    "../../../services/intell_voice_trigger/inc",
+    "../../../services/intell_voice_trigger/server/",
+    "../../../services/intell_voice_trigger/server/connector_mgr",
+    "../../../services/intell_voice_engine/proxy",
     "../../../interfaces/inner_api/native",
   ]
 
@@ -49,9 +54,20 @@ ohos_fuzztest("ServiceManagerFuzzTest") {
 
   deps = [
     "../../../frameworks/native:intellvoice_native",
-    "../../../services:intell_voice_server",
+    "../../../services/intell_voice_engine:intelligentvoice_engine",
+    "../../../services/intell_voice_service:intell_voice_server",
     "../../../utils:intell_voice_utils",
   ]
+
+  cflags_cc = []
+
+  if (intelligent_voice_framework_trigger_enable) {
+    cflags_cc += [ "-DTRIGGER_ENABLE" ]
+  }
+
+  if (intelligent_voice_framework_engine_enable) {
+    cflags_cc += [ "-DENGINE_ENABLE" ]
+  }
 
   external_deps = [
     "ability_base:want",

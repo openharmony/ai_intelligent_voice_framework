@@ -39,7 +39,7 @@ public:
     int32_t SetParameter(const std::string &keyValueList) override;
     std::string GetParameter(const std::string &key) override;
     int32_t WriteAudio(const uint8_t *buffer, uint32_t size) override;
-    int32_t Evaluate(const std::string &word, EvaluationResultInfo &info) override;
+    int32_t Evaluate(const std::string &word, EvaluationResult &result) override;
 
 private:
     EnrollEngine();

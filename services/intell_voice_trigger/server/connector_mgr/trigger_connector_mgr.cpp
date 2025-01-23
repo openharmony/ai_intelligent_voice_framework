@@ -14,7 +14,7 @@
  */
 #include "trigger_connector_mgr.h"
 #include "intell_voice_log.h"
-#include "intell_voice_service_manager.h"
+#include "trigger_callback_message.h"
 #include "trigger_connector_internal_validation.h"
 #include "trigger_connector_internal_impl.h"
 
@@ -62,10 +62,7 @@ std::shared_ptr<IIntellVoiceTriggerConnectorModule> TriggerConnectorMgr::GetConn
 void TriggerConnectorMgr::OnTriggerConnectServiceStart(const IntellVoiceTriggerAdapterDsecriptor &desc)
 {
     INTELL_VOICE_LOG_INFO("enter, adapter name:%{public}s", desc.adapterName.c_str());
-    const auto &manager = OHOS::IntellVoiceEngine::IntellVoiceServiceManager::GetInstance();
-    if (manager != nullptr) {
-        manager->OnTriggerConnectServiceStart();
-    }
+    TriggerCallbackMessage::CallFunc(OHOS::IntellVoiceTrigger::TRIGGER_CONNECT_SERVICE_START);
 }
 }  // namespace IntellVoiceTrigger
 }  // namespace OHOS
