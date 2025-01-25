@@ -76,6 +76,7 @@ ohos_shared_library("intelligentvoice_engine") {
       "ability_runtime:ability_manager",
       "audio_framework:audio_capturer",
       "audio_framework:audio_client",
+      "audio_framework:audio_foundation",
       "c_utils:utils",
       "drivers_interface_intelligent_voice:intell_voice_engine_idl_headers",
       "drivers_interface_intelligent_voice:libintell_voice_engine_proxy_1.0",
