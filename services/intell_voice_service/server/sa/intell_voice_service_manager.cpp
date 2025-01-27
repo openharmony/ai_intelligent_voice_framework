@@ -41,6 +41,7 @@ namespace IntellVoiceEngine {
 static constexpr int32_t WAIT_AUDIO_HAL_INTERVAL = 500; //500ms
 static constexpr uint32_t MAX_TASK_NUM = 2048;
 static constexpr uint32_t WAIT_SWICTH_ON_TIME = 2000;  // 2000ms
+static constexpr uint32_t WAIT_RECORD_START_TIME = 10000; // 10s
 static const std::string STOP_ALL_RECOGNITION = "stop_all_recognition";
 static const std::string SHORT_WORD_SWITCH = "short_word_switch";
 template<typename T, typename E>
@@ -862,19 +863,10 @@ template<typename T, typename E>
 void IntellVoiceServiceManager<T, E>::OnSingleLevelDetected()
 {
     INTELL_VOICE_LOG_INFO("single level detected");
+    recordStart_ = -1;
     NotifyEvent("single_level_event");
+    HandleRecordStartInfoChange();
     return;
-}
-
-template<typename T, typename E>
-void IntellVoiceServiceManager<T, E>::ResetSingleLevelWakeup(std::string &value)
-{
-    INTELL_VOICE_LOG_INFO("record_start:%{public}s", value.c_str());
-    if (value == std::string("true")) {
-        StopWakeupSource();
-    } else if (value == std::string("false")) {
-        HandleCloseWakeupSource(true);
-    }
 }
 
 template<typename T, typename E>
@@ -894,6 +886,70 @@ void IntellVoiceServiceManager<T, E>::ProcSingleLevelModel()
     }
     std::vector<uint8_t> data(buffer.get(), buffer.get() + size);
     T::UpdateModel(data, VOICE_WAKEUP_MODEL_UUID, TriggerModelType::VOICE_WAKEUP_TYPE);
+}
+
+template<typename T, typename E>
+void IntellVoiceServiceManager<T, E>::ResetSingleLevelWakeup(const std::string &value)
+{
+    INTELL_VOICE_LOG_INFO("record_start:%{public}s", value.c_str());
+    if (value != std::string("true") && value != std::string("false")) {
+        return;
+    }
+
+    recordStart_ = (value == std::string("true")) ? 1 : 0;
+    NoiftyRecordStartInfoChange();
+    if (recordStart_ == 1) {
+        StopWakeupSource();
+    } else {
+        HandleCloseWakeupSource(true);
+    }
+}
+
+template<typename T, typename E>
+bool IntellVoiceServiceManager<T, E>::HasReceviedRecordStartMsg()
+{
+    return (recordStart_ == 1 || recordStart_ == 0);
+}
+
+template<typename T, typename E>
+void IntellVoiceServiceManager<T, E>::NoiftyRecordStartInfoChange()
+{
+    {
+        std::unique_lock<std::mutex> lock(recordStartInfoChangeMutex_);
+        if (!notifyRecordStartInfoChange_) {
+            INTELL_VOICE_LOG_INFO("no need to notify");
+            return;
+        }
+    }
+
+    recordStartInfoChangeCv_.notify_all();
+}
+
+template<typename T, typename E>
+void IntellVoiceServiceManager<T, E>::HandleRecordStartInfoChange()
+{
+    if (HasReceviedRecordStartMsg()) {
+        INTELL_VOICE_LOG_INFO("record start info has received, no need to process");
+        return;
+    }
+
+    std::thread([&]() {
+        std::unique_lock<std::mutex> lock(recordStartInfoChangeMutex_);
+        if (HasReceviedRecordStartMsg()) {
+            INTELL_VOICE_LOG_INFO("record start info has received, no need to process");
+            return;
+        }
+        notifyRecordStartInfoChange_ = true;
+        if (recordStartInfoChangeCv_.wait_for(lock, std::chrono::milliseconds(WAIT_RECORD_START_TIME),
+            [this] { return HasReceviedRecordStartMsg(); })) {
+            INTELL_VOICE_LOG_INFO("record start info has received, do nothing");
+            notifyRecordStartInfoChange_ = false;
+            return;
+        }
+        INTELL_VOICE_LOG_WARN("wait time out, need to reset wakeup");
+        notifyRecordStartInfoChange_ = false;
+        HandleCloseWakeupSource(true);
+    }).detach();
 }
 
 template class IntellVoiceServiceManager<TriggerManagerType, EngineManagerType>;

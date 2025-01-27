@@ -128,7 +128,10 @@ private:
     void LoadWakeupConfig();
     bool IsSingleLevel();
     void StopWakeupSource();
-    void ResetSingleLevelWakeup(std::string &value);
+    void ResetSingleLevelWakeup(const std::string &value);
+    bool HasReceviedRecordStartMsg();
+    void NoiftyRecordStartInfoChange();
+    void HandleRecordStartInfoChange();
     void OnTriggerConnectServiceStart() override;
     void SetShortWordStatus();
 
@@ -142,6 +145,10 @@ private:
     IntellVoiceUtils::UniqueProductType<SwitchProvider> switchProvider_ =
         IntellVoiceUtils::UniqueProductType<SwitchProvider> {nullptr, nullptr};
     std::map<int32_t, bool> isStarted_;
+    int32_t recordStart_ = -1;
+    bool notifyRecordStartInfoChange_ = false;
+    std::mutex recordStartInfoChangeMutex_;
+    std::condition_variable recordStartInfoChangeCv_;
 #ifdef USE_FFRT
     std::shared_ptr<ffrt::queue> taskQueue_ = nullptr;
     std::map<int32_t, ffrt::task_handle> taskHandle_;

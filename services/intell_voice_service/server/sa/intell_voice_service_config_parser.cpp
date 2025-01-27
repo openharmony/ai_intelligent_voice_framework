@@ -25,7 +25,8 @@ using namespace OHOS::IntellVoiceUtils;
 
 namespace OHOS {
 namespace IntellVoiceEngine {
-static constexpr char AUDIO_WAKEUP_CONFIG_FILE[] = "vendor/etc/audio/audio_wakeup_config.xml";
+static constexpr char CONFIG_FILE[] = "/vendor/etc/audio/audio_wakeup_config.xml";
+static constexpr char CHIP_PROD_ONFIG_FILE[] = "/chip_prod/etc/audio/audio_wakeup_config.xml";
 
 AudioWakeupConfigParser::AudioWakeupConfigParser()
 {
@@ -39,8 +40,11 @@ AudioWakeupConfigParser::~AudioWakeupConfigParser()
 
 bool AudioWakeupConfigParser::LoadConfig()
 {
-    doc_ = xmlReadFile(AUDIO_WAKEUP_CONFIG_FILE, nullptr, 0);
-    CHECK_CONDITION_RETURN_FALSE(doc_ == nullptr, "Not found audio_wakeup_config.xml!");
+    doc_ = xmlReadFile(CONFIG_FILE, nullptr, 0);
+    if (doc_ == nullptr) {
+        doc_ = xmlReadFile(CHIP_PROD_ONFIG_FILE, nullptr, 0);
+        CHECK_CONDITION_RETURN_FALSE(doc_ == nullptr, "Not found audio_wakeup_config.xml!");
+    }
 
     if (!Parse()) {
         return false;
