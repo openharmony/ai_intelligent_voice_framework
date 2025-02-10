@@ -20,7 +20,6 @@ ohos_shared_library("intell_voice_server") {
   sources = [
     "server/sa/intell_voice_engine_registrar.cpp",
     "server/sa/intell_voice_service.cpp",
-    "server/sa/intell_voice_service_config_parser.cpp",
     "server/sa/intell_voice_service_manager.cpp",
     "server/sa/intell_voice_service_stub.cpp",
     "server/sa/intell_voice_trigger_registrar.cpp",
@@ -88,6 +87,10 @@ ohos_shared_library("intell_voice_server") {
 
   if (intelligent_voice_framework_engine_enable) {
     cflags_cc += [ "-DENGINE_ENABLE" ]
+  }
+
+  if (intelligent_voice_framework_only_first_stage) {
+    cflags_cc += [ "-DONLY_FIRST_STAGE" ]
   }
   subsystem_name = "ai"
   part_name = "intelligent_voice_framework"

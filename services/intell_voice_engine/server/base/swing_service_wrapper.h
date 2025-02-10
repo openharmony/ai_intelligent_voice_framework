@@ -18,15 +18,29 @@
 #include <string>
 #include <mutex>
 
-#include "i_swing_service.h"
+#include "intell_voice_log.h"
+
+#define LOG_TAG "SwingServiceWrapper"
 
 namespace OHOS {
 namespace IntellVoiceEngine {
-using GetSwingServiceInstFunc = ISwingService *(*)();
+#define LOAD_FUNCTION(funcPoint, funcPrototype, funcName, impl, errCount)          \
+    do {                                                                 \
+        (funcPoint) = (funcPrototype)dlsym((impl).handle, (funcName)); \
+        const char *strErr = dlerror();                                  \
+        if (strErr != nullptr) {                                         \
+            INTELL_VOICE_LOG_ERROR("load function failed: %{public}s", strErr);               \
+            (errCount)++;                                        \
+        }                                                                \
+    } while (0)
+
+using SubscribeSwingEventPtr = int (*)(const char *swingEventType, const char *eventParams);
+using UnSubscribeSwingEventPtr = int (*)(const char *swingEventType, const char *eventParams);
 
 struct SwingServiceManagerPriv {
     void *handle { nullptr };
-    GetSwingServiceInstFunc getSwingServiceInst { nullptr };
+    SubscribeSwingEventPtr subscribeSwingEvent { nullptr };
+    UnSubscribeSwingEventPtr unSubscribeSwingEvent { nullptr };
 };
 
 class SwingServiceWrapper {
@@ -40,18 +54,19 @@ public:
         return swingServiceWrapper;
     }
 
-    int32_t SubscribeSwingEvent(std::string swingEventType, std::map<std::string, std::string> eventParams);
-    int32_t UnSubscribeSwingEvent(std::string swingEventType, std::map<std::string, std::string> eventParams);
+    int32_t SubscribeSwingEvent(std::string swingEventType, std::string eventParams);
+    int32_t UnSubscribeSwingEvent(std::string swingEventType, std::string eventParams);
 
 private:
     int32_t LoadSwingServiceLib();
     void UnloadSwingServiceLib();
+    int32_t LoadLibFunction();
 
 private:
     std::mutex mutex_ {};
     SwingServiceManagerPriv swingServicePriv_;
-    ISwingService *inst_ = nullptr;
 };
 }
 }
+#undef LOG_TAG
 #endif

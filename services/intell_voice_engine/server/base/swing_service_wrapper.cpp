@@ -25,6 +25,11 @@ static const std::string SWINGSERVICE_SO_PATH = "libswing_client.z.so";
 
 int32_t SwingServiceWrapper::LoadSwingServiceLib()
 {
+    if (swingServicePriv_.handle != nullptr) {
+        INTELL_VOICE_LOG_INFO("Npu lib has loaded");
+        return 0;
+    }
+
     const char *strError = nullptr;
     swingServicePriv_.handle = dlopen(SWINGSERVICE_SO_PATH.c_str(), RTLD_LAZY);
     if (swingServicePriv_.handle == nullptr) {
@@ -33,19 +38,24 @@ int32_t SwingServiceWrapper::LoadSwingServiceLib()
         return -1;
     }
 
-    (void)dlerror(); // clear existing error
-    swingServicePriv_.getSwingServiceInst = reinterpret_cast<GetSwingServiceInstFunc>(dlsym(
-        swingServicePriv_.handle, "GetSwingServiceInst"));
-    if (swingServicePriv_.getSwingServiceInst == nullptr) {
-        strError = dlerror();
-        INTELL_VOICE_LOG_ERROR("dlsym getSwingServiceInst err:%{public}s", strError);
-        dlclose(swingServicePriv_.handle);
-        swingServicePriv_.handle = nullptr;
+    if (LoadLibFunction() > 0) {
+        UnloadSwingServiceLib();
         return -1;
     }
 
     INTELL_VOICE_LOG_INFO("load swingService lib success");
     return 0;
+}
+
+int32_t SwingServiceWrapper::LoadLibFunction()
+{
+    int32_t errCount = 0;
+    dlerror(); // clear existing error
+    LOAD_FUNCTION(swingServicePriv_.subscribeSwingEvent, SubscribeSwingEventPtr,
+        "SubscribeSwingEvent", swingServicePriv_, errCount);
+    LOAD_FUNCTION(swingServicePriv_.unSubscribeSwingEvent, UnSubscribeSwingEventPtr,
+        "UnSubscribeSwingEvent", swingServicePriv_, errCount);
+    return errCount;
 }
 
 void SwingServiceWrapper::UnloadSwingServiceLib()
@@ -54,16 +64,15 @@ void SwingServiceWrapper::UnloadSwingServiceLib()
         dlclose(swingServicePriv_.handle);
         swingServicePriv_.handle = nullptr;
     }
+    swingServicePriv_.subscribeSwingEvent = nullptr;
+    swingServicePriv_.unSubscribeSwingEvent = nullptr;
 }
 
 SwingServiceWrapper::SwingServiceWrapper()
 {
     INTELL_VOICE_LOG_INFO("enter");
-    if (LoadSwingServiceLib() == 0) {
-        inst_ = swingServicePriv_.getSwingServiceInst();
-        if (inst_ == nullptr) {
-            INTELL_VOICE_LOG_ERROR("failed to get swingService inst");
-        }
+    if (LoadSwingServiceLib() != 0) {
+        INTELL_VOICE_LOG_ERROR("failed to get swingServicePriv_");
     }
 }
 
@@ -71,33 +80,28 @@ SwingServiceWrapper::~SwingServiceWrapper()
 {
     INTELL_VOICE_LOG_INFO("enter");
     UnloadSwingServiceLib();
-    inst_ = nullptr;
 }
 
-int32_t SwingServiceWrapper::SubscribeSwingEvent(std::string swingEventType,
-    std::map<std::string, std::string> eventParams)
+int32_t SwingServiceWrapper::SubscribeSwingEvent(std::string swingEventType, std::string eventParams)
 {
     INTELL_VOICE_LOG_INFO("enter");
     std::lock_guard<std::mutex> lock(mutex_);
-    if (inst_ == nullptr) {
-        INTELL_VOICE_LOG_ERROR("inst is nullptr");
+    if (swingServicePriv_.subscribeSwingEvent == nullptr) {
+        INTELL_VOICE_LOG_ERROR("failed to get subscribeSwingEvent");
         return -1;
     }
-
-    return inst_->SubscribeSwingEvent(swingEventType, eventParams);
+    return swingServicePriv_.subscribeSwingEvent(swingEventType.c_str(), eventParams.c_str());
 }
 
-int32_t SwingServiceWrapper::UnSubscribeSwingEvent(std::string swingEventType,
-    std::map<std::string, std::string> eventParams)
+int32_t SwingServiceWrapper::UnSubscribeSwingEvent(std::string swingEventType, std::string eventParams)
 {
     INTELL_VOICE_LOG_INFO("enter");
     std::lock_guard<std::mutex> lock(mutex_);
-    if (inst_ == nullptr) {
-        INTELL_VOICE_LOG_ERROR("inst is nullptr");
+    if (swingServicePriv_.unSubscribeSwingEvent == nullptr) {
+        INTELL_VOICE_LOG_ERROR("failed to get unSubscribeSwingEvent");
         return -1;
     }
-
-    return inst_->UnSubscribeSwingEvent(swingEventType, eventParams);
+    return swingServicePriv_.unSubscribeSwingEvent(swingEventType.c_str(), eventParams.c_str());
 }
 }  // namespace IntellVoice
 }  // namespace OHOS

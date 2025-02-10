@@ -27,7 +27,6 @@
 #include "string_util.h"
 #include "json/json.h"
 #include "history_info_mgr.h"
-#include "intell_voice_service_config_parser.h"
 #include "ability_manager_client.h"
 
 #define LOG_TAG "IntellVoiceServiceManager"
@@ -57,7 +56,6 @@ IntellVoiceServiceManager<T, E>::IntellVoiceServiceManager() : TaskExecutor("Ser
 #ifdef USE_FFRT
     taskQueue_ = std::make_shared<ffrt::queue>("ServMgrQueue");
 #endif
-    LoadWakeupConfig();
 }
 
 template<typename T, typename E>
@@ -473,7 +471,7 @@ void IntellVoiceServiceManager<T, E>::CreateAndStartServiceObject(int32_t uuid, 
         return;
     }
 
-    if (!IsSingleLevel()) {
+#ifndef ONLY_FIRST_STAGE
         INTELL_VOICE_LOG_INFO("is not single wakeup level");
         if (!needResetAdapter) {
             E::CreateEngine(INTELL_VOICE_WAKEUP);
@@ -481,9 +479,9 @@ void IntellVoiceServiceManager<T, E>::CreateAndStartServiceObject(int32_t uuid, 
             E::CreateOrResetWakeupEngine();
         }
         T::CreateDetector(uuid, [this, uuid]() { OnDetected(uuid); });
-    } else {
+#else
         T::CreateDetector(uuid, [this, uuid]() { OnSingleLevelDetected(); });
-    }
+#endif
 
     if (uuid == VOICE_WAKEUP_MODEL_UUID) {
         SetShortWordStatus();
@@ -801,12 +799,10 @@ int32_t IntellVoiceServiceManager<T, E>::EngineSetParameter(const std::string &k
         } else if (it.first == std::string("wakeup_ability_name")) {
             INTELL_VOICE_LOG_INFO("set wakeup ability name:%{public}s", it.second.c_str());
             historyInfoMgr.SetStringKVPair(KEY_WAKEUP_ENGINE_ABILITY_NAME, it.second);
+#ifdef ONLY_FIRST_STAGE
         } else if (it.first == std::string("record_start")) {
-            if (IsSingleLevel()) {
-                ResetSingleLevelWakeup(it.second);
-            } else {
-                INTELL_VOICE_LOG_ERROR("invalid parameters key:%{public}s", it.first.c_str());
-            }
+            ResetSingleLevelWakeup(it.second);
+#endif
         } else {
             INTELL_VOICE_LOG_INFO("no need to process, key:%{public}s", it.first.c_str());
         }
@@ -847,23 +843,11 @@ void IntellVoiceServiceManager<T, E>::SetScreenOff(bool value)
 }
 
 template<typename T, typename E>
-void IntellVoiceServiceManager<T, E>::LoadWakeupConfig()
-{
-    std::unique_ptr<AudioWakeupConfigParser> wakeupConfigParser = std::make_unique<AudioWakeupConfigParser>();
-    wakeupLevel_ = wakeupConfigParser->GetWakeupLevel();
-}
-
-template<typename T, typename E>
-bool IntellVoiceServiceManager<T, E>::IsSingleLevel()
-{
-    return wakeupLevel_ == WAKEUP_LEVEL_SINGLE;
-}
-
-template<typename T, typename E>
 void IntellVoiceServiceManager<T, E>::OnSingleLevelDetected()
 {
     INTELL_VOICE_LOG_INFO("single level detected");
     recordStart_ = -1;
+    StopWakeupSource();
     NotifyEvent("single_level_event");
     HandleRecordStartInfoChange();
     return;
@@ -872,12 +856,8 @@ void IntellVoiceServiceManager<T, E>::OnSingleLevelDetected()
 template<typename T, typename E>
 void IntellVoiceServiceManager<T, E>::ProcSingleLevelModel()
 {
+#ifdef ONLY_FIRST_STAGE
     INTELL_VOICE_LOG_INFO("enter");
-    if (!IsSingleLevel()) {
-        INTELL_VOICE_LOG_INFO("is not single level");
-        return;
-    }
- 
     std::shared_ptr<uint8_t> buffer = nullptr;
     uint32_t size = 0;
     if (!IntellVoiceUtil::ReadFile(SINGLE_LEVEL_MODEL_PATH, buffer, size)) {
@@ -886,6 +866,7 @@ void IntellVoiceServiceManager<T, E>::ProcSingleLevelModel()
     }
     std::vector<uint8_t> data(buffer.get(), buffer.get() + size);
     T::UpdateModel(data, VOICE_WAKEUP_MODEL_UUID, TriggerModelType::VOICE_WAKEUP_TYPE);
+#endif
 }
 
 template<typename T, typename E>
@@ -898,9 +879,7 @@ void IntellVoiceServiceManager<T, E>::ResetSingleLevelWakeup(const std::string &
 
     recordStart_ = (value == std::string("true")) ? 1 : 0;
     NoiftyRecordStartInfoChange();
-    if (recordStart_ == 1) {
-        StopWakeupSource();
-    } else {
+    if (recordStart_ == 0) {
         HandleCloseWakeupSource(true);
     }
 }

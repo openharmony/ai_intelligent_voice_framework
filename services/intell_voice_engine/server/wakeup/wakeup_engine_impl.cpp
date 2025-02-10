@@ -726,8 +726,8 @@ void WakeupEngineImpl::SubscribeSwingEvent()
     INTELL_VOICE_LOG_INFO("enter");
     isSubscribeSwingEvent_.store(true);
     int32_t ret = SwingServiceWrapper::GetInstance().SubscribeSwingEvent(WAKEUP_CONFORMER_EVENT_TYPE,
-        {{"domainId", WAKEUP_CONFORMER_DOMAIN_ID}});
-    if (ret != 1) {
+        WAKEUP_CONFORMER_DOMAIN_ID);
+    if (ret != 0) {
         INTELL_VOICE_LOG_ERROR("load tiny model failed: %{public}d", ret);
         return;
     }
@@ -743,8 +743,8 @@ void WakeupEngineImpl::UnSubscribeSwingEvent()
     }
     isSubscribeSwingEvent_.store(false);
     int32_t ret = SwingServiceWrapper::GetInstance().UnSubscribeSwingEvent(WAKEUP_CONFORMER_EVENT_TYPE,
-        {{"domainId", WAKEUP_CONFORMER_DOMAIN_ID}});
-    if (ret != 1) {
+        WAKEUP_CONFORMER_DOMAIN_ID);
+    if (ret != 0) {
         INTELL_VOICE_LOG_ERROR("unload tiny model failed: %{public}d", ret);
         return;
     }
