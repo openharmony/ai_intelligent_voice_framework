@@ -48,7 +48,8 @@
         },
         "features": [
           "intelligent_voice_framework_trigger_enable",
-          "intelligent_voice_framework_engine_enable"
+          "intelligent_voice_framework_engine_enable",
+          "intelligent_voice_framework_only_first_stage"
         ],
         "build": {
             "sub_component": [

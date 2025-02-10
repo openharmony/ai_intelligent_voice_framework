@@ -125,8 +125,6 @@ private:
     void DelStartDetectionTask(int32_t uuid);
     bool IsSwitchError(const std::string &key);
     void NotifyEvent(const std::string &eventType);
-    void LoadWakeupConfig();
-    bool IsSingleLevel();
     void StopWakeupSource();
     void ResetSingleLevelWakeup(const std::string &value);
     bool HasReceviedRecordStartMsg();
@@ -136,7 +134,6 @@ private:
     void SetShortWordStatus();
 
 private:
-    int32_t wakeupLevel_ = 0;
     bool notifyPowerModeChange_ = false;
     std::mutex powerModeChangeMutex_;
     std::condition_variable powerModeChangeCv_;
