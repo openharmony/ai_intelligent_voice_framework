@@ -21,7 +21,6 @@ constexpr int32_t VOICE_WAKEUP_MODEL_UUID = 1;
 constexpr int32_t PROXIMAL_WAKEUP_MODEL_UUID = 2;
 const std::string WAKEUP_KEY = "intell_voice_trigger_enabled";
 const std::string WHISPER_KEY = "intell_voice_trigger_whisper";
-const std::string IMPROVE_KEY = "intell_voice_improve_enabled";
 const std::string SHORTWORD_KEY = "intell_voice_trigger_shortword";
 const std::string SENSIBILITY_TEXT = "sensibility=";
 

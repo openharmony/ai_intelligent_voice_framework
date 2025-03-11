@@ -92,7 +92,7 @@ private:
     IntellVoiceServiceManager();
     static bool IsSwitchKeyValid(const std::string &key)
     {
-        if ((key == WAKEUP_KEY) || (key == WHISPER_KEY) || (key == IMPROVE_KEY) || (key == SHORTWORD_KEY)) {
+        if ((key == WAKEUP_KEY) || (key == WHISPER_KEY) || (key == SHORTWORD_KEY)) {
             return true;
         }
         return false;

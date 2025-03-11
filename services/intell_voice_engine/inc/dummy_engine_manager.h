@@ -35,8 +35,6 @@ public:
     int32_t GetWakeupSourceFilesList(std::vector<std::string> &cloneFiles) { return 0; };
     int32_t GetWakeupSourceFile(const std::string &filePath, std::vector<uint8_t> &buffer) { return 0; };
     int32_t SendWakeupFile(const std::string &filePath, const std::vector<uint8_t> &buffer) { return 0; };
-    std::string GetDspSensibility(const std::string &sensibility, const std::string &dspFeature,
-    const std::string &configPath) { return ""; };
     int32_t GetUploadFiles(int numMax, std::vector<UploadFilesFromHdi> &files) { return 0; };
 
     void ClearUserDataInner() {};
@@ -44,7 +42,6 @@ public:
     bool IsNeedUpdateComplete(int32_t result, const std::string &param) { return false; };
     bool IsNeedUpdateRetry() { return false; };
     void EngineOnDetected(int32_t uuid) {};
-    void ImproveKeySwitch() {};
     void ClearWakeupEngineCb() {};
     bool CreateOrResetWakeupEngine() { return false; };
     bool IsEngineExist(IntellVoiceEngineType type) { return false; };

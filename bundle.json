@@ -27,6 +27,7 @@
                 "drivers_interface_intelligent_voice",
                 "hdf_core",
                 "hilog",
+                "image_framework",
                 "ipc",
                 "kv_store",
                 "audio_framework",
@@ -41,9 +42,6 @@
                 "jsoncpp",
                 "power_manager",
                 "ffrt"
-            ],
-            "third_party": [
-              "libxml2"
             ]
         },
         "features": [

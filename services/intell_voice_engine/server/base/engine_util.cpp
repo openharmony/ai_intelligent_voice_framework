@@ -22,6 +22,7 @@
 #include "intell_voice_engine_manager.h"
 #include "history_info_mgr.h"
 #include "intell_voice_definitions.h"
+#include "intell_voice_sensibility.h"
 
 #define LOG_TAG "EngineUtils"
 
@@ -269,10 +270,25 @@ void EngineUtil::SetSensibility()
         return;
     }
 
-    auto engineMgr = IntellVoiceEngineManager::GetInstance();
-    if (engineMgr != nullptr) {
-        engineMgr->SetDspSensibility(sensibility);
+    auto ret = EngineCallbackMessage::CallFunc(TRIGGERMGR_GET_PARAMETER, KEY_GET_WAKEUP_FEATURE);
+    std::string features = "";
+    if (ret.has_value()) {
+        try {
+            features = std::any_cast<std::string>(*ret);
+        } catch (const std::bad_any_cast&) {
+            INTELL_VOICE_LOG_ERROR("msg bus bad any cast");
+            return;
+        }
+    } else {
+        INTELL_VOICE_LOG_ERROR("msg bus return no value");
+        return;
     }
+    auto value = IntellVoiceSensibility::GetDspSensibility(sensibility, features, WAKEUP_CONFIG_PATH);
+    if (value.empty()) {
+        INTELL_VOICE_LOG_ERROR("no sensibility value");
+        return;
+    }
+    EngineCallbackMessage::CallFunc(TRIGGERMGR_SET_PARAMETER, "WAKEUP_SENSIBILITY", value);
     adapter_->SetParameter(SENSIBILITY_TEXT + sensibility);
 }
 
@@ -308,6 +324,16 @@ void EngineUtil::SetScreenStatus()
     } else {
         SetParameter("screenoff=false");
     }
+}
+
+void EngineUtil::SetImproveParam()
+{
+    if (adapter_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("adapter is nullptr");
+        return;
+    }
+
+    adapter_->SetParameter("userImproveOn=true");
 }
 }
 }

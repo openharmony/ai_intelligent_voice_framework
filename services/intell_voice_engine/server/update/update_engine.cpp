@@ -103,6 +103,7 @@ bool UpdateEngine::Init(const std::string &param)
     SetDspFeatures();
 
     if (!param.empty()) {
+        EngineUtil::SetImproveParam();
         SetParameter(param);
     }
 

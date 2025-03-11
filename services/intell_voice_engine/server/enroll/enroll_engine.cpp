@@ -138,6 +138,8 @@ int32_t EnrollEngine::Attach(const IntellVoiceEngineInfo &info)
     }
 
     SetDspFeatures();
+    EngineUtil::SetImproveParam();
+
     isPcmFromExternal_ = info.isPcmFromExternal;
     wakeupPhrase_ = info.wakeupPhrase;
 

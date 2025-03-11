@@ -43,7 +43,7 @@ static const std::string INTELL_VOICE_EVENT_CALLBACK_NAME = "wakeupIntelligentVo
 
 WakeupIntellVoiceEngineNapi::WakeupIntellVoiceEngineNapi()
 {
-    INTELL_VOICE_LOG_INFO("enter, %{public}p", this);
+    INTELL_VOICE_LOG_INFO("enter");
 }
 
 WakeupIntellVoiceEngineNapi::~WakeupIntellVoiceEngineNapi()

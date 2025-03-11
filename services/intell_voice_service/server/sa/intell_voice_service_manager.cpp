@@ -82,7 +82,6 @@ void IntellVoiceServiceManager<T, E>::CreateSwitchProvider()
     }
     RegisterObserver(WAKEUP_KEY);
     RegisterObserver(WHISPER_KEY);
-    RegisterObserver(IMPROVE_KEY);
     RegisterObserver(SHORTWORD_KEY);
 }
 
@@ -222,11 +221,6 @@ void IntellVoiceServiceManager<T, E>::OnSwitchChange(const std::string &switchKe
             HandleSwitchOff(false, PROXIMAL_WAKEUP_MODEL_UUID);
             HandleUnloadIntellVoiceService(false);
         }
-    } else if (switchKey == IMPROVE_KEY) {
-        TaskExecutor::AddSyncTask([this]() -> int32_t {
-            E::ImproveKeySwitch();
-            return 0;
-        });
     } else if (switchKey == SHORTWORD_KEY) {
         TaskExecutor::AddSyncTask([this]() -> int32_t {
             INTELL_VOICE_LOG_INFO("short word switch change");

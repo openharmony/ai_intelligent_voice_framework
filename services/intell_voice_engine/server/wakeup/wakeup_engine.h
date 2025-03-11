@@ -23,6 +23,12 @@
 
 namespace OHOS {
 namespace IntellVoiceEngine {
+enum DetectDeviceType {
+    DETECT_TYPE_PHONE = 0,
+    DETECT_TYPE_HEADSET,
+    DETECT_TYPE_BUT
+};
+
 class WakeupEngine : public EngineBase {
 public:
     WakeupEngine();
@@ -52,6 +58,7 @@ private:
     static std::string GetEventValue(int32_t uuid);
     int32_t HandleHeadsetOff();
     int32_t HandleHeadsetOn();
+    int32_t HandleCapturerMsg(StateMsg &msg);
     USE_ROLE(WakeupEngineImpl);
 
 private:
@@ -59,6 +66,7 @@ private:
         OHOS::IntellVoiceUtils::UniqueProductType<HeadsetWakeupEngineImpl>(nullptr, nullptr);
     std::mutex headsetMutex_;
     sptr<IIntelligentVoiceEngineCallback> callback_ = nullptr;
+    std::atomic<DetectDeviceType> detectDeviceType_ = DETECT_TYPE_PHONE;
 };
 }
 }
