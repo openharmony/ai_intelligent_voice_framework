@@ -14,7 +14,7 @@
 import("//build/ohos.gni")
 import("../../intell_voice_service.gni")
 
-ohos_shared_library("intelligentvoice_trigger") {
+ohos_source_set("trigger_source") {
   configs = [ "//build/config/compiler:exceptions" ]
   if (intelligent_voice_framework_trigger_enable) {
     sources = [
@@ -54,7 +54,6 @@ ohos_shared_library("intelligentvoice_trigger") {
       "ffrt:libffrt",
       "hdf_core:libhdf_host",
       "hdf_core:libhdi",
-      "hilog:libhilog",
       "huks:libhukssdk",
       "ipc:ipc_core",
       "kv_store:distributeddata_inner",
@@ -73,7 +72,7 @@ ohos_shared_library("intelligentvoice_trigger") {
       "../../../../ai/intelligent_voice_framework/utils",
       "../intell_voice_service/inc",
     ]
-    external_deps = [ "hilog:libhilog" ]
+    external_deps = []
   }
 
   cflags_cc = [
@@ -87,8 +86,6 @@ ohos_shared_library("intelligentvoice_trigger") {
   if (build_variant == "root") {
     defines += [ "INTELL_VOICE_BUILD_VARIANT_ROOT" ]
   }
-
-  deps = [ "../../utils:intell_voice_utils" ]
 
   sanitize = {
     cfi = true
@@ -107,7 +104,45 @@ ohos_shared_library("intelligentvoice_trigger") {
     ]
     defines += [ "SUPPORT_TELEPHONY_SERVICE" ]
   }
+  subsystem_name = "ai"
+  part_name = "intelligent_voice_framework"
+}
 
+ohos_shared_library("intelligentvoice_trigger") {
+  deps = [
+    ":trigger_source",
+    "../../utils:intell_voice_utils",
+  ]
+  external_deps = [ "hilog:libhilog" ]
+  if (intelligent_voice_framework_trigger_enable) {
+    version_script = "libintelligentvoice_trigger.versionscript"
+  } else {
+    version_script = "libintelligentvoice_dummy_trigger.versionscript"
+  }
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    cfi_vcall_icall_only = true
+    debug = false
+  }
+  branch_protector_ret = "pac_ret"
+  subsystem_name = "ai"
+  part_name = "intelligent_voice_framework"
+}
+
+ohos_shared_library("intelligentvoice_trigger_test") {
+  deps = [
+    ":trigger_source",
+    "../../utils:intell_voice_utils",
+  ]
+  external_deps = [ "hilog:libhilog" ]
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    cfi_vcall_icall_only = true
+    debug = false
+  }
+  branch_protector_ret = "pac_ret"
   subsystem_name = "ai"
   part_name = "intelligent_voice_framework"
 }

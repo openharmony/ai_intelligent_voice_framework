@@ -14,7 +14,7 @@
  */
 
 #include "engine_callback_message.h"
- 
+
 namespace OHOS {
 namespace IntellVoiceEngine {
 std::map<EngineCbMessageId, EngineCallbackMessage::Func> EngineCallbackMessage::EngineFuncMap;

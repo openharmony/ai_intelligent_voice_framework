@@ -51,7 +51,7 @@ static const std::string WAKEUP_MANAGER_NAPI_CLASS_NAME = "WakeupManager";
 
 WakeupManagerNapi::WakeupManagerNapi()
 {
-    INTELL_VOICE_LOG_INFO("enter, %{public}p", this);
+    INTELL_VOICE_LOG_INFO("enter");
 }
 
 WakeupManagerNapi::~WakeupManagerNapi()

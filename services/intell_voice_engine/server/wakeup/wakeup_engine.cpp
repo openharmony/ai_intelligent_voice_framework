@@ -47,8 +47,10 @@ void WakeupEngine::OnDetected(int32_t uuid)
         if ((headsetImpl_ != nullptr) && (HeadsetWakeupWrapper::GetInstance().GetHeadsetAwakeState() == 1)) {
             INTELL_VOICE_LOG_INFO("headset wakeup is exist");
             EngineCallbackMessage::CallFunc(HANDLE_CLOSE_WAKEUP_SOURCE, true);
+            return;
         }
     }
+    detectDeviceType_.store(DETECT_TYPE_PHONE);
 
     std::thread([uuid]() { WakeupEngine::StartAbility(GetEventValue(uuid)); }).detach();
     StateMsg msg(START_RECOGNIZE, &uuid, sizeof(int32_t));
@@ -93,14 +95,14 @@ int32_t WakeupEngine::Attach(const IntellVoiceEngineInfo & /* info */)
 int32_t WakeupEngine::StartCapturer(int32_t channels)
 {
     StateMsg msg(START_CAPTURER, &channels, sizeof(int32_t));
-    return ROLE(WakeupEngineImpl).Handle(msg);
+    return HandleCapturerMsg(msg);
 }
 
 int32_t WakeupEngine::Read(std::vector<uint8_t> &data)
 {
     CapturerData capturerData;
     StateMsg msg(READ, nullptr, 0, reinterpret_cast<void *>(&capturerData));
-    int32_t ret = ROLE(WakeupEngineImpl).Handle(msg);
+    int32_t ret = HandleCapturerMsg(msg);
     if (ret != 0) {
         INTELL_VOICE_LOG_ERROR("read failed, ret:%{public}d", ret);
         return -1;
@@ -113,7 +115,23 @@ int32_t WakeupEngine::Read(std::vector<uint8_t> &data)
 int32_t WakeupEngine::StopCapturer()
 {
     StateMsg msg(STOP_CAPTURER);
-    return ROLE(WakeupEngineImpl).Handle(msg);
+    return HandleCapturerMsg(msg);
+}
+
+int32_t WakeupEngine::HandleCapturerMsg(StateMsg &msg)
+{
+    int32_t ret = -1;
+    if (detectDeviceType_.load() == DETECT_TYPE_PHONE) {
+        ret = ROLE(WakeupEngineImpl).Handle(msg);
+    } else if (detectDeviceType_.load() == DETECT_TYPE_HEADSET) {
+        std::lock_guard<std::mutex> lock(headsetMutex_);
+        if (headsetImpl_ != nullptr) {
+            ret = headsetImpl_->Handle(msg);
+        }
+    } else {
+        INTELL_VOICE_LOG_ERROR("unknow detectDeviceType");
+    }
+    return ret;
 }
 
 int32_t WakeupEngine::NotifyHeadsetWakeEvent()
@@ -126,6 +144,7 @@ int32_t WakeupEngine::NotifyHeadsetWakeEvent()
     }
 
     std::thread([]() { WakeupEngine::StartAbility("headset_event"); }).detach();
+    detectDeviceType_.store(DETECT_TYPE_HEADSET);
 
     StateMsg msg(START_RECOGNIZE);
     return headsetImpl_->Handle(msg);

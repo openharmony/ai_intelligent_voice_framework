@@ -32,7 +32,6 @@ class IntellVoiceEngineManager : private IntellVoiceEngineArbitration,
 public:
     IntellVoiceEngineManager();
     ~IntellVoiceEngineManager();
-    static std::shared_ptr<IntellVoiceEngineManager> GetInstance();
     static bool GetScreenOff();
     void SetScreenOff(bool value);
     static void SetEnrollResult(IntellVoiceEngineType type, bool result)
@@ -70,7 +69,6 @@ public:
     bool IsNeedUpdateComplete(int32_t result, const std::string &param);
     bool IsNeedUpdateRetry();
     void EngineOnDetected(int32_t uuid);
-    void ImproveKeySwitch();
     void ClearWakeupEngineCb();
     bool CreateOrResetWakeupEngine();
     bool IsEngineExist(IntellVoiceEngineType type);
@@ -88,7 +86,6 @@ private:
     sptr<IIntellVoiceEngine> CreateEngineInner(IntellVoiceEngineType type, const std::string &param = "");
     void ReleaseUpdateEngine() override;
     bool CreateUpdateEngine(const std::string &param) override;
-    void SetImproveParam(sptr<EngineBase> engine);
     void LoadIntellVoiceHost();
     void UnloadIntellVoiceHost();
 

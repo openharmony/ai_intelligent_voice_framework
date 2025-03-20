@@ -14,7 +14,7 @@
 import("//build/ohos.gni")
 import("../../intell_voice_service.gni")
 
-ohos_shared_library("intelligentvoice_engine") {
+ohos_source_set("engine_source") {
   configs = [ "//build/config/compiler:exceptions" ]
   if (intelligent_voice_framework_engine_enable) {
     sources = [
@@ -84,8 +84,8 @@ ohos_shared_library("intelligentvoice_engine") {
       "drivers_interface_intelligent_voice:libintell_voice_engine_proxy_1.2",
       "ffrt:libffrt",
       "hdf_core:libhdi",
-      "hilog:libhilog",
       "huks:libhukssdk",
+      "image_framework:image_native",
       "ipc:ipc_core",
       "jsoncpp:jsoncpp",
       "kv_store:distributeddata_inner",
@@ -100,6 +100,7 @@ ohos_shared_library("intelligentvoice_engine") {
     include_dirs = [
       "inc",
       "../intell_voice_service/inc",
+      "../../../../ai/intelligent_voice_framework/utils",
     ]
     external_deps = []
   }
@@ -126,7 +127,39 @@ ohos_shared_library("intelligentvoice_engine") {
   }
 
   branch_protector_ret = "pac_ret"
+  subsystem_name = "ai"
+  part_name = "intelligent_voice_framework"
+}
 
+ohos_shared_library("intelligentvoice_engine") {
+  deps = [ ":engine_source" ]
+  external_deps = [ "hilog:libhilog" ]
+  if (intelligent_voice_framework_engine_enable) {
+    version_script = "libintelligentvoice_engine.versionscript"
+  } else {
+    version_script = "libintelligentvoice_dummy_engine.versionscript"
+  }
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    cfi_vcall_icall_only = true
+    debug = false
+  }
+  branch_protector_ret = "pac_ret"
+  subsystem_name = "ai"
+  part_name = "intelligent_voice_framework"
+}
+
+ohos_shared_library("intelligentvoice_engine_test") {
+  deps = [ ":engine_source" ]
+  external_deps = [ "hilog:libhilog" ]
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    cfi_vcall_icall_only = true
+    debug = false
+  }
+  branch_protector_ret = "pac_ret"
   subsystem_name = "ai"
   part_name = "intelligent_voice_framework"
 }

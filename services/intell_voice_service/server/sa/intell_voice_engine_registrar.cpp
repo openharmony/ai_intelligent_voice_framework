@@ -48,6 +48,8 @@ void IntellVoiceEngineRegistrar::RegisterHandleCloseWakeupSource()
     EngineCallbackMessage::RegisterFunc(EngineCbMessageId::HANDLE_CLOSE_WAKEUP_SOURCE,
         [this](const std::vector<std::any> &args) -> std::optional<std::any> {
             if (args.size() != ARGS_ONE || !args[ARGS_INDEX_0].has_value()) {
+                INTELL_VOICE_LOG_ERROR("HANDLE_CLOSE_WAKEUP_SOURCE receiving wrong param size: %{public}u",
+                    static_cast<uint32_t>(args.size()));
                 return std::nullopt;
             }
             try {
@@ -55,6 +57,7 @@ void IntellVoiceEngineRegistrar::RegisterHandleCloseWakeupSource()
                 HandleCloseWakeupSource(isNeedStop);
                 return std::nullopt;
             } catch (const std::bad_any_cast&) {
+                INTELL_VOICE_LOG_ERROR("HANDLE_CLOSE_WAKEUP_SOURCE bad any cast");
                 return std::nullopt;
             }
         });
@@ -65,6 +68,8 @@ void IntellVoiceEngineRegistrar::RegisterHandleClearWakeupEngineCb()
     EngineCallbackMessage::RegisterFunc(EngineCbMessageId::HANDLE_CLEAR_WAKEUP_ENGINE_CB,
         [this](const std::vector<std::any> &args) -> std::optional<std::any> {
             if (args.size() != 0) {
+                INTELL_VOICE_LOG_ERROR("HANDLE_CLEAR_WAKEUP_ENGINE_CB receiving wrong param size: %{public}u",
+                    static_cast<uint32_t>(args.size()));
                 return std::nullopt;
             }
             HandleClearWakeupEngineCb();
@@ -77,6 +82,8 @@ void IntellVoiceEngineRegistrar::RegisterHandleHeadsetHostDie()
     EngineCallbackMessage::RegisterFunc(EngineCbMessageId::HANDLE_HEADSET_HOST_DIE,
         [this](const std::vector<std::any> &args) -> std::optional<std::any> {
             if (args.size() != 0) {
+                INTELL_VOICE_LOG_ERROR("HANDLE_HEADSET_HOST_DIE receiving wrong param size: %{public}u",
+                    static_cast<uint32_t>(args.size()));
                 return std::nullopt;
             }
             HandleHeadsetHostDie();
@@ -89,6 +96,8 @@ void IntellVoiceEngineRegistrar::RegisterHandleReleaseEngine()
     EngineCallbackMessage::RegisterFunc(EngineCbMessageId::HANDLE_RELEASE_ENGINE,
         [this](const std::vector<std::any> &args) -> std::optional<std::any> {
             if (args.size() != ARGS_ONE || !args[ARGS_INDEX_0].has_value()) {
+                INTELL_VOICE_LOG_ERROR("HANDLE_RELEASE_ENGINE receiving wrong param size: %{public}u",
+                    static_cast<uint32_t>(args.size()));
                 return std::nullopt;
             }
             try {
@@ -96,6 +105,7 @@ void IntellVoiceEngineRegistrar::RegisterHandleReleaseEngine()
                 int32_t result = HandleReleaseEngine(type);
                 return std::optional<std::any>(result);
             } catch (const std::bad_any_cast&) {
+                INTELL_VOICE_LOG_ERROR("HANDLE_RELEASE_ENGINE bad any cast");
                 return std::nullopt;
             }
         });
@@ -106,6 +116,8 @@ void IntellVoiceEngineRegistrar::RegisterHandleUpdateComplete()
     EngineCallbackMessage::RegisterFunc(EngineCbMessageId::HANDLE_UPDATE_COMPLETE,
         [this](const std::vector<std::any> &args) -> std::optional<std::any> {
             if (args.size() != ARGS_TWO || !args[ARGS_INDEX_0].has_value() || !args[ARGS_INDEX_1].has_value()) {
+                INTELL_VOICE_LOG_ERROR("HANDLE_UPDATE_COMPLETE receiving wrong param size: %{public}u",
+                    static_cast<uint32_t>(args.size()));
                 return std::nullopt;
             }
             try {
@@ -114,6 +126,7 @@ void IntellVoiceEngineRegistrar::RegisterHandleUpdateComplete()
                 HandleUpdateComplete(result, param);
                 return std::nullopt;
             } catch (const std::bad_any_cast&) {
+                INTELL_VOICE_LOG_ERROR("HANDLE_UPDATE_COMPLETE bad any cast");
                 return std::nullopt;
             }
         });
@@ -124,6 +137,8 @@ void IntellVoiceEngineRegistrar::RegisterHandleUpdateRetry()
     EngineCallbackMessage::RegisterFunc(EngineCbMessageId::HANDLE_UPDATE_RETRY,
         [this](const std::vector<std::any> &args) -> std::optional<std::any> {
             if (args.size() != 0) {
+                INTELL_VOICE_LOG_ERROR("HANDLE_UPDATE_RETRY receiving wrong param size: %{public}u",
+                    static_cast<uint32_t>(args.size()));
                 return std::nullopt;
             }
             HandleUpdateRetry();
@@ -136,13 +151,16 @@ void IntellVoiceEngineRegistrar::RegisterReleaseEngine()
     EngineCallbackMessage::RegisterFunc(EngineCbMessageId::RELEASE_ENGINE, [this](const std::vector<std::any> &args)
         -> std::optional<std::any> {
             if (args.size() != ARGS_ONE || !args[ARGS_INDEX_0].has_value()) {
+                INTELL_VOICE_LOG_ERROR("RELEASE_ENGINE receiving wrong param size: %{public}u",
+                    static_cast<uint32_t>(args.size()));
                 return std::nullopt;
             }
             try {
                 IntellVoiceEngineType type = std::any_cast<IntellVoiceEngineType>(args[ARGS_INDEX_0]);
                 int32_t result = ReleaseEngine(type);
-                return std::optional<std::any> (result);
+                return std::optional<std::any>(result);
             } catch (const std::bad_any_cast&) {
+                INTELL_VOICE_LOG_ERROR("RELEASE_ENGINE bad any cast");
                 return std::nullopt;
             }
     });
@@ -153,13 +171,16 @@ void IntellVoiceEngineRegistrar::RegisterQuerySwitchStatus()
     EngineCallbackMessage::RegisterFunc(EngineCbMessageId::QUERY_SWITCH_STATUS,
         [this](const std::vector<std::any> &args) -> std::optional<std::any> {
             if (args.size() != ARGS_ONE || !args[ARGS_INDEX_0].has_value()) {
+                INTELL_VOICE_LOG_ERROR("QUERY_SWITCH_STATUS receiving wrong param size: %{public}u",
+                    static_cast<uint32_t>(args.size()));
                 return std::nullopt;
             }
             try {
                 const std::string &key = std::any_cast<std::string>(args[ARGS_INDEX_0]);
                 bool result = QuerySwitchStatus(key);
-                return std::optional<std::any> (result);
+                return std::optional<std::any>(result);
             } catch (const std::bad_any_cast&) {
+                INTELL_VOICE_LOG_ERROR("QUERY_SWITCH_STATUS bad any cast");
                 return std::nullopt;
             }
     });
@@ -170,13 +191,16 @@ void IntellVoiceEngineRegistrar::RegisterTriggerGetParameter()
     EngineCallbackMessage::RegisterFunc(EngineCbMessageId::TRIGGERMGR_GET_PARAMETER,
         [this](const std::vector<std::any> &args) -> std::optional<std::any> {
             if (args.size() != ARGS_ONE || !args[ARGS_INDEX_0].has_value()) {
+                INTELL_VOICE_LOG_ERROR("TRIGGERMGR_GET_PARAMETER receiving wrong param size: %{public}u",
+                    static_cast<uint32_t>(args.size()));
                 return std::nullopt;
             }
             try {
                 const std::string &key = std::any_cast<std::string>(args[ARGS_INDEX_0]);
                 std::string result = TriggerGetParameter(key);
-                return std::optional<std::any> (result);
+                return std::optional<std::any>(result);
             } catch (const std::bad_any_cast&) {
+                INTELL_VOICE_LOG_ERROR("TRIGGERMGR_GET_PARAMETER bad any cast");
                 return std::nullopt;
             }
     });
@@ -187,14 +211,17 @@ void IntellVoiceEngineRegistrar::RegisterTriggerSetParameter()
     EngineCallbackMessage::RegisterFunc(EngineCbMessageId::TRIGGERMGR_SET_PARAMETER,
         [this](const std::vector<std::any> &args) -> std::optional<std::any> {
             if (args.size() != ARGS_TWO || !args[ARGS_INDEX_0].has_value() || !args[ARGS_INDEX_1].has_value()) {
+                INTELL_VOICE_LOG_ERROR("TRIGGERMGR_SET_PARAMETER receiving wrong param size: %{public}u",
+                    static_cast<uint32_t>(args.size()));
                 return std::nullopt;
             }
             try {
                 const std::string &key = std::any_cast<std::string>(args[ARGS_INDEX_0]);
                 const std::string &value = std::any_cast<std::string>(args[ARGS_INDEX_1]);
                 int32_t result = TriggerSetParameter(key, value);
-                return std::optional<std::any> (result);
+                return std::optional<std::any>(result);
             } catch (const std::bad_any_cast&) {
+                INTELL_VOICE_LOG_ERROR("TRIGGERMGR_SET_PARAMETER bad any cast");
                 return std::nullopt;
             }
     });
@@ -206,6 +233,8 @@ void IntellVoiceEngineRegistrar::RegisterTriggerMgrUpdateModel()
         [this](const std::vector<std::any> &args) -> std::optional<std::any> {
             if (args.size() != ARGS_THREE || !args[ARGS_INDEX_0].has_value() ||
                 !args[ARGS_INDEX_1].has_value() || !args[ARGS_INDEX_2].has_value()) {
+                INTELL_VOICE_LOG_ERROR("TRIGGERMGR_UPDATE_MODEL receiving wrong param size: %{public}u",
+                    static_cast<uint32_t>(args.size()));
                 return std::nullopt;
             }
             try {
@@ -216,6 +245,7 @@ void IntellVoiceEngineRegistrar::RegisterTriggerMgrUpdateModel()
                 TriggerMgrUpdateModel(buffer, uuid, type);
                 return std::nullopt;
             } catch (const std::bad_any_cast&) {
+                INTELL_VOICE_LOG_ERROR("TRIGGERMGR_UPDATE_MODEL bad any cast");
                 return std::nullopt;
             }
     });

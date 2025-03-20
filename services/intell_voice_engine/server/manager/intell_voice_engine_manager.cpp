@@ -64,17 +64,6 @@ IntellVoiceEngineManager::~IntellVoiceEngineManager()
 {
 }
 
-std::shared_ptr<IntellVoiceEngineManager> IntellVoiceEngineManager::GetInstance()
-{
-    if (instance_ == nullptr) {
-        std::lock_guard<std::mutex> autoLock(instanceMutex_);
-        if (instance_ == nullptr) {
-            instance_ = std::make_shared<IntellVoiceEngineManager>();
-        }
-    }
-    return instance_;
-}
-
 sptr<IIntellVoiceEngine> IntellVoiceEngineManager::CreateEngine(IntellVoiceEngineType type, const std::string &param)
 {
     INTELL_VOICE_LOG_INFO("enter, type:%{public}d", type);
@@ -109,8 +98,6 @@ sptr<IIntellVoiceEngine> IntellVoiceEngineManager::CreateEngineInner(IntellVoice
         INTELL_VOICE_LOG_ERROR("create engine failed, type:%{public}d", type);
         return nullptr;
     }
-
-    SetImproveParam(engine);
     engines_[type] = engine;
     INTELL_VOICE_LOG_INFO("create engine ok");
     return engine;
@@ -161,7 +148,6 @@ bool IntellVoiceEngineManager::CreateOrResetWakeupEngine()
             INTELL_VOICE_LOG_ERROR("failed to reset adapter");
             return false;
         }
-        SetImproveParam(engine);
     } else {
         if (CreateEngineInner(INTELL_VOICE_WAKEUP) == nullptr) {
             INTELL_VOICE_LOG_ERROR("failed to create wakeup engine");
@@ -277,16 +263,6 @@ bool IntellVoiceEngineManager::CreateUpdateEngine(const std::string &param)
 void IntellVoiceEngineManager::ReleaseUpdateEngine()
 {
     EngineCallbackMessage::CallFunc(RELEASE_ENGINE, INTELL_VOICE_UPDATE);
-}
-
-void IntellVoiceEngineManager::SetImproveParam(sptr<EngineBase> engine)
-{
-    if (engine == nullptr) {
-        return;
-    }
-
-    std::string status = "true";
-    engine->SetParameter("userImproveOn=" + status);
 }
 
 int32_t IntellVoiceEngineManager::GetUploadFiles(int numMax, std::vector<UploadFilesFromHdi> &files)
@@ -445,14 +421,6 @@ void IntellVoiceEngineManager::EngineOnDetected(int32_t uuid)
 {
     auto engine = GetEngine(INTELL_VOICE_WAKEUP, engines_);
     engine->OnDetected(uuid);
-}
-
-void IntellVoiceEngineManager::ImproveKeySwitch()
-{
-    auto engine = GetEngine(INTELL_VOICE_WAKEUP, engines_);
-    if (engine != nullptr) {
-        SetImproveParam(engine);
-    }
 }
 
 void IntellVoiceEngineManager::ClearWakeupEngineCb()

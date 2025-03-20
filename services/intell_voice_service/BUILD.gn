@@ -14,7 +14,7 @@
 import("//build/ohos.gni")
 import("../../intell_voice_service.gni")
 
-ohos_shared_library("intell_voice_server") {
+ohos_source_set("server_source") {
   configs = [ "//build/config/compiler:exceptions" ]
 
   sources = [
@@ -50,11 +50,7 @@ ohos_shared_library("intell_voice_server") {
     defines += [ "INTELL_VOICE_BUILD_VARIANT_ROOT" ]
   }
 
-  deps = [
-    "../../utils:intell_voice_utils",
-    "../intell_voice_engine:intelligentvoice_engine",
-    "../intell_voice_trigger:intelligentvoice_trigger",
-  ]
+  deps = [ "../../utils:intell_voice_utils" ]
 
   external_deps = [
     "ability_runtime:ability_manager",
@@ -63,14 +59,12 @@ ohos_shared_library("intell_voice_server") {
     "common_event_service:cesfwk_innerkits",
     "data_share:datashare_consumer",
     "ffrt:libffrt",
-    "hilog:libhilog",
+    "image_framework:image_native",
     "ipc:ipc_core",
     "kv_store:distributeddata_inner",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
   ]
-
-  public_external_deps = [ "libxml2:libxml2" ]
 
   sanitize = {
     cfi = true
@@ -92,6 +86,45 @@ ohos_shared_library("intell_voice_server") {
   if (intelligent_voice_framework_only_first_stage) {
     cflags_cc += [ "-DONLY_FIRST_STAGE" ]
   }
+
+  subsystem_name = "ai"
+  part_name = "intelligent_voice_framework"
+}
+
+ohos_shared_library("intell_voice_server") {
+  deps = [
+    ":server_source",
+    "../intell_voice_engine:intelligentvoice_engine",
+    "../intell_voice_trigger:intelligentvoice_trigger",
+  ]
+  external_deps = [ "hilog:libhilog" ]
+
+  version_script = "libintell_voice_server.versionscript"
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    cfi_vcall_icall_only = true
+    debug = false
+  }
+  branch_protector_ret = "pac_ret"
+  subsystem_name = "ai"
+  part_name = "intelligent_voice_framework"
+}
+
+ohos_shared_library("intell_voice_server_test") {
+  deps = [
+    ":server_source",
+    "../intell_voice_engine:intelligentvoice_engine_test",
+    "../intell_voice_trigger:intelligentvoice_trigger_test",
+  ]
+  external_deps = [ "hilog:libhilog" ]
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    cfi_vcall_icall_only = true
+    debug = false
+  }
+  branch_protector_ret = "pac_ret"
   subsystem_name = "ai"
   part_name = "intelligent_voice_framework"
 }

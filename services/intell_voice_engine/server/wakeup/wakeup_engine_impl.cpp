@@ -418,6 +418,7 @@ int32_t WakeupEngineImpl::HandleInit(const StateMsg & /* msg */, State &nextStat
     EngineUtil::SetLanguage();
     EngineUtil::SetArea();
     EngineUtil::SetSensibility();
+    EngineUtil::SetImproveParam();
     SetDspFeatures();
 
     IntellVoiceEngineInfo info = {
@@ -636,6 +637,8 @@ int32_t WakeupEngineImpl::HandleResetAdapter(const StateMsg & /* msg */, State &
     adapter_->SetCallback(callback_);
     EngineUtil::SetLanguage();
     EngineUtil::SetArea();
+    EngineUtil::SetSensibility();
+    EngineUtil::SetImproveParam();
     SetDspFeatures();
 
     IntellVoiceEngineAdapterInfo adapterInfo = {

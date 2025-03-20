@@ -22,6 +22,9 @@
 #include <any>
 #include <optional>
 #include "nocopyable.h"
+#include "intell_voice_log.h"
+
+#define LOG_TAG "EngineCallbackMessage"
 
 namespace OHOS {
 namespace IntellVoiceEngine {
@@ -52,23 +55,26 @@ public:
         EngineFuncMap[id] = func;
     }
     template <typename... Args>
-    static std::optional<std::any> CallFunc(EngineCbMessageId id, Args &&... args);
+    static std::optional<std::any> CallFunc(EngineCbMessageId id, Args &&... args)
+    {
+        std::vector<std::any> params = { std::forward<Args>(args)... };
+        if (EngineFuncMap.find(id) != EngineFuncMap.end()) {
+            INTELL_VOICE_LOG_INFO("enter, EngineCbMessageId: %{public}d, Number of arguments: %{public}u",
+                id, static_cast<uint32_t>(params.size()));
+            return EngineFuncMap[id](params);
+        } else {
+            INTELL_VOICE_LOG_ERROR("Engine Callback Function not found");
+            return std::nullopt;
+        }
+    }
 
 private:
     static std::map<EngineCbMessageId, Func> EngineFuncMap;
     DISALLOW_COPY_AND_MOVE(EngineCallbackMessage);
 };
-
-template <typename... Args>
-std::optional<std::any> EngineCallbackMessage::CallFunc(EngineCbMessageId id, Args &&... args)
-{
-    std::vector<std::any> params = { std::forward<Args>(args)... };
-    if (EngineFuncMap.find(id) != EngineFuncMap.end()) {
-        return EngineFuncMap[id](params);
-    } else {
-        return std::nullopt;
-    }
-}
 }  // namespace IntellVoice
 }  // namespace OHOS
+
+#undef LOG_TAG
+
 #endif

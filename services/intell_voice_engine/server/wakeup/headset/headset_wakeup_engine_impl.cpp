@@ -32,7 +32,7 @@ using namespace std;
 namespace OHOS {
 namespace IntellVoiceEngine {
 static constexpr int64_t RECOGNIZING_TIMEOUT_US = 10 * 1000 * 1000; //10s
-static constexpr int64_t RECOGNIZE_COMPLETE_TIMEOUT_US = 1 * 1000; //1ms
+static constexpr int64_t RECOGNIZE_COMPLETE_TIMEOUT_US = 2 * 1000 * 1000; //2s
 static constexpr int64_t READ_CAPTURER_TIMEOUT_US = 10 * 1000 * 1000; //10s
 static constexpr uint32_t MAX_HEADSET_TASK_NUM = 200;
 static const std::string HEADSET_THREAD_NAME = "HeadsetThread";
