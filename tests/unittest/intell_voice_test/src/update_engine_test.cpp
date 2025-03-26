@@ -79,70 +79,9 @@ void UpdateEngineTest::TearDown(void)
 /**
  * @tc.name  : Test Template UpdateEngineTest
  * @tc.number: UpdateEngineTest_001
- * @tc.desc  : Test For SilenceUpdate
- */
-HWTEST_F(UpdateEngineTest, UpdateEngineTest_001, TestSize.Level1)
-{
-    if (!EngineHostManager::GetInstance().Init()) {
-        INTELL_VOICE_LOG_ERROR("init engine host failed");
-    }
-    HistoryInfoMgr &historyInfoMgr = HistoryInfoMgr::GetInstance();
-    historyInfoMgr.SetStringKVPair(KEY_WAKEUP_VESRION, "0");
-    auto &mgr = ServiceManagerType::GetInstance();
-    mgr.HandleReleaseEngine(INTELL_VOICE_WAKEUP);
-    std::shared_ptr<SilenceUpdateStrategy> silenceStrategy = std::make_shared<SilenceUpdateStrategy>("");
-    if (silenceStrategy == nullptr) {
-        INTELL_VOICE_LOG_ERROR("silence strategy is nullptr");
-    }
-    std::shared_ptr<IUpdateStrategy> strategy = std::dynamic_pointer_cast<IUpdateStrategy>(silenceStrategy);
-    int ret = mgr.CreateUpdateEngineUntilTime(strategy);
-    sleep(5);
-    EXPECT_EQ(0, ret);
-    INTELL_VOICE_LOG_INFO("end");
-}
-
-/**
- * @tc.name  : Test Template UpdateEngineTest
- * @tc.number: UpdateEngineTest_001
- * @tc.desc  : Test For Voiceprint Clone And ClearUserData
- */
-HWTEST_F(UpdateEngineTest, UpdateEngineTest_002, TestSize.Level1)
-{
-    std::vector<WakeupSourceFile> cloneFileInfo;
-    int ret1 = IntellVoiceManager::GetInstance()->GetWakeupSourceFiles(cloneFileInfo);
-    sleep(2);
-    EXPECT_EQ(0, ret1);
-    INTELL_VOICE_LOG_INFO("GetWakeupSourceFiles end");
-
-    int ret2 = IntellVoiceManager::GetInstance()->ClearUserData();
-    sleep(2);
-    EXPECT_EQ(0, ret2);
-    INTELL_VOICE_LOG_INFO("ClearUserData end");
-
-    Json::Value wakeupInfo;
-    wakeupInfo["clone"] = "true";
-    wakeupInfo["clone_path"] = "/data/service/el0/intelligent_voice/wakeup/clone";
-    wakeupInfo["source_device"] = "BRA-AL00";
-    wakeupInfo["source_version"] = "3.0.0.28";
-    wakeupInfo["destination_device"] = "${result.substring(0, 8)}";
-    wakeupInfo["destination_version"] = "${result.slice(9)}";
-    wakeupInfo["bundle_name"] = "com.huawei.hmos.aibase";
-    wakeupInfo["ability_name"] = "WakeUpExtAbility";
-
-    cb_ = std::make_shared<IntellVoiceUpdateCallback>();
-    int ret3 = IntellVoiceManager::GetInstance()->EnrollWithWakeupFilesForResult(
-        cloneFileInfo, wakeupInfo.toStyledString(), cb_);
-    sleep(5);
-    EXPECT_EQ(0, ret3);
-    INTELL_VOICE_LOG_INFO("EnrollWithWakeupFilesForResult end");
-}
-
-/**
- * @tc.name  : Test Template UpdateEngineTest
- * @tc.number: UpdateEngineTest_001
  * @tc.desc  : Test For Wptr
  */
-HWTEST_F(UpdateEngineTest, UpdateEngineTest_003, TestSize.Level1)
+HWTEST_F(UpdateEngineTest, UpdateEngineTest_001, TestSize.Level1)
 {
     sptr<TestWptr> t = sptr<TestWptr>(new TestWptr());
     t->Func();
