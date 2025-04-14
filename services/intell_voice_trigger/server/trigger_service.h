@@ -43,6 +43,12 @@ public:
     void DetachAudioRendererEventListener();
     void AttachHibernateObserver();
     void DetachHibernateObserver();
+#ifdef SUPPORT_WINDOW_MANAGER
+    void AttachFoldStatusListener();
+    void DetachFoldStatusListener();
+#endif
+    void AttachAudioSceneEventListener();
+    void DetachAudioSceneEventListener();
 
 private:
     std::shared_ptr<TriggerHelper> triggerHelper_ = nullptr;

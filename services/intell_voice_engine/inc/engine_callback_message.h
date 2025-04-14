@@ -24,6 +24,7 @@
 #include "nocopyable.h"
 #include "intell_voice_log.h"
 
+#undef LOG_TAG
 #define LOG_TAG "EngineCallbackMessage"
 
 namespace OHOS {

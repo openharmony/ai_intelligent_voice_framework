@@ -30,7 +30,7 @@ namespace IntellVoiceEngine {
 class EnrollEngine : public EngineBase, private EngineUtil, private OHOS::IntellVoiceUtils::TaskExecutor {
 public:
     ~EnrollEngine();
-    bool Init(const std::string &param) override;
+    bool Init(const std::string &param, bool reEnroll = false) override;
     void SetCallback(sptr<IRemoteObject> object) override;
     int32_t Attach(const IntellVoiceEngineInfo &info) override;
     int32_t Detach(void) override;

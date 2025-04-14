@@ -34,7 +34,12 @@ const std::string KEY_WAKEUP_PHRASE = "WakeupPhrase";
 const std::string KEY_ENROLL_ENGINE_UID = "EnrollEngineUid";
 const std::string KEY_SENSIBILITY = "Sensibility";
 const std::string KEY_WAKEUP_DSP_FEATURE = "WakeupDspFeature";
+const std::string KEY_WHISPER_VPR = "WhisperVpr";
 
+static const std::string WHISPER_MODEL_PATH_VDE =
+    "/sys_prod/variant/region_comm/china/etc/intellvoice/wakeup/dsp/whisper_wakeup_dsp_config_vde";
+static const std::string WHISPER_VPR_CONFIG_PATH =
+    "/sys_prod/variant/region_comm/china/etc/intellvoice/wakeup/vpr/whisper/vpr_domainDict_04.dat";
 static const std::string WHISPER_MODEL_PATH =
     "/sys_prod/variant/region_comm/china/etc/intellvoice/wakeup/dsp/whisper_wakeup_dsp_config";
 static const std::string VAD_MODEL_PATH =

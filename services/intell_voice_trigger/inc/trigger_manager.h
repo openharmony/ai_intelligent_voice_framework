@@ -46,6 +46,7 @@ public:
     void OnAudioDistributedServiceChange(bool isAdded);
     void OnAudioPolicyServiceChange(bool isAdded);
     void OnPowerManagerServiceChange(bool isAdded);
+    void OnDisplayManagerServiceChange(bool isAdded);
 
 private:
     void AttachTelephonyObserver();
@@ -56,6 +57,10 @@ private:
     void DetachAudioRendererEventListener();
     void AttachHibernateObserver();
     void DetachHibernateObserver();
+    void AttachFoldStatusListener();
+    void DetachFoldStatusListener();
+    void AttachAudioSceneEventListener();
+    void DetachAudioSceneEventListener();
 
 private:
     std::mutex detectorMutex_; //这个锁回头看看有没有必要删掉

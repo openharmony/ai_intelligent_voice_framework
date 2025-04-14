@@ -31,6 +31,7 @@
 #include "string_util.h"
 #include "clone_update_strategy.h"
 #include "silence_update_strategy.h"
+#include "whisper_update_strategy.h"
 #include "update_engine_utils.h"
 #include "json/json.h"
 #include "intell_voice_sensibility.h"
@@ -64,7 +65,8 @@ IntellVoiceEngineManager::~IntellVoiceEngineManager()
 {
 }
 
-sptr<IIntellVoiceEngine> IntellVoiceEngineManager::CreateEngine(IntellVoiceEngineType type, const std::string &param)
+sptr<IIntellVoiceEngine> IntellVoiceEngineManager::CreateEngine(IntellVoiceEngineType type,
+    const std::string &param, bool reEnroll)
 {
     INTELL_VOICE_LOG_INFO("enter, type:%{public}d", type);
     SetEnrollResult(type, false);
@@ -80,11 +82,11 @@ sptr<IIntellVoiceEngine> IntellVoiceEngineManager::CreateEngine(IntellVoiceEngin
         }
     }
 
-    return CreateEngineInner(type, param);
+    return CreateEngineInner(type, param, reEnroll);
 }
 
 sptr<IIntellVoiceEngine> IntellVoiceEngineManager::CreateEngineInner(IntellVoiceEngineType type,
-    const std::string &param)
+    const std::string &param, bool reEnroll)
 {
     INTELL_VOICE_LOG_INFO("create engine enter, type: %{public}d", type);
     OHOS::IntellVoiceUtils::MemoryGuard memoryGuard;
@@ -93,7 +95,7 @@ sptr<IIntellVoiceEngine> IntellVoiceEngineManager::CreateEngineInner(IntellVoice
         return engine;
     }
 
-    engine = EngineFactory::CreateEngineInst(type, param);
+    engine = EngineFactory::CreateEngineInst(type, param, reEnroll);
     if (engine == nullptr) {
         INTELL_VOICE_LOG_ERROR("create engine failed, type:%{public}d", type);
         return nullptr;
@@ -249,9 +251,9 @@ bool IntellVoiceEngineManager::IsEngineExist(IntellVoiceEngineType type)
     return false;
 }
 
-bool IntellVoiceEngineManager::CreateUpdateEngine(const std::string &param)
+bool IntellVoiceEngineManager::CreateUpdateEngine(const std::string &param, bool reEnroll)
 {
-    sptr<IIntellVoiceEngine> updateEngine = CreateEngine(INTELL_VOICE_UPDATE, param);
+    sptr<IIntellVoiceEngine> updateEngine = CreateEngine(INTELL_VOICE_UPDATE, param, reEnroll);
     if (updateEngine == nullptr) {
         INTELL_VOICE_LOG_ERROR("updateEngine is nullptr");
         return false;
@@ -364,7 +366,6 @@ int32_t IntellVoiceEngineManager::CloneUpdate(const std::string &wakeupInfo, con
     return CreateUpdateEngineUntilTime(strategy);
 }
 
-
 int32_t IntellVoiceEngineManager::SilenceUpdate()
 {
     std::shared_ptr<SilenceUpdateStrategy> silenceStrategy = std::make_shared<SilenceUpdateStrategy>("");
@@ -376,6 +377,18 @@ int32_t IntellVoiceEngineManager::SilenceUpdate()
     INTELL_VOICE_LOG_INFO("enter");
     std::shared_ptr<IUpdateStrategy> strategy = std::dynamic_pointer_cast<IUpdateStrategy>(silenceStrategy);
     return CreateUpdateEngineUntilTime(strategy);
+}
+
+int32_t IntellVoiceEngineManager::WhisperVprUpdate(bool reEnroll)
+{
+    INTELL_VOICE_LOG_INFO("enter");
+    std::shared_ptr<IUpdateStrategy> strategy = std::make_shared<WhisperUpdateStrategy>("WhisperVprUpdate");
+    if (strategy == nullptr) {
+        INTELL_VOICE_LOG_ERROR("strategy is nullptr");
+        return -1;
+    }
+
+    return CreateUpdateEngineUntilTime(strategy, reEnroll);
 }
 
 

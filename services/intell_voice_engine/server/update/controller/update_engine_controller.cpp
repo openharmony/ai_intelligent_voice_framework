@@ -101,7 +101,7 @@ int UpdateEngineController::UpdateArbitration(int priority)
     return 0;
 }
 
-int UpdateEngineController::CreateUpdateEngineUntilTime(std::shared_ptr<IUpdateStrategy> updateStrategy)
+int UpdateEngineController::CreateUpdateEngineUntilTime(std::shared_ptr<IUpdateStrategy> updateStrategy, bool reEnroll)
 {
     std::lock_guard<std::mutex> lock(updateEngineMutex_);
     INTELL_VOICE_LOG_INFO("enter");
@@ -119,7 +119,7 @@ int UpdateEngineController::CreateUpdateEngineUntilTime(std::shared_ptr<IUpdateS
         return -1;
     }
 
-    if (!CreateUpdateEngine(updateStrategy->param_)) {
+    if (!CreateUpdateEngine(updateStrategy->param_, reEnroll)) {
         INTELL_VOICE_LOG_ERROR("create update engine error");
         return -1;
     }

@@ -29,6 +29,11 @@
 #include "wakeup_source_process.h"
 #include "task_executor.h"
 
+#ifdef SUPPORT_WINDOW_MANAGER
+#include "display_manager_lite.h"
+using FoldStatus = OHOS::Rosen::FoldStatus;
+#endif
+
 namespace OHOS {
 namespace IntellVoiceEngine {
 using OHOS::IntellVoiceUtils::StateMsg;
@@ -68,6 +73,10 @@ private:
     OHOS::AudioStandard::AudioChannel GetWakeupSourceChannel();
     void SubscribeSwingEvent();
     void UnSubscribeSwingEvent();
+#ifdef SUPPORT_WINDOW_MANAGER
+    int32_t GetFoldStatusInfo(bool &isFoldable, FoldStatus &status);
+    void SetFoldStatus();
+#endif
 
 private:
     bool InitStates();
@@ -102,6 +111,9 @@ private:
     std::shared_ptr<WakeupSourceStopCallback> wakeupSourceStopCallback_ = nullptr;
     std::unique_ptr<AudioSource> audioSource_ = nullptr;
     OHOS::AudioStandard::AudioCapturerOptions capturerOptions_;
+#ifdef SUPPORT_WINDOW_MANAGER
+    FoldStatus curFoldStatus_ = FoldStatus::UNKNOWN;
+#endif
 };
 }
 }

@@ -178,6 +178,24 @@ void TriggerService::DetachAudioRendererEventListener()
     triggerHelper_->DetachAudioRendererEventListener();
 }
 
+void TriggerService::AttachAudioSceneEventListener()
+{
+    if (triggerHelper_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("trigger helper is nullptr");
+        return;
+    }
+    triggerHelper_->AttachAudioSceneEventListener();
+}
+
+void TriggerService::DetachAudioSceneEventListener()
+{
+    if (triggerHelper_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("trigger helper is nullptr");
+        return;
+    }
+    triggerHelper_->DetachAudioSceneEventListener();
+}
+
 void TriggerService::AttachHibernateObserver()
 {
     if (triggerHelper_ == nullptr) {
@@ -195,5 +213,25 @@ void TriggerService::DetachHibernateObserver()
     }
     triggerHelper_->DetachHibernateObserver();
 }
+
+#ifdef SUPPORT_WINDOW_MANAGER
+void TriggerService::AttachFoldStatusListener()
+{
+    if (triggerHelper_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("trigger helper is nullptr");
+        return;
+    }
+    triggerHelper_->AttachFoldStatusListener();
+}
+
+void TriggerService::DetachFoldStatusListener()
+{
+    if (triggerHelper_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("trigger helper is nullptr");
+        return;
+    }
+    triggerHelper_->DetachFoldStatusListener();
+}
+#endif
 }  // namespace IntellVoiceTrigger
 }  // namespace OHOS

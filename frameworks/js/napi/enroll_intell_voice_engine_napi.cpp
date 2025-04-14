@@ -47,7 +47,7 @@ static const std::string ENROLL_ENGINE_NAPI_CLASS_NAME = "EnrollIntelligentVoice
 
 EnrollIntellVoiceEngineNapi::EnrollIntellVoiceEngineNapi()
 {
-    INTELL_VOICE_LOG_INFO("enter, %{public}p", this);
+    INTELL_VOICE_LOG_INFO("enter");
 }
 
 EnrollIntellVoiceEngineNapi::~EnrollIntellVoiceEngineNapi()

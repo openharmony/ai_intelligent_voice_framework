@@ -72,9 +72,11 @@ public:
     void ClearWakeupEngineCb();
     bool CreateOrResetWakeupEngine();
     bool IsEngineExist(IntellVoiceEngineType type);
-    sptr<IIntellVoiceEngine> CreateEngine(IntellVoiceEngineType type, const std::string &param = "");
+    sptr<IIntellVoiceEngine> CreateEngine(IntellVoiceEngineType type,
+        const std::string &param = "", bool reEnroll = false);
     int32_t ReleaseEngineInner(IntellVoiceEngineType type);
     int32_t SilenceUpdate();
+    int32_t WhisperVprUpdate(bool reEnroll = false);
     int32_t CloneUpdate(const std::string &wakeupInfo, const sptr<IRemoteObject> &object);
     int32_t ServiceStopProc();
     void SetDspSensibility(const std::string &sensibility);
@@ -83,9 +85,10 @@ public:
 
 private:
 
-    sptr<IIntellVoiceEngine> CreateEngineInner(IntellVoiceEngineType type, const std::string &param = "");
+    sptr<IIntellVoiceEngine> CreateEngineInner(IntellVoiceEngineType type,
+        const std::string &param = "", bool reEnroll = false);
     void ReleaseUpdateEngine() override;
-    bool CreateUpdateEngine(const std::string &param) override;
+    bool CreateUpdateEngine(const std::string &param, bool reEnroll = false) override;
     void LoadIntellVoiceHost();
     void UnloadIntellVoiceHost();
 

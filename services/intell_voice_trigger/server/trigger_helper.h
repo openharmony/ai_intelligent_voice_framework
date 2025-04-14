@@ -31,12 +31,20 @@
 #include "audio_info.h"
 #include "sync_hibernate_callback_stub.h"
 #include "sync_sleep_callback_stub.h"
+#ifdef SUPPORT_WINDOW_MANAGER
+#include "display_manager_lite.h"
+#endif
 
 namespace OHOS {
 namespace IntellVoiceTrigger {
 using OHOS::AudioStandard::AudioCapturerSourceCallback;
 using OHOS::AudioStandard::AudioRendererStateChangeCallback;
 using OHOS::AudioStandard::AudioRendererChangeInfo;
+using OHOS::AudioStandard::AudioManagerAudioSceneChangedCallback;
+using OHOS::AudioStandard::AudioScene;
+#ifdef SUPPORT_WINDOW_MANAGER
+using FoldStatus = OHOS::Rosen::FoldStatus;
+#endif
 
 enum ModelState { MODEL_NOTLOADED, MODEL_LOADED, MODEL_STARTED, MODEL_STATE_BUT };
 
@@ -86,6 +94,8 @@ public:
     void DetachAudioCaptureListener();
     void AttachAudioRendererEventListener();
     void DetachAudioRendererEventListener();
+    void AttachAudioSceneEventListener();
+    void DetachAudioSceneEventListener();
 #ifdef SUPPORT_TELEPHONY_SERVICE
     void AttachTelephonyObserver();
     void DetachTelephonyObserver();
@@ -111,6 +121,7 @@ private:
     void OnCapturerStateChange(bool isActive);
     void OnUpdateRendererState(int32_t streamUsage, bool isPlaying);
     void OnHibernateStateUpdated(bool isHibernate);
+    void OnAudioSceneChange(const AudioScene audioScene);
 #ifdef SUPPORT_TELEPHONY_SERVICE
     void OnCallStateUpdated(int32_t callState);
     class TelephonyStateObserver : public Telephony::TelephonyObserver {
@@ -130,6 +141,60 @@ private:
 private:
     sptr<TelephonyStateObserver> telephonyObserver0_ = nullptr;
 #endif
+
+#ifdef SUPPORT_WINDOW_MANAGER
+public:
+    void AttachFoldStatusListener();
+    void DetachFoldStatusListener();
+
+private:
+    void UpdateGenericTriggerModel(std::shared_ptr<GenericTriggerModel> model);
+    std::shared_ptr<GenericTriggerModel> ReadWhisperModel();
+    void ReLoadWhisperModel(std::shared_ptr<TriggerModelData> modelData);
+    void FoldStatusOperation(std::shared_ptr<TriggerModelData> modelData);
+    void SetFoldStatus();
+    void RegisterFoldStatusListener();
+    void StartAllRecognition();
+    void StopAllRecognition();
+    void RestartAllRecognition();
+    void OnFoldStatusChanged(FoldStatus foldStatus);
+    std::string GetFoldStatusInfo();
+    bool GetParameterInner(const std::string &key, std::string &value);
+class FoldStatusListener : public OHOS::Rosen::DisplayManagerLite::IFoldStatusListener {
+public:
+    explicit FoldStatusListener(const std::shared_ptr<TriggerHelper> helper) : helper_(helper)
+    {}
+
+    ~FoldStatusListener()
+    {
+        helper_ = nullptr;
+    }
+    void OnFoldStatusChanged(FoldStatus foldStatus) override;
+
+    public:
+        std::shared_ptr<TriggerHelper> helper_ = nullptr;
+};
+private:
+    sptr<OHOS::Rosen::DisplayManagerLite::IFoldStatusListener> foldStatusListener_;
+    FoldStatus curFoldStatus_ = FoldStatus::UNKNOWN;
+    bool isFoldStatusDetached_ = false;
+    bool isFoldable_ = false;
+    std::mutex foldStatusMutex_;
+#endif
+
+    class AudioSceneChangeCallback : public AudioManagerAudioSceneChangedCallback {
+    public:
+        explicit AudioSceneChangeCallback(const std::shared_ptr<TriggerHelper> helper) : helper_(helper)
+        {}
+        ~AudioSceneChangeCallback()
+        {
+            helper_ = nullptr;
+        }
+        void OnAudioSceneChange(const AudioScene audioScene) override;
+
+    public:
+        std::shared_ptr<TriggerHelper> helper_ = nullptr;
+    };
 
     class AudioCapturerSourceChangeCallback : public AudioCapturerSourceCallback {
     public:
@@ -203,22 +268,26 @@ private:
     std::mutex telephonyMutex_;
     std::mutex rendererMutex_;
     std::mutex hiberateMutex_;
+    std::mutex sceneMutex_;
 
     std::map<int32_t, std::shared_ptr<TriggerModelData>> modelDataMap_;
     std::shared_ptr<IIntellVoiceTriggerConnectorModule> module_ = nullptr;
     std::vector<TriggerConnectorModuleDesc> moduleDesc_;
     std::shared_ptr<AudioCapturerSourceChangeCallback> audioCapturerSourceChangeCallback_ = nullptr;
     std::shared_ptr<AudioRendererStateChangeCallbackImpl> audioRendererStateChangeCallback_ = nullptr;
+    std::shared_ptr<AudioSceneChangeCallback> audioSceneChangeCallback_ = nullptr;
     sptr<HibernateCallback> hibernateCallback_ = nullptr;
     sptr<SleepCallback> sleepCallback_ = nullptr;
     bool callActive_ = false;
     bool systemHibernate_ = false;
     bool audioCaptureActive_ = false;
+    AudioScene audioScene_ = AudioScene::AUDIO_SCENE_DEFAULT;
 #ifdef SUPPORT_TELEPHONY_SERVICE
     bool isTelephonyDetached_ = false;
 #endif
     bool isRendererDetached_ = false;
     bool isHibernateDetached_ = false;
+    bool isSceneDetached_ = false;
 };
 }  // namespace IntellVoiceTrigger
 }  // namespace OHOS

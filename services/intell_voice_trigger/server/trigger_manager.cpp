@@ -138,7 +138,6 @@ void TriggerManager::DetachTelephonyObserver()
 #endif
 }
 
-
 void TriggerManager::AttachAudioCaptureListener()
 {
     if (service_ == nullptr) {
@@ -175,6 +174,25 @@ void TriggerManager::DetachAudioRendererEventListener()
     return service_->DetachAudioRendererEventListener();
 }
 
+void TriggerManager::AttachAudioSceneEventListener()
+{
+    if (service_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("service_ is nullptr");
+        return;
+    }
+    return service_->AttachAudioSceneEventListener();
+}
+
+void TriggerManager::DetachAudioSceneEventListener()
+{
+    if (service_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("service_ is nullptr");
+        return;
+    }
+    return service_->DetachAudioSceneEventListener();
+}
+
+
 void TriggerManager::AttachHibernateObserver()
 {
     if (service_ == nullptr) {
@@ -191,6 +209,28 @@ void TriggerManager::DetachHibernateObserver()
         return;
     }
     return service_->DetachHibernateObserver();
+}
+
+void TriggerManager::AttachFoldStatusListener()
+{
+#ifdef SUPPORT_WINDOW_MANAGER
+    if (service_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("service_ is nullptr");
+        return;
+    }
+    return service_->AttachFoldStatusListener();
+#endif
+}
+
+void TriggerManager::DetachFoldStatusListener()
+{
+#ifdef SUPPORT_WINDOW_MANAGER
+    if (service_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("service_ is nullptr");
+        return;
+    }
+    return service_->DetachFoldStatusListener();
+#endif
 }
 
 int32_t TriggerManager::StartDetection(int32_t uuid)
@@ -253,8 +293,9 @@ void TriggerManager::OnServiceStop()
     DetachAudioCaptureListener();
     DetachAudioRendererEventListener();
     DetachHibernateObserver();
+    DetachFoldStatusListener();
+    DetachAudioSceneEventListener();
 }
-
 
 void TriggerManager::OnTelephonyStateRegistryServiceChange(bool isAdded)
 {
@@ -283,6 +324,7 @@ void TriggerManager::OnAudioPolicyServiceChange(bool isAdded)
     if (isAdded) {
         INTELL_VOICE_LOG_INFO("audio policy service is added");
         AttachAudioRendererEventListener();
+        AttachAudioSceneEventListener();
     } else {
         INTELL_VOICE_LOG_INFO("audio policy service is removed");
     }
@@ -296,6 +338,18 @@ void TriggerManager::OnPowerManagerServiceChange(bool isAdded)
     } else {
         INTELL_VOICE_LOG_INFO("power manager service is removed");
     }
+}
+
+void TriggerManager::OnDisplayManagerServiceChange(bool isAdded)
+{
+#ifdef SUPPORT_WINDOW_MANAGER
+    if (isAdded) {
+        INTELL_VOICE_LOG_INFO("fold status service is added");
+        AttachFoldStatusListener();
+    } else {
+        INTELL_VOICE_LOG_INFO("fold status service is removed");
+    }
+#endif
 }
 }  // namespace IntellVoiceTrigger
 }  // namespace OHOS

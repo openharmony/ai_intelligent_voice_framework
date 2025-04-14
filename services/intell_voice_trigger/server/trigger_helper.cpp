@@ -26,6 +26,12 @@
 #include "intell_voice_log.h"
 #include "trigger_connector_mgr.h"
 
+#ifdef SUPPORT_WINDOW_MANAGER
+#include "intell_voice_util.h"
+#include "intell_voice_definitions.h"
+#include "trigger_db_helper.h"
+#endif
+
 #undef LOG_TAG
 #define LOG_TAG "TriggerHelper"
 
@@ -33,6 +39,10 @@ using namespace OHOS::HDI::IntelligentVoice::Trigger::V1_0;
 using namespace OHOS::AudioStandard;
 #ifdef SUPPORT_TELEPHONY_SERVICE
 using namespace OHOS::Telephony;
+#endif
+#ifdef SUPPORT_WINDOW_MANAGER
+using namespace OHOS::IntellVoiceUtils;
+using namespace OHOS::IntellVoiceEngine;
 #endif
 using namespace OHOS::AudioStandard;
 using namespace OHOS::PowerMgr;
@@ -241,6 +251,12 @@ std::string TriggerHelper::GetParameter(const std::string &key)
     }
 
     std::string value;
+#ifdef SUPPORT_WINDOW_MANAGER
+    if (GetParameterInner(key, value)) {
+        return value;
+    }
+#endif
+
     auto ret = module_->GetParams(key, value);
     if (ret != 0) {
         INTELL_VOICE_LOG_ERROR("failed to get parameter");
@@ -316,6 +332,11 @@ int32_t TriggerHelper::StartRecognition(shared_ptr<TriggerModelData> modelData)
         INTELL_VOICE_LOG_ERROR("module_ is nullptr");
         return -1;
     }
+
+#ifdef SUPPORT_WINDOW_MANAGER
+    FoldStatusOperation(modelData);
+#endif
+
     auto ret = module_->Start(modelData->GetModelHandle());
     if (ret != 0) {
         INTELL_VOICE_LOG_ERROR("failed to start recognition");
@@ -456,7 +477,7 @@ bool TriggerHelper::IsConflictSceneActive()
 {
     INTELL_VOICE_LOG_INFO("callActive: %{public}d, audioCaptureActive: %{public}d, systemHibernate: %{public}d",
         callActive_, audioCaptureActive_, systemHibernate_);
-    return (callActive_ || audioCaptureActive_ || systemHibernate_);
+    return (callActive_ || audioCaptureActive_ || systemHibernate_ || (audioScene_ != AUDIO_SCENE_DEFAULT));
 }
 
 void TriggerHelper::OnUpdateAllRecognitionState()
@@ -589,6 +610,29 @@ void TriggerHelper::DetachAudioCaptureListener()
     } else {
         INTELL_VOICE_LOG_ERROR("audioSystemManager is null");
     }
+}
+
+void TriggerHelper::OnAudioSceneChange(const AudioScene audioScene)
+{
+    lock_guard<std::mutex> lock(mutex_);
+    if (audioScene_ == audioScene) {
+        return;
+    }
+
+    audioScene_ = audioScene;
+    OnUpdateAllRecognitionState();
+}
+
+void TriggerHelper::AudioSceneChangeCallback::OnAudioSceneChange(const AudioScene audioScene)
+{
+    INTELL_VOICE_LOG_INFO("OnAudioScene change scene: %{public}d", audioScene);
+
+    if (helper_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("helper is nullptr");
+        return;
+    }
+
+    helper_->OnAudioSceneChange(audioScene);
 }
 
 void TriggerHelper::OnCapturerStateChange(bool isActive)
@@ -738,6 +782,52 @@ void TriggerHelper::AttachAudioRendererEventListener()
     audioRendererStateChangeCallback_->OnRendererStateChange(audioRendererChangeInfos);
 }
 
+void TriggerHelper::AttachAudioSceneEventListener()
+{
+    INTELL_VOICE_LOG_INFO("enter");
+    std::lock_guard<std::mutex> lock(sceneMutex_);
+    if (isSceneDetached_) {
+        INTELL_VOICE_LOG_INFO("csene event listener is already detached");
+        return;
+    }
+    audioSceneChangeCallback_ = std::make_shared<AudioSceneChangeCallback>(shared_from_this());
+    if (audioSceneChangeCallback_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("Memory Allocation Failed !!");
+        return;
+    }
+
+    auto audioSystemManager = AudioSystemManager::GetInstance();
+    if (audioSystemManager == nullptr) {
+        INTELL_VOICE_LOG_ERROR("audioSystemManager is nullptr");
+        return;
+    }
+    int32_t ret = audioSystemManager->SetAudioSceneChangeCallback(audioSceneChangeCallback_);
+    if (ret != 0) {
+        INTELL_VOICE_LOG_ERROR("RegisterAudioSceneListener failed");
+        return;
+    }
+    INTELL_VOICE_LOG_INFO("RegisterAudioSceneListener success");
+    AudioScene audioScene = audioSystemManager->GetAudioScene();
+    audioSceneChangeCallback_->OnAudioSceneChange(audioScene);
+}
+
+void TriggerHelper::DetachAudioSceneEventListener()
+{
+    INTELL_VOICE_LOG_INFO("enter");
+    std::lock_guard<std::mutex> lock(sceneMutex_);
+    isSceneDetached_ = true;
+
+    auto audioSystemManager = AudioSystemManager::GetInstance();
+    if (audioSystemManager == nullptr) {
+        INTELL_VOICE_LOG_ERROR("audioSystemManager is nullptr");
+        return;
+    }
+    int32_t ret = audioSystemManager->UnsetAudioSceneChangeCallback(audioSceneChangeCallback_);
+    if (ret != 0) {
+        INTELL_VOICE_LOG_ERROR("UnregisterAudioRendererEventListener failed");
+    }
+}
+
 void TriggerHelper::DetachAudioRendererEventListener()
 {
     INTELL_VOICE_LOG_INFO("enter");
@@ -808,5 +898,242 @@ void TriggerHelper::DetachHibernateObserver()
         INTELL_VOICE_LOG_ERROR("sleepCallback_ unregister failed");
     }
 }
+
+#ifdef SUPPORT_WINDOW_MANAGER
+std::string TriggerHelper::GetFoldStatusInfo()
+{
+    std::string value = isFoldable_ ? "is_foldable=true" : "is_foldable=false";
+    value += ";";
+    value += (curFoldStatus_ == FoldStatus::FOLDED) ? "fold_status=fold" : "fold_status=expand";
+    return value;
+}
+
+bool TriggerHelper::GetParameterInner(const std::string &key, std::string &value)
+{
+    if (key == std::string("fold_status_info")) {
+        value = GetFoldStatusInfo();
+        INTELL_VOICE_LOG_INFO("get fold_status_info:%{public}s", value.c_str());
+        return true;
+    }
+
+    return false;
+}
+
+void TriggerHelper::StartAllRecognition()
+{
+    for (auto iter : modelDataMap_) {
+        if (iter.second == nullptr) {
+            INTELL_VOICE_LOG_ERROR("audio_fold_status model data is null, uuid: %{public}d, ", iter.first);
+            continue;
+        }
+        bool needStart = (iter.second->GetRequested() && (!IsConflictSceneActive()));
+        if (!needStart) {
+            INTELL_VOICE_LOG_INFO("audio_fold_status no need start uuid: %{public}d", iter.first);
+            continue;
+        }
+
+        StartRecognition(iter.second);
+    }
+}
+
+void TriggerHelper::StopAllRecognition()
+{
+    for (auto iter : modelDataMap_) {
+        if (iter.second == nullptr) {
+            INTELL_VOICE_LOG_ERROR("audio_fold_status model data is null, uuid: %{public}d, ", iter.first);
+            continue;
+        }
+        bool needStart = (iter.second->GetRequested() && (!IsConflictSceneActive()));
+        if (!needStart) {
+            INTELL_VOICE_LOG_INFO("audio_fold_status no need stop uuid: %{public}d", iter.first);
+            continue;
+        }
+
+        StopRecognition(iter.second);
+    }
+}
+
+void TriggerHelper::RestartAllRecognition()
+{
+    StopAllRecognition();
+    StartAllRecognition();
+}
+
+void TriggerHelper::UpdateGenericTriggerModel(std::shared_ptr<GenericTriggerModel> model)
+{
+    INTELL_VOICE_LOG_INFO("enter");
+    if (model == nullptr) {
+        INTELL_VOICE_LOG_ERROR("trigger model is null");
+        return;
+    }
+
+    if (!TriggerDbHelper::GetInstance().UpdateGenericTriggerModel(model)) {
+        INTELL_VOICE_LOG_ERROR("failed to update generic model");
+    }
+}
+
+std::shared_ptr<GenericTriggerModel> TriggerHelper::ReadWhisperModel()
+{
+    std::string modelPath = (curFoldStatus_ == FoldStatus::FOLDED) ? WHISPER_MODEL_PATH_VDE : WHISPER_MODEL_PATH;
+    std::shared_ptr<uint8_t> buffer = nullptr;
+    uint32_t size = 0;
+    if (!IntellVoiceUtil::ReadFile(modelPath, buffer, size)) {
+        INTELL_VOICE_LOG_ERROR("audio_fold_status read model failed");
+        return nullptr;
+    }
+    std::vector<uint8_t> data(buffer.get(), buffer.get() + size);
+    std::shared_ptr<GenericTriggerModel> model = std::make_shared<GenericTriggerModel>(
+        OHOS::IntellVoiceEngine::PROXIMAL_WAKEUP_MODEL_UUID,
+        TriggerModel::TriggerModelVersion::MODLE_VERSION_2,
+        TriggerModelType::PROXIMAL_WAKEUP_TYPE);
+    if (model == nullptr) {
+        INTELL_VOICE_LOG_ERROR("audio_fold_status model null");
+        return nullptr;
+    }
+    model->SetData(data);
+    return model;
+}
+
+void TriggerHelper::ReLoadWhisperModel(shared_ptr<TriggerModelData> modelData)
+{
+    if (modelData->uuid_ != OHOS::IntellVoiceEngine::PROXIMAL_WAKEUP_MODEL_UUID) {
+        return;
+    }
+
+    std::shared_ptr<GenericTriggerModel> model = ReadWhisperModel();
+    if (model == nullptr) {
+        INTELL_VOICE_LOG_ERROR("audio_fold_status read model failed");
+        return;
+    }
+    UpdateGenericTriggerModel(model);
+    if (!modelData->SameModel(model)) {
+        UnloadModel(modelData);
+        modelData->SetModel(model);
+        LoadModel(modelData);
+    }
+    INTELL_VOICE_LOG_INFO("audio_fold_status reload model success");
+}
+
+void TriggerHelper::FoldStatusOperation(shared_ptr<TriggerModelData> modelData)
+{
+    if (!isFoldable_) {
+        return;
+    }
+
+    ReLoadWhisperModel(modelData);
+
+    auto firstElement = modelDataMap_.begin();
+    if (firstElement->second->uuid_ == modelData->uuid_) {
+        SetFoldStatus();
+    }
+}
+
+void TriggerHelper::SetFoldStatus()
+{
+    std::string key = "is_folded";
+    std::string value = (curFoldStatus_ == FoldStatus::FOLDED) ? "true" : "false";
+    if (!GetModule()) {
+        INTELL_VOICE_LOG_ERROR("audio_fold_status get module failed");
+        return;
+    }
+
+    if (module_->SetParams(key, value) != 0) {
+        INTELL_VOICE_LOG_ERROR("audio_fold_status set failed");
+        return;
+    }
+
+    INTELL_VOICE_LOG_INFO("audio_fold_status set to hal success is_fold:%{public}s", value.c_str());
+}
+
+void TriggerHelper::OnFoldStatusChanged(FoldStatus foldStatus)
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    FoldStatus newFoldStatus = foldStatus;
+    if (foldStatus == FoldStatus::HALF_FOLD) {
+        newFoldStatus = FoldStatus::EXPAND;
+    }
+    if (curFoldStatus_ == newFoldStatus) {
+        INTELL_VOICE_LOG_INFO("audio_fold_status same, no deed set");
+        return;
+    }
+    curFoldStatus_ = newFoldStatus;
+    bool isFolded = (curFoldStatus_ == FoldStatus::FOLDED) ? true : false;
+    RestartAllRecognition();
+    INTELL_VOICE_LOG_INFO("audio_fold_status change, status: %{public}d, is_fold: %{public}d", foldStatus, isFolded);
+}
+
+void TriggerHelper::FoldStatusListener::OnFoldStatusChanged(FoldStatus foldStatus)
+{
+    INTELL_VOICE_LOG_INFO("audio_fold_status on change status: %{public}d", foldStatus);
+    if (helper_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("helper is nullptr");
+        return;
+    }
+
+    helper_->OnFoldStatusChanged(foldStatus);
+}
+
+void TriggerHelper::RegisterFoldStatusListener()
+{
+    foldStatusListener_ = std::make_unique<FoldStatusListener>(shared_from_this()).release();
+    if (foldStatusListener_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("audio_fold_status listener is nullptr");
+        return;
+    }
+
+    auto ret = OHOS::Rosen::DisplayManagerLite::GetInstance().RegisterFoldStatusListener(foldStatusListener_);
+    if (ret != OHOS::Rosen::DMError::DM_OK) {
+        INTELL_VOICE_LOG_ERROR("audio_fold_status register listener failed");
+        foldStatusListener_ = nullptr;
+    } else {
+        INTELL_VOICE_LOG_INFO("audio_fold_status register listener success");
+    }
+}
+
+void TriggerHelper::AttachFoldStatusListener()
+{
+    INTELL_VOICE_LOG_INFO("audio_fold_status attach enter");
+    std::lock_guard<std::mutex> lock(foldStatusMutex_);
+    if (isFoldStatusDetached_) {
+        INTELL_VOICE_LOG_INFO("audio_fold_status already detached");
+        return;
+    }
+
+    bool isFoldable = OHOS::Rosen::DisplayManagerLite::GetInstance().IsFoldable();
+    bool isFileExist = IntellVoiceUtil::IsFileExist(WHISPER_MODEL_PATH_VDE);
+    isFoldable_ = (isFileExist && isFoldable) ? true : false;
+    INTELL_VOICE_LOG_INFO("audio_fold_status isFoldable:%{public}d, isFileExist:%{public}d", isFoldable, isFileExist);
+    if (!isFoldable_) {
+        return;
+    }
+
+    RegisterFoldStatusListener();
+
+    curFoldStatus_ = OHOS::Rosen::DisplayManagerLite::GetInstance().GetFoldStatus();
+    if (curFoldStatus_ == FoldStatus::FOLDED) {
+        RestartAllRecognition();
+    }
+    INTELL_VOICE_LOG_INFO("audio_fold_status attach success");
+}
+
+void TriggerHelper::DetachFoldStatusListener()
+{
+    INTELL_VOICE_LOG_INFO("audio_fold_status detach enter");
+    std::lock_guard<std::mutex> lock(foldStatusMutex_);
+    isFoldStatusDetached_ = true;
+
+    if (foldStatusListener_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("audio_fold_status listener is null");
+        return;
+    }
+
+    auto ret = OHOS::Rosen::DisplayManagerLite::GetInstance().UnregisterFoldStatusListener(foldStatusListener_);
+    if (ret != OHOS::Rosen::DMError::DM_OK) {
+        INTELL_VOICE_LOG_ERROR("audio_fold_status detach failed");
+    }
+    foldStatusListener_ = nullptr;
+    INTELL_VOICE_LOG_INFO("audio_fold_status detach success");
+}
+#endif
 }  // namespace IntellVoiceTrigger
 }  // namespace OHOS

@@ -95,6 +95,7 @@ public:
     std::vector<uint8_t> ReadDspModel(OHOS::HDI::IntelligentVoice::Engine::V1_0::ContentType type);
     void ProcDspModel(const std::vector<uint8_t> &buffer);
     void SetLanguage();
+    void SetWhisperVpr();
     void SetArea();
     void SetSensibility();
     void SelectInputDevice(AudioStandard::DeviceType type);

@@ -19,7 +19,6 @@
 
 namespace OHOS {
 namespace IntellVoiceEngine {
-
 class SilenceUpdateStrategy final: public IUpdateStrategy {
 public:
     ~SilenceUpdateStrategy() override;

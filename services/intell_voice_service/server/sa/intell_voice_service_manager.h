@@ -45,6 +45,7 @@ public:
     sptr<IIntellVoiceEngine> HandleCreateEngine(IntellVoiceEngineType type);
     int32_t HandleReleaseEngine(IntellVoiceEngineType type) override;
     void HandleSilenceUpdate();
+    void HandleWhisperVprUpdate();
     int32_t HandleCloneUpdate(const std::string &wakeupInfo, const sptr<IRemoteObject> &object);
     void HandleServiceStop();
 

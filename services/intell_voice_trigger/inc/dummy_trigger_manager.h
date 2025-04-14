@@ -43,6 +43,7 @@ public:
     void OnAudioDistributedServiceChange(bool isAdded) {};
     void OnAudioPolicyServiceChange(bool isAdded) {};
     void OnPowerManagerServiceChange(bool isAdded) {};
+    void OnDisplayManagerServiceChange(bool isAdded) {};
 };
 }  // namespace IntellVoiceTrigger
 }  // namespace OHOS
