@@ -27,7 +27,7 @@ namespace IntellVoiceEngine {
 class UpdateEngine : public EngineBase, private EngineUtil {
 public:
     ~UpdateEngine();
-    bool Init(const std::string &param) override;
+    bool Init(const std::string &param, bool reEnroll = false) override;
     void SetCallback(sptr<IRemoteObject> object) override;
     int32_t Attach(const IntellVoiceEngineInfo &info) override;
     int32_t Detach(void) override;

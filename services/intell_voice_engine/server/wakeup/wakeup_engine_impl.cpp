@@ -16,6 +16,7 @@
 
 #include "audio_asr.h"
 #include "audio_system_manager.h"
+#include "audio_policy_manager.h"
 #include "ipc_skeleton.h"
 #include "v1_2/intell_voice_engine_types.h"
 #include "adapter_callback_service.h"
@@ -221,6 +222,10 @@ void WakeupEngineImpl::SetParamOnAudioStart(int32_t uuid)
         return;
     }
 
+#ifdef SUPPORT_WINDOW_MANAGER
+    SetFoldStatus();
+#endif
+
     audioSystemManager->SetAsrAecMode(AsrAecMode::STANDARD);
     if (uuid == PROXIMAL_WAKEUP_MODEL_UUID) {
         audioSystemManager->SetAsrNoiseSuppressionMode(AsrNoiseSuppressionMode::NEAR_FIELD);
@@ -236,6 +241,26 @@ void WakeupEngineImpl::SetParamOnAudioStop()
     if (audioSystemManager == nullptr) {
         INTELL_VOICE_LOG_ERROR("audioSystemManager is nullptr");
         return;
+    }
+    auto audioStreamManager = AudioStreamManager::GetInstance();
+    if (audioStreamManager == nullptr) {
+        INTELL_VOICE_LOG_ERROR("audioStreamManager is nullptr");
+        return;
+    }
+    std::vector<std::shared_ptr<AudioCapturerChangeInfo>> audioCapturerChangeInfos;
+    int32_t ret = audioStreamManager->GetCurrentCapturerChangeInfos(audioCapturerChangeInfos);
+    if (ret != 0) {
+        INTELL_VOICE_LOG_ERROR("GetCurrentCapturerChangeInfos failed");
+    }
+    for (auto it = audioCapturerChangeInfos.begin(); it != audioCapturerChangeInfos.end(); it++) {
+        if ((*it) == nullptr) {
+            INTELL_VOICE_LOG_ERROR("AudioCapturerChangeInfo ptr is nullptr");
+            continue;
+        }
+        if ((*it)->capturerInfo.sourceType == SOURCE_TYPE_VOICE_RECOGNITION) {
+            INTELL_VOICE_LOG_INFO("SOURCE_TYPE_VOICE_RECOGNITION exists");
+            return;
+        }
     }
     audioSystemManager->SetAsrAecMode(AsrAecMode::BYPASS);
     audioSystemManager->SetAsrNoiseSuppressionMode(AsrNoiseSuppressionMode::BYPASS);
@@ -414,6 +439,7 @@ int32_t WakeupEngineImpl::HandleInit(const StateMsg & /* msg */, State &nextStat
         INTELL_VOICE_LOG_ERROR("failed to set callback");
         return -1;
     }
+    EngineUtil::SetWhisperVpr();
     SetWakeupModel();
     EngineUtil::SetLanguage();
     EngineUtil::SetArea();
@@ -635,6 +661,7 @@ int32_t WakeupEngineImpl::HandleResetAdapter(const StateMsg & /* msg */, State &
     }
     SetWakeupModel();
     adapter_->SetCallback(callback_);
+    EngineUtil::SetWhisperVpr();
     EngineUtil::SetLanguage();
     EngineUtil::SetArea();
     EngineUtil::SetSensibility();
@@ -786,5 +813,71 @@ void WakeupEngineImpl::ReadBufferCallback(uint8_t *buffer, uint32_t size, bool i
     }
     WakeupSourceProcess::Write(audioData);
 }
+
+#ifdef SUPPORT_WINDOW_MANAGER
+void WakeupEngineImpl::SetFoldStatus()
+{
+    bool isFoldable = false;
+    FoldStatus newStatus = FoldStatus::EXPAND;
+    int32_t ret = GetFoldStatusInfo(isFoldable, newStatus);
+    if (ret != 0) {
+        INTELL_VOICE_LOG_ERROR("get fold status info err");
+        return;
+    }
+
+    INTELL_VOICE_LOG_INFO("audio_fold_status isFoldable:%{public}d, curStatus:%{public}d, newStatus:%{public}d",
+        isFoldable, curFoldStatus_, newStatus);
+    if (!isFoldable || newStatus == curFoldStatus_) {
+        return;
+    }
+
+    curFoldStatus_ = newStatus;
+    AsrAecMode aecMode = (newStatus == FoldStatus::FOLDED) ? AsrAecMode::FOLDED : AsrAecMode::EXPAND;
+    auto audioSystemManager = AudioSystemManager::GetInstance();
+    if (audioSystemManager == nullptr) {
+        INTELL_VOICE_LOG_ERROR("audioSystemManager is nullptr");
+        return;
+    }
+    audioSystemManager->SetAsrAecMode(aecMode);
+    INTELL_VOICE_LOG_INFO("audio_fold_status set to fwk success, aecMode:%{public}d", aecMode);
+}
+
+int32_t WakeupEngineImpl::GetFoldStatusInfo(bool &isFoldable, FoldStatus &status)
+{
+    isFoldable = false;
+    status = FoldStatus::EXPAND;
+
+    auto triggerMgr = TriggerManager::GetInstance();
+    if (triggerMgr == nullptr) {
+        INTELL_VOICE_LOG_ERROR("trigger manager is nullptr");
+        return -1;
+    }
+
+    std::string keyValueList = triggerMgr->GetParameter("fold_status_info");
+    if (keyValueList == "") {
+        INTELL_VOICE_LOG_ERROR("no status info");
+        return -1;
+    }
+
+    std::map<std::string, std::string> kvpairs;
+    IntellVoiceUtil::SplitStringToKVPair(keyValueList, kvpairs);
+    for (auto it : kvpairs) {
+        if (it.first == std::string("is_foldable")) {
+            INTELL_VOICE_LOG_INFO("audio_fold_status is_foldable:%{public}s", it.second.c_str());
+            if (it.second == "true") {
+                isFoldable = true;
+            }
+        }
+        if (it.first == std::string("fold_status")) {
+            INTELL_VOICE_LOG_INFO("audio_fold_status fold_status:%{public}s", it.second.c_str());
+            if (it.second == "fold") {
+                status = FoldStatus::FOLDED;
+            }
+        }
+    }
+    INTELL_VOICE_LOG_INFO("audio_fold_status is_foldable:%{public}d, fold_status:%{public}d", isFoldable, status);
+    return 0;
+}
+#endif
 }
 }

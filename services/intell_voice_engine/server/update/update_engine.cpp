@@ -90,11 +90,18 @@ void UpdateEngine::OnUpdateEvent(int32_t msgId, int32_t result)
     }
 }
 
-bool UpdateEngine::Init(const std::string &param)
+bool UpdateEngine::Init(const std::string &param, bool reEnroll)
 {
     if (!EngineUtil::CreateAdapterInner(EngineHostManager::GetInstance(), UPDATE_ADAPTER_TYPE)) {
         INTELL_VOICE_LOG_ERROR("failed to create adapter");
         return false;
+    }
+
+    if (param == "WhisperVprUpdate") {
+        EngineUtil::SetParameter("WhisperVpr=true");
+    }
+    if (reEnroll) {
+        EngineUtil::SetParameter("WhisperReEnroll=true");
     }
 
     SetCallback(nullptr);

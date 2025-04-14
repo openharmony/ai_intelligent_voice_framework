@@ -25,7 +25,7 @@ using namespace OHOS::IntellVoiceUtils;
 
 namespace OHOS {
 namespace IntellVoiceEngine {
-sptr<EngineBase> EngineFactory::CreateEngineInst(IntellVoiceEngineType type, const std::string &param)
+sptr<EngineBase> EngineFactory::CreateEngineInst(IntellVoiceEngineType type, const std::string &param, bool reEnroll)
 {
     sptr<EngineBase> engine = nullptr;
     switch (type) {
@@ -36,7 +36,7 @@ sptr<EngineBase> EngineFactory::CreateEngineInst(IntellVoiceEngineType type, con
             engine = SptrFactory<EngineBase, WakeupEngineObj>::CreateInstance(param);
             break;
         case INTELL_VOICE_UPDATE:
-            engine = SptrFactory<EngineBase, UpdateEngine>::CreateInstance(param);
+            engine = SptrFactory<EngineBase, UpdateEngine>::CreateInstance(param, reEnroll);
             break;
         default:
             INTELL_VOICE_LOG_INFO("create engine enter, type:%{public}d", type);

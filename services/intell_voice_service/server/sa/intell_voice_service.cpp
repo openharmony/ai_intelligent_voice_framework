@@ -109,6 +109,7 @@ void IntellVoiceService::OnStart(const SystemAbilityOnDemandReason &startReason)
     AddSystemAbilityListener(AUDIO_DISTRIBUTED_SERVICE_ID);
     AddSystemAbilityListener(AUDIO_POLICY_SERVICE_ID);
     AddSystemAbilityListener(POWER_MANAGER_SERVICE_ID);
+    AddSystemAbilityListener(DISPLAY_MANAGER_SERVICE_ID);
     RegisterPermissionCallback(OHOS_PERMISSION_INTELL_VOICE);
     INTELL_VOICE_LOG_INFO("publish ok");
 }

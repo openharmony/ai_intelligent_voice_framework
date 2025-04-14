@@ -241,6 +241,15 @@ void EngineUtil::SetLanguage()
     adapter_->SetParameter(LANGUAGE_TEXT + language);
 }
 
+void EngineUtil::SetWhisperVpr()
+{
+    if (adapter_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("adapter is nullptr");
+        return;
+    }
+    adapter_->SetParameter("WhisperVpr=" + HistoryInfoMgr::GetInstance().GetStringKVPair(KEY_WHISPER_VPR));
+}
+
 void EngineUtil::SetArea()
 {
     if (adapter_ == nullptr) {

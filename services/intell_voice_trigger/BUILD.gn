@@ -51,6 +51,7 @@ ohos_source_set("trigger_source") {
       "drivers_interface_intelligent_voice:intell_voice_trigger_idl_headers",
       "drivers_interface_intelligent_voice:libintell_voice_trigger_proxy_1.0",
       "drivers_interface_intelligent_voice:libintell_voice_trigger_proxy_1.1",
+      "eventhandler:libeventhandler",
       "ffrt:libffrt",
       "hdf_core:libhdf_host",
       "hdf_core:libhdi",
@@ -103,6 +104,10 @@ ohos_source_set("trigger_source") {
       "state_registry:tel_state_registry_api",
     ]
     defines += [ "SUPPORT_TELEPHONY_SERVICE" ]
+  }
+  if (intelligent_voice_framework_window_manager_enable) {
+    external_deps += [ "window_manager:libdm_lite" ]
+    defines += [ "SUPPORT_WINDOW_MANAGER" ]
   }
   subsystem_name = "ai"
   part_name = "intelligent_voice_framework"

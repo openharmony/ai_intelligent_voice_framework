@@ -274,7 +274,7 @@ int32_t IntellVoiceServiceManager<T, E>::ClearUserData()
     return TaskExecutor::AddSyncTask([this]() -> int32_t {
         E::ClearUserDataInner();
         HistoryInfoMgr::GetInstance().DeleteKey({KEY_WAKEUP_ENGINE_BUNDLE_NAME, KEY_WAKEUP_ENGINE_ABILITY_NAME,
-            KEY_WAKEUP_VESRION, KEY_LANGUAGE, KEY_AREA, KEY_WAKEUP_PHRASE});
+            KEY_WAKEUP_VESRION, KEY_LANGUAGE, KEY_AREA, KEY_WAKEUP_PHRASE, KEY_WHISPER_VPR});
         return UnloadIntellVoiceService();
     });
 }
@@ -420,9 +420,13 @@ int32_t IntellVoiceServiceManager<T, E>::ReleaseEngine(IntellVoiceEngineType typ
     }
 
     if (E::GetEnrollResult(type)) {
-        SwitchOnProc(VOICE_WAKEUP_MODEL_UUID, true);
-        SwitchOnProc(PROXIMAL_WAKEUP_MODEL_UUID, true);
-        SwitchOffProc(PROXIMAL_WAKEUP_MODEL_UUID);
+        if (IntellVoiceUtil::IsFileExist(WHISPER_VPR_CONFIG_PATH)) {
+            HandleWhisperVprUpdate();
+        } else {
+            SwitchOnProc(VOICE_WAKEUP_MODEL_UUID, true);
+            SwitchOnProc(PROXIMAL_WAKEUP_MODEL_UUID, true);
+            SwitchOffProc(PROXIMAL_WAKEUP_MODEL_UUID);
+        }
     } else {
         SwitchOnProc(VOICE_WAKEUP_MODEL_UUID, true);
         SwitchOffProc(VOICE_WAKEUP_MODEL_UUID);
@@ -579,7 +583,20 @@ template<typename T, typename E>
 void IntellVoiceServiceManager<T, E>::HandleSilenceUpdate()
 {
     TaskExecutor::AddAsyncTask([this]() {
-        E::SilenceUpdate();
+        int32_t ret = E::SilenceUpdate();
+        if (ret != 0 && IntellVoiceUtil::IsFileExist(WHISPER_VPR_CONFIG_PATH)
+            && HistoryInfoMgr::GetInstance().GetStringKVPair(KEY_WHISPER_VPR) == "false") {
+            E::WhisperVprUpdate();
+        }
+    });
+}
+
+template<typename T, typename E>
+void IntellVoiceServiceManager<T, E>::HandleWhisperVprUpdate()
+{
+    INTELL_VOICE_LOG_INFO("enter");
+    TaskExecutor::AddAsyncTask([this]() {
+        E::WhisperVprUpdate();
     });
 }
 
@@ -674,11 +691,19 @@ template<typename T, typename E>
 void IntellVoiceServiceManager<T, E>::HandleUpdateComplete(int32_t result, const std::string &param)
 {
     TaskExecutor::AddAsyncTask([this, result, param]() {
-        if (E::IsNeedUpdateComplete(result, param)) {
-            SwitchOnProc(VOICE_WAKEUP_MODEL_UUID, true);
-            SwitchOnProc(PROXIMAL_WAKEUP_MODEL_UUID, true);
-            UnloadIntellVoiceService();
-        }
+            bool isNeedUpdateComplete = E::IsNeedUpdateComplete(result, param);
+            INTELL_VOICE_LOG_INFO("isNeedUpdateComplete:%{public}d", isNeedUpdateComplete);
+            if (isNeedUpdateComplete && IntellVoiceUtil::IsFileExist(WHISPER_VPR_CONFIG_PATH)
+                && param != "WhisperVprUpdate") {
+                E::WhisperVprUpdate(true);
+                return;
+            }
+
+            if (isNeedUpdateComplete) {
+                SwitchOnProc(VOICE_WAKEUP_MODEL_UUID, true);
+                SwitchOnProc(PROXIMAL_WAKEUP_MODEL_UUID, true);
+                UnloadIntellVoiceService();
+            }
         }, "IntellVoiceServiceManager::HandleUpdateComplete", false);
 }
 
@@ -721,6 +746,9 @@ void IntellVoiceServiceManager<T, E>::OnServiceStart(std::map<int32_t, std::func
     };
     saChangeFuncMap[POWER_MANAGER_SERVICE_ID] = [this](bool isAdded) {
         T::OnPowerManagerServiceChange(isAdded);
+    };
+    saChangeFuncMap[DISPLAY_MANAGER_SERVICE_ID] = [this](bool isAdded) {
+        T::OnDisplayManagerServiceChange(isAdded);
     };
     T::OnServiceStart();
     E::OnServiceStart();

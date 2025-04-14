@@ -60,7 +60,7 @@ void WakeupEngine::OnDetected(int32_t uuid)
     }
 }
 
-bool WakeupEngine::Init(const std::string & /* param */)
+bool WakeupEngine::Init(const std::string & /* param */, bool reEnroll)
 {
     StateMsg msg(INIT);
     if (ROLE(WakeupEngineImpl).Handle(msg) != 0) {

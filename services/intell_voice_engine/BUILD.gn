@@ -42,6 +42,7 @@ ohos_source_set("engine_source") {
       "server/manager/intell_voice_engine_manager.cpp",
       "server/update/controller/strategy/clone_update_strategy.cpp",
       "server/update/controller/strategy/silence_update_strategy.cpp",
+      "server/update/controller/strategy/whisper_update_strategy.cpp",
       "server/update/controller/update_engine_controller.cpp",
       "server/update/update_adapter_listener.cpp",
       "server/update/update_engine.cpp",

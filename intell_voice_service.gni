@@ -16,6 +16,7 @@ declare_args() {
   intelligent_voice_framework_trigger_enable = true
   intelligent_voice_framework_engine_enable = true
   intelligent_voice_framework_only_first_stage = false
+  intelligent_voice_framework_window_manager_enable = false
   if (defined(global_parts_info) &&
       defined(global_parts_info.telephony_state_registry) &&
       defined(global_parts_info.telephony_core_service) &&

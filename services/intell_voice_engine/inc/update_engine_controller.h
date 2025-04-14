@@ -30,12 +30,12 @@ public:
     virtual ~UpdateEngineController();
     UpdateEngineController();
 
-    virtual bool CreateUpdateEngine(const std::string &param)
+    virtual bool CreateUpdateEngine(const std::string &param, bool reEnroll = false)
     {
         return false;
     }
     virtual void ReleaseUpdateEngine() {};
-    int CreateUpdateEngineUntilTime(std::shared_ptr<IUpdateStrategy> updateStrategy);
+    int CreateUpdateEngineUntilTime(std::shared_ptr<IUpdateStrategy> updateStrategy, bool reEnroll = false);
 
     static bool GetUpdateState()
     {

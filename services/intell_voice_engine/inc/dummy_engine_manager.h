@@ -49,6 +49,7 @@ public:
         { return nullptr; };
     int32_t ReleaseEngineInner(IntellVoiceEngineType type) { return 0; };
     int32_t SilenceUpdate() { return 0; };
+    int32_t WhisperVprUpdate(bool reEnroll = false) { return 0; };
     int32_t CloneUpdate(const std::string &wakeupInfo, const sptr<IRemoteObject> &object) { return 0; };
     int32_t ServiceStopProc() { return 0; };
     void SetDspSensibility(const std::string &sensibility) {};

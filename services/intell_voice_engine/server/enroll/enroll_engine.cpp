@@ -88,7 +88,7 @@ void EnrollEngine::OnEnrollComplete(int32_t result, const std::string &info)
     StopAudioSource();
 }
 
-bool EnrollEngine::Init(const std::string &param)
+bool EnrollEngine::Init(const std::string &param, bool reEnroll)
 {
     if (!EngineUtil::CreateAdapterInner(EngineHostManager::GetInstance(), ENROLL_ADAPTER_TYPE)) {
         INTELL_VOICE_LOG_ERROR("failed to create adapter");

@@ -22,7 +22,7 @@ namespace IntellVoiceEngine {
 class EngineBase : public IntellVoiceEngineStub {
 public:
     ~EngineBase() = default;
-    virtual bool Init(const std::string &param = "") = 0;
+    virtual bool Init(const std::string &param = "", bool reEnroll = false) = 0;
     int32_t WriteAudio(const uint8_t *buffer, uint32_t size) override
     {
         return 0;
