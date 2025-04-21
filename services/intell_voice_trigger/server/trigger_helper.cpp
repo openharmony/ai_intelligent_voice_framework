@@ -931,7 +931,9 @@ void TriggerHelper::StartAllRecognition()
             INTELL_VOICE_LOG_INFO("audio_fold_status no need start uuid: %{public}d", iter.first);
             continue;
         }
-
+        if (PrepareForRecognition(iter.second) != 0) {
+            return;
+        }
         StartRecognition(iter.second);
     }
 }

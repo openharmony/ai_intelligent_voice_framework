@@ -42,7 +42,6 @@ ohos_shared_library("intell_voice_proxy") {
     "drivers_interface_intelligent_voice:libintell_voice_engine_proxy_1.0",
     "drivers_interface_intelligent_voice:libintell_voice_engine_proxy_1.1",
     "drivers_interface_intelligent_voice:libintell_voice_engine_proxy_1.2",
-    "hdf_core:libhdf_host",
     "hdf_core:libhdf_ipc_adapter",
     "hdf_core:libhdf_utils",
     "hdf_core:libhdi",

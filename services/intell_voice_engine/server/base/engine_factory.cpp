@@ -17,6 +17,7 @@
 #include "enroll_engine.h"
 #include "wakeup_engine_obj.h"
 #include "update_engine.h"
+#include "high_power_wakeup_engine.h"
 #include "intell_voice_log.h"
 #include "intell_voice_generic_factory.h"
 
@@ -33,7 +34,11 @@ sptr<EngineBase> EngineFactory::CreateEngineInst(IntellVoiceEngineType type, con
             engine = SptrFactory<EngineBase, EnrollEngine>::CreateInstance(param);
             break;
         case INTELL_VOICE_WAKEUP:
+#ifdef ONLY_SECOND_STAGE
+            engine = SptrFactory<EngineBase, HighPowerWakeupEngine>::CreateInstance(param);
+#else
             engine = SptrFactory<EngineBase, WakeupEngineObj>::CreateInstance(param);
+#endif
             break;
         case INTELL_VOICE_UPDATE:
             engine = SptrFactory<EngineBase, UpdateEngine>::CreateInstance(param, reEnroll);

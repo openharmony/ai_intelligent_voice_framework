@@ -87,6 +87,7 @@ ohos_source_set("server_source") {
   if (intelligent_voice_framework_only_first_stage) {
     cflags_cc += [ "-DONLY_FIRST_STAGE" ]
   }
+
   subsystem_name = "ai"
   part_name = "intelligent_voice_framework"
 }

@@ -125,7 +125,6 @@ private:
     bool AddStartDetectionTask(int32_t uuid);
     void DelStartDetectionTask(int32_t uuid);
     bool IsSwitchError(const std::string &key);
-    void NotifyEvent(const std::string &eventType);
     void StopWakeupSource();
     void ResetSingleLevelWakeup(const std::string &value);
     bool HasReceviedRecordStartMsg();

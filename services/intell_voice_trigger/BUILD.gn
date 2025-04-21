@@ -53,7 +53,6 @@ ohos_source_set("trigger_source") {
       "drivers_interface_intelligent_voice:libintell_voice_trigger_proxy_1.1",
       "eventhandler:libeventhandler",
       "ffrt:libffrt",
-      "hdf_core:libhdf_host",
       "hdf_core:libhdi",
       "huks:libhukssdk",
       "ipc:ipc_core",

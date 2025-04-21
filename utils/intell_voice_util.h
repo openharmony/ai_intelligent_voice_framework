@@ -23,6 +23,8 @@
 namespace OHOS {
 namespace IntellVoiceUtils {
 const std::string OHOS_MICROPHONE_PERMISSION = "ohos.permission.MICROPHONE";
+const std::string KEY_WAKEUP_ENGINE_BUNDLE_NAME = "WakeupEngineBundleName";
+const std::string KEY_WAKEUP_ENGINE_ABILITY_NAME = "WakeupEngineAbilityName";
 
 enum IntellVoicePermissionState {
     INTELL_VOICE_PERMISSION_START = 0,
@@ -40,6 +42,7 @@ public:
     static bool IsFileExist(const std::string &filePath);
     static bool RecordPermissionPrivacy(const std::string &permissionName, uint32_t targetTokenId,
         IntellVoicePermissionState state);
+    static void StartAbility(const std::string &event);
 
 private:
     static bool VerifyClientPermission(const std::string &permissionName);
