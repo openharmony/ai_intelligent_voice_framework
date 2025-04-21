@@ -56,6 +56,13 @@ ohos_source_set("engine_source") {
       "server/wakeup/wakeup_source_stop_callback.cpp",
     ]
 
+    if (intelligent_voice_framework_only_second_stage) {
+      sources += [
+        "server/wakeup/high_power/high_power_adapter_listener.cpp",
+        "server/wakeup/high_power/high_power_wakeup_engine.cpp",
+      ]
+    }
+
     include_dirs = [
       "inc",
       "../../../../ai/intelligent_voice_framework/utils",
@@ -71,6 +78,7 @@ ohos_source_set("engine_source") {
       "server/utils",
       "server/wakeup",
       "server/wakeup/headset",
+      "server/wakeup/high_power",
     ]
 
     external_deps = [
@@ -112,6 +120,10 @@ ohos_source_set("engine_source") {
     "-DENABLE_DEBUG",
     "-DUSE_FFRT",
   ]
+
+  if (intelligent_voice_framework_only_second_stage) {
+    cflags_cc += [ "-DONLY_SECOND_STAGE" ]
+  }
 
   defines = []
   if (build_variant == "root") {

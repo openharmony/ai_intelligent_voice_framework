@@ -18,9 +18,7 @@
 #include "intell_voice_log.h"
 #include "scope_guard.h"
 #include "update_engine_utils.h"
-#include "history_info_mgr.h"
-#include "ability_manager_client.h"
-#include "intell_voice_definitions.h"
+#include "intell_voice_util.h"
 
 #define LOG_TAG "SilenceUpdateStrategy"
 
@@ -53,30 +51,6 @@ int SilenceUpdateStrategy::GetRetryTimes()
     return SILENCE_UPDATE_RETRY_TIMES;
 }
 
-void SilenceUpdateStrategy::NotifyUpdateFail()
-{
-    AAFwk::Want want;
-    HistoryInfoMgr &historyInfoMgr = HistoryInfoMgr::GetInstance();
-
-    std::string bundleName = historyInfoMgr.GetStringKVPair(KEY_WAKEUP_ENGINE_BUNDLE_NAME);
-    std::string abilityName = historyInfoMgr.GetStringKVPair(KEY_WAKEUP_ENGINE_ABILITY_NAME);
-    INTELL_VOICE_LOG_INFO("bundleName:%{public}s, abilityName:%{public}s", bundleName.c_str(), abilityName.c_str());
-    if (bundleName.empty() || abilityName.empty()) {
-        INTELL_VOICE_LOG_ERROR("bundle name is empty or ability name is empty");
-        return;
-    }
-    want.SetElementName(bundleName, abilityName);
-    want.SetParam("serviceName", std::string("intell_voice"));
-    want.SetParam("servicePid", getpid());
-    want.SetParam("eventType", std::string("update_event"));
-    auto abilityManagerClient = AAFwk::AbilityManagerClient::GetInstance();
-    if (abilityManagerClient == nullptr) {
-        INTELL_VOICE_LOG_ERROR("abilityManagerClient is nullptr");
-        return;
-    }
-    abilityManagerClient->StartAbility(want);
-}
-
 int SilenceUpdateStrategy::OnUpdateCompleteCallback(const int result, bool isLast)
 {
     if (!isLast || result == 0) {
@@ -84,7 +58,7 @@ int SilenceUpdateStrategy::OnUpdateCompleteCallback(const int result, bool isLas
     }
 
     INTELL_VOICE_LOG_INFO("notify silence update fail");
-    NotifyUpdateFail();
+    IntellVoiceUtil::StartAbility("update_event");
     return  0;
 }
 }

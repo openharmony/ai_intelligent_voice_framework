@@ -29,6 +29,8 @@
 #include "privacy_error.h"
 #include "intell_voice_log.h"
 #include "intell_voice_info.h"
+#include "ability_manager_client.h"
+#include "history_info_mgr.h"
 
 #define LOG_TAG "IntellVoiceUtil"
 
@@ -199,6 +201,30 @@ bool IntellVoiceUtil::RecordPermissionPrivacy(const std::string &permissionName,
     }
 
     return true;
+}
+
+void IntellVoiceUtil::StartAbility(const std::string &event)
+{
+    AAFwk::Want want;
+    HistoryInfoMgr &historyInfoMgr = HistoryInfoMgr::GetInstance();
+
+    std::string bundleName = historyInfoMgr.GetStringKVPair(KEY_WAKEUP_ENGINE_BUNDLE_NAME);
+    std::string abilityName = historyInfoMgr.GetStringKVPair(KEY_WAKEUP_ENGINE_ABILITY_NAME);
+    INTELL_VOICE_LOG_INFO("bundleName:%{public}s, abilityName:%{public}s", bundleName.c_str(), abilityName.c_str());
+    if (bundleName.empty() || abilityName.empty()) {
+        INTELL_VOICE_LOG_ERROR("bundle name is empty or ability name is empty");
+        return;
+    }
+    want.SetElementName(bundleName, abilityName);
+    want.SetParam("serviceName", std::string("intell_voice"));
+    want.SetParam("servicePid", getpid());
+    want.SetParam("eventType", event);
+    auto abilityManagerClient = AAFwk::AbilityManagerClient::GetInstance();
+    if (abilityManagerClient == nullptr) {
+        INTELL_VOICE_LOG_ERROR("abilityManagerClient is nullptr");
+        return;
+    }
+    abilityManagerClient->StartAbility(want);
 }
 }
 }

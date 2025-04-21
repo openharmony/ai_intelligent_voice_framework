@@ -27,7 +27,6 @@
 #include "string_util.h"
 #include "json/json.h"
 #include "history_info_mgr.h"
-#include "ability_manager_client.h"
 
 #define LOG_TAG "IntellVoiceServiceManager"
 
@@ -174,31 +173,6 @@ bool IntellVoiceServiceManager<T, E>::IsSwitchError(const std::string &key)
     }
  
     return switchProvider_->IsSwitchError(key);
-}
-
-template<typename T, typename E>
-void IntellVoiceServiceManager<T, E>::NotifyEvent(const std::string &eventType)
-{
-    AAFwk::Want want;
-    HistoryInfoMgr &historyInfoMgr = HistoryInfoMgr::GetInstance();
- 
-    std::string bundleName = historyInfoMgr.GetStringKVPair(KEY_WAKEUP_ENGINE_BUNDLE_NAME);
-    std::string abilityName = historyInfoMgr.GetStringKVPair(KEY_WAKEUP_ENGINE_ABILITY_NAME);
-    INTELL_VOICE_LOG_INFO("bundleName:%{public}s, abilityName:%{public}s", bundleName.c_str(), abilityName.c_str());
-    if (bundleName.empty() || abilityName.empty()) {
-        INTELL_VOICE_LOG_ERROR("bundle name is empty or ability name is empty");
-        return;
-    }
-    want.SetElementName(bundleName, abilityName);
-    want.SetParam("serviceName", std::string("intell_voice"));
-    want.SetParam("servicePid", getpid());
-    want.SetParam("eventType", eventType);
-    auto abilityManagerClient = AAFwk::AbilityManagerClient::GetInstance();
-    if (abilityManagerClient == nullptr) {
-        INTELL_VOICE_LOG_ERROR("abilityManagerClient is nullptr");
-        return;
-    }
-    abilityManagerClient->StartAbility(want);
 }
 
 template<typename T, typename E>
@@ -459,10 +433,12 @@ int32_t IntellVoiceServiceManager<T, E>::SwitchOnProc(int32_t uuid, bool needUpd
 template<typename T, typename E>
 void IntellVoiceServiceManager<T, E>::CreateAndStartServiceObject(int32_t uuid, bool needResetAdapter)
 {
+#ifdef TRIGGER_ENABLE
     if (!T::IsModelExist(uuid)) {
         INTELL_VOICE_LOG_INFO("no model");
         return;
     }
+#endif
 
     if (!QuerySwitchByUuid(uuid)) {
         INTELL_VOICE_LOG_INFO("switch is off, uuid is %{public}d", uuid);
@@ -639,7 +615,7 @@ void IntellVoiceServiceManager<T, E>::HandleServiceStop()
     });
     if (IsSwitchError(WAKEUP_KEY)) {
         INTELL_VOICE_LOG_WARN("db is abnormal, can not find wakeup switch, notify db error");
-        NotifyEvent("db_error");
+        IntellVoiceUtil::StartAbility("db_error");
     }
 }
 
@@ -870,7 +846,7 @@ void IntellVoiceServiceManager<T, E>::OnSingleLevelDetected()
     INTELL_VOICE_LOG_INFO("single level detected");
     recordStart_ = -1;
     StopWakeupSource();
-    NotifyEvent("single_level_event");
+    IntellVoiceUtil::StartAbility("single_level_event");
     HandleRecordStartInfoChange();
     return;
 }

@@ -13,14 +13,13 @@
  * limitations under the License.
  */
 #include "wakeup_engine.h"
-#include "ability_manager_client.h"
 #include "idevmgr_hdi.h"
 #include "intell_voice_engine_manager.h"
 #include "intell_voice_log.h"
 #include "headset_host_manager.h"
 #include "headset_wakeup_wrapper.h"
 #include "engine_callback_message.h"
-#include "history_info_mgr.h"
+#include "intell_voice_util.h"
 
 #define LOG_TAG "WakeupEngine"
 
@@ -52,7 +51,7 @@ void WakeupEngine::OnDetected(int32_t uuid)
     }
     detectDeviceType_.store(DETECT_TYPE_PHONE);
 
-    std::thread([uuid]() { WakeupEngine::StartAbility(GetEventValue(uuid)); }).detach();
+    std::thread([uuid]() { IntellVoiceUtil::StartAbility(GetEventValue(uuid)); }).detach();
     StateMsg msg(START_RECOGNIZE, &uuid, sizeof(int32_t));
     if (ROLE(WakeupEngineImpl).Handle(msg) != 0) {
         INTELL_VOICE_LOG_WARN("start failed");
@@ -143,7 +142,7 @@ int32_t WakeupEngine::NotifyHeadsetWakeEvent()
         return -1;
     }
 
-    std::thread([]() { WakeupEngine::StartAbility("headset_event"); }).detach();
+    std::thread([]() { IntellVoiceUtil::StartAbility("headset_event"); }).detach();
     detectDeviceType_.store(DETECT_TYPE_HEADSET);
 
     StateMsg msg(START_RECOGNIZE);
@@ -285,30 +284,6 @@ std::string WakeupEngine::GetEventValue(int32_t uuid)
     }
 
     return "recognition_event";
-}
-
-void WakeupEngine::StartAbility(const std::string &event)
-{
-    AAFwk::Want want;
-    HistoryInfoMgr &historyInfoMgr = HistoryInfoMgr::GetInstance();
-
-    std::string bundleName = historyInfoMgr.GetStringKVPair(KEY_WAKEUP_ENGINE_BUNDLE_NAME);
-    std::string abilityName = historyInfoMgr.GetStringKVPair(KEY_WAKEUP_ENGINE_ABILITY_NAME);
-    INTELL_VOICE_LOG_INFO("bundleName:%{public}s, abilityName:%{public}s", bundleName.c_str(), abilityName.c_str());
-    if (bundleName.empty() || abilityName.empty()) {
-        INTELL_VOICE_LOG_ERROR("bundle name is empty or ability name is empty");
-        return;
-    }
-    want.SetElementName(bundleName, abilityName);
-    want.SetParam("serviceName", std::string("intell_voice"));
-    want.SetParam("servicePid", getpid());
-    want.SetParam("eventType", event);
-    auto abilityManagerClient = AAFwk::AbilityManagerClient::GetInstance();
-    if (abilityManagerClient == nullptr) {
-        INTELL_VOICE_LOG_ERROR("abilityManagerClient is nullptr");
-        return;
-    }
-    abilityManagerClient->StartAbility(want);
 }
 
 bool WakeupEngine::ResetAdapter()

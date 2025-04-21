@@ -27,8 +27,6 @@ public:
     UpdatePriority GetUpdatePriority() override;
     int GetRetryTimes() override;
     int OnUpdateCompleteCallback(const int result, bool isLast) override;
-private:
-    static void NotifyUpdateFail();
 };
 }
 }

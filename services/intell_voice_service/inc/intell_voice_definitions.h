@@ -15,6 +15,7 @@
 #ifndef INTELL_VOICE_DEFINITIONS_H
 #define INTELL_VOICE_DEFINITIONS_H
 #include <string>
+#include "intell_voice_util.h"
 namespace OHOS {
 namespace IntellVoiceEngine {
 constexpr int32_t VOICE_WAKEUP_MODEL_UUID = 1;
@@ -25,8 +26,6 @@ const std::string SHORTWORD_KEY = "intell_voice_trigger_shortword";
 const std::string SENSIBILITY_TEXT = "sensibility=";
 
 const std::string KEY_GET_WAKEUP_FEATURE = "wakeup_features";
-const std::string KEY_WAKEUP_ENGINE_BUNDLE_NAME = "WakeupEngineBundleName";
-const std::string KEY_WAKEUP_ENGINE_ABILITY_NAME = "WakeupEngineAbilityName";
 const std::string KEY_WAKEUP_VESRION = "WakeupVersion";
 const std::string KEY_LANGUAGE = "Language";
 const std::string KEY_AREA = "Area";

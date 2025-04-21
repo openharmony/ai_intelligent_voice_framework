@@ -54,7 +54,6 @@ public:
     int32_t NotifyHeadsetHostEvent(HeadsetHostEventType event) override;
 
 private:
-    static void StartAbility(const std::string &event);
     static std::string GetEventValue(int32_t uuid);
     int32_t HandleHeadsetOff();
     int32_t HandleHeadsetOn();
