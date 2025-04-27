@@ -584,15 +584,19 @@ int32_t WakeupEngineImpl::HandleStartCapturer(const StateMsg &msg, State &nextSt
         return ret;
     }
 
+    callerTokenId_ = IPCSkeleton::GetCallingTokenID();
+    if (!IntellVoiceUtil::RecordPermissionPrivacy(OHOS_MICROPHONE_PERMISSION, callerTokenId_,
+        INTELL_VOICE_PERMISSION_START)) {
+        INTELL_VOICE_LOG_ERROR("record permissionPrivacy failed");
+        return -1;
+    }
+
     int32_t *msgBody = reinterpret_cast<int32_t *>(msg.inMsg);
     if (msgBody == nullptr) {
         INTELL_VOICE_LOG_ERROR("msgBody is nullptr");
         return INTELLIGENT_VOICE_START_CAPTURER_FAILED;
     }
     channels_ = *msgBody;
-    callerTokenId_ = IPCSkeleton::GetCallingTokenID();
-    IntellVoiceUtil::RecordPermissionPrivacy(OHOS_MICROPHONE_PERMISSION, callerTokenId_,
-        INTELL_VOICE_PERMISSION_START);
     nextState = State(READ_CAPTURER);
     return 0;
 }

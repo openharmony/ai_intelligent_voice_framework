@@ -305,6 +305,13 @@ int32_t EnrollEngine::Evaluate(const std::string &word, EvaluationResult &result
 
 bool EnrollEngine::StartAudioSource()
 {
+    callerTokenId_ = IPCSkeleton::GetCallingTokenID();
+    if (!IntellVoiceUtil::RecordPermissionPrivacy(OHOS_MICROPHONE_PERMISSION, callerTokenId_,
+        INTELL_VOICE_PERMISSION_START)) {
+        INTELL_VOICE_LOG_ERROR("record permissionPrivacy failed");
+        return false;
+    }
+
     auto listener = std::make_unique<AudioSourceListener>([&] (uint8_t *buffer, uint32_t size, bool isEnd) {
         if ((adapter_ != nullptr) && (!isEnd)) {
             std::vector<uint8_t> audioBuff(&buffer[0], &buffer[size]);
@@ -330,12 +337,10 @@ bool EnrollEngine::StartAudioSource()
     if (!audioSource_->Start()) {
         INTELL_VOICE_LOG_ERROR("start capturer failed");
         audioSource_ = nullptr;
+        IntellVoiceUtil::RecordPermissionPrivacy(OHOS_MICROPHONE_PERMISSION, callerTokenId_,
+            INTELL_VOICE_PERMISSION_STOP);
         return false;
     }
-
-    callerTokenId_ = IPCSkeleton::GetCallingTokenID();
-    IntellVoiceUtil::RecordPermissionPrivacy(OHOS_MICROPHONE_PERMISSION, callerTokenId_,
-        INTELL_VOICE_PERMISSION_START);
     return true;
 }
 
