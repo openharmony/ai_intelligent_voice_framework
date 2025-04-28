@@ -77,8 +77,6 @@ ohos_unittest("intell_voice_manager_test") {
     "c_utils:utils",
     "common_event_service:cesfwk_innerkits",
     "data_share:datashare_consumer",
-    "drivers_interface_intelligent_voice:intell_voice_engine_idl_headers",
-    "drivers_interface_intelligent_voice:intell_voice_trigger_idl_headers",
     "drivers_interface_intelligent_voice:libintell_voice_engine_proxy_1.0",
     "drivers_interface_intelligent_voice:libintell_voice_engine_proxy_1.1",
     "drivers_interface_intelligent_voice:libintell_voice_engine_proxy_1.2",
