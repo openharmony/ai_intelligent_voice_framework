@@ -87,7 +87,6 @@ ohos_source_set("engine_source") {
       "audio_framework:audio_client",
       "audio_framework:audio_foundation",
       "c_utils:utils",
-      "drivers_interface_intelligent_voice:intell_voice_engine_idl_headers",
       "drivers_interface_intelligent_voice:libintell_voice_engine_proxy_1.0",
       "drivers_interface_intelligent_voice:libintell_voice_engine_proxy_1.1",
       "drivers_interface_intelligent_voice:libintell_voice_engine_proxy_1.2",
