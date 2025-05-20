@@ -14,6 +14,8 @@
  */
 #include "trigger_helper.h"
 
+#include <chrono>
+#include <thread>
 #ifdef SUPPORT_TELEPHONY_SERVICE
 #include "telephony_observer_client.h"
 #include "state_registry_errors.h"
@@ -53,6 +55,7 @@ namespace IntellVoiceTrigger {
 #ifdef SUPPORT_TELEPHONY_SERVICE
 static constexpr int32_t SIM_SLOT_ID_1 = DEFAULT_SIM_SLOT_ID + 1;
 #endif
+static constexpr uint32_t HIBERNATE_WAIT_TIME = 500; // 500ms
 
 TriggerModelData::TriggerModelData(int32_t uuid)
 {
@@ -502,6 +505,9 @@ void TriggerHelper::OnUpdateAllRecognitionState()
             StopRecognition(iter.second);
             if (systemHibernate_) {
                 UnloadModel(iter.second);
+                INTELL_VOICE_LOG_INFO("begin to wait");
+                std::this_thread::sleep_for(std::chrono::milliseconds(HIBERNATE_WAIT_TIME));
+                INTELL_VOICE_LOG_INFO("finish to wait");
             }
         }
     }
