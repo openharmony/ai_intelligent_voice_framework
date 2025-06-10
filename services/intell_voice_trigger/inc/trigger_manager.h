@@ -45,7 +45,9 @@ public:
     void OnTelephonyStateRegistryServiceChange(bool isAdded);
     void OnAudioDistributedServiceChange(bool isAdded);
     void OnAudioPolicyServiceChange(bool isAdded);
+#ifdef POWER_MANAGER_ENABLE
     void OnPowerManagerServiceChange(bool isAdded);
+#endif
     void OnDisplayManagerServiceChange(bool isAdded);
 
 private:
@@ -55,8 +57,10 @@ private:
     void DetachAudioCaptureListener();
     void AttachAudioRendererEventListener();
     void DetachAudioRendererEventListener();
+#ifdef POWER_MANAGER_ENABLE
     void AttachHibernateObserver();
     void DetachHibernateObserver();
+#endif
     void AttachFoldStatusListener();
     void DetachFoldStatusListener();
     void AttachAudioSceneEventListener();

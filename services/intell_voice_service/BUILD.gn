@@ -77,6 +77,10 @@ ohos_source_set("server_source") {
 
   branch_protector_ret = "pac_ret"
 
+  if (intelligent_voice_framework_power_manager_enable) {
+    defines += [ "POWER_MANAGER_ENABLE" ]
+  }
+
   if (intelligent_voice_framework_trigger_enable) {
     cflags_cc += [ "-DTRIGGER_ENABLE" ]
   }

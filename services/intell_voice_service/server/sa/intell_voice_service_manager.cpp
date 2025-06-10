@@ -720,9 +720,11 @@ void IntellVoiceServiceManager<T, E>::OnServiceStart(std::map<int32_t, std::func
     saChangeFuncMap[AUDIO_POLICY_SERVICE_ID] = [this](bool isAdded) {
         T::OnAudioPolicyServiceChange(isAdded);
     };
+#ifdef POWER_MANAGER_ENABLE
     saChangeFuncMap[POWER_MANAGER_SERVICE_ID] = [this](bool isAdded) {
         T::OnPowerManagerServiceChange(isAdded);
     };
+#endif
     saChangeFuncMap[DISPLAY_MANAGER_SERVICE_ID] = [this](bool isAdded) {
         T::OnDisplayManagerServiceChange(isAdded);
     };

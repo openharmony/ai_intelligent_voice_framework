@@ -192,7 +192,7 @@ void TriggerManager::DetachAudioSceneEventListener()
     return service_->DetachAudioSceneEventListener();
 }
 
-
+#ifdef POWER_MANAGER_ENABLE
 void TriggerManager::AttachHibernateObserver()
 {
     if (service_ == nullptr) {
@@ -210,6 +210,7 @@ void TriggerManager::DetachHibernateObserver()
     }
     return service_->DetachHibernateObserver();
 }
+#endif
 
 void TriggerManager::AttachFoldStatusListener()
 {
@@ -292,7 +293,9 @@ void TriggerManager::OnServiceStop()
     DetachTelephonyObserver();
     DetachAudioCaptureListener();
     DetachAudioRendererEventListener();
+#ifdef POWER_MANAGER_ENABLE
     DetachHibernateObserver();
+#endif
     DetachFoldStatusListener();
     DetachAudioSceneEventListener();
 }
@@ -330,6 +333,7 @@ void TriggerManager::OnAudioPolicyServiceChange(bool isAdded)
     }
 }
 
+#ifdef POWER_MANAGER_ENABLE
 void TriggerManager::OnPowerManagerServiceChange(bool isAdded)
 {
     if (isAdded) {
@@ -339,6 +343,7 @@ void TriggerManager::OnPowerManagerServiceChange(bool isAdded)
         INTELL_VOICE_LOG_INFO("power manager service is removed");
     }
 }
+#endif
 
 void TriggerManager::OnDisplayManagerServiceChange(bool isAdded)
 {

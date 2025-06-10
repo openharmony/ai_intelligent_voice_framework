@@ -41,8 +41,10 @@ public:
     void DetachAudioCaptureListener();
     void AttachAudioRendererEventListener();
     void DetachAudioRendererEventListener();
+#ifdef POWER_MANAGER_ENABLE
     void AttachHibernateObserver();
     void DetachHibernateObserver();
+#endif
 #ifdef SUPPORT_WINDOW_MANAGER
     void AttachFoldStatusListener();
     void DetachFoldStatusListener();

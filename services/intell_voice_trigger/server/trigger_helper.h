@@ -29,8 +29,11 @@
 #include "audio_system_manager.h"
 #include "audio_stream_manager.h"
 #include "audio_info.h"
+#ifdef POWER_MANAGER_ENABLE
 #include "sync_hibernate_callback_stub.h"
 #include "sync_sleep_callback_stub.h"
+#include "power_mgr_client.h"
+#endif
 #ifdef SUPPORT_WINDOW_MANAGER
 #include "display_manager_lite.h"
 #endif
@@ -100,8 +103,10 @@ public:
     void AttachTelephonyObserver();
     void DetachTelephonyObserver();
 #endif
+#ifdef POWER_MANAGER_ENABLE
     void AttachHibernateObserver();
     void DetachHibernateObserver();
+#endif
 
 private:
     TriggerHelper();
@@ -120,7 +125,9 @@ private:
     void OnRecognition(int32_t modelHandle, const IntellVoiceRecognitionEvent &event) override;
     void OnCapturerStateChange(bool isActive);
     void OnUpdateRendererState(int32_t streamUsage, bool isPlaying);
+#ifdef POWER_MANAGER_ENABLE
     void OnHibernateStateUpdated(bool isHibernate);
+#endif
     void OnAudioSceneChange(const AudioScene audioScene);
 #ifdef SUPPORT_TELEPHONY_SERVICE
     void OnCallStateUpdated(int32_t callState);
@@ -229,6 +236,7 @@ private:
         std::map<int32_t, bool> rendererStateMap_;
     };
 
+#ifdef POWER_MANAGER_ENABLE
     class HibernateCallback : public PowerMgr::SyncHibernateCallbackStub {
     public:
         explicit HibernateCallback(const std::shared_ptr<TriggerHelper> helper)
@@ -262,12 +270,15 @@ private:
     private:
         std::shared_ptr<TriggerHelper> helper_ = nullptr;
     };
+#endif
 
 private:
     std::mutex mutex_;
     std::mutex telephonyMutex_;
     std::mutex rendererMutex_;
+#ifdef POWER_MANAGER_ENABLE
     std::mutex hiberateMutex_;
+#endif
     std::mutex sceneMutex_;
 
     std::map<int32_t, std::shared_ptr<TriggerModelData>> modelDataMap_;
@@ -276,8 +287,6 @@ private:
     std::shared_ptr<AudioCapturerSourceChangeCallback> audioCapturerSourceChangeCallback_ = nullptr;
     std::shared_ptr<AudioRendererStateChangeCallbackImpl> audioRendererStateChangeCallback_ = nullptr;
     std::shared_ptr<AudioSceneChangeCallback> audioSceneChangeCallback_ = nullptr;
-    sptr<HibernateCallback> hibernateCallback_ = nullptr;
-    sptr<SleepCallback> sleepCallback_ = nullptr;
     bool callActive_ = false;
     bool systemHibernate_ = false;
     bool audioCaptureActive_ = false;
@@ -286,7 +295,11 @@ private:
     bool isTelephonyDetached_ = false;
 #endif
     bool isRendererDetached_ = false;
+#ifdef POWER_MANAGER_ENABLE
+    sptr<HibernateCallback> hibernateCallback_ = nullptr;
+    sptr<SleepCallback> sleepCallback_ = nullptr;
     bool isHibernateDetached_ = false;
+#endif
     bool isSceneDetached_ = false;
 };
 }  // namespace IntellVoiceTrigger

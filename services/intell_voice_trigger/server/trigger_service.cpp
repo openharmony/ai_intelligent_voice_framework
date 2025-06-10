@@ -196,6 +196,7 @@ void TriggerService::DetachAudioSceneEventListener()
     triggerHelper_->DetachAudioSceneEventListener();
 }
 
+#ifdef POWER_MANAGER_ENABLE
 void TriggerService::AttachHibernateObserver()
 {
     if (triggerHelper_ == nullptr) {
@@ -213,6 +214,7 @@ void TriggerService::DetachHibernateObserver()
     }
     triggerHelper_->DetachHibernateObserver();
 }
+#endif
 
 #ifdef SUPPORT_WINDOW_MANAGER
 void TriggerService::AttachFoldStatusListener()
