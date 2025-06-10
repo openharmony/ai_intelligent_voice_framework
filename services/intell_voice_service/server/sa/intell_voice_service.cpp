@@ -108,7 +108,9 @@ void IntellVoiceService::OnStart(const SystemAbilityOnDemandReason &startReason)
     AddSystemAbilityListener(TELEPHONY_STATE_REGISTRY_SYS_ABILITY_ID);
     AddSystemAbilityListener(AUDIO_DISTRIBUTED_SERVICE_ID);
     AddSystemAbilityListener(AUDIO_POLICY_SERVICE_ID);
+#ifdef POWER_MANAGER_ENABLE
     AddSystemAbilityListener(POWER_MANAGER_SERVICE_ID);
+#endif
     AddSystemAbilityListener(DISPLAY_MANAGER_SERVICE_ID);
     RegisterPermissionCallback(OHOS_PERMISSION_INTELL_VOICE);
     INTELL_VOICE_LOG_INFO("publish ok");

@@ -23,7 +23,6 @@
 #include "call_manager_inner_type.h"
 #endif
 #include "audio_policy_manager.h"
-#include "power_mgr_client.h"
 
 #include "intell_voice_log.h"
 #include "trigger_connector_mgr.h"
@@ -47,7 +46,9 @@ using namespace OHOS::IntellVoiceUtils;
 using namespace OHOS::IntellVoiceEngine;
 #endif
 using namespace OHOS::AudioStandard;
+#ifdef POWER_MANAGER_ENABLE
 using namespace OHOS::PowerMgr;
+#endif
 using namespace std;
 
 namespace OHOS {
@@ -583,16 +584,6 @@ void TriggerHelper::TelephonyStateObserver::OnCallStateUpdated(
 }
 #endif
 
-void TriggerHelper::OnHibernateStateUpdated(bool isHibernate)
-{
-    lock_guard<std::mutex> lock(mutex_);
-    if (systemHibernate_ == isHibernate) {
-        return;
-    }
-    systemHibernate_ = isHibernate;
-    OnUpdateAllRecognitionState();
-}
-
 void TriggerHelper::AttachAudioCaptureListener()
 {
     INTELL_VOICE_LOG_INFO("enter");
@@ -706,6 +697,63 @@ void TriggerHelper::AudioRendererStateChangeCallbackImpl::OnRendererStateChange(
     }
 }
 
+#ifdef POWER_MANAGER_ENABLE
+void TriggerHelper::AttachHibernateObserver()
+{
+    INTELL_VOICE_LOG_INFO("enter");
+    std::lock_guard<std::mutex> lock(hiberateMutex_);
+    if (isHibernateDetached_) {
+        INTELL_VOICE_LOG_INFO("system hibernate is already detached");
+        return;
+    }
+
+    hibernateCallback_ = std::make_unique<HibernateCallback>(shared_from_this()).release();
+    if (hibernateCallback_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("hibernateCallback_ is nullptr");
+        return;
+    }
+    auto res =  PowerMgrClient::GetInstance().RegisterSyncHibernateCallback(hibernateCallback_);
+    if (!res) {
+        INTELL_VOICE_LOG_ERROR("hibernateCallback_ register failed");
+    }
+
+    sleepCallback_ = std::make_unique<SleepCallback>(shared_from_this()).release();
+    if (sleepCallback_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("sleepCallback_ is nullptr");
+        return;
+    }
+    res =  PowerMgrClient::GetInstance().RegisterSyncSleepCallback(sleepCallback_, SleepPriority::DEFAULT);
+    if (!res) {
+        INTELL_VOICE_LOG_ERROR("sleepCallback_ register failed");
+    }
+}
+
+void TriggerHelper::DetachHibernateObserver()
+{
+    INTELL_VOICE_LOG_INFO("enter");
+    std::lock_guard<std::mutex> lock(hiberateMutex_);
+
+    isHibernateDetached_ = true;
+    if (hibernateCallback_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("hibernateCallback_ is nullptr");
+        return;
+    }
+    auto res =  PowerMgrClient::GetInstance().UnRegisterSyncHibernateCallback(hibernateCallback_);
+    if (!res) {
+        INTELL_VOICE_LOG_ERROR("hibernateCallback_ unregister failed");
+    }
+
+    if (sleepCallback_ == nullptr) {
+        INTELL_VOICE_LOG_ERROR("sleepCallback_ is nullptr");
+        return;
+    }
+    res =  PowerMgrClient::GetInstance().UnRegisterSyncSleepCallback(sleepCallback_);
+    if (!res) {
+        INTELL_VOICE_LOG_ERROR("sleepCallback_ unregister failed");
+    }
+}
+
+
 void TriggerHelper::HibernateCallback::OnSyncHibernate()
 {
     if (helper_ == nullptr) {
@@ -755,6 +803,17 @@ void TriggerHelper::SleepCallback::OnSyncWakeup(bool onForceSleep)
 
     helper_->OnHibernateStateUpdated(false);
 }
+
+void TriggerHelper::OnHibernateStateUpdated(bool isHibernate)
+{
+    lock_guard<std::mutex> lock(mutex_);
+    if (systemHibernate_ == isHibernate) {
+        return;
+    }
+    systemHibernate_ = isHibernate;
+    OnUpdateAllRecognitionState();
+}
+#endif
 
 void TriggerHelper::AttachAudioRendererEventListener()
 {
@@ -847,61 +906,6 @@ void TriggerHelper::DetachAudioRendererEventListener()
     int32_t ret = audioStreamManager->UnregisterAudioRendererEventListener(getpid());
     if (ret != 0) {
         INTELL_VOICE_LOG_ERROR("UnregisterAudioRendererEventListener failed");
-    }
-}
-
-void TriggerHelper::AttachHibernateObserver()
-{
-    INTELL_VOICE_LOG_INFO("enter");
-    std::lock_guard<std::mutex> lock(hiberateMutex_);
-    if (isHibernateDetached_) {
-        INTELL_VOICE_LOG_INFO("system hibernate is already detached");
-        return;
-    }
-
-    hibernateCallback_ = std::make_unique<HibernateCallback>(shared_from_this()).release();
-    if (hibernateCallback_ == nullptr) {
-        INTELL_VOICE_LOG_ERROR("hibernateCallback_ is nullptr");
-        return;
-    }
-    auto res =  PowerMgrClient::GetInstance().RegisterSyncHibernateCallback(hibernateCallback_);
-    if (!res) {
-        INTELL_VOICE_LOG_ERROR("hibernateCallback_ register failed");
-    }
-
-    sleepCallback_ = std::make_unique<SleepCallback>(shared_from_this()).release();
-    if (sleepCallback_ == nullptr) {
-        INTELL_VOICE_LOG_ERROR("sleepCallback_ is nullptr");
-        return;
-    }
-    res =  PowerMgrClient::GetInstance().RegisterSyncSleepCallback(sleepCallback_, SleepPriority::DEFAULT);
-    if (!res) {
-        INTELL_VOICE_LOG_ERROR("sleepCallback_ register failed");
-    }
-}
-
-void TriggerHelper::DetachHibernateObserver()
-{
-    INTELL_VOICE_LOG_INFO("enter");
-    std::lock_guard<std::mutex> lock(hiberateMutex_);
-
-    isHibernateDetached_ = true;
-    if (hibernateCallback_ == nullptr) {
-        INTELL_VOICE_LOG_ERROR("hibernateCallback_ is nullptr");
-        return;
-    }
-    auto res =  PowerMgrClient::GetInstance().UnRegisterSyncHibernateCallback(hibernateCallback_);
-    if (!res) {
-        INTELL_VOICE_LOG_ERROR("hibernateCallback_ unregister failed");
-    }
-
-    if (sleepCallback_ == nullptr) {
-        INTELL_VOICE_LOG_ERROR("sleepCallback_ is nullptr");
-        return;
-    }
-    res =  PowerMgrClient::GetInstance().UnRegisterSyncSleepCallback(sleepCallback_);
-    if (!res) {
-        INTELL_VOICE_LOG_ERROR("sleepCallback_ unregister failed");
     }
 }
 
