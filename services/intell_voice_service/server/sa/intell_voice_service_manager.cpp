@@ -25,7 +25,6 @@
 #include "intell_voice_generic_factory.h"
 #include "memory_guard.h"
 #include "string_util.h"
-#include "json/json.h"
 #include "history_info_mgr.h"
 
 #define LOG_TAG "IntellVoiceServiceManager"
