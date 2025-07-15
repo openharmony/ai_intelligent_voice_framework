@@ -45,7 +45,6 @@ public:
 
 private:
     IntellVoiceManager *manager_ = nullptr;
-
 };
 }  // namespace IntellVoiceNapi
 }  // namespace OHOS

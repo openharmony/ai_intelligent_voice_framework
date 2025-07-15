@@ -37,9 +37,7 @@ class EnrollIntellVoiceEngineCallbackTaihe : public IIntellVoiceEngineEventCallb
 public:
     explicit EnrollIntellVoiceEngineCallbackTaihe();
     virtual ~EnrollIntellVoiceEngineCallbackTaihe();
-
     void OnEvent(const IntellVoiceEngineCallBackEvent &event) override;
-
 };
 }  // namespace IntellVoiceNapi
 }  // namespace OHOS
