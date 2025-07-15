@@ -52,7 +52,8 @@
           "intelligent_voice_framework_only_first_stage",
           "intelligent_voice_framework_only_second_stage",
           "intelligent_voice_framework_window_manager_enable",
-          "intelligent_voice_framework_power_manager_enable"
+          "intelligent_voice_framework_power_manager_enable",
+          "intelligent_voice_framework_first_stage_oneshot_enable"
         ],
         "build": {
             "sub_component": [

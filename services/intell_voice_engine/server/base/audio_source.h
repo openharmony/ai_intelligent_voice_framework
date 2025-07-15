@@ -22,6 +22,7 @@
 #include "audio_capturer.h"
 #include "audio_info.h"
 #include "audio_debug.h"
+#include "thread_wrapper.h"
 
 namespace OHOS {
 namespace IntellVoiceEngine {
@@ -35,7 +36,11 @@ struct AudioSourceListener {
     OnBufferEndCb bufferEndCb_;
 };
 
+#ifdef FIRST_STAGE_ONESHOT_ENABLE
+class AudioSource : public IntellVoiceUtils::ThreadWrapper, private AudioDebug {
+#else
 class AudioSource : private AudioDebug {
+#endif
 public:
     AudioSource(uint32_t minBufferSize, uint32_t bufferCnt, std::unique_ptr<AudioSourceListener> listener,
         const OHOS::AudioStandard::AudioCapturerOptions &capturerOptions);
@@ -44,7 +49,7 @@ public:
     void Stop();
 
 private:
-    void ReadThread();
+    void Run();
     bool Read();
 
 private:

@@ -58,6 +58,7 @@ private:
     int32_t HandleHeadsetOff();
     int32_t HandleHeadsetOn();
     int32_t HandleCapturerMsg(StateMsg &msg);
+    static void StartAbility(const std::string &event);
     USE_ROLE(WakeupEngineImpl);
 
 private:
