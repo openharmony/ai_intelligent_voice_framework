@@ -44,8 +44,8 @@ OnlyFirstEngineManager::~OnlyFirstEngineManager()
 
 bool OnlyFirstEngineManager::IsEngineExist(IntellVoiceEngineType type)
 {
-    if(type == INTELL_VOICE_WAKEUP) {
-        if(wakeupEngine_ != nullptr) {
+    if (type == INTELL_VOICE_WAKEUP) {
+        if (wakeupEngine_ != nullptr) {
             return true;
         }
     }
@@ -74,17 +74,15 @@ bool OnlyFirstEngineManager::RegisterProxyDeathRecipient(IntellVoiceEngineType t
         return false;
     }
 
-    if(proxyDeathRecipient_ != nullptr) {
+    if (proxyDeathRecipient_ != nullptr) {
         INTELL_VOICE_LOG_ERROR("death recipient is not nullptr, type:%{public}d", type);
         return false;
     }
-
     deathRecipientObj_ = object;
     proxyDeathRecipient_ = new (std::nothrow) IntellVoiceDeathRecipient([&]() {
         INTELL_VOICE_LOG_INFO("receive wakeup proxy death recipient, clear wakeup engine callback");
         EngineCallbackMessage::CallFunc(HANDLE_CLEAR_WAKEUP_ENGINE_CB);
     });
-    
     if (proxyDeathRecipient_ == nullptr) {
         INTELL_VOICE_LOG_ERROR("create death recipient failed");
         return false;
