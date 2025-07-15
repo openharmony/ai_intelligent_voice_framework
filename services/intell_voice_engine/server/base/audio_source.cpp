@@ -79,12 +79,20 @@ bool AudioSource::Start()
 
     isReading_.store(true);
     CreateAudioDebugFile("_audio_source");
-    std::thread t1(std::bind(&AudioSource::ReadThread, this));
+
+#ifdef FIRST_STAGE_ONESHOT_ENABLE
+    if (!ThreadWrapper::Start("WakeUpAudioSource")) {
+        INTELL_VOICE_LOG_ERROR("failed to start wakeup source");
+        return false;
+    }
+#else
+    std::thread t1(std::bind(&AudioSource::Run, this));
     readThread_ = std::move(t1);
+#endif
     return true;
 }
 
-void AudioSource::ReadThread()
+void AudioSource::Run()
 {
     INTELL_VOICE_LOG_INFO("enter");
     uint32_t readCnt = 0;
@@ -133,7 +141,11 @@ void AudioSource::Stop()
     MemoryGuard memoryGuard;
 
     isReading_.store(false);
+#ifdef FIRST_STAGE_ONESHOT_ENABLE
+    ThreadWrapper::Join();
+#else
     readThread_.join();
+#endif
 
     DestroyAudioDebugFile();
 

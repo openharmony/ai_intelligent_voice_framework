@@ -45,7 +45,7 @@ template<typename T, typename E>
 IntellVoiceServiceManager<T, E>::IntellVoiceServiceManager() : TaskExecutor("ServMgrThread", MAX_TASK_NUM)
 {
     TaskExecutor::StartThread();
-#ifdef ENGINE_ENABLE
+#if defined(ENGINE_ENABLE) || defined(FIRST_STAGE_ONESHOT_ENABLE)
     RegisterEngineCallbacks();
 #endif
 #ifdef TRIGGER_ENABLE
@@ -444,7 +444,7 @@ void IntellVoiceServiceManager<T, E>::CreateAndStartServiceObject(int32_t uuid, 
         return;
     }
 
-#ifndef ONLY_FIRST_STAGE
+#if defined(ENGINE_ENABLE) || defined(FIRST_STAGE_ONESHOT_ENABLE)
         INTELL_VOICE_LOG_INFO("is not single wakeup level");
         if (!needResetAdapter) {
             E::CreateEngine(INTELL_VOICE_WAKEUP);
@@ -800,7 +800,13 @@ int32_t IntellVoiceServiceManager<T, E>::EngineSetParameter(const std::string &k
             historyInfoMgr.SetStringKVPair(KEY_WAKEUP_ENGINE_ABILITY_NAME, it.second);
 #ifdef ONLY_FIRST_STAGE
         } else if (it.first == std::string("record_start")) {
+#ifndef FIRST_STAGE_ONESHOT_ENABLE
             ResetSingleLevelWakeup(it.second);
+#else
+            std::string keyValue = it.first;
+            keyValue.append("=").append(it.second);
+            E::SetParameter(keyValue);
+#endif
 #endif
         } else {
             INTELL_VOICE_LOG_INFO("no need to process, key:%{public}s", it.first.c_str());

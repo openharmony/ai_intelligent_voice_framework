@@ -23,10 +23,13 @@
 
 #ifdef ENGINE_ENABLE
 #include "intell_voice_engine_manager.h"
+#elif defined(FIRST_STAGE_ONESHOT_ENABLE)
+#include "only_first_engine_manager.h"
 #else
 #include "dummy_engine_manager.h"
-#include "ffrt_api.h"
 #endif
+
+#include "ffrt_api.h"
 
 namespace OHOS {
 namespace IntellVoiceEngine {
@@ -39,6 +42,8 @@ using TriggerManagerType = OHOS::IntellVoiceTrigger::DummyTriggerManager;
 #endif
 #ifdef ENGINE_ENABLE
 using EngineManagerType = IntellVoiceEngineManager;
+#elif defined(FIRST_STAGE_ONESHOT_ENABLE)
+using EngineManagerType = OnlyFirstEngineManager;
 #else
 using EngineManagerType = DummyEngineManager;
 #endif

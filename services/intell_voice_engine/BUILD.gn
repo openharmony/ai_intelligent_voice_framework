@@ -102,6 +102,44 @@ ohos_source_set("engine_source") {
       "safwk:system_ability_fwk",
       "samgr:samgr_proxy",
     ]
+  } else if (intelligent_voice_framework_first_stage_oneshot_enable) {
+      sources = [
+      "server/base/audio_debug.cpp",
+      "server/base/audio_source.cpp",
+      "server/base/engine_base.cpp",
+      "server/base/file_source.cpp",
+      "server/base/intell_voice_engine_stub.cpp",
+      "server/manager/engine_callback_message.cpp",
+      "server/manager/only_first_engine_manager.cpp",
+      "server/wakeup/only_first/only_first_wakeup_engine.cpp",
+      "server/wakeup/only_first/only_first_wakeup_engine_impl.cpp",
+      "server/wakeup/wakeup_source_process.cpp",
+      "server/wakeup/wakeup_source_stop_callback.cpp",
+    ]
+
+    include_dirs = [
+      "inc",
+      "../../../../ai/intelligent_voice_framework/utils",
+      "../../../../ai/intelligent_voice_framework/interfaces/inner_api/native",
+      "../intell_voice_service/inc",
+      "intell_voice_engine",
+      "server/base",
+      "server/utils",
+      "server/wakeup",
+      "server/wakeup/only_first",
+    ]
+
+    external_deps = [
+      "audio_framework:audio_capturer",
+      "audio_framework:audio_client",
+      "audio_framework:audio_foundation",
+      "c_utils:utils",
+      "eventhandler:libeventhandler",
+      "ffrt:libffrt",
+      "hilog:libhilog",
+      "image_framework:image_native",
+      "ipc:ipc_core",
+    ]
   } else {
     sources = [
       "server/manager/dummy_engine_manager.cpp",
@@ -124,6 +162,13 @@ ohos_source_set("engine_source") {
 
   if (intelligent_voice_framework_only_second_stage) {
     cflags_cc += [ "-DONLY_SECOND_STAGE" ]
+  }
+
+  if (intelligent_voice_framework_only_first_stage) {
+    cflags_cc += [ "-DONLY_FIRST_STAGE" ]
+    if (intelligent_voice_framework_first_stage_oneshot_enable) {
+      cflags_cc += [ "-DFIRST_STAGE_ONESHOT_ENABLE" ]
+    }
   }
 
   defines = []
@@ -150,6 +195,8 @@ ohos_shared_library("intelligentvoice_engine") {
   external_deps = [ "hilog:libhilog" ]
   if (intelligent_voice_framework_engine_enable) {
     version_script = "libintelligentvoice_engine.versionscript"
+  } else if (intelligent_voice_framework_first_stage_oneshot_enable) {
+    version_script = "libintelligentvoice_only_first_engine.versionscript"
   } else {
     version_script = "libintelligentvoice_dummy_engine.versionscript"
   }
