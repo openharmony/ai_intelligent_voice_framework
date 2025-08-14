@@ -102,6 +102,8 @@ ohos_unittest("trigger_unit_test") {
     ]
     defines = [ "SUPPORT_TELEPHONY_SERVICE" ]
   }
+
+  resource_config_file = "resource/ohos_test.xml"
 }
 
 ohos_unittest("trigger_manager_test") {
@@ -147,6 +149,8 @@ ohos_unittest("trigger_manager_test") {
     ]
     defines = [ "SUPPORT_TELEPHONY_SERVICE" ]
   }
+
+  resource_config_file = "resource/ohos_test.xml"
 }
 
 ohos_unittest("update_engine_test") {
@@ -243,4 +247,6 @@ ohos_unittest("update_engine_test") {
     "src/intell_voice_update_callback.cpp",
     "src/update_engine_test.cpp",
   ]
+
+  resource_config_file = "resource/ohos_test.xml"
 }
