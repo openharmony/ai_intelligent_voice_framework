@@ -20,4 +20,24 @@
             <option name="push" value="one.pcm -> /data/test/resource" src="res"/>
         </preparer>
     </target>
+    <target name="trigger_unit_test">
+        <preparer>
+            <option name="push" value="ai/intelligent_voice_framework/libintelligentvoice_trigger_test.z.so -> /system/lib64" src="out"/>
+            <option name="push" value="ai/intelligent_voice_framework/libintelligentvoice_trigger_test.z.so -> /system/lib" src="out"/>
+        </preparer>
+    </target>
+    <target name="trigger_manager_test">
+        <preparer>
+            <option name="push" value="ai/intelligent_voice_framework/libintelligentvoice_trigger_test.z.so -> /system/lib64" src="out"/>
+            <option name="push" value="ai/intelligent_voice_framework/libintelligentvoice_trigger_test.z.so -> /system/lib" src="out"/>
+        </preparer>
+    </target>
+    <target name="update_engine_test">
+        <preparer>
+            <option name="push" value="ai/intelligent_voice_framework/libintelligentvoice_engine_test.z.so -> /system/lib64" src="out"/>
+            <option name="push" value="ai/intelligent_voice_framework/libintell_voice_server_test.z.so -> /system/lib64" src="out"/>
+            <option name="push" value="ai/intelligent_voice_framework/libintelligentvoice_engine_test.z.so -> /system/lib" src="out"/>
+            <option name="push" value="ai/intelligent_voice_framework/libintell_voice_server_test.z.so -> /system/lib" src="out"/>
+        </preparer>
+    </target>
 </configuration>
