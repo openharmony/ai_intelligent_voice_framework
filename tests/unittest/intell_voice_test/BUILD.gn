@@ -89,7 +89,6 @@ ohos_unittest("trigger_unit_test") {
     "hilog:libhilog",
     "power_manager:powermgr_client",
     "relational_store:native_rdb",
-    "state_registry:tel_state_registry_api",
   ]
 }
 
@@ -125,7 +124,6 @@ ohos_unittest("trigger_manager_test") {
     "relational_store:native_rdb",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
-    "state_registry:tel_state_registry_api",
   ]
 }
 

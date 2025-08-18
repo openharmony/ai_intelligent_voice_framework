@@ -101,6 +101,5 @@ ohos_fuzztest("ServiceManagerFuzzTest") {
     "relational_store:native_rdb",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
-    "state_registry:tel_state_registry_api",
   ]
 }
