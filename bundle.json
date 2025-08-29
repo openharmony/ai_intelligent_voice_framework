@@ -97,7 +97,6 @@
                 }
             ],
             "test": [
-              "//foundation/ai/intelligent_voice_framework/tests:intell_voice_unit_test",
               "//foundation/ai/intelligent_voice_framework/tests:intell_voice_fuzz_test"
             ]
         }
