@@ -14,14 +14,14 @@
  */
 #include "history_info_mgr.h"
 
+#include "intell_voice_log.h"
+#include "parse_history_int32.h"
 #include "string_util.h"
 
 #define LOG_TAG "HistoryInfoMgr"
 
 namespace OHOS {
 namespace IntellVoiceUtils {
-constexpr int DECIMAL_NOTATION = 10;
-
 HistoryInfoMgr::HistoryInfoMgr()
     : ServiceDbHelper("intell_voice_service_manager", "local_intell_voice_history_mgr_storeId")
 {
@@ -35,7 +35,13 @@ void HistoryInfoMgr::SetIntKVPair(std::string key, int32_t value)
 int32_t HistoryInfoMgr::GetIntKVPair(std::string key)
 {
     std::string value = GetValue(key);
-    return static_cast<int32_t>(strtol(value.c_str(), nullptr, DECIMAL_NOTATION));
+    int32_t result = 0;
+    if (!ParseHistoryInt32(value, result)) {
+        INTELL_VOICE_LOG_ERROR("GetIntKVPair parse failed, key:%{public}s value:%{public}s",
+            key.c_str(), value.c_str());
+        return 0;
+    }
+    return result;
 }
 
 void HistoryInfoMgr::SetStringKVPair(std::string key, std::string value)
